@@ -6,7 +6,9 @@ tmp_dir = "tmp"
   bin = "tmp/main"
   delay = 1000                     
   exclude_dir = ["tmp"]
+  include_file = [".env"]
   include_ext = ["go", "tpl", "tmpl", "html"]
+  exclude_file = [".gitignore", "README.md"]
   exclude_regex = ["_test.go"]
   pre_cmd = []                      # todo gen docs
 
