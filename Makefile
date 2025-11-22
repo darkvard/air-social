@@ -1,99 +1,54 @@
-# ===================== DOCKER ======================
+# ===================== DOCKER COMPOSE ======================
 
-# Detect project name from go.mod
-MODULE := $(shell grep '^module ' go.mod | sed 's/module //')
-PROJECT := $(notdir $(MODULE))
+.PHONY: up
+up:
+	@echo "🚀 Starting all services (app + db + redis)"
+	@docker compose up -d
 
-IMAGE ?= $(PROJECT)
-CONTAINER ?= $(PROJECT)-dev
+.PHONY: down
+down:
+	@echo "🛑 Stopping all services"
+	@docker compose down
 
-HOST_PORT ?= 3000
-CONTAINER_PORT ?= 8080
+.PHONY: restart
+restart:
+	$(MAKE) down
+	$(MAKE) up
 
+.PHONY: logs
+logs:
+	@docker compose logs -f app
 
-# -------- Utils --------
+.PHONY: ps
+ps:
+	@docker compose ps
 
-.PHONY: docker-stop
-docker-stop:
-	-@docker stop $(CONTAINER)
-
-.PHONY: docker-logs
-docker-logs:
-	@docker logs -f $(CONTAINER)
-
-.PHONY: docker-sh
-docker-sh:
-	@docker exec -it $(CONTAINER) sh
-
-
-# -------- Clean --------
-
-.PHONY: docker-clean-container
-docker-clean-container:
-	@if docker ps -a --format '{{.Names}}' | grep -Eq '^$(CONTAINER)$$'; then \
-		echo "🗑 Removing container: $(CONTAINER)"; \
-		docker rm -f $(CONTAINER); \
-	fi
-
-.PHONY: docker-clean-image
-docker-clean-image:
-	@if docker images -q $(IMAGE) | grep -q .; then \
-		echo "🗑 Removing image: $(IMAGE)"; \
-		docker rmi -f $(IMAGE); \
-	fi
+.PHONY: rebuild
+rebuild:
+	@echo "♻️ Rebuilding all images"
+	@docker compose build --no-cache
+	$(MAKE) up
 
 
-# -------- Build --------
+## Utils
 
-.PHONY: docker-build
-docker-build: docker-clean-image
-	@echo "🔥 Building image: $(IMAGE)"
-	@docker build -t $(IMAGE) .
+.PHONY: sh-app
+sh-app:
+	@docker compose exec app sh
 
+.PHONY: sh-db
+sh-db:
+	@docker compose exec db sh
 
-# -------- Run (no mount) --------
-
-.PHONY: docker-run
-docker-run: docker-clean-container
-	@echo "🚀 Running container (NO-MOUNT): $(CONTAINER)"
-	@docker run --name $(CONTAINER) \
-		-p $(HOST_PORT):$(CONTAINER_PORT) \
-		$(IMAGE)
+.PHONY: sh-redis
+sh-redis:
+	@docker compose exec redis sh
 
 
-# -------- Run (mount for Air hot reload) --------
+# ===================== AIR (for dev hot reload) ======================
+# Air.toml references this:
+# cmd = "make air-build"
 
-.PHONY: docker-run-mount
-docker-run-mount: docker-clean-container
-	@echo "🔁 Running container (MOUNT for AIR): $(CONTAINER)"
-	@docker run --name $(CONTAINER) \
-		-p $(HOST_PORT):$(CONTAINER_PORT) \
-		-v $(PWD):/app \
-		$(IMAGE)
-
-
-# -------- Reload (no mount) --------
-
-.PHONY: docker-reload
-docker-reload:
-	@echo "♻️ Reload: clean → build → run"
-	@$(MAKE) docker-clean-container
-	@$(MAKE) docker-clean-image
-	@$(MAKE) docker-build
-	@$(MAKE) docker-run
-
-
-# -------- Reload (mount + Air) --------
-.PHONY: docker-reload-mount
-docker-reload-mount:
-	@echo "♻️ Reload DEV: clean → build → run (mount)"
-	@$(MAKE) docker-clean-container
-	@$(MAKE) docker-clean-image
-	@$(MAKE) docker-build
-	@$(MAKE) docker-run-mount
-
-
-# ===================== Air ======================
 .PHONY: air-build
 air-build:
 	@go build -o ./tmp/main -buildvcs=false .
