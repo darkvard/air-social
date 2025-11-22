@@ -1,3 +1,13 @@
+include .env	
+
+# ===================== AIR =====================
+
+# Air.toml references this:
+.PHONY: air-build
+air-build:
+	@go build -o ./tmp/main -buildvcs=false .
+
+
 # ===================== DOCKER COMPOSE ======================
 
 .PHONY: up
@@ -45,10 +55,63 @@ sh-redis:
 	@docker compose exec redis sh
 
 
-# ===================== AIR (for dev hot reload) ======================
-# Air.toml references this:
-# cmd = "make air-build"
+# ===================== MIGRATIONS ======================
 
-.PHONY: air-build
-air-build:
-	@go build -o ./tmp/main -buildvcs=false .
+# Path to migrations inside the container
+MIGRATIONS_PATH = /app/internal/repository/migrations
+
+
+# Base migrate command (runs inside app container)
+MIGRATE_CMD = docker compose exec app migrate -path=$(MIGRATIONS_PATH) -database "$(DB_URL)"
+
+
+# ---- Show current version ----
+.PHONY: migrate-version
+migrate-version:
+	@echo "🔎  Checking current migration version..."
+	-@$(MIGRATE_CMD) version || echo "No migrations applied yet."
+
+
+# ---- Create new migration ----
+# Usage:
+#   make migrate-create name=create_users_table
+.PHONY: migrate-create
+migrate-create:
+ifndef name
+	$(error Usage: make migrate-create name=<migration_name>)
+endif
+	@echo "🆕  Creating migration: $(name)"
+	@docker compose exec app migrate create -seq -ext sql -dir $(MIGRATIONS_PATH) $(name)
+
+
+# ---- Apply migrations (up) ----
+# Usage:
+#   make migrate-up
+#   make migrate-up n=1
+.PHONY: migrate-up
+migrate-up:
+	@echo "⬆️  Applying migrations..."
+	@$(MIGRATE_CMD) up $(n)
+
+
+# ---- Rollback (down) ----
+# Usage:
+#   make migrate-down
+#   make migrate-down n=1
+.PHONY: migrate-down
+migrate-down:
+	@echo "⬇️  Rolling back migrations..."
+	@$(MIGRATE_CMD) down $(n)
+
+
+# ---- Force migration version (dirty state fix) ----
+# Usage:
+#   make migrate-force version=12
+.PHONY: migrate-force
+migrate-force:
+ifndef version
+	$(error Usage: make migrate-force version=<version_number>)
+endif
+	@echo "⚠️  Forcing migration version to $(version)..."
+	@$(MIGRATE_CMD) force $(version)
+

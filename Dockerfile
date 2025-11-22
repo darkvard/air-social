@@ -4,8 +4,12 @@ FROM golang:1.25
 # Application working directory inside the container
 WORKDIR /app
 
-# Install Air (hot reload tool)
+# Install Air tool
 RUN go install github.com/air-verse/air@latest
+
+# Install migrate CLI tools
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.19.0/migrate.linux-amd64.tar.gz | tar xvz && mv migrate /usr/local/bin/
+
 
 # Copy Go module files first for caching benefits (go.mod, go.sum)
 COPY go.* ./
