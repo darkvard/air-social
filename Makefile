@@ -57,6 +57,15 @@ sh-redis:
 
 # ===================== MIGRATIONS ======================
 
+
+# HOST_UID and HOST_GID store the current user's UID and GID on the host machine.
+# These are used when running commands inside the container (via `docker compose exec -u`)
+# to ensure that files created inside the container are owned by the host user, not by root.
+# This avoids permission issues where VS Code cannot edit or save files created by the container.
+HOST_UID := $(shell id -u)
+HOST_GID := $(shell id -g)
+
+
 # Path to migrations inside the container
 MIGRATIONS_PATH = /app/internal/repository/migrations
 
@@ -81,7 +90,8 @@ ifndef name
 	$(error Usage: make migrate-create name=<migration_name>)
 endif
 	@echo "🆕  Creating migration: $(name)"
-	@docker compose exec app migrate create -seq -ext sql -dir $(MIGRATIONS_PATH) $(name)
+	docker compose exec -u $(HOST_UID):$(HOST_GID) app \
+		migrate create -seq -ext sql -dir $(MIGRATIONS_PATH) $(name)
 
 
 # ---- Apply migrations (up) ----
