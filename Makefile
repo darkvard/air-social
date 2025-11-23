@@ -5,7 +5,7 @@ include .env
 # Air.toml references this:
 .PHONY: air-build
 air-build:
-	@go build -o ./tmp/main -buildvcs=false .
+	@go build -buildvcs=false -o ./tmp/main ./cmd/api
 
 
 # ===================== DOCKER COMPOSE ======================
@@ -62,7 +62,7 @@ MIGRATIONS_PATH = /app/internal/repository/migrations
 
 
 # Base migrate command (runs inside app container)
-MIGRATE_CMD = docker compose exec app migrate -path=$(MIGRATIONS_PATH) -database "$(DB_URL)"
+MIGRATE_CMD = docker compose exec app migrate -path=$(MIGRATIONS_PATH) -database "$(DB_DSN)"
 
 
 # ---- Show current version ----
