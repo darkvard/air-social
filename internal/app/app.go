@@ -12,7 +12,7 @@ import (
 
 	"air-social/internal/config"
 	"air-social/internal/transport/ws"
-	"air-social/pkg/jwt"
+	"air-social/pkg"
 )
 
 type Application struct {
@@ -20,8 +20,8 @@ type Application struct {
 	Logger *zap.SugaredLogger
 	DB     *sqlx.DB
 	Redis  *redis.Client
-	JWT    *jwt.JWTAuthenticator
 	Hub    *ws.Hub
+	JWT    pkg.JWTAuth
 }
 
 func NewApplication() (*Application, error) {
@@ -50,7 +50,7 @@ func NewApplication() (*Application, error) {
 		Logger: logger,
 		DB:     db,
 		Redis:  redis,
-		JWT:    newJWT(cfg.JWT),
+		JWT:    pkg.NewJWTAuth(cfg.JWT),
 		Hub:    ws.NewHub(),
 	}, nil
 }
@@ -96,10 +96,4 @@ func newRedis(rc config.RedisConfig) *redis.Client {
 		Password: rc.Password,
 		DB:       rc.DB,
 	})
-}
-
-func newJWT(jc config.JWTConfig) *jwt.JWTAuthenticator {
-	return jwt.NewJWTAuthenticator(
-		jc.Secret, jc.Aud, jc.Iss, jc.AccessTokenTTL, jc.RefreshTokenTTL,
-	)
 }
