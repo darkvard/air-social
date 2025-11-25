@@ -13,11 +13,6 @@ type User struct {
 	Version      int       `db:"version" json:"version"`
 }
 
-type CreateRequest struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
 
 type UpdateRequest struct {
 	Email    *string `json:"email,omitempty"`
@@ -32,7 +27,6 @@ type UserResponse struct {
 	Username  string    `json:"username"`
 	Profile   any       `json:"profile,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
 }
 
 

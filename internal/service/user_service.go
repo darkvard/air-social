@@ -37,6 +37,5 @@ func (s *UserService) CreateUser(ctx context.Context, in *user.CreateUserInput) 
 		Username:  u.Username,
 		Profile:   u.Profile,
 		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
 	}, nil
 }
