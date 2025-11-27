@@ -2,6 +2,8 @@ package main
 
 import (
 	"air-social/internal/app"
+	"air-social/internal/config"
+	"air-social/pkg"
 )
 
 func main() {
@@ -10,5 +12,16 @@ func main() {
 		panic(err)
 	}
 	defer app.Cleanup()
+
+	pkg.NewLogger(app.Config.AppEnv)
+	welcome(app.Config.Server)
+
 	app.Run()
+}
+
+func welcome(server config.ServerConfig) {
+	pkg.Log().Infow("server started",
+		"container_port", server.Port,
+		"host_port", server.HostPort,
+	)
 }

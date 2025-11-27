@@ -3,7 +3,7 @@ services:
     build: .
     container_name: app
     ports:
-      - "${APP_PORT}:${APP_INTERNAL_PORT}"
+      - "${APP_HOST_PORT}:${APP_PORT}"
     volumes:
       - .:/app
     depends_on:

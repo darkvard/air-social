@@ -21,7 +21,8 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port string
+	Port     string
+	HostPort string
 }
 
 type PostgresConfig struct {
@@ -61,7 +62,8 @@ func Load() *Config {
 	return &Config{
 		AppEnv: getString("APP_ENV", "development"),
 		Server: ServerConfig{
-			Port: getString("APP_PORT", "3000"),
+			Port:     getString("APP_PORT", "8080"),
+			HostPort: getString("APP_HOST_PORT", "3000"),
 		},
 		Postgres: PostgresConfig{
 			DSN: func() string {

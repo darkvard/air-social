@@ -1,6 +1,9 @@
 package app
 
 import (
+	"fmt"
+
+	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
@@ -26,11 +29,6 @@ type Application struct {
 func NewApplication() (*Application, error) {
 	cfg := config.Load()
 
-	logger, err := bootstrap.NewLogger(cfg.AppEnv)
-	if err != nil {
-		return nil, err
-	}
-
 	db, err := bootstrap.NewDatabase(cfg.Postgres)
 	if err != nil {
 		return nil, err
@@ -44,21 +42,22 @@ func NewApplication() (*Application, error) {
 
 	return &Application{
 		Config: cfg,
-		Logger: logger,
-		DB:     db,
-		Redis:  redis,
-		JWT:    jwt,
-		Http:   httpServer,
-		Hub:    ws.NewHub(),
+		// Logger: logger,
+		DB:    db,
+		Redis: redis,
+		JWT:   jwt,
+		Http:  httpServer,
+		Hub:   ws.NewHub(),
 	}, nil
 }
 
 func (a *Application) Cleanup() {
-	a.Logger.Sync()
 	a.DB.Close()
 	a.Redis.Close()
 }
 
 func (a *Application) Run() {
-	a.NewRouter().Run(a.Config.Server.Port)
+	gin.SetMode(gin.DebugMode)
+	port := fmt.Sprintf(":%s", a.Config.Server.Port)
+	a.NewRouter().Run(port)
 }
