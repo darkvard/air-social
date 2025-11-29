@@ -3,12 +3,12 @@ package provider
 import (
 	"github.com/jmoiron/sqlx"
 
-	"air-social/internal/domain/user"
+	"air-social/internal/domain"
 	"air-social/internal/repository/postgres"
 )
 
 type RepoProvider struct {
-	User user.Repository
+	User domain.UserRepository
 }
 
 func NewRepoProvider(db *sqlx.DB) *RepoProvider {

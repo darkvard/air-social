@@ -7,7 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"air-social/internal/domain/user"
+	"air-social/internal/domain"
 	"air-social/pkg"
 )
 
@@ -19,7 +19,7 @@ func NewUserRepoImpl(db *sqlx.DB) *UserRepoImpl {
 	return &UserRepoImpl{db: db}
 }
 
-func (r *UserRepoImpl) Create(ctx context.Context, user *user.User) error {
+func (r *UserRepoImpl) Create(ctx context.Context, user *domain.User) error {
 	query := `
         INSERT INTO users (email, username, password_hash, profile)
         VALUES (:email, :username, :password_hash, :profile)
@@ -38,14 +38,14 @@ func (r *UserRepoImpl) Create(ctx context.Context, user *user.User) error {
 	return pkg.ErrDatabase
 }
 
-func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*user.User, error) {
+func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
 		SELECT id, email, username, password_hash, profile, created_at, updated_at, version
 		FROM users
 		WHERE email = $1
 		LIMIT 1
 	`
-	var u user.User
+	var u domain.User
 	err := r.db.GetContext(ctx, &u, query, email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -56,10 +56,10 @@ func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*user.User
 	return &u, nil
 }
 
-func (r *UserRepoImpl) GetByID(ctx context.Context, id int64) (*user.User, error) {
+func (r *UserRepoImpl) GetByID(ctx context.Context, id int64) (*domain.User, error) {
 	return nil, nil
 }
 
-func (r *UserRepoImpl) Update(ctx context.Context, u *user.User) error {
+func (r *UserRepoImpl) Update(ctx context.Context, u *domain.User) error {
 	return nil
 }

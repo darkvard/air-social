@@ -1,8 +1,8 @@
-package user
+package domain
 
 import "context"
 
-type Repository interface {
+type UserRepository interface {
 	Create(ctx context.Context, user *User) error
 	Update(ctx context.Context, user *User) error
 	GetByID(ctx context.Context, id int64) (*User, error)

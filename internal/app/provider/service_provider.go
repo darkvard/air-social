@@ -6,8 +6,8 @@ import (
 )
 
 type ServiceProvider struct {
-	User *service.UserService
-	Auth *service.AuthService
+	User service.UserService
+	Auth service.AuthService
 }
 
 func NewServiceProvider(repo *RepoProvider, jwt pkg.JWTAuth, hash pkg.Hasher) *ServiceProvider {

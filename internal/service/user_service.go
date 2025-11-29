@@ -3,24 +3,28 @@ package service
 import (
 	"context"
 
-	"air-social/internal/domain/user"
+	"air-social/internal/domain"
 	"air-social/pkg"
 )
 
-type UserService struct {
-	repo user.Repository
+type UserService interface {
+	CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error)
 }
 
-func NewUserService(repo user.Repository) *UserService {
-	return &UserService{repo: repo}
+type UserServiceImpl struct {
+	repo domain.UserRepository
 }
 
-func (s *UserService) CreateUser(ctx context.Context, in *user.CreateUserInput) (*user.UserResponse, error) {
+func NewUserService(repo domain.UserRepository) *UserServiceImpl {
+	return &UserServiceImpl{repo: repo}
+}
+
+func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error) {
 	if existing, _ := s.repo.GetByEmail(ctx, in.Email); existing != nil {
 		return nil, pkg.ErrAlreadyExists
 	}
 
-	u := &user.User{
+	u := &domain.User{
 		Email:        in.Email,
 		Username:     in.Username,
 		PasswordHash: in.PasswordHash,
@@ -31,7 +35,7 @@ func (s *UserService) CreateUser(ctx context.Context, in *user.CreateUserInput) 
 		return nil, err
 	}
 
-	return &user.UserResponse{
+	return &domain.UserResponse{
 		ID:        u.ID,
 		Email:     u.Email,
 		Username:  u.Username,

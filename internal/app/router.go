@@ -1,9 +1,6 @@
 package app
 
 import (
-	"context"
-	"time"
-
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/transport/http/handler"
@@ -29,37 +26,7 @@ func (app *Application) commonRoutes(r *gin.Engine) {
 	})
 
 	r.GET("/health", func(c *gin.Context) {
-		ok := "Ok"
-		err := "Error"
-
-		dbErr := ok
-		if err := app.DB.Ping(); err != nil {
-			dbErr = err.Error()
-		}
-
-		redisErr := ok
-		if err := app.Redis.Ping(context.Background()).Err(); err != nil {
-			redisErr = err.Error()
-		}
-
-		status := 200
-		msg := ok
-		if dbErr != ok || redisErr != ok {
-			status = 500
-			msg = err
-		}
-
-		pkg.Respond(c, pkg.Response{
-			Code:    status,
-			Message: msg,
-			Data: gin.H{
-				"status":    status,
-				"db":        dbErr,
-				"redis":     redisErr,
-				"timestamp": time.Now().Format(time.RFC3339),
-			},
-		})
-
+		pkg.Success(c, app.HealthStatus())
 	})
 }
 

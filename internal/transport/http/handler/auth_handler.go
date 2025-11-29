@@ -1,36 +1,35 @@
 package handler
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 
-	"air-social/internal/domain/auth"
+	"air-social/internal/domain"
 	"air-social/internal/service"
+	"air-social/pkg"
 )
 
 type AuthHandler struct {
-	auth *service.AuthService
+	auth service.AuthService
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(authService service.AuthService) *AuthHandler {
 	return &AuthHandler{
 		auth: authService,
 	}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
-	var req auth.RegisterRequest
+	var req domain.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		pkg.HandleValidateError(c, err)
 		return
 	}
 
 	result, err := h.auth.Register(c.Request.Context(), &req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	pkg.Success(c, result)
 }

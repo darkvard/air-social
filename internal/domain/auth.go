@@ -1,11 +1,11 @@
-package auth
+package domain
 
 // import "air-social/internal/domain/user"
 
 type RegisterRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required,min=6"`
+	Email    string `json:"email" binding:"required,email,max=255"`
+	Username string `json:"username" binding:"required,min=3,max=30"`
+	Password string `json:"password" binding:"required,min=8,max=64"`
 }
 
 // type LoginResponse struct {

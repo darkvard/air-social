@@ -1,4 +1,4 @@
-package user
+package domain
 
 import "time"
 
@@ -12,7 +12,6 @@ type User struct {
 	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
 	Version      int       `db:"version" json:"version"`
 }
-
 
 type UpdateRequest struct {
 	Email    *string `json:"email,omitempty"`
@@ -28,7 +27,6 @@ type UserResponse struct {
 	Profile   any       `json:"profile,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
-
 
 type CreateUserInput struct {
     Email        string

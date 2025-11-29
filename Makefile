@@ -125,3 +125,39 @@ endif
 	@echo "⚠️  Forcing migration version to $(version)..."
 	@$(MIGRATE_CMD) force $(version)
 
+
+# ===================== TESTING ======================
+
+
+.PHONY: test
+test:
+	@echo "==> Running all tests..."
+	@go test -v ./...
+
+.PHONY: test-cover
+test-cover:
+	@echo "==> Running tests with coverage..."
+	@go test -cover -v ./...
+
+.PHONY: test-bench
+test-bench:
+	@echo "==> Running benchmarks..."
+	@go test -bench=. -benchmem ./...
+ 
+# Usage: make test-pkg pkg=./mypackage
+.PHONY: test-pkg
+test-pkg:
+	@echo "==> Testing package: $(pkg)"
+	@go test -v $(pkg)
+
+# Usage: make test-pkg-cover pkg=./mypackage
+.PHONY: test-pkg-cover
+test-pkg-cover:
+	@echo "==> Testing package with coverage: $(pkg)"
+	@go test -cover -v $(pkg)
+
+# Usage: make bench-pkg pkg=./mypackage
+.PHONY: test-bench-pkg
+test-bench-pkg:
+	@echo "==> Benchmarking package: $(pkg)"
+	@go test -bench=. -benchmem $(pkg)	
