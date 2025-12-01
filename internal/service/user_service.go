@@ -9,6 +9,7 @@ import (
 
 type UserService interface {
 	CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error)
+	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 }
 
 type UserServiceImpl struct {
@@ -42,4 +43,8 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserI
 		Profile:   u.Profile,
 		CreatedAt: u.CreatedAt,
 	}, nil
+}
+
+func(s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	return s.repo.GetByEmail(ctx, email)
 }

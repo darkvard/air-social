@@ -3,6 +3,7 @@ package provider
 import (
 	"github.com/jmoiron/sqlx"
 
+	"air-social/internal/config"
 	"air-social/pkg"
 )
 
@@ -12,9 +13,9 @@ type HttpProvider struct {
 	Handler *HandlerProvider
 }
 
-func NewHttpProvider(db *sqlx.DB, jwt pkg.JWTAuth, hash pkg.Hasher) *HttpProvider {
+func NewHttpProvider(db *sqlx.DB, cfg config.TokenConfig, hash pkg.Hasher) *HttpProvider {
 	repo := NewRepoProvider(db)
-	service := NewServiceProvider(repo, jwt, hash)
+	service := NewServiceProvider(repo, cfg, hash)
 	handler := NewHandlerProvider(service)
 	return &HttpProvider{
 		Repo:    repo,

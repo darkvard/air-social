@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -15,8 +16,9 @@ var (
 )
 
 var (
-	ErrUnauthorized = errors.New("unauthorized")
-	ErrForbidden    = errors.New("forbidden")
+	ErrInvalidCredentials = errors.New("invalid_credentials")
+	ErrUnauthorized       = errors.New("unauthorized")
+	ErrForbidden          = errors.New("forbidden")
 )
 
 var (
@@ -40,11 +42,15 @@ func pgCode(err error) string {
 	return ""
 }
 
-// Convert PG error → domain error
 func MapPostgresError(err error) error {
-	code := pgCode(err)
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNotFound
+	}
 
-	switch code {
+	switch pgCode(err) {
 	case CodeUniqueViolation:
 		return ErrAlreadyExists
 
@@ -59,8 +65,7 @@ func MapPostgresError(err error) error {
 
 	case CodeSerializationFailure:
 		return ErrConflict
-
-	default:
-		return ErrDatabase
 	}
+
+	return ErrDatabase
 }

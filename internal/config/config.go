@@ -15,7 +15,7 @@ type Config struct {
 	Server   ServerConfig
 	Postgres PostgresConfig
 	Redis    RedisConfig
-	JWT      JWTConfig
+	Token    TokenConfig
 	Mailer   MailConfig
 	Limiter  RateLimiterConfig
 }
@@ -39,7 +39,7 @@ type RedisConfig struct {
 	DB       int
 }
 
-type JWTConfig struct {
+type TokenConfig struct {
 	Secret          string
 	Aud             string
 	Iss             string
@@ -93,7 +93,7 @@ func Load() *Config {
 			Password: getString("REDIS_PASS", ""),
 			DB:       getInt("REDIS_DB", 0),
 		},
-		JWT: JWTConfig{
+		Token: TokenConfig{
 			Secret:          getString("JWT_SECRET", "my_secret_key"),
 			Aud:             getString("JWT_AUD", "air-social"),
 			Iss:             getString("JWT_ISS", "air-social-api"),

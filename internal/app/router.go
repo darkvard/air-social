@@ -34,5 +34,8 @@ func authRoutes(r *gin.Engine, h *handler.AuthHandler) {
 	auth := r.Group("/auth")
 	{
 		auth.POST("/register", h.Register)
+		auth.POST("/login", h.Login)
+		auth.POST("/refresh", nil)
+		auth.POST("/logout", nil)
 	}
 }

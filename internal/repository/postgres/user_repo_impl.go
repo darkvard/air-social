@@ -2,8 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
 	"github.com/jmoiron/sqlx"
 
@@ -46,12 +44,8 @@ func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.Us
 		LIMIT 1
 	`
 	var u domain.User
-	err := r.db.GetContext(ctx, &u, query, email)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, pkg.ErrNotFound
-		}
-		return nil, err
+	if err := r.db.GetContext(ctx, &u, query, email); err != nil {
+		return nil, pkg.MapPostgresError(err)
 	}
 	return &u, nil
 }

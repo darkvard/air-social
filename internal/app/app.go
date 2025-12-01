@@ -21,7 +21,6 @@ type Application struct {
 	Logger *zap.SugaredLogger
 	DB     *sqlx.DB
 	Redis  *redis.Client
-	JWT    pkg.JWTAuth
 	Http   *provider.HttpProvider
 	Hub    *ws.Hub
 }
@@ -36,18 +35,15 @@ func NewApplication() (*Application, error) {
 
 	redis := bootstrap.NewRedis(cfg.Redis)
 
-	jwt := pkg.NewJWTAuth(cfg.JWT)
 	hash := pkg.NewBcrypt()
-	httpServer := provider.NewHttpProvider(db, jwt, hash)
+	httpServer := provider.NewHttpProvider(db, cfg.Token, hash)
 
 	return &Application{
 		Config: cfg,
-		// Logger: logger,
-		DB:    db,
-		Redis: redis,
-		JWT:   jwt,
-		Http:  httpServer,
-		Hub:   ws.NewHub(),
+		DB:     db,
+		Redis:  redis,
+		Http:   httpServer,
+		Hub:    ws.NewHub(),
 	}, nil
 }
 

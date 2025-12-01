@@ -33,3 +33,22 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	pkg.Success(c, result)
 }
+
+func (h *AuthHandler) Login(c *gin.Context) {
+	var req domain.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	user, token, err := h.auth.Login(c.Request.Context(), &req)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, gin.H{
+		"user":  user,
+		"token": token,
+	})
+}

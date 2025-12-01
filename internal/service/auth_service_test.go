@@ -23,6 +23,14 @@ func (m *MockUserService) CreateUser(ctx context.Context, in *domain.CreateUserI
 	return args.Get(0).(*domain.UserResponse), args.Error(1)
 }
 
+func (m *MockUserService) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	args := m.Called(ctx, email)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.User), args.Error(1)
+}
+
 type MockHasher struct {
 	mock.Mock
 }
@@ -37,22 +45,32 @@ func (m *MockHasher) Verify(password, hash string) bool {
 	return args.Bool(0)
 }
 
-type MockJWT struct {
+type MockToken struct {
 	mock.Mock
 }
 
-func (m *MockJWT) GenerateAccessToken(userID int64) (string, error) {
-	args := m.Called(userID)
-	return args.String(0), args.Error(1)
+func (m *MockToken) GenerateTokens(ctx context.Context, userID int64) (*domain.TokenInfo, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.TokenInfo), args.Error(1)
 }
 
-func (m *MockJWT) GenerateRefreshToken(userID int64) (string, error) {
-	args := m.Called(userID)
-	return args.String(0), args.Error(1)
+func (m *MockToken) Refresh(ctx context.Context, raw string) (*domain.TokenInfo, error) {
+	args := m.Called(ctx, raw)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.TokenInfo), args.Error(1)
 }
 
-func (m *MockJWT) Validate(token string) (*jwt.Token, error) {
-	args := m.Called(token)
+func (m *MockToken) Revoke(ctx context.Context, raw string) error {
+	return m.Called(ctx, raw).Error(0)
+}
+
+func (m *MockToken) Validate(access string) (*jwt.Token, error) {
+	args := m.Called(access)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -62,9 +80,9 @@ func (m *MockJWT) Validate(token string) (*jwt.Token, error) {
 func TestAuthService_Register(t *testing.T) {
 	mockUsers := new(MockUserService)
 	mockHasher := new(MockHasher)
-	mockJWT := new(MockJWT)
+	mockToken := new(MockToken)
 
-	authService := NewAuthService(mockUsers, mockJWT, mockHasher)
+	authService := NewAuthService(mockUsers, mockToken, mockHasher)
 
 	validReq := &domain.RegisterRequest{
 		Email:    "test@example.com",

@@ -8,11 +8,13 @@ import (
 )
 
 type RepoProvider struct {
-	User domain.UserRepository
+	User  domain.UserRepository
+	Token domain.TokenRepository
 }
 
 func NewRepoProvider(db *sqlx.DB) *RepoProvider {
 	return &RepoProvider{
-		User: postgres.NewUserRepoImpl(db),
+		User:  postgres.NewUserRepoImpl(db),
+		Token: postgres.NewTokenRepository(db),
 	}
 }
