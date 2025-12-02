@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/transport/http/handler"
@@ -31,6 +33,8 @@ func (app *Application) commonRoutes(r *gin.Engine) {
 }
 
 func authRoutes(r *gin.Engine, h *handler.AuthHandler) {
+	fmt.Println("Registering auth routes...")
+
 	auth := r.Group("/auth")
 	{
 		auth.POST("/register", h.Register)

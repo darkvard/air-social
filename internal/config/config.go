@@ -55,7 +55,11 @@ type RateLimiterConfig struct {
 }
 
 func Load() *Config {
-	if err := godotenv.Load(); err != nil {
+	envFile := ".env"
+	if os.Getenv("APP_ENV") == "debug" {
+		envFile = ".env.local"
+	}
+	if err := godotenv.Load(envFile); err != nil {
 		log.Fatal("No .env file found")
 	}
 

@@ -7,8 +7,8 @@ import (
 )
 
 type Hasher interface {
-	Hash(password string) (string, error)
-	Verify(password, hash string) bool
+	Hash(plainPassword string) (string, error)
+	Verify(plainPassword, hashPassword string) bool
 }
 
 type BcryptHasher struct{}
@@ -22,15 +22,15 @@ func NewBcrypt() *BcryptHasher { return &BcryptHasher{} }
 // To avoid this issue:
 // - Limit password length to 72 bytes (add input validation), OR
 // - Pre-hash the password using SHA-256 before passing it to bcrypt (any -> 32 bytes)
-func (BcryptHasher) Hash(password string) (string, error) {
+func (BcryptHasher) Hash(plainPassword string) (string, error) {
 	// Pre-hash using SHA-256 to avoid 72-byte limitation in bcrypt
-	sha := sha256.Sum256([]byte(password))
+	sha := sha256.Sum256([]byte(plainPassword))
 	hash, err := bcrypt.GenerateFromPassword(sha[:], bcrypt.DefaultCost)
 	return string(hash), err
 }
 
-func (BcryptHasher) Verify(password, hash string) bool {
-	sha := sha256.Sum256([]byte(password))
-	err := bcrypt.CompareHashAndPassword([]byte(hash), sha[:])
+func (BcryptHasher) Verify(plainPassword, hashPassword string) bool {
+	sha := sha256.Sum256([]byte(plainPassword))
+	err := bcrypt.CompareHashAndPassword([]byte(hashPassword), sha[:])
 	return err == nil
 }

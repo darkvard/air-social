@@ -66,22 +66,19 @@ func HandleValidateError(c *gin.Context, err error) {
 
 func HandleServiceError(c *gin.Context, err error) {
 	switch err {
+	case ErrInvalidCredentials:
+		Unauthorized(c, "email or password is incorrect1")
 	case ErrAlreadyExists:
 		Conflict(c, "resource already exists")
-
 	case ErrNotFound:
 		NotFound(c, "resource not found")
-
 	case ErrUnauthorized:
 		Unauthorized(c, "unauthorized")
-
 	case ErrForbidden:
 		Forbidden(c, "forbidden")
-
 	case ErrInvalidInput, ErrInvalidData:
 		BadRequest(c, "invalid data")
-
 	default:
-		InternalError(c, "internal Server Error")
+		InternalError(c, "internal server error")
 	}
 }

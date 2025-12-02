@@ -26,10 +26,10 @@ func Log() *zap.SugaredLogger {
 
 func newZapLogger(env string) *zap.SugaredLogger {
 	var cfg zapcore.EncoderConfig
-	if env == "development" {
-		cfg = newEncoderColorConfig()
-	} else {
+	if env == "production" {
 		cfg = zap.NewProductionEncoderConfig()
+	} else {
+		cfg = newEncoderColorConfig()
 	}
 
 	core := zapcore.NewCore(

@@ -47,12 +47,7 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *domain.LoginRequest) (
 		return nil, nil, pkg.ErrInvalidCredentials
 	}
 
-	pwdHashed, err := s.hash.Hash(req.Password)
-	if err != nil {
-		return nil, nil, pkg.ErrInternal
-	}
-
-	if !s.hash.Verify(user.PasswordHash, pwdHashed) {
+	if !s.hash.Verify(req.Password, user.PasswordHash) {
 		return nil, nil, pkg.ErrInvalidCredentials
 	}
 
