@@ -7,6 +7,8 @@ type RegisterRequest struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email,omitempty" binding:"required,email,max=255"`
-	Password string `json:"password,omitempty" binding:"required,min=8,max=64"`
+	Email    string `json:"email" binding:"required,email,max=255"`
+	Password string `json:"password" binding:"required,min=8,max=64"`
+	DeviceID string `json:"device_id" binding:"required"`
 }
+ 

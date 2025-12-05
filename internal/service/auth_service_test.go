@@ -49,7 +49,7 @@ type MockToken struct {
 	mock.Mock
 }
 
-func (m *MockToken) GenerateTokens(ctx context.Context, userID int64) (*domain.TokenInfo, error) {
+func (m *MockToken) CreateSession(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -65,7 +65,7 @@ func (m *MockToken) Refresh(ctx context.Context, raw string) (*domain.TokenInfo,
 	return args.Get(0).(*domain.TokenInfo), args.Error(1)
 }
 
-func (m *MockToken) Revoke(ctx context.Context, raw string) error {
+func (m *MockToken) RevokeSingle(ctx context.Context, raw string) error {
 	return m.Called(ctx, raw).Error(0)
 }
 
@@ -75,6 +75,18 @@ func (m *MockToken) Validate(access string) (*jwt.Token, error) {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*jwt.Token), args.Error(1)
+}
+
+func (m *MockToken) RevokeDeviceSession(ctx context.Context, userID int64, deviceID string) error {
+	return m.Called(ctx, userID, deviceID).Error(0)
+}
+
+func (m *MockToken) RevokeAllUserSessions(ctx context.Context, userID int64) error {
+	return m.Called(ctx, userID).Error(0)
+}
+
+func (m *MockToken) CleanupDatabase(ctx context.Context) error {
+	return m.Called(ctx).Error(0)
 }
 
 func TestAuthService_Register(t *testing.T) {

@@ -16,10 +16,13 @@ import (
 )
 
 type TokenService interface {
-	GenerateTokens(ctx context.Context, userID int64) (*domain.TokenInfo, error)
-	Refresh(ctx context.Context, raw string) (*domain.TokenInfo, error)
-	Revoke(ctx context.Context, raw string) error
-	Validate(access string) (*jwt.Token, error)
+	CreateSession(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error)
+	Refresh(ctx context.Context, token string) (*domain.TokenInfo, error)
+	Validate(accessToken string) (*jwt.Token, error)
+	RevokeSingle(ctx context.Context, token string) error
+	RevokeDeviceSession(ctx context.Context, userID int64, deviceID string) error
+	RevokeAllUserSessions(ctx context.Context, userID int64) error
+	CleanupDatabase(ctx context.Context) error
 }
 
 type TokenServiceImpl struct {
@@ -29,6 +32,30 @@ type TokenServiceImpl struct {
 
 func NewTokenService(repo domain.TokenRepository, cfg config.TokenConfig) *TokenServiceImpl {
 	return &TokenServiceImpl{repo: repo, cfg: cfg}
+}
+
+func (s *TokenServiceImpl) CreateSession(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error) {
+	_ = s.RevokeDeviceSession(ctx, userID, deviceID)
+	return s.generateTokens(ctx, userID, deviceID)
+}
+
+func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error) {
+	access, err := s.generateAccessToken(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	raw, refresh := s.generateRefreshToken(userID, deviceID)
+	if err := s.repo.Create(ctx, refresh); err != nil {
+		return nil, err
+	}
+
+	return &domain.TokenInfo{
+		AccessToken:  access,
+		RefreshToken: hashToken(raw),
+		ExpiresIn:    int64(s.cfg.AccessTokenTTL.Seconds()),
+		TokenType:    "Bearer",
+	}, nil
 }
 
 func (s *TokenServiceImpl) generateAccessToken(userID int64) (string, error) {
@@ -45,74 +72,37 @@ func (s *TokenServiceImpl) generateAccessToken(userID int64) (string, error) {
 	return token.SignedString([]byte(s.cfg.Secret))
 }
 
-func (s *TokenServiceImpl) generateRefreshToken(userID int64) (string, *domain.RefreshToken) {
+func (s *TokenServiceImpl) generateRefreshToken(userID int64, deviceID string) (string, *domain.RefreshToken) {
 	raw := uuid.NewString()
 	h := sha256.Sum256([]byte(raw))
 	hashed := hex.EncodeToString(h[:])
 
 	return raw, &domain.RefreshToken{
 		UserID:    userID,
+		DeviceID:  deviceID,
 		TokenHash: hashed,
 		ExpiresAt: time.Now().Add(s.cfg.RefreshTokenTTL),
 		CreatedAt: time.Now(),
 	}
 }
 
-func hashToken(raw string) string {
-	h := sha256.Sum256([]byte(raw))
-	return hex.EncodeToString(h[:])
-}
-
-func (s *TokenServiceImpl) GenerateTokens(ctx context.Context, userID int64) (*domain.TokenInfo, error) {
-	access, err := s.generateAccessToken(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	raw, refresh := s.generateRefreshToken(userID)
-	if err := s.repo.Create(ctx, refresh); err != nil {
-		return nil, err
-	}
-
-	return &domain.TokenInfo{
-		AccessToken:  access,
-		RefreshToken: hashToken(raw),
-		ExpiresIn:    int64(s.cfg.AccessTokenTTL.Seconds()),
-		TokenType:    "Bearer",
-	}, nil
-}
-
-func (s *TokenServiceImpl) Refresh(ctx context.Context, raw string) (*domain.TokenInfo, error) {
-	hash := hashToken(raw)
-
-	dbToken, err := s.repo.GetByHash(ctx, hash)
+func (s *TokenServiceImpl) Refresh(ctx context.Context, token string) (*domain.TokenInfo, error) {
+	dbToken, err := s.repo.GetByHash(ctx, hashToken(token))
 	if err != nil {
 		return nil, pkg.ErrUnauthorized
 	}
 
-	// Check expiration
 	if dbToken.ExpiresAt.Before(time.Now()) {
 		return nil, pkg.ErrUnauthorized
 	}
 
-	// Rotate token (revoke old)
-	_ = s.repo.Revoke(ctx, dbToken.ID)
+	_ = s.repo.UpdateRevoked(ctx, dbToken.ID)
 
-	// New token pair
-	return s.GenerateTokens(ctx, dbToken.UserID)
+	return s.generateTokens(ctx, dbToken.UserID, dbToken.DeviceID)
 }
 
-func (s *TokenServiceImpl) Revoke(ctx context.Context, raw string) error {
-	hash := hashToken(raw)
-	dbToken, err := s.repo.GetByHash(ctx, hash)
-	if err != nil {
-		return nil
-	}
-	return s.repo.Revoke(ctx, dbToken.ID)
-}
-
-func (s *TokenServiceImpl) Validate(access string) (*jwt.Token, error) {
-	return jwt.Parse(access, func(t *jwt.Token) (any, error) {
+func (s *TokenServiceImpl) Validate(accessToken string) (*jwt.Token, error) {
+	return jwt.Parse(accessToken, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method %v", t.Header["alg"])
 		}
@@ -123,4 +113,32 @@ func (s *TokenServiceImpl) Validate(access string) (*jwt.Token, error) {
 		jwt.WithIssuer(s.cfg.Iss),
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
+}
+
+func (s *TokenServiceImpl) RevokeSingle(ctx context.Context, token string) error {
+	hash := hashToken(token)
+	dbToken, err := s.repo.GetByHash(ctx, hash)
+	if err != nil {
+		return err
+	}
+	return s.repo.UpdateRevoked(ctx, dbToken.ID)
+}
+
+func (s *TokenServiceImpl) RevokeDeviceSession(ctx context.Context, userID int64, deviceID string) error {
+	return s.repo.UpdateRevokedByDevice(ctx, userID, deviceID)
+}
+
+func (s *TokenServiceImpl) RevokeAllUserSessions(ctx context.Context, userID int64) error {
+	return s.repo.UpdateRevokedByUser(ctx, userID)
+}
+
+func (s *TokenServiceImpl) CleanupDatabase(ctx context.Context) error {
+    const auditRetentionPeriod = 30 * 24 * time.Hour  
+    threshold := time.Now().Add(-auditRetentionPeriod) 
+    return s.repo.DeleteExpiredAndRevoked(ctx, threshold, threshold)
+}
+
+func hashToken(raw string) string {
+	h := sha256.Sum256([]byte(raw))
+	return hex.EncodeToString(h[:])
 }

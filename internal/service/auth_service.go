@@ -51,7 +51,8 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *domain.LoginRequest) (
 		return nil, nil, pkg.ErrInvalidCredentials
 	}
 
-	tokens, err := s.tokens.GenerateTokens(ctx, user.ID)
+
+	tokens, err := s.tokens.CreateSession(ctx, user.ID, req.DeviceID)
 	if err != nil {
 		return nil, nil, err
 	}
