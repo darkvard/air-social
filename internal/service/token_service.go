@@ -25,6 +25,8 @@ type TokenService interface {
 	CleanupDatabase(ctx context.Context) error
 }
 
+const auditRetentionPeriod = 30 * 24 * time.Hour
+
 type TokenServiceImpl struct {
 	repo domain.TokenRepository
 	cfg  config.TokenConfig
@@ -52,7 +54,7 @@ func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, dev
 
 	return &domain.TokenInfo{
 		AccessToken:  access,
-		RefreshToken: hashToken(raw),
+		RefreshToken: raw,
 		ExpiresIn:    int64(s.cfg.AccessTokenTTL.Seconds()),
 		TokenType:    "Bearer",
 	}, nil
@@ -133,9 +135,8 @@ func (s *TokenServiceImpl) RevokeAllUserSessions(ctx context.Context, userID int
 }
 
 func (s *TokenServiceImpl) CleanupDatabase(ctx context.Context) error {
-    const auditRetentionPeriod = 30 * 24 * time.Hour  
-    threshold := time.Now().Add(-auditRetentionPeriod) 
-    return s.repo.DeleteExpiredAndRevoked(ctx, threshold, threshold)
+	threshold := time.Now().Add(-auditRetentionPeriod)
+	return s.repo.DeleteExpiredAndRevoked(ctx, threshold, threshold)
 }
 
 func hashToken(raw string) string {
