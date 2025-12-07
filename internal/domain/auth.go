@@ -11,4 +11,22 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required,min=8,max=64"`
 	DeviceID string `json:"device_id" binding:"required"`
 }
- 
+
+type RefreshRequest struct {
+	AccessToken  string `json:"-"` // From header, not body
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+type LogoutRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+	AllDevices   bool   `json:"all_devices,omitempty"`
+}
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type ResetPasswordRequest struct {
+	Token    string `json:"token" binding:"required"`
+	Password string `json:"password" binding:"required,min=8,max=64"`
+}

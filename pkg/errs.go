@@ -19,11 +19,13 @@ var (
 	ErrInvalidCredentials = errors.New("invalid_credentials")
 	ErrUnauthorized       = errors.New("unauthorized")
 	ErrForbidden          = errors.New("forbidden")
+	ErrInvalidInput       = errors.New("invalid_input")
+	ErrInternal           = errors.New("internal_error")
 )
 
 var (
-	ErrInvalidInput = errors.New("invalid_input")
-	ErrInternal     = errors.New("internal_error")
+	ErrKeyNotFound = errors.New("key_not_found")
+	ErrJWTInvalid  = errors.New("invalid_jwt")
 )
 
 const (

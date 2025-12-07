@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/transport/http/handler"
@@ -16,8 +14,15 @@ func (a *Application) NewRouter() *gin.Engine {
 	r.SetTrustedProxies(nil)
 
 	h := a.Http.Handler
+
 	a.commonRoutes(r)
-	authRoutes(r, h.Auth)
+
+	// API version 1
+	v1 := r.Group("/v1")
+	{
+		authRoutes(v1, h.Auth)
+		// userRoutes(v1, h.User, authMiddleware())
+	}
 
 	return r
 }
@@ -32,14 +37,28 @@ func (app *Application) commonRoutes(r *gin.Engine) {
 	})
 }
 
-func authRoutes(r *gin.Engine, h *handler.AuthHandler) {
-	fmt.Println("Registering auth routes...")
-
-	auth := r.Group("/auth")
+func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler) {
+	auth := rg.Group("/auth")
 	{
 		auth.POST("/register", h.Register)
 		auth.POST("/login", h.Login)
-		auth.POST("/refresh", nil)
-		auth.POST("/logout", nil)
+		auth.POST("/refresh", h.Refresh)
+		auth.POST("/logout", h.Logout)
+		auth.POST("/forgot-password", h.ForgotPassword)
+		auth.POST("/reset-password", h.ResetPassword)
+		auth.GET("/verify-email", h.VerifyEmail)
 	}
 }
+
+// func userRoutes(rg *gin.RouterGroup, h *handler.UserHandler, auth gin.HandlerFunc) {
+// 	users := rg.Group("/users", auth)
+// 	{
+// 		me := users.Group("/me")
+// 		{
+// 			me.GET("", h.GetProfile)
+// 			me.PUT("", h.UpdateProfile)
+// 			me.PUT("/password", h.ChangePassword)
+// 			me.POST("/avatar", h.UpdateAvatar)
+// 		}
+// 	}
+// }

@@ -1,6 +1,21 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+type TokenRepository interface {
+	Create(ctx context.Context, t *RefreshToken) error
+	GetByHash(ctx context.Context, tokenHash string) (*RefreshToken, error)
+	UpdateRevoked(ctx context.Context, id int64) error
+	UpdateRevokedByUser(ctx context.Context, userID int64) error
+	UpdateRevokedByDevice(ctx context.Context, userID int64, deviceID string) error
+	DeleteExpiredAndRevoked(ctx context.Context, expiredBefore time.Time, revokedBefore time.Time) error
+}
+
+const AuditRetentionPeriod = 30 * 24 * time.Hour
 
 type RefreshToken struct {
 	ID        int64      `db:"id"`
@@ -17,4 +32,8 @@ type TokenInfo struct {
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int64  `json:"expires_in"`
 	TokenType    string `json:"token_type"`
+}
+
+func BlockedAccessTokenKey(jwtID string) string {
+	return fmt.Sprintf("token:block:%v", jwtID)
 }

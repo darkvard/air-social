@@ -36,6 +36,10 @@ func Unauthorized(c *gin.Context, msg string) {
 	JSON(c, http.StatusUnauthorized, msg, nil)
 }
 
+func MissingAuthHeader(c *gin.Context) {
+	Unauthorized(c, "authorization header is required")
+}
+
 func Forbidden(c *gin.Context, msg string) {
 	JSON(c, http.StatusForbidden, msg, nil)
 }

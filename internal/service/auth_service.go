@@ -10,6 +10,8 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, req *domain.RegisterRequest) (*domain.UserResponse, error)
 	Login(ctx context.Context, req *domain.LoginRequest) (*domain.UserResponse, *domain.TokenInfo, error)
+	Refresh(ctx context.Context, req *domain.RefreshRequest) (*domain.TokenInfo, error)
+	Logout(ctx context.Context, req *domain.LogoutRequest) error
 }
 
 type AuthServiceImpl struct {
@@ -51,7 +53,6 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *domain.LoginRequest) (
 		return nil, nil, pkg.ErrInvalidCredentials
 	}
 
-
 	tokens, err := s.tokens.CreateSession(ctx, user.ID, req.DeviceID)
 	if err != nil {
 		return nil, nil, err
@@ -64,4 +65,12 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *domain.LoginRequest) (
 		Profile:   user.Profile,
 		CreatedAt: user.CreatedAt,
 	}, tokens, nil
+}
+
+func (s *AuthServiceImpl) Refresh(ctx context.Context, req *domain.RefreshRequest) (*domain.TokenInfo, error) {
+	return s.tokens.Refresh(ctx, req.AccessToken, req.RefreshToken)
+}
+
+func (s *AuthServiceImpl) Logout(ctx context.Context, req *domain.LogoutRequest) error {
+	return nil
 }

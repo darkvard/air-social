@@ -46,8 +46,6 @@ func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.Us
 	if err := r.db.GetContext(ctx, &u, query, email); err != nil {
 		return nil, pkg.MapPostgresError(err)
 	}
-		pkg.Log().Infow("repo", "repo", u)
-
 	return &u, nil
 }
 

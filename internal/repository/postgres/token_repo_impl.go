@@ -33,7 +33,7 @@ func (r *TokenRepoImpl) GetByHash(ctx context.Context, hash string) (*domain.Ref
 	query := `
 		SELECT id, user_id, token_hash, expires_at, revoked_at, created_at
 		FROM refresh_tokens
-		WHERE token_hash = $1 AND revoked_at IS NULL
+		WHERE token_hash = $1
 	`
 	var t domain.RefreshToken
 	if err := r.db.GetContext(ctx, &t, query, hash); err != nil {

@@ -59,20 +59,20 @@ func (m *MockToken) CreateSession(ctx context.Context, userID int64, deviceID st
 	return args.Get(0).(*domain.TokenInfo), args.Error(1)
 }
 
-func (m *MockToken) Refresh(ctx context.Context, raw string) (*domain.TokenInfo, error) {
-	args := m.Called(ctx, raw)
+func (m *MockToken) Refresh(ctx context.Context, accessToken, refreshToken string) (*domain.TokenInfo, error) {
+	args := m.Called(ctx, accessToken, refreshToken)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*domain.TokenInfo), args.Error(1)
 }
 
-func (m *MockToken) RevokeSingle(ctx context.Context, raw string) error {
-	return m.Called(ctx, raw).Error(0)
+func (m *MockToken) RevokeSingle(ctx context.Context, refreshToken string) error {
+	return m.Called(ctx, refreshToken).Error(0)
 }
 
-func (m *MockToken) Validate(access string) (*jwt.Token, error) {
-	args := m.Called(access)
+func (m *MockToken) Validate(accessToken string) (*jwt.Token, error) {
+	args := m.Called(accessToken)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -89,6 +89,15 @@ func (m *MockToken) RevokeAllUserSessions(ctx context.Context, userID int64) err
 
 func (m *MockToken) CleanupDatabase(ctx context.Context) error {
 	return m.Called(ctx).Error(0)
+}
+
+func (m *MockToken) Block(ctx context.Context, accessToken string) error {
+	return m.Called(ctx).Error(0)
+}
+
+func (m *MockToken) IsBlocked(ctx context.Context, accessToken string) (bool, error) {
+	args := m.Called(ctx, accessToken)
+	return args.Bool(0), args.Error(1)
 }
 
 func TestAuthService_Register(t *testing.T) {
@@ -206,7 +215,7 @@ func TestAuthService_Login(t *testing.T) {
 			name:  "user not found",
 			input: loginReq,
 			setupMocks: func() {
-				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(nil, assert.AnError) 
+				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(nil, assert.AnError)
 			},
 			expectedError: pkg.ErrInvalidCredentials,
 		},
@@ -214,8 +223,8 @@ func TestAuthService_Login(t *testing.T) {
 			name:  "invalid password",
 			input: loginReq,
 			setupMocks: func() {
-				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil) 
-				mockHasher.On("Verify", loginReq.Password, user.PasswordHash).Return(false) 
+				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil)
+				mockHasher.On("Verify", loginReq.Password, user.PasswordHash).Return(false)
 			},
 			expectedError: pkg.ErrInvalidCredentials,
 		},
@@ -223,9 +232,9 @@ func TestAuthService_Login(t *testing.T) {
 			name:  "token creation error",
 			input: loginReq,
 			setupMocks: func() {
-				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil) 
-				mockHasher.On("Verify", loginReq.Password, user.PasswordHash).Return(true) 
-				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(nil, assert.AnError) 
+				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil)
+				mockHasher.On("Verify", loginReq.Password, user.PasswordHash).Return(true)
+				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(nil, assert.AnError)
 			},
 			expectedError: assert.AnError,
 		},
