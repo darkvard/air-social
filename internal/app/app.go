@@ -35,8 +35,12 @@ func NewApplication() (*Application, error) {
 
 	redis := bootstrap.NewRedis(cfg.Redis)
 
-	hash := pkg.NewBcrypt()
-	httpServer := provider.NewHttpProvider(db, cfg.Token, hash)
+	httpServer := provider.NewHttpProvider(
+		db,
+		cfg.Token,
+		pkg.NewBcrypt(),
+		redis,
+	)
 
 	return &Application{
 		Config: cfg,
