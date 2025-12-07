@@ -8,24 +8,25 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("not_found")
-	ErrAlreadyExists = errors.New("already_exists")
+	ErrNotFound      = errors.New("not found")
+	ErrAlreadyExists = errors.New("already exists")
 	ErrConflict      = errors.New("conflict")
-	ErrInvalidData   = errors.New("invalid_data")
-	ErrDatabase      = errors.New("database_error")
+	ErrInvalidData   = errors.New("invalid data")
+	ErrDatabase      = errors.New("database error")
+	ErrKeyNotFound   = errors.New("key not found")
 )
 
 var (
-	ErrInvalidCredentials = errors.New("invalid_credentials")
+	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUnauthorized       = errors.New("unauthorized")
 	ErrForbidden          = errors.New("forbidden")
-	ErrInvalidInput       = errors.New("invalid_input")
-	ErrInternal           = errors.New("internal_error")
+	ErrInvalidInput       = errors.New("invalid input")
+	ErrInternal           = errors.New("internal error")
 )
 
 var (
-	ErrKeyNotFound = errors.New("key_not_found")
-	ErrJWTInvalid  = errors.New("invalid_jwt")
+	ErrTokenExpired  = errors.New("token has expired")
+	ErrTokenRevoked  = errors.New("token has been revoked")
 )
 
 const (

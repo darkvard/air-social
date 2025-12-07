@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"air-social/internal/domain"
 	"air-social/pkg"
@@ -68,7 +69,18 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *domain.LoginRequest) (
 }
 
 func (s *AuthServiceImpl) Refresh(ctx context.Context, req *domain.RefreshRequest) (*domain.TokenInfo, error) {
-	return s.tokens.Refresh(ctx, req.AccessToken, req.RefreshToken)
+	tokens, err := s.tokens.Refresh(ctx, req.RefreshToken)
+	if err != nil {
+		switch {
+		case errors.Is(err, pkg.ErrTokenExpired),
+			errors.Is(err, pkg.ErrTokenRevoked),
+			errors.Is(err, pkg.ErrNotFound):
+			return nil, pkg.ErrUnauthorized
+		default:
+			return nil, pkg.ErrInternal
+		}
+	}
+	return tokens, nil
 }
 
 func (s *AuthServiceImpl) Logout(ctx context.Context, req *domain.LogoutRequest) error {

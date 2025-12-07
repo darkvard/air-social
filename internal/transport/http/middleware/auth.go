@@ -21,20 +21,7 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 			return
 		}
 
-		// Check blocked
-		isBlocked, err := tokenService.IsBlocked(c.Request.Context(), tokenString)
-		if err != nil {
-			pkg.Unauthorized(c, "invalid token")
-			c.Abort()
-			return
-		}
-		if isBlocked {
-			pkg.Unauthorized(c, "token has been revoked")
-			c.Abort()
-			return
-		}
-
-		// Validate and get data
+		// Validate 
 		validatedToken, err := tokenService.Validate(tokenString)
 		if err != nil || !validatedToken.Valid {
 			pkg.Unauthorized(c, "invalid or expired token")
@@ -42,6 +29,7 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 			return
 		}
 
+		// Get data
 		var userID int64
 		if err := pkg.ExtractClaimFromToken(validatedToken, pkg.JWTClaimSubject, &userID); err != nil {
 			pkg.Unauthorized(c, "invalid user identifier in token")

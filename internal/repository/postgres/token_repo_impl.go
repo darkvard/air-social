@@ -31,7 +31,7 @@ func (r *TokenRepoImpl) Create(ctx context.Context, t *domain.RefreshToken) erro
 
 func (r *TokenRepoImpl) GetByHash(ctx context.Context, hash string) (*domain.RefreshToken, error) {
 	query := `
-		SELECT id, user_id, token_hash, expires_at, revoked_at, created_at
+		SELECT id, user_id, token_hash, expires_at, revoked_at, created_at, device_id
 		FROM refresh_tokens
 		WHERE token_hash = $1
 	`

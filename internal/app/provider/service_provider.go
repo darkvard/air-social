@@ -12,7 +12,7 @@ type ServiceProvider struct {
 }
 
 func NewServiceProvider(repo *RepoProvider, cfg config.TokenConfig, hash pkg.Hasher) *ServiceProvider {
-	token := service.NewTokenService(repo.Token, cfg, repo.Cache)
+	token := service.NewTokenService(repo.Token, cfg)
 	user := service.NewUserService(repo.User)
 	auth := service.NewAuthService(user, token, hash)
 	return &ServiceProvider{

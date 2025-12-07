@@ -13,7 +13,6 @@ type LoginRequest struct {
 }
 
 type RefreshRequest struct {
-	AccessToken  string `json:"-"` // From header, not body
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 

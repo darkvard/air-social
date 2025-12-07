@@ -59,8 +59,8 @@ func (m *MockToken) CreateSession(ctx context.Context, userID int64, deviceID st
 	return args.Get(0).(*domain.TokenInfo), args.Error(1)
 }
 
-func (m *MockToken) Refresh(ctx context.Context, accessToken, refreshToken string) (*domain.TokenInfo, error) {
-	args := m.Called(ctx, accessToken, refreshToken)
+func (m *MockToken) Refresh(ctx context.Context, refreshToken string) (*domain.TokenInfo, error) {
+	args := m.Called(ctx, refreshToken)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -89,15 +89,6 @@ func (m *MockToken) RevokeAllUserSessions(ctx context.Context, userID int64) err
 
 func (m *MockToken) CleanupDatabase(ctx context.Context) error {
 	return m.Called(ctx).Error(0)
-}
-
-func (m *MockToken) Block(ctx context.Context, accessToken string) error {
-	return m.Called(ctx).Error(0)
-}
-
-func (m *MockToken) IsBlocked(ctx context.Context, accessToken string) (bool, error) {
-	args := m.Called(ctx, accessToken)
-	return args.Bool(0), args.Error(1)
 }
 
 func TestAuthService_Register(t *testing.T) {

@@ -60,13 +60,6 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := pkg.ExtractTokenFromHeader(c)
-	if err != nil {
-		pkg.Unauthorized(c, err.Error())
-		return
-	}
-	req.AccessToken = accessToken
-
 	tokens, err := h.auth.Refresh(c.Request.Context(), &req)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
