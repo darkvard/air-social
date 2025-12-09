@@ -40,7 +40,7 @@ func (s *TokenServiceImpl) CreateSession(ctx context.Context, userID int64, devi
 }
 
 func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error) {
-	access, err := s.generateAccessToken(userID)
+	access, err := s.generateAccessToken(userID, deviceID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +58,11 @@ func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, dev
 	}, nil
 }
 
-func (s *TokenServiceImpl) generateAccessToken(userID int64) (string, error) {
+func (s *TokenServiceImpl) generateAccessToken(userID int64, deviceID string) (string, error) {
 	now := time.Now()
 	claims := jwt.MapClaims{
 		pkg.JWTClaimSubject:   fmt.Sprintf("%d", userID),
+		pkg.JWTClaimDevice:    deviceID,
 		pkg.JWTClaimAudience:  s.cfg.Aud,
 		pkg.JWTClaimIssuer:    s.cfg.Iss,
 		pkg.JWTClaimIssuedAt:  now.Unix(),

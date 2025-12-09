@@ -84,5 +84,10 @@ func (s *AuthServiceImpl) Refresh(ctx context.Context, req *domain.RefreshReques
 }
 
 func (s *AuthServiceImpl) Logout(ctx context.Context, req *domain.LogoutRequest) error {
-	return nil
+	if req.IsAllDevices {
+		return s.tokens.RevokeAllUserSessions(ctx, req.UserID)
+	} else {
+		return s.tokens.RevokeDeviceSession(ctx, req.UserID, req.DeviceID)
+
+	}
 }

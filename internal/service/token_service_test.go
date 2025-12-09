@@ -138,8 +138,6 @@ func TestTokenService_Refresh(t *testing.T) {
 	}
 	service := NewTokenService(mockRepo, cfg)
 
-	pkg.NewLogger("debug")
-
 	rawToken := "raw-refresh-token"
 	hashedToken := service.hashToken(rawToken)
 	dbToken := &domain.RefreshToken{
@@ -229,7 +227,7 @@ func TestTokenService_Validate(t *testing.T) {
 	}
 	service := NewTokenService(nil, cfg)
 
-	validToken, _ := service.generateAccessToken(1)
+	validToken, _ := service.generateAccessToken(1, "test-device")
 
 	tests := []struct {
 		name          string
@@ -255,7 +253,7 @@ func TestTokenService_Validate(t *testing.T) {
 				expiredCfg := cfg
 				expiredCfg.AccessTokenTTL = -1 * time.Minute
 				expiredService := NewTokenService(nil, expiredCfg)
-				token, _ := expiredService.generateAccessToken(1)
+				token, _ := expiredService.generateAccessToken(1, "test-device")
 				return token
 			}(),
 			service:       service,

@@ -2,14 +2,16 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 
+	"air-social/internal/domain"
 	"air-social/internal/service"
 	"air-social/pkg"
 )
 
-type userContextKey string
+type authContextKey string
 
-const UserIDContextKey userContextKey = "userID"
+const AuthPayloadKey authContextKey = "auth_payload"
 
 func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -21,7 +23,7 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 			return
 		}
 
-		// Validate 
+		// Validate
 		validatedToken, err := tokenService.Validate(tokenString)
 		if err != nil || !validatedToken.Valid {
 			pkg.Unauthorized(c, "invalid or expired token")
@@ -30,20 +32,43 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 		}
 
 		// Get data
-		var userID int64
-		if err := pkg.ExtractClaimFromToken(validatedToken, pkg.JWTClaimSubject, &userID); err != nil {
-			pkg.Unauthorized(c, "invalid user identifier in token")
+		clams, ok := validatedToken.Claims.(jwt.MapClaims)
+		if !ok {
+			pkg.Unauthorized(c, "invalid token claims")
 			c.Abort()
 			return
 		}
+
+		userID := pkg.GetInt64Claims(clams, pkg.JWTClaimSubject)
 		if userID <= 0 {
 			pkg.Unauthorized(c, "user id must be positive")
 			c.Abort()
 			return
 		}
 
+		deviceID := pkg.GetStringClaims(clams, pkg.JWTClaimDevice)
+
+		payload := &domain.AuthPayload{
+			UserID:   userID,
+			DeviceID: deviceID,
+		}
+
 		// Set context
-		c.Set(string(UserIDContextKey), userID)
+		c.Set(AuthPayloadKey, payload)
 		c.Next()
 	}
+}
+
+func GetAuthPayload(c *gin.Context) (*domain.AuthPayload, error) {
+	value, exists := c.Get(AuthPayloadKey)
+	if !exists {
+		return nil, pkg.ErrUnauthorized
+	}
+
+	payload, ok := value.(*domain.AuthPayload)
+	if !ok {
+		return nil, pkg.ErrUnauthorized
+	}
+
+	return payload, nil
 }

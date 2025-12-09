@@ -17,8 +17,9 @@ type RefreshRequest struct {
 }
 
 type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
-	AllDevices   bool   `json:"all_devices,omitempty"`
+	IsAllDevices bool   `json:"is_all_devices,omitempty"`
+	DeviceID   string `json:"-"`
+	UserID     int64  `json:"-"`
 }
 
 type ForgotPasswordRequest struct {
@@ -28,4 +29,10 @@ type ForgotPasswordRequest struct {
 type ResetPasswordRequest struct {
 	Token    string `json:"token" binding:"required"`
 	Password string `json:"password" binding:"required,min=8,max=64"`
+}
+
+type AuthPayload struct {
+	UserID   int64
+	DeviceID string
+	Role     int64
 }

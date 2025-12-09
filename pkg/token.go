@@ -1,9 +1,8 @@
 package pkg
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +17,7 @@ const (
 // Standard JWT claims
 const (
 	JWTClaimSubject   = "sub"
+	JWTClaimDevice    = "dev"
 	JWTClaimAudience  = "aud"
 	JWTClaimIssuer    = "iss"
 	JWTClaimIssuedAt  = "iat"
@@ -39,26 +39,25 @@ func ExtractTokenFromHeader(c *gin.Context) (string, error) {
 	return parts[1], nil
 }
 
+func GetStringClaims(claims jwt.MapClaims, key string) string {
+	if val, ok := claims[key]; ok {
+		if s, ok := val.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
 
-func ExtractClaimFromToken(token *jwt.Token, claimKey string, dest any) error {
-    claims, ok := token.Claims.(jwt.MapClaims)
-    if !ok {
-        return errors.New("invalid token claims type")
-    }
-
-    claimValue, ok := claims[claimKey]
-    if !ok {
-        return fmt.Errorf("claim '%s' not found", claimKey)
-    }
-
-    data, err := json.Marshal(claimValue)
-    if err != nil {
-        return fmt.Errorf("failed to marshal claim: %w", err)
-    }
-
-    if err := json.Unmarshal(data, dest); err != nil {
-        return fmt.Errorf("failed to unmarshal claim into destination: %w", err)
-    }
-
-    return nil
+func GetInt64Claims(claim jwt.MapClaims, key string) int64 {
+	if val, ok := claim[key]; ok {
+		switch v := val.(type) {
+		case float64:
+			return int64(v)
+		case string:
+			if i, err := strconv.ParseInt(v, 10, 64); err == nil {
+				return i
+			}
+		}
+	}
+	return 0
 }

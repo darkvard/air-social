@@ -5,6 +5,7 @@ import (
 
 	"air-social/internal/domain"
 	"air-social/internal/service"
+	"air-social/internal/transport/http/middleware"
 	"air-social/pkg"
 )
 
@@ -70,7 +71,23 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// redis block access token
+	var req domain.LogoutRequest
+	_ = c.ShouldBindJSON(&req)
+
+	payload, err := middleware.GetAuthPayload(c)
+	if err != nil || payload.UserID < 0 || payload.DeviceID == "" {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
+	req.UserID = payload.UserID
+	req.DeviceID = payload.DeviceID
+
+	if err := h.auth.Logout(c.Request.Context(), &req); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+	pkg.Success(c, "logout success")
 }
 
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
