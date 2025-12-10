@@ -1,0 +1,35 @@
+{{define "subject"}}Welcome to Air Social!{{end}}
+
+{{define "plainBody"}}
+Hello {{.Name}},
+
+Welcome to Air Social.
+This is a test email with raw data.
+Your lucky number is: {{.LuckyNumber}}
+{{end}}
+
+{{define "htmlBody"}}
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.brand { color: #00a8ff; font-weight: bold; font-size: 20px; }
+.box { border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+</style>
+</head>
+<body style="font-family: Arial, sans-serif;">
+<div class="box">
+<div class="brand">Air Social ✈️</div>
+
+<h3>Hello, {{.Name}}!</h3>
+
+<p>Thank you for joining the community.</p>
+
+<p>Your registration number is: <strong>{{.LuckyNumber}}</strong></p>
+
+<hr>
+<small>Sent from Air Social System</small>
+</div>
+</body>
+</html>
+{{end}}

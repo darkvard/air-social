@@ -49,6 +49,12 @@ type TokenConfig struct {
 
 // todo: mailer, limiter
 type MailConfig struct {
+	Host        string
+	Port        int
+	Username    string
+	Password    string
+	FromAddress string
+	FromName    string
 }
 
 type RateLimiterConfig struct {
@@ -104,7 +110,14 @@ func Load() *Config {
 			AccessTokenTTL:  getDuration("JWT_ACCESS_TTL", time.Minute*15),
 			RefreshTokenTTL: getDuration("JWT_REFRESH_TTL", time.Hour*24*7),
 		},
-		Mailer:  MailConfig{},
+		Mailer: MailConfig{
+			Host:        getString("MAILTRAP_HOST", "smtp.mailtrap.io"),
+			Port:        getInt("MAILTRAP_PORT", 587),
+			Username:    getString("MAILTRAP_USERNAME", "fd2dfd6851a016"),
+			Password:    getString("MAILTRAP_PASSWORD", ""),
+			FromAddress: getString("MAILTRAP_FROM_ADDRESS", "no-reply@airsocial.com"),
+			FromName:    getString("MAILTRAP_FROM_NAME", "Air Social"),
+		},
 		Limiter: RateLimiterConfig{},
 	}
 }
