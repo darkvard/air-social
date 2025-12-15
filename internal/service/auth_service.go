@@ -19,13 +19,15 @@ type AuthServiceImpl struct {
 	users  UserService
 	tokens TokenService
 	hash   pkg.Hasher
+	queue  domain.EventQueue
 }
 
-func NewAuthService(users UserService, tokens TokenService, hash pkg.Hasher) *AuthServiceImpl {
+func NewAuthService(users UserService, tokens TokenService, hash pkg.Hasher, queue domain.EventQueue) *AuthServiceImpl {
 	return &AuthServiceImpl{
 		users:  users,
 		tokens: tokens,
 		hash:   hash,
+		queue:  queue,
 	}
 }
 

@@ -15,7 +15,7 @@ func main() {
 	}
 	defer app.Cleanup()
 
-	pkg.NewLogger(app.Config.AppEnv)
+	pkg.NewLogger(app.Config.Server.Env )
 	welcome(app.Config.Server)
 
 	testMailTrap(&app.Config.Mailer)

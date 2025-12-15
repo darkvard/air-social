@@ -91,12 +91,25 @@ func (m *MockToken) CleanupDatabase(ctx context.Context) error {
 	return m.Called(ctx).Error(0)
 }
 
+type MockQueue struct {
+	mock.Mock
+}
+
+func (m *MockQueue) Publish(ctx context.Context, topic string, payload any) error {
+	return m.Called(ctx, topic, payload).Error(0)
+}
+
+func (m *MockQueue) Close() {
+	m.Called()
+}
+
 func TestAuthService_Register(t *testing.T) {
 	mockUsers := new(MockUserService)
 	mockHasher := new(MockHasher)
 	mockToken := new(MockToken)
+	mockQueue := new(MockQueue)
 
-	authService := NewAuthService(mockUsers, mockToken, mockHasher)
+	authService := NewAuthService(mockUsers, mockToken, mockHasher, mockQueue)
 
 	validReq := &domain.RegisterRequest{
 		Email:    "test@example.com",
@@ -170,8 +183,9 @@ func TestAuthService_Login(t *testing.T) {
 	mockUsers := new(MockUserService)
 	mockHasher := new(MockHasher)
 	mockToken := new(MockToken)
+	mockQueue := new(MockQueue)
 
-	authService := NewAuthService(mockUsers, mockToken, mockHasher)
+	authService := NewAuthService(mockUsers, mockToken, mockHasher, mockQueue)
 
 	loginReq := &domain.LoginRequest{
 		Email:    "test@example.com",

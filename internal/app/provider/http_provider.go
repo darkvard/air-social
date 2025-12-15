@@ -5,6 +5,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"air-social/internal/config"
+	"air-social/internal/domain"
 	"air-social/pkg"
 )
 
@@ -19,9 +20,10 @@ func NewHttpProvider(
 	cfg config.TokenConfig,
 	hash pkg.Hasher,
 	cache *redis.Client,
+	queue domain.EventQueue,
 ) *HttpProvider {
 	repo := NewRepoProvider(db, cache)
-	service := NewServiceProvider(repo, cfg, hash)
+	service := NewServiceProvider(repo, cfg, hash, queue)
 	handler := NewHandlerProvider(service)
 	return &HttpProvider{
 		Repo:    repo,
