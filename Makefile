@@ -1,13 +1,5 @@
 include .env	
 
-# ===================== AIR =====================
-
-# Air.toml references this:
-.PHONY: air-build
-air-build:
-	@go build -buildvcs=false -o ./tmp/main ./cmd/api
-
-
 # ===================== DOCKER COMPOSE ======================
 
 .PHONY: up
@@ -22,7 +14,13 @@ down:
 
 .PHONY: restart
 restart:
-	$(MAKE) down
+	@echo "🔁 Restarting app"
+	@docker compose restart app
+
+.PHONY: rebuild
+rebuild:
+	@echo "♻️ Rebuilding all images"
+	@docker compose build --no-cache
 	$(MAKE) up
 
 .PHONY: logs
@@ -32,13 +30,6 @@ logs:
 .PHONY: ps
 ps:
 	@docker compose ps
-
-.PHONY: rebuild
-rebuild:
-	@echo "♻️ Rebuilding all images"
-	@docker compose build --no-cache
-	$(MAKE) up
-
 
 ## Utils
 
@@ -54,6 +45,9 @@ sh-db:
 sh-redis:
 	@docker compose exec redis sh
 
+.PHONY: sh-rabbitmq
+sh-rabbitmq:
+	@docker compose exec rabbitmq sh
 
 # ===================== MIGRATIONS ======================
 
@@ -161,3 +155,25 @@ test-pkg-cover:
 test-bench-pkg:
 	@echo "==> Benchmarking package: $(pkg)"
 	@go test -bench=. -benchmem $(pkg)	
+
+
+# ===================== AIR =====================
+
+# Air.toml references this:
+.PHONY: air-build
+air-build:
+	@go build -buildvcs=false -o ./tmp/main ./cmd/api
+
+
+# ===================== RABBIT MQ ======================
+
+.PHONY: rabbitmq-ui
+rabbitmq-ui:
+	@echo "🐰 RabbitMQ Management UI"
+	@echo "----------------------------------"
+	@echo "URL      : http://localhost:$(RABBITMQ_UI_PORT)"
+	@echo "Username : $(RABBITMQ_USER)"
+	@echo "Password : $(RABBITMQ_PASS)"
+	@echo "----------------------------------"
+	@xdg-open http://localhost:$(RABBITMQ_UI_PORT) >/dev/null 2>&1 &
+

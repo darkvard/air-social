@@ -18,7 +18,7 @@ func main() {
 	pkg.NewLogger(app.Config.Server.Env )
 	welcome(app.Config.Server)
 
-	testMailTrap(&app.Config.Mailer)
+	// testMailTrap(&app.Config.Mailer)
 
 	app.Run()
 }
