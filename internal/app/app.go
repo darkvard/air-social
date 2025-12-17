@@ -14,7 +14,7 @@ import (
 	"air-social/internal/app/provider"
 	"air-social/internal/config"
 	"air-social/internal/domain"
-	"air-social/internal/infrastructure/queue"
+	"air-social/internal/infrastructure/messaging"
 	"air-social/internal/transport/ws"
 	"air-social/internal/worker"
 	"air-social/pkg"
@@ -48,9 +48,9 @@ func NewApplication() (*Application, error) {
 
 	// rabbit
 	rabbitConn := bootstrap.NewRabbitMQ(cfg.RabbitMQ)
-	publisher, err := queue.NewPublisher(
+	publisher, err := messaging.NewPublisher(
 		rabbitConn,
-		queue.ExchangeConfig{
+		messaging.ExchangeConfig{
 			Name: "events",
 			Type: "topic",
 		}, 10)

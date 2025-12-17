@@ -1,4 +1,4 @@
-package queue
+package messaging
 
 import (
 	"context"
@@ -10,11 +10,6 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
-
-type ExchangeConfig struct {
-	Name string
-	Type string  
-}
 
 type pubChannel struct {
 	ch       *amqp.Channel

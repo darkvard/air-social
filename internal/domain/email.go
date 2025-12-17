@@ -9,3 +9,8 @@ type EmailEnvelope struct {
 	TemplateFile string
 	Data         any
 }
+
+type RegisterEmailData struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+}

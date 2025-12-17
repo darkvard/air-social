@@ -12,13 +12,13 @@ import (
 	"air-social/templates"
 )
 
-type mailtrapSender struct {
+type MailTrap struct {
 	dialer *gomail.Dialer
 	from   string
 }
 
-func NewMailtrapSender(cfg *config.MailConfig) *mailtrapSender {
-	return &mailtrapSender{
+func NewMailtrap(cfg config.MailConfig) *MailTrap {
+	return &MailTrap{
 		dialer: gomail.NewDialer(
 			cfg.Host, cfg.Port, cfg.Username, cfg.Password,
 		),
@@ -26,7 +26,7 @@ func NewMailtrapSender(cfg *config.MailConfig) *mailtrapSender {
 	}
 }
 
-func (m *mailtrapSender) Send(env *domain.EmailEnvelope) error {
+func (m *MailTrap) Send(env *domain.EmailEnvelope) error {
 	tmpPath := fmt.Sprintf("email/%s", env.TemplateFile)
 
 	t, err := template.ParseFS(templates.EmailFS, tmpPath)
