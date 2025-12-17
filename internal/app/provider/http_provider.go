@@ -20,7 +20,7 @@ func NewHttpProvider(
 	cfg config.TokenConfig,
 	hash pkg.Hasher,
 	cache *redis.Client,
-	queue domain.EventQueue,
+	queue domain.EventPublisher,
 ) *HttpProvider {
 	repo := NewRepoProvider(db, cache)
 	service := NewServiceProvider(repo, cfg, hash, queue)

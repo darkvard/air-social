@@ -17,7 +17,7 @@ func NewServiceProvider(
 	repo *RepoProvider,
 	cfg config.TokenConfig,
 	hash pkg.Hasher,
-	queue domain.EventQueue,
+	queue domain.EventPublisher,
 ) *ServiceProvider {
 	token := service.NewTokenService(repo.Token, cfg)
 	user := service.NewUserService(repo.User)

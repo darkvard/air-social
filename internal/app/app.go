@@ -6,25 +6,32 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	"air-social/internal/app/bootstrap"
 	"air-social/internal/app/provider"
 	"air-social/internal/config"
+	"air-social/internal/domain"
 	"air-social/internal/infrastructure/queue"
 	"air-social/internal/transport/ws"
+	"air-social/internal/worker"
 	"air-social/pkg"
 )
 
 type Application struct {
-	Config   *config.Config
-	Logger   *zap.SugaredLogger
-	DB       *sqlx.DB
-	Redis    *redis.Client
-	RabbitMQ *queue.RabbitMQPublisher
-	Http     *provider.HttpProvider
-	Hub      *ws.Hub
+	Config *config.Config
+	DB     *sqlx.DB
+	Logger *zap.SugaredLogger
+	Redis  *redis.Client
+
+	RabbitConn *amqp.Connection
+	Event      domain.EventPublisher
+	Worker     worker.Worker
+
+	Http *provider.HttpProvider
+	Hub  *ws.Hub
 }
 
 func NewApplication() (*Application, error) {
@@ -40,8 +47,9 @@ func NewApplication() (*Application, error) {
 	redis := bootstrap.NewRedis(cfg.Redis)
 
 	// rabbit
-	rabbitPublisher, err := queue.NewRabbitMQPublisher(
-		bootstrap.NewRabbitMQ(cfg.RabbitMQ),
+	rabbitConn := bootstrap.NewRabbitMQ(cfg.RabbitMQ)
+	publisher, err := queue.NewPublisher(
+		rabbitConn,
 		queue.ExchangeConfig{
 			Name: "events",
 			Type: "topic",
@@ -56,24 +64,37 @@ func NewApplication() (*Application, error) {
 		cfg.Token,
 		pkg.NewBcrypt(),
 		redis,
-		rabbitPublisher,
+		publisher,
 	)
 
 	return &Application{
-		Config:   cfg,
-		DB:       db,
-		Redis:    redis,
-		RabbitMQ: rabbitPublisher,
-		Http:     httpServer,
-		Hub:      ws.NewHub(),
+		Config:     cfg,
+		DB:         db,
+		Redis:      redis,
+		RabbitConn: rabbitConn,
+		Event:      publisher,
+		Worker:     nil,
+		Http:       httpServer,
+		Hub:        ws.NewHub(),
 	}, nil
 }
 
 func (a *Application) Cleanup() {
-	a.DB.Close()
-	a.Redis.Close()
-	a.RabbitMQ.Close()
-	a.RabbitMQ.Conn.Close()
+	if a.Event != nil {
+		a.Event.Close()
+	}
+
+	if a.RabbitConn != nil {
+		a.RabbitConn.Close()
+	}
+
+	if a.Redis != nil {
+		a.Redis.Close()
+	}
+
+	if a.DB != nil {
+		a.DB.Close()
+	}
 }
 
 func (a *Application) Run() {
