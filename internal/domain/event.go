@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+const (
+	EventEmailRegister = "email.register"
+)
+
 type EventPublisher interface {
 	Publish(ctx context.Context, routingKey string, payload any) error
 	Close()

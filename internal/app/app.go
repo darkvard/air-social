@@ -10,53 +10,43 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"air-social/internal/app/bootstrap"
+	boot "air-social/internal/app/bootstrap"
 	"air-social/internal/app/provider"
 	"air-social/internal/config"
-	"air-social/internal/domain"
-	"air-social/internal/infrastructure/messaging"
+	mess "air-social/internal/infrastructure/messaging"
 	"air-social/internal/transport/ws"
 	"air-social/internal/worker"
 	"air-social/pkg"
 )
 
 type Application struct {
-	Config *config.Config
-	DB     *sqlx.DB
-	Logger *zap.SugaredLogger
-	Redis  *redis.Client
-
-	RabbitConn *amqp.Connection
-	Event      domain.EventPublisher
-	Worker     worker.Worker
-
-	Http *provider.HttpProvider
-	Hub  *ws.Hub
+	Config        *config.Config
+	DB            *sqlx.DB
+	Logger        *zap.SugaredLogger
+	Redis         *redis.Client
+	RabbitConn    *amqp.Connection
+	Event         *mess.Publisher
+	WorkerManager *worker.Manager
+	Http          *provider.HttpProvider
+	Hub           *ws.Hub
 }
 
 func NewApplication() (*Application, error) {
 	cfg := config.Load()
 
 	// db
-	db, err := bootstrap.NewDatabase(cfg.Postgres)
+	db, err := boot.NewDatabase(cfg.Postgres)
 	if err != nil {
 		return nil, err
 	}
 
 	// redis
-	redis := bootstrap.NewRedis(cfg.Redis)
+	redis := boot.NewRedis(cfg.Redis)
 
 	// rabbit
-	rabbitConn := bootstrap.NewRabbitMQ(cfg.RabbitMQ)
-	publisher, err := messaging.NewPublisher(
-		rabbitConn,
-		messaging.ExchangeConfig{
-			Name: "events",
-			Type: "topic",
-		}, 10)
-	if err != nil {
-		return nil, err
-	}
+	rabbitConn := boot.NewRabbitMQ(cfg.RabbitMQ)
+	rabbitPublisher := boot.NewPublisher(rabbitConn)
+	workerManager := boot.NewWorkerManager(rabbitConn, cfg.Mailer)
 
 	// http
 	httpServer := provider.NewHttpProvider(
@@ -64,18 +54,18 @@ func NewApplication() (*Application, error) {
 		cfg.Token,
 		pkg.NewBcrypt(),
 		redis,
-		publisher,
+		rabbitPublisher,
 	)
 
 	return &Application{
-		Config:     cfg,
-		DB:         db,
-		Redis:      redis,
-		RabbitConn: rabbitConn,
-		Event:      publisher,
-		Worker:     nil,
-		Http:       httpServer,
-		Hub:        ws.NewHub(),
+		Config:        cfg,
+		DB:            db,
+		Redis:         redis,
+		RabbitConn:    rabbitConn,
+		Event:         rabbitPublisher,
+		WorkerManager: workerManager,
+		Http:          httpServer,
+		Hub:           ws.NewHub(),
 	}, nil
 }
 

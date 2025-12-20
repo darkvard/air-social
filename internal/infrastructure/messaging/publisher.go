@@ -14,6 +14,7 @@ import (
 type pubChannel struct {
 	ch       *amqp.Channel
 	confirms chan amqp.Confirmation
+	returns  chan amqp.Return
 }
 
 type Publisher struct {
@@ -23,20 +24,14 @@ type Publisher struct {
 	once   sync.Once
 }
 
-// NewPublisher creates a publisher with channel pool + confirm mode
-func NewPublisher(
-	conn *amqp.Connection,
-	exCfg ExchangeConfig,
-	poolSize int,
-) (*Publisher, error) {
-
+func NewPublisher(conn *amqp.Connection, eCfg ExchangeConfig, poolSize int) (*Publisher, error) {
 	if poolSize <= 0 {
 		poolSize = 1
 	}
 
 	p := &Publisher{
 		conn:   conn,
-		cfg:    exCfg,
+		cfg:    eCfg,
 		chPool: make(chan *pubChannel, poolSize),
 	}
 
@@ -49,8 +44,8 @@ func NewPublisher(
 
 		// ExchangeDeclare is idempotent
 		if err := ch.ExchangeDeclare(
-			exCfg.Name,
-			exCfg.Type,
+			eCfg.Name,
+			eCfg.Type,
 			true,  // durable
 			false, // auto-delete
 			false, // internal
@@ -72,6 +67,7 @@ func NewPublisher(
 		pc := &pubChannel{
 			ch:       ch,
 			confirms: ch.NotifyPublish(make(chan amqp.Confirmation, 8)),
+			returns:  ch.NotifyReturn(make(chan amqp.Return, 1)),
 		}
 
 		p.chPool <- pc
@@ -80,14 +76,14 @@ func NewPublisher(
 	return p, nil
 }
 
-// Publish publishes a message and waits for broker confirm
-func (p *Publisher) Publish( ctx context.Context, routingKey string, payload any, ) error {
-
+func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any) error {
 	pc, err := p.acquire(ctx)
 	if err != nil {
 		return err
 	}
 	defer p.release(pc)
+
+	seqNo := pc.ch.GetNextPublishSeqNo()
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -98,7 +94,7 @@ func (p *Publisher) Publish( ctx context.Context, routingKey string, payload any
 		ctx,
 		p.cfg.Name,
 		routingKey,
-		false, // mandatory
+		true, // mandatory
 		false,
 		amqp.Publishing{
 			ContentType:  "application/json",
@@ -110,17 +106,29 @@ func (p *Publisher) Publish( ctx context.Context, routingKey string, payload any
 		return err
 	}
 
-	// Wait for broker confirm
-	select {
-	case confirm := <-pc.confirms:
-		if !confirm.Ack {
-			return errors.New("rabbitmq: publish not acknowledged by broker")
-		}
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	// Wait for broker confirm matching our sequence number
+	for {
+		select {
+		case ret := <-pc.returns: 		// ROUTING FAIL
+			return fmt.Errorf(
+				"publish return: exchange=%s routingKey=%s reason=%s",
+				ret.Exchange,
+				ret.RoutingKey,
+				ret.ReplyText,
+			)
 
-	return nil
+		case confirm := <-pc.confirms: 	// BROKER CONFIRM
+			if confirm.DeliveryTag < seqNo {
+				continue
+			}
+			if !confirm.Ack {
+				return errors.New("rabbitmq: publish not acknowledged by broker")
+			}
+			return nil
+		case <-ctx.Done():				// TIMEOUT / CANCEL
+			return ctx.Err()
+		}
+	}
 }
 
 func (p *Publisher) acquire(ctx context.Context) (*pubChannel, error) {
