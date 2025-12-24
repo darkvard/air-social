@@ -1,12 +1,20 @@
 package pkg
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+)
+
+const (
+	ErrorLog = "ERROR"
+	InfoLog  = "INFO"
+	WarnLog  = "WARN"
+	template = "%-15s | %-20s | %s"
 )
 
 var (
@@ -21,6 +29,9 @@ func NewLogger(env string) {
 }
 
 func Log() *zap.SugaredLogger {
+	if l == nil {
+		NewLogger("development")
+	}
 	return l
 }
 
@@ -53,4 +64,18 @@ func newEncoderColorConfig() zapcore.EncoderConfig {
 		enc.AppendString("\033[90m" + c.TrimmedPath() + "\033[0m")
 	}
 	return cfg
+}
+
+func LogTemplate(level, component, action, msg string, args ...any) {
+	if len(args) > 0 {
+		msg = fmt.Sprintf(msg, args...)
+	}
+	switch level {
+	case ErrorLog:
+		Log().Errorf(template, component, action, msg)
+	case WarnLog:
+		Log().Warnf(template, component, action, msg)
+	default:
+		Log().Infof(template, component, action, msg)
+	}
 }

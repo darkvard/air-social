@@ -109,15 +109,18 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any)
 	// Wait for broker confirm matching our sequence number
 	for {
 		select {
-		case ret := <-pc.returns: 		// ROUTING FAIL
+		case ret := <-pc.returns: // Routing fail
 			return fmt.Errorf(
-				"publish return: exchange=%s routingKey=%s reason=%s",
+				"publish return: exchange = %s, routingKey = %s, reason = %s",
 				ret.Exchange,
 				ret.RoutingKey,
 				ret.ReplyText,
 			)
 
-		case confirm := <-pc.confirms: 	// BROKER CONFIRM
+		case confirm, ok := <-pc.confirms: // Broker confirm
+			if !ok {
+				return errors.New("rabbitmq: confirm channel closed")
+			}
 			if confirm.DeliveryTag < seqNo {
 				continue
 			}
@@ -125,7 +128,7 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any)
 				return errors.New("rabbitmq: publish not acknowledged by broker")
 			}
 			return nil
-		case <-ctx.Done():				// TIMEOUT / CANCEL
+		case <-ctx.Done(): // Timeout, cancel
 			return ctx.Err()
 		}
 	}

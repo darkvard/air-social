@@ -13,8 +13,10 @@ func main() {
 	}
 	defer app.Cleanup()
 
-	pkg.NewLogger(app.Config.Server.Env )
+	pkg.NewLogger(app.Config.Server.Env)
 	welcome(app.Config.Server)
+
+	go app.TestMessageQueue()
 
 	app.Run()
 }
@@ -25,5 +27,3 @@ func welcome(server config.ServerConfig) {
 		"host_port", server.HostPort,
 	)
 }
-
- 

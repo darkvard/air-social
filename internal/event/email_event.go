@@ -6,11 +6,7 @@ import (
 
 	"air-social/internal/domain"
 )
-
-type EmailHandler interface {
-	Handle(ctx context.Context, evt domain.EventPayload) error
-}
-
+ 
 type EmailHandleImpl struct {
 	sender domain.EmailSender
 }

@@ -8,7 +8,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 
 	"air-social/internal/domain"
-	"air-social/internal/event"
 	mess "air-social/internal/infrastructure/messaging"
 )
 
@@ -16,7 +15,7 @@ type EmailWorker struct {
 	conn *amqp.Connection
 	eCfg mess.ExchangeConfig
 	qCfg mess.QueueConfig
-	disp event.EmailHandler
+	disp domain.EventHandler
 	ch   *amqp.Channel
 	done chan struct{}
 	once sync.Once
@@ -26,7 +25,7 @@ func NewEmailWorker(
 	conn *amqp.Connection,
 	eCfg mess.ExchangeConfig,
 	qCfg mess.QueueConfig,
-	disp event.EmailHandler,
+	disp domain.EventHandler,
 ) *EmailWorker {
 	return &EmailWorker{
 		conn: conn,

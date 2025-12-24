@@ -14,6 +14,7 @@ import (
 	"air-social/internal/app/provider"
 	"air-social/internal/config"
 	mess "air-social/internal/infrastructure/messaging"
+	"air-social/internal/interaction/mq"
 	"air-social/internal/transport/ws"
 	"air-social/internal/worker"
 	"air-social/pkg"
@@ -91,4 +92,8 @@ func (a *Application) Run() {
 	gin.SetMode(gin.DebugMode)
 	port := fmt.Sprintf(":%s", a.Config.Server.Port)
 	a.NewRouter().Run(port)
+}
+
+func (a *Application) TestMessageQueue() {
+	mq.TestRabbitMQ(a.RabbitConn)
 }

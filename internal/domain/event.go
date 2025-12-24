@@ -10,6 +10,10 @@ const (
 	EventEmailRegister = "email.register"
 )
 
+type EventHandler interface {
+	Handle(ctx context.Context, evt EventPayload) error
+}
+
 type EventPublisher interface {
 	Publish(ctx context.Context, routingKey string, payload any) error
 	Close()
