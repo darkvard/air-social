@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	interaction = "[INTERACTION]"
-	publisher   = "[PUBLISHER]"
-	consumer    = "[CONSUMER]"
-	timeout     = "[TIMEOUT]"
+	interaction = "INTERACTION"
+	publisher   = "PUBLISHER"
+	consumer    = "CONSUMER"
+	timeout     = "TIMEOUT"
 )
 
 type rabbitMQ struct {
@@ -35,7 +35,7 @@ func newRabbitMQ(conn *amqp091.Connection) *rabbitMQ {
 				Queue:      "email.interaction.q",
 				RoutingKey: "email.*",
 			},
-			&eventHandlerImpl{},
+			newEventHandler(),
 		),
 	)
 
@@ -89,7 +89,7 @@ func (r *rabbitMQ) messageHandle(ctx context.Context) {
 			defer pubCancel()
 
 			if c.name == connErrState {
-				logInfo(timeout, "SIMULATING", "Closing publisher connection...")
+				logInfo(timeout, "Simulating", "Closing publisher connection...")
 				r.publisher.Close()
 				time.Sleep(100 * time.Millisecond)
 			}
@@ -100,9 +100,9 @@ func (r *rabbitMQ) messageHandle(ctx context.Context) {
 			}
 
 			if err := r.publisher.Publish(pubCtx, c.key, evt); err != nil {
-				logError(publisher, "PUBLISH FAILED", "Error: %v", err)
+				logError(publisher, "Publish failed", "Error: %v", err)
 			} else {
-				logInfo(publisher, "PUBLISH SUCCESS", "Target: %s", c.key)
+				logInfo(publisher, "Publish success", "Target: %s", c.key)
 			}
 		}()
 
