@@ -11,6 +11,7 @@ import (
 	"air-social/internal/domain"
 	mess "air-social/internal/infrastructure/messaging"
 	"air-social/internal/worker"
+	"air-social/internal/worker/email"
 	"air-social/pkg"
 )
 
@@ -28,7 +29,7 @@ type rabbitMQ struct {
 
 func newRabbitMQ(conn *amqp091.Connection) *rabbitMQ {
 	mgr := worker.NewManager(
-		worker.NewEmailWorker(
+		email.NewEmailWorker(
 			conn,
 			mess.EventsExchange,
 			mess.QueueConfig{

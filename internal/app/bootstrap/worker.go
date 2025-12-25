@@ -8,13 +8,14 @@ import (
 	"air-social/internal/infrastructure/mailer"
 	mess "air-social/internal/infrastructure/messaging"
 	"air-social/internal/worker"
+	"air-social/internal/worker/email"
 )
 
 func NewWorkerManager(conn *amqp.Connection, mailCfg config.MailConfig) *worker.Manager {
 	mailSender := mailer.NewMailtrap(mailCfg)
 	emailHandler := event.NewEmailHandler(mailSender)
 
-	emailWorker := worker.NewEmailWorker(
+	emailWorker := email.NewEmailWorker(
 		conn,
 		mess.EventsExchange,
 		mess.EmailRegisterQueueConfig,

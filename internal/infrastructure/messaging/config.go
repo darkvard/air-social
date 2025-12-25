@@ -8,6 +8,10 @@ type ExchangeConfig struct {
 type QueueConfig struct {
 	Queue      string
 	RoutingKey string
+
+	DeadLetterQueue      string
+	DeadLetterRoutingKey string
+	DeadLetterExchange   string
 }
 
 var EventsExchange = ExchangeConfig{
@@ -18,4 +22,8 @@ var EventsExchange = ExchangeConfig{
 var EmailRegisterQueueConfig = QueueConfig{
 	Queue:      "email_register_queue",
 	RoutingKey: "email.register",
+
+	DeadLetterExchange:   EventsExchange.Name,
+	DeadLetterQueue:      "email_register_queue.dlq",
+	DeadLetterRoutingKey: "email.register.dlq",
 }
