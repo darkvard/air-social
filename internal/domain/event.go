@@ -25,3 +25,10 @@ type EventPayload struct {
 	Timestamp time.Time       `json:"timestamp"`
 	Data      json.RawMessage `json:"data"`
 }
+
+type RegisterEventPayload struct {
+	Email  string `json:"email"`
+	Name   string `json:"name"`
+	Link   string `json:"link"`
+	Expiry string `json:"expiry"`
+}

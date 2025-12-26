@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 
 	"air-social/internal/domain"
+	"air-social/templates"
 )
- 
+
 type EmailHandleImpl struct {
 	sender domain.EmailSender
 }
@@ -18,26 +19,30 @@ func NewEmailHandler(sender domain.EmailSender) *EmailHandleImpl {
 func (d *EmailHandleImpl) Handle(ctx context.Context, evt domain.EventPayload) error {
 	switch evt.EventType {
 	case domain.EventEmailRegister:
-		return d.handleEmailRegister(evt)
+		return d.verifyEmail(evt)
 	default:
 		return nil
 	}
-
 }
 
-func (d *EmailHandleImpl) handleEmailRegister(evt domain.EventPayload) error {
-	var data domain.RegisterEmailData
-	if err := json.Unmarshal(evt.Data, &data); err != nil {
+func (d *EmailHandleImpl) verifyEmail(evt domain.EventPayload) error {
+	var payload domain.RegisterEventPayload
+	if err := json.Unmarshal(evt.Data, &payload); err != nil {
 		return err
 	}
-	// todo: impl template register email
-	env := &domain.EmailEnvelope{
-		To:           data.Email,
-		TemplateFile: "welcome.html",
-		Data: map[string]any{
-			"Name":        data.Name,
-			"LuckyNumber": 6868,
-		},
+
+	data := domain.VerifyEmailData{
+		Name:   payload.Name,
+		Link:   payload.Link,
+		Expiry: payload.Expiry,
 	}
+
+	env := &domain.EmailEnvelope{
+		To:           payload.Email,
+		LayoutFile:   templates.LayoutPath,
+		TemplateFile: templates.VerifyEmailPath,
+		Data:         data,
+	}
+
 	return d.sender.Send(env)
 }

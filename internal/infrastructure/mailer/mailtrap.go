@@ -12,13 +12,13 @@ import (
 	"air-social/templates"
 )
 
-type MailTrap struct {
+type mailtrap struct {
 	dialer *gomail.Dialer
 	from   string
 }
 
-func NewMailtrap(cfg config.MailConfig) *MailTrap {
-	return &MailTrap{
+func NewMailtrap(cfg config.MailConfig) *mailtrap {
+	return &mailtrap{
 		dialer: gomail.NewDialer(
 			cfg.Host, cfg.Port, cfg.Username, cfg.Password,
 		),
@@ -26,28 +26,35 @@ func NewMailtrap(cfg config.MailConfig) *MailTrap {
 	}
 }
 
-func (m *MailTrap) Send(env *domain.EmailEnvelope) error {
-	tmpPath := fmt.Sprintf("email/%s", env.TemplateFile)
+func (m *mailtrap) Send(env *domain.EmailEnvelope) error {
+	// path
+	layoutPath := env.LayoutFile
+	contentPath := env.TemplateFile
 
-	t, err := template.ParseFS(templates.EmailFS, tmpPath)
+	// parsing (merge layout + content)
+	t, err := template.ParseFS(templates.EmailFS, layoutPath, contentPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse templates (%s + %s): %w", layoutPath, contentPath, err)
 	}
 
-	var subject bytes.Buffer
-	if err := t.ExecuteTemplate(&subject, "subject", env.Data); err != nil {
-		return err
+	// rendering + binding
+	var subjectBuffer bytes.Buffer
+	if err := t.ExecuteTemplate(&subjectBuffer, "subject", env.Data); err != nil {
+		return fmt.Errorf("failed to execute 'subject' block: %w", err)
 	}
-	var htmlBody bytes.Buffer
-	if err := t.ExecuteTemplate(&htmlBody, "htmlBody", env.Data); err != nil {
-		return err
+	var bodyBuffer bytes.Buffer
+	if err := t.ExecuteTemplate(&bodyBuffer, "layout", env.Data); err != nil {
+		return fmt.Errorf("failed to execute 'layout' block: %w", err)
 	}
 
+	// send email
 	msg := gomail.NewMessage()
 	msg.SetHeader("From", m.from)
 	msg.SetHeader("To", env.To)
-	msg.SetHeader("Subject", subject.String())
-	msg.SetBody("text/html", htmlBody.String())
-
-	return m.dialer.DialAndSend(msg)
+	msg.SetHeader("Subject", subjectBuffer.String())
+	msg.SetBody("text/html", bodyBuffer.String())
+	if err := m.dialer.DialAndSend(msg); err != nil {
+		return fmt.Errorf("mailtrap send error: %w", err)
+	}
+	return nil
 }
