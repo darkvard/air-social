@@ -12,16 +12,17 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, email string) (*User, error)
 }
 
-
 type User struct {
-	ID           int64     `db:"id" json:"id"`
-	Email        string    `db:"email" json:"email"`
-	Username     string    `db:"username" json:"username"`
-	PasswordHash string    `db:"password_hash" json:"-"`
-	Profile      any       `db:"profile" json:"profile"`
-	CreatedAt    time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
-	Version      int       `db:"version" json:"version"`
+	ID           int64      `db:"id" json:"id"`
+	Email        string     `db:"email" json:"email"`
+	Username     string     `db:"username" json:"username"`
+	PasswordHash string     `db:"password_hash" json:"-"`
+	Profile      any        `db:"profile" json:"profile"`
+	Verified     bool       `db:"verified" json:"verified"`
+	VerifiedAt   *time.Time `db:"verified_at" json:"verified_at"`
+	CreatedAt    time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt    time.Time  `db:"updated_at" json:"updated_at"`
+	Version      int        `db:"version" json:"version"`
 }
 
 type UpdateRequest struct {
@@ -40,7 +41,7 @@ type UserResponse struct {
 }
 
 type CreateUserInput struct {
-    Email        string
-    Username     string
-    PasswordHash string
+	Email        string
+	Username     string
+	PasswordHash string
 }

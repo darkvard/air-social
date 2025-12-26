@@ -1,0 +1,3 @@
+ALTER TABLE users
+DROP COLUMN IF EXISTS verified,
+DROP COLUMN IF EXISTS verified_at;
