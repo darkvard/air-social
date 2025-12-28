@@ -42,6 +42,7 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserI
 		Email:     u.Email,
 		Username:  u.Username,
 		Profile:   u.Profile,
+		Verified:  u.Verified,
 		CreatedAt: u.CreatedAt,
 	}, nil
 }

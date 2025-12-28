@@ -180,6 +180,5 @@ func (s *AuthServiceImpl) Logout(ctx context.Context, req *domain.LogoutRequest)
 		return s.tokens.RevokeAllUserSessions(ctx, req.UserID)
 	} else {
 		return s.tokens.RevokeDeviceSession(ctx, req.UserID, req.DeviceID)
-
 	}
 }

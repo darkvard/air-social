@@ -14,6 +14,7 @@ func (a *Application) NewRouter() *gin.Engine {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 	r.SetTrustedProxies(nil)
+	r.LoadHTMLGlob("templates/**/*")
 
 	h := a.Http.Handler
 	s := a.Http.Service

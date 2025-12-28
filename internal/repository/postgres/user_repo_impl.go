@@ -37,11 +37,7 @@ func (r *UserRepoImpl) Create(ctx context.Context, user *domain.User) error {
 }
 
 func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	query := `
-		SELECT id, email, username, password_hash, profile, created_at, updated_at, version
-		FROM users
-		WHERE email = $1
-	`
+	query := ` SELECT * FROM users WHERE email = $1 `
 	var u domain.User
 	if err := r.db.GetContext(ctx, &u, query, email); err != nil {
 		return nil, pkg.MapPostgresError(err)
@@ -50,10 +46,36 @@ func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.Us
 }
 
 func (r *UserRepoImpl) GetByID(ctx context.Context, id int64) (*domain.User, error) {
-	return nil, nil
+	query := ` SELECT * FROM users WHERE id = $1 `
+	var u domain.User
+	if err := r.db.GetContext(ctx, &u, query, id); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+	return &u, nil
 }
 
 func (r *UserRepoImpl) Update(ctx context.Context, u *domain.User) error {
-	// todo
-	return nil
+	query := `
+		UPDATE users
+		SET username = :username, 
+			password_hash = :password_hash, 
+			profile = :profile, 
+			verified = :verified, 
+			verified_at = :verified_at, 
+			updated_at = NOW(), 
+			version = version + 1
+		WHERE id = :id AND version = :version
+		RETURNING updated_at, version
+	`
+	rows, err := r.db.NamedQueryContext(ctx, query, u)
+	if err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return rows.StructScan(u)
+	}
+
+	return pkg.ErrNotFound
 }

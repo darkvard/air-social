@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - Air Social</title>
+    <style>
+        /* --- PAGE STYLES --- */
+        body { background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        
+        /* Card */
+        .card { background: white; padding: 48px 40px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); text-align: center; max-width: 420px; width: 90%; }
+        
+        /* Header Brand */
+        .brand-title { margin: 0 0 24px 0; color: #111827; font-weight: 800; font-size: 32px; letter-spacing: -0.025em; line-height: 1; }
+        
+        /* Status Text */
+        .status-title { margin: 0 0 16px; font-size: 20px; font-weight: 700; }
+        .title-success { color: #166534; }
+        .title-error { color: #991b1b; }
+        p { color: #4b5563; line-height: 1.6; margin-bottom: 40px; font-size: 16px; }
+        
+        /* Button */
+        .btn { display: inline-block; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: background 0.2s, transform 0.1s; border: none; cursor: pointer; font-size: 16px; width: 100%; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background-color: #2563eb; color: white; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
+        .btn-primary:hover { background-color: #1d4ed8; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 class="brand-title">Air Social</h1>
+
+        <h2 class="status-title {{if .Success}}title-success{{else}}title-error{{end}}">
+            {{if .Success}}Verification Successful!{{else}}Verification Failed{{end}}
+        </h2>
+        
+        <p>
+            {{if .Success}}
+                Thank you! Your email has been verified. You can close this window and return to the app to login.
+            {{else}}
+                Sorry, the verification link is invalid or has expired. Please try requesting a new one.
+            {{end}}
+        </p>
+
+        <button onclick="handleClose({{.Success}})" class="btn btn-primary">
+            Close Window
+        </button>
+    </div>
+
+    <script>
+        function handleClose(isSuccess) {
+            if (isSuccess) {
+                alert("Account verified successfully! Please open your app to login.");
+            }
+            
+            window.close();
+            if (!window.closed) {
+                alert("Browser prevented closing functionality. Please close this tab manually.");
+            }
+        }
+    </script>
+</body>
+</html>
