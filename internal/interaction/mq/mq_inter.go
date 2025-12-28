@@ -8,6 +8,7 @@ import (
 
 	"github.com/rabbitmq/amqp091-go"
 
+	"air-social/internal/cache"
 	"air-social/internal/domain"
 	mess "air-social/internal/infrastructure/messaging"
 	"air-social/internal/worker"
@@ -27,10 +28,11 @@ type rabbitMQ struct {
 	workerMgr *worker.Manager
 }
 
-func newRabbitMQ(conn *amqp091.Connection) *rabbitMQ {
+func newRabbitMQ(conn *amqp091.Connection, c cache.CacheStorage) *rabbitMQ {
 	mgr := worker.NewManager(
 		email.NewEmailWorker(
 			conn,
+			c,
 			mess.EventsExchange,
 			mess.QueueConfig{
 				Queue:      "email.interaction.q",
@@ -55,8 +57,8 @@ func newRabbitMQ(conn *amqp091.Connection) *rabbitMQ {
 	}
 }
 
-func TestRabbitMQ(conn *amqp091.Connection) {
-	mq := newRabbitMQ(conn)
+func TestRabbitMQ(conn *amqp091.Connection, c cache.CacheStorage) {
+	mq := newRabbitMQ(conn, c)
 	mq.testing()
 }
 

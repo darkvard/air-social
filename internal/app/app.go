@@ -14,7 +14,7 @@ import (
 	"air-social/internal/app/provider"
 	"air-social/internal/config"
 	mess "air-social/internal/infrastructure/messaging"
-	"air-social/internal/interaction/mq"
+	rp "air-social/internal/repository/redis"
 	"air-social/internal/transport/ws"
 	"air-social/internal/worker"
 	"air-social/pkg"
@@ -42,26 +42,27 @@ func NewApplication() (*Application, error) {
 	}
 
 	// redis
-	redis := boot.NewRedis(cfg.Redis)
+	rc := boot.NewRedisClient(cfg.Redis)
+	cache := rp.NewRedisCache(rc)
 
 	// rabbit
 	rabbitConn := boot.NewRabbitMQ(cfg.RabbitMQ)
 	rabbitPublisher := boot.NewPublisher(rabbitConn)
-	workerManager := boot.NewWorkerManager(rabbitConn, cfg.Mailer)
+	workerManager := boot.NewWorkerManager(rabbitConn, cache, cfg.Mailer)
 
 	// http
 	httpServer := provider.NewHttpProvider(
 		db,
 		cfg.Token,
 		pkg.NewBcrypt(),
-		redis,
+		cache,
 		rabbitPublisher,
 	)
 
 	return &Application{
 		Config:        cfg,
 		DB:            db,
-		Redis:         redis,
+		Redis:         rc,
 		RabbitConn:    rabbitConn,
 		Event:         rabbitPublisher,
 		WorkerManager: workerManager,
@@ -92,8 +93,4 @@ func (a *Application) Run() {
 	gin.SetMode(gin.DebugMode)
 	port := fmt.Sprintf(":%s", a.Config.Server.Port)
 	a.NewRouter().Run(port)
-}
-
-func (a *Application) TestMessageQueue() {
-	mq.TestRabbitMQ(a.RabbitConn)
 }

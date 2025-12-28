@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -99,6 +100,7 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any)
 		amqp.Publishing{
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
+			MessageId:    uuid.NewString(),
 			Timestamp:    time.Now(),
 			Body:         body,
 		},

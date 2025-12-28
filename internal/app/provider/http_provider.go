@@ -2,8 +2,8 @@ package provider
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/redis/go-redis/v9"
 
+	"air-social/internal/cache"
 	"air-social/internal/config"
 	"air-social/internal/domain"
 	"air-social/pkg"
@@ -19,7 +19,7 @@ func NewHttpProvider(
 	db *sqlx.DB,
 	cfg config.TokenConfig,
 	hash pkg.Hasher,
-	cache *redis.Client,
+	cache cache.CacheStorage,
 	queue domain.EventPublisher,
 ) *HttpProvider {
 	repo := NewRepoProvider(db, cache)

@@ -6,15 +6,17 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
+	"air-social/internal/cache"
 	"air-social/internal/domain"
 	mess "air-social/internal/infrastructure/messaging"
 )
 
 type Worker struct {
-	conn *amqp.Connection
-	eCfg mess.ExchangeConfig
-	qCfg mess.QueueConfig
-	disp domain.EventHandler
+	conn  *amqp.Connection
+	cache cache.CacheStorage
+	eCfg  mess.ExchangeConfig
+	qCfg  mess.QueueConfig
+	disp  domain.EventHandler
 
 	ch   *amqp.Channel
 	done chan struct{}
@@ -23,16 +25,18 @@ type Worker struct {
 
 func NewEmailWorker(
 	conn *amqp.Connection,
+	cache cache.CacheStorage,
 	eCfg mess.ExchangeConfig,
 	qCfg mess.QueueConfig,
 	disp domain.EventHandler,
 ) *Worker {
 	return &Worker{
-		conn: conn,
-		eCfg: eCfg,
-		qCfg: qCfg,
-		disp: disp,
-		done: make(chan struct{}),
+		conn:  conn,
+		cache: cache,
+		eCfg:  eCfg,
+		qCfg:  qCfg,
+		disp:  disp,
+		done:  make(chan struct{}),
 	}
 }
 
@@ -71,7 +75,7 @@ func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) error {
 
 	w.ch = ch
 	wg.Add(1)
-	go consumeLoop(ctx, msgs, w.disp, w.done, wg)
+	go consumeLoop(ctx, w.cache, msgs, w.disp, w.done, wg)
 
 	return nil
 }

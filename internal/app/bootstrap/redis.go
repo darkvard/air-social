@@ -6,7 +6,7 @@ import (
 	"air-social/internal/config"
 )
 
-func NewRedis(rc config.RedisConfig) *redis.Client {
+func NewRedisClient(rc config.RedisConfig) *redis.Client {
 	return redis.NewClient(&redis.Options{
 		Addr:     rc.Addr,
 		Password: rc.Password,
