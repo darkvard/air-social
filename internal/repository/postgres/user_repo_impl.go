@@ -54,5 +54,6 @@ func (r *UserRepoImpl) GetByID(ctx context.Context, id int64) (*domain.User, err
 }
 
 func (r *UserRepoImpl) Update(ctx context.Context, u *domain.User) error {
+	// todo
 	return nil
 }

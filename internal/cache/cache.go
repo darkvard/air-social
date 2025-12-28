@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// <system>:<feature>:<state>:<id>
+const (
+	WorkerEmailProcessed = "worker:email:processed:"
+	WorkerEmailVerify    = "worker:email:verify:"
+)
+
 type CacheStorage interface {
 	Get(ctx context.Context, key string, dst any) error
 	Set(ctx context.Context, key string, val any, ttl time.Duration) error

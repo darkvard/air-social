@@ -6,28 +6,28 @@ import (
 	"air-social/internal/cache"
 	"air-social/internal/config"
 	"air-social/internal/domain"
-	"air-social/pkg"
+	"air-social/internal/routes"
 )
 
 type HttpProvider struct {
-	Repo    *RepoProvider
-	Service *ServiceProvider
-	Handler *HandlerProvider
+	Repository *RepoProvider
+	Service    *ServiceProvider
+	Handler    *HandlerProvider
 }
 
 func NewHttpProvider(
 	db *sqlx.DB,
 	cfg config.TokenConfig,
-	hash pkg.Hasher,
-	cache cache.CacheStorage,
-	queue domain.EventPublisher,
+	cs cache.CacheStorage,
+	pub domain.EventPublisher,
+	rr routes.Registry,
 ) *HttpProvider {
-	repo := NewRepoProvider(db, cache)
-	service := NewServiceProvider(repo, cfg, hash, queue)
+	repository := NewRepoProvider(db, cs)
+	service := NewServiceProvider(repository, cfg, pub, rr, cs)
 	handler := NewHandlerProvider(service)
 	return &HttpProvider{
-		Repo:    repo,
-		Service: service,
-		Handler: handler,
+		Repository: repository,
+		Service:    service,
+		Handler:    handler,
 	}
 }

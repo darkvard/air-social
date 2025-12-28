@@ -10,6 +10,7 @@ import (
 type UserService interface {
 	CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error)
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
+	VerifyEmail(ctx context.Context, email string) error
 }
 
 type UserServiceImpl struct {
@@ -45,6 +46,16 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserI
 	}, nil
 }
 
-func(s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	return s.repo.GetByEmail(ctx, email)
+}
+
+func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
+	user, err := s.GetByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	user.Verified = true
+	return s.repo.Update(ctx, user)
 }

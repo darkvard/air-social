@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/gin-gonic/gin"
 
+	"air-social/internal/routes"
 	"air-social/internal/transport/http/handler"
 	"air-social/internal/transport/http/middleware"
 	"air-social/pkg"
@@ -20,7 +21,7 @@ func (a *Application) NewRouter() *gin.Engine {
 
 	a.commonRoutes(r)
 
-	v1 := r.Group("/v1")
+	v1 := r.Group("/" + a.Config.Server.Version)
 	{
 		authRoutes(v1, h.Auth, authMiddleware)
 		// userRoutes(v1, h.User, authMiddleware())
@@ -34,24 +35,25 @@ func (app *Application) commonRoutes(r *gin.Engine) {
 		pkg.NotFound(c, "Page not found")
 	})
 
-	r.GET("/health", func(c *gin.Context) {
+	r.GET(routes.Health, func(c *gin.Context) {
+		// todo: base auth
 		pkg.Success(c, app.HealthStatus())
 	})
 }
 
 func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, authMiddleware gin.HandlerFunc) {
-	auth := rg.Group("/auth")
+	auth := rg.Group(routes.AuthGroup)
 	{
-		auth.POST("/register", h.Register)
-		auth.POST("/login", h.Login)
-		auth.POST("/refresh", h.Refresh)
-		auth.POST("/reset-password", h.ResetPassword)
-		auth.POST("/forgot-password", h.ForgotPassword)
-		auth.GET("/verify-email", h.VerifyEmail)
+		auth.POST(routes.Register, h.Register)
+		auth.POST(routes.Login, h.Login)
+		auth.POST(routes.Refresh, h.Refresh)
+		auth.POST(routes.ResetPassword, h.ResetPassword)
+		auth.POST(routes.ForgotPassword, h.ForgotPassword)
+		auth.GET(routes.VerifyEmail, h.VerifyEmail)
 	}
 	protected := auth.Group("").Use(authMiddleware)
 	{
-		protected.POST("/logout", h.Logout)
+		protected.POST(routes.Logout, h.Logout)
 	}
 }
 

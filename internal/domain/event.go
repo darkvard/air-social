@@ -2,12 +2,11 @@ package domain
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 )
 
 const (
-	EventEmailRegister = "email.register"
+	EmailVerify = "email.verify"
 )
 
 type EventHandler interface {
@@ -20,13 +19,13 @@ type EventPublisher interface {
 }
 
 type EventPayload struct {
-	EventID   string          `json:"event_id"`
-	EventType string          `json:"event_type"`
-	Timestamp time.Time       `json:"timestamp"`
-	Data      json.RawMessage `json:"data"`
+	EventID   string    `json:"event_id"`
+	EventType string    `json:"event_type"`
+	Timestamp time.Time `json:"timestamp"`
+	Data      any       `json:"data"`
 }
 
-type RegisterEventPayload struct {
+type EventEmailVerify struct {
 	Email  string `json:"email"`
 	Name   string `json:"name"`
 	Link   string `json:"link"`

@@ -33,18 +33,9 @@ func (m *MockUserService) GetByEmail(ctx context.Context, email string) (*domain
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-type MockHasher struct {
-	mock.Mock
-}
-
-func (m *MockHasher) Hash(password string) (string, error) {
-	args := m.Called(password)
-	return args.String(0), args.Error(1)
-}
-
-func (m *MockHasher) Verify(password, hash string) bool {
-	args := m.Called(password, hash)
-	return args.Bool(0)
+func (m *MockUserService) VerifyEmail(ctx context.Context, email string) error {
+	args := m.Called(ctx, email)
+	return args.Error(0)
 }
 
 type MockToken struct {
@@ -103,55 +94,91 @@ func (m *MockQueue) Close() {
 	m.Called()
 }
 
+type MockCache struct {
+	mock.Mock
+}
+
+func (m *MockCache) Get(ctx context.Context, key string, dst any) error {
+	args := m.Called(ctx, key, dst)
+	return args.Error(0)
+}
+
+func (m *MockCache) Set(ctx context.Context, key string, val any, ttl time.Duration) error {
+	args := m.Called(ctx, key, val, ttl)
+	return args.Error(0)
+}
+
+func (m *MockCache) Delete(ctx context.Context, key string) error {
+	args := m.Called(ctx, key)
+	return args.Error(0)
+}
+
+func (m *MockCache) IsExist(ctx context.Context, key string) (bool, error) {
+	args := m.Called(ctx, key)
+	return args.Bool(0), args.Error(1)
+}
+
+type MockRoutes struct {
+	mock.Mock
+}
+
+func (m *MockRoutes) VerifyEmailURL(token string) string {
+	return m.Called(token).String(0)
+}
+
+func (m *MockRoutes) Prefix() string {
+	return m.Called().String(0)
+}
+
 func TestAuthService_Register(t *testing.T) {
 	mockUsers := new(MockUserService)
-	mockHasher := new(MockHasher)
+	mockCache := new(MockCache)
 	mockToken := new(MockToken)
 	mockQueue := new(MockQueue)
+	mockRoutes := new(MockRoutes)
 
-	authService := NewAuthService(mockUsers, mockToken, mockHasher, mockQueue)
+	authService := NewAuthService(mockUsers, mockToken, mockQueue, mockRoutes, mockCache)
 
 	validReq := &domain.RegisterRequest{
 		Email:    "test@example.com",
 		Username: "tester",
 		Password: "123456",
 	}
-	hashed := "hashed-pass"
 
 	tests := []struct {
 		name          string
 		input         *domain.RegisterRequest
-		setupMocks    func(u *MockUserService, h *MockHasher)
+		setupMocks    func(u *MockUserService)
 		expectedError error
 	}{
 		{
-			name:  "hash error",
-			input: validReq,
-			setupMocks: func(u *MockUserService, h *MockHasher) {
-				h.On("Hash", validReq.Password).Return("", assert.AnError)
-			},
-			expectedError: assert.AnError,
-		},
-		{
 			name:  "success",
 			input: validReq,
-			setupMocks: func(u *MockUserService, h *MockHasher) {
-				h.On("Hash", validReq.Password).Return(hashed, nil)
-
-				expectedCreateInput := &domain.CreateUserInput{
-					Email:        validReq.Email,
-					Username:     validReq.Username,
-					PasswordHash: hashed,
-				}
-
-				u.On("CreateUser", mock.Anything, expectedCreateInput).
+			setupMocks: func(u *MockUserService) {
+				u.On("CreateUser", mock.Anything, mock.MatchedBy(func(input *domain.CreateUserInput) bool {
+					return input.Email == validReq.Email &&
+						input.Username == validReq.Username &&
+						input.PasswordHash != "" && input.PasswordHash != validReq.Password
+				})).
 					Return(&domain.UserResponse{
 						ID:       1,
 						Email:    validReq.Email,
 						Username: validReq.Username,
 					}, nil)
+
+				mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				mockRoutes.On("VerifyEmailURL", mock.Anything).Return("http://test.link")
+				mockQueue.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedError: nil,
+		},
+		{
+			name:  "create user error",
+			input: validReq,
+			setupMocks: func(u *MockUserService) {
+				u.On("CreateUser", mock.Anything, mock.Anything).Return(nil, assert.AnError)
+			},
+			expectedError: assert.AnError,
 		},
 	}
 
@@ -159,10 +186,14 @@ func TestAuthService_Register(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockUsers.ExpectedCalls = nil
 			mockUsers.Calls = nil
-			mockHasher.ExpectedCalls = nil
-			mockHasher.Calls = nil
+			mockCache.ExpectedCalls = nil
+			mockCache.Calls = nil
+			mockQueue.ExpectedCalls = nil
+			mockQueue.Calls = nil
+			mockRoutes.ExpectedCalls = nil
+			mockRoutes.Calls = nil
 
-			tc.setupMocks(mockUsers, mockHasher)
+			tc.setupMocks(mockUsers)
 			res, err := authService.Register(context.Background(), tc.input)
 
 			if tc.expectedError != nil {
@@ -174,18 +205,21 @@ func TestAuthService_Register(t *testing.T) {
 				assert.Equal(t, tc.input.Username, res.Username)
 			}
 			mockUsers.AssertExpectations(t)
-			mockHasher.AssertExpectations(t)
+			mockCache.AssertExpectations(t)
+			mockQueue.AssertExpectations(t)
+			mockRoutes.AssertExpectations(t)
 		})
 	}
 }
 
 func TestAuthService_Login(t *testing.T) {
 	mockUsers := new(MockUserService)
-	mockHasher := new(MockHasher)
+	mockCache := new(MockCache)
 	mockToken := new(MockToken)
 	mockQueue := new(MockQueue)
+	mockRoutes := new(MockRoutes)
 
-	authService := NewAuthService(mockUsers, mockToken, mockHasher, mockQueue)
+	authService := NewAuthService(mockUsers, mockToken, mockQueue, mockRoutes, mockCache)
 
 	loginReq := &domain.LoginRequest{
 		Email:    "test@example.com",
@@ -193,11 +227,12 @@ func TestAuthService_Login(t *testing.T) {
 		DeviceID: "device-123",
 	}
 
+	hashedPwd, _ := hashPassword(loginReq.Password)
 	user := &domain.User{
 		ID:           1,
 		Email:        loginReq.Email,
 		Username:     "tester",
-		PasswordHash: "hashed-password",
+		PasswordHash: hashedPwd,
 		CreatedAt:    time.Now(),
 	}
 
@@ -228,8 +263,9 @@ func TestAuthService_Login(t *testing.T) {
 			name:  "invalid password",
 			input: loginReq,
 			setupMocks: func() {
-				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil)
-				mockHasher.On("Verify", loginReq.Password, user.PasswordHash).Return(false)
+				badUser := *user
+				badUser.PasswordHash, _ = hashPassword("wrong-password")
+				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(&badUser, nil)
 			},
 			expectedError: pkg.ErrInvalidCredentials,
 		},
@@ -238,7 +274,6 @@ func TestAuthService_Login(t *testing.T) {
 			input: loginReq,
 			setupMocks: func() {
 				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil)
-				mockHasher.On("Verify", loginReq.Password, user.PasswordHash).Return(true)
 				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(nil, assert.AnError)
 			},
 			expectedError: assert.AnError,
@@ -248,7 +283,6 @@ func TestAuthService_Login(t *testing.T) {
 			input: loginReq,
 			setupMocks: func() {
 				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil)
-				mockHasher.On("Verify", loginReq.Password, user.PasswordHash).Return(true)
 				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(tokenInfo, nil)
 			},
 			expectedUserResp: &domain.UserResponse{
@@ -266,8 +300,6 @@ func TestAuthService_Login(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockUsers.ExpectedCalls = nil
 			mockUsers.Calls = nil
-			mockHasher.ExpectedCalls = nil
-			mockHasher.Calls = nil
 			mockToken.ExpectedCalls = nil
 			mockToken.Calls = nil
 
@@ -280,7 +312,6 @@ func TestAuthService_Login(t *testing.T) {
 			assert.Equal(t, tc.expectedTokenInfo, tokenInfo)
 
 			mockUsers.AssertExpectations(t)
-			mockHasher.AssertExpectations(t)
 			mockToken.AssertExpectations(t)
 		})
 	}

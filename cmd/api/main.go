@@ -19,7 +19,7 @@ func main() {
 	pkg.NewLogger(app.Config.Server.Env)
 	welcome(app.Config.Server)
 
-	testEmail(app.Config.Mailer)
+	// testEmail(app.Config.Mailer)
 
 	app.Run()
 }

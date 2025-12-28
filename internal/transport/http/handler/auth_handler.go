@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain"
@@ -99,5 +101,16 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 }
 
 func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		pkg.HandleValidateError(c, errors.New("token is required"))
+		return
+	}
 
+	if err := h.auth.VerifyEmail(c.Request.Context(), token); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, "email verified successfully")
 }

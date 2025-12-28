@@ -3,8 +3,10 @@ package event
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"air-social/internal/domain"
+	"air-social/pkg"
 	"air-social/templates"
 )
 
@@ -16,18 +18,23 @@ func NewEmailHandler(sender domain.EmailSender) *EmailHandleImpl {
 	return &EmailHandleImpl{sender: sender}
 }
 
-func (d *EmailHandleImpl) Handle(ctx context.Context, evt domain.EventPayload) error {
+func (e *EmailHandleImpl) Handle(ctx context.Context, evt domain.EventPayload) error {
 	switch evt.EventType {
-	case domain.EventEmailRegister:
-		return d.verifyEmail(evt)
+	case domain.EmailVerify:
+		return e.verifyEmail(evt)
 	default:
 		return nil
 	}
 }
 
-func (d *EmailHandleImpl) verifyEmail(evt domain.EventPayload) error {
-	var payload domain.RegisterEventPayload
-	if err := json.Unmarshal(evt.Data, &payload); err != nil {
+func (e *EmailHandleImpl) verifyEmail(evt domain.EventPayload) error {
+	dataBytes, err := json.Marshal(evt.Data)
+	if err != nil {
+		return fmt.Errorf("failed to marshal event data: %w", err)
+	}
+
+	var payload domain.EventEmailVerify
+	if err := json.Unmarshal(dataBytes, &payload); err != nil {
 		return err
 	}
 
@@ -44,5 +51,9 @@ func (d *EmailHandleImpl) verifyEmail(evt domain.EventPayload) error {
 		Data:         data,
 	}
 
-	return d.sender.Send(env)
+	if err := e.sender.Send(env); err != nil {
+		pkg.Log().Errorw("failed to send email", "error", err, "to", payload.Email)
+		return err
+	}
+	return nil
 }

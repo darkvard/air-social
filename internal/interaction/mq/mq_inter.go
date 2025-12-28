@@ -2,7 +2,6 @@ package mq
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -119,7 +118,7 @@ func initEvent(name, key string) domain.EventPayload {
 		EventID:   name,
 		EventType: key,
 		Timestamp: time.Now(),
-		Data:      json.RawMessage(`{}`),
+		Data:      map[string]interface{}{},
 	}
 }
 

@@ -1,9 +1,12 @@
 package pkg
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+
+	"air-social/internal/domain"
 )
 
 type FieldError struct {
@@ -45,5 +48,17 @@ func ValidateRequestError(err error) *ValidationResult {
 		return &result
 	}
 
+	return nil
+}
+
+func ValidateEventData(eventType string, data any) error {
+	switch eventType {
+	case domain.EmailVerify:
+		if _, ok := data.(domain.EventEmailVerify); !ok {
+			return fmt.Errorf("invalid event data: expected EventEmailVerify for type %s, got %T", eventType, data)
+		}
+	default:
+		return fmt.Errorf("unregistered event type: %s", eventType)
+	}
 	return nil
 }

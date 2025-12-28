@@ -14,10 +14,10 @@ type RepoProvider struct {
 	Cache cache.CacheStorage
 }
 
-func NewRepoProvider(db *sqlx.DB, c cache.CacheStorage) *RepoProvider {
+func NewRepoProvider(db *sqlx.DB, cs cache.CacheStorage) *RepoProvider {
 	return &RepoProvider{
 		User:  postgres.NewUserRepoImpl(db),
 		Token: postgres.NewTokenRepository(db),
-		Cache: c,
+		Cache: cs,
 	}
 }

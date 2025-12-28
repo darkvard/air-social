@@ -3,6 +3,7 @@ package email
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -10,11 +11,7 @@ import (
 
 	"air-social/internal/cache"
 	"air-social/internal/domain"
-)
-
-const (
-	dedupKeyPrefix = "email:processed:"
-	dedupTTL       = 24 * time.Hour
+	"air-social/pkg"
 )
 
 func consumeLoop(
@@ -50,31 +47,37 @@ func handleMessage(
 ) {
 	var evt domain.EventPayload
 	if err := json.Unmarshal(msg.Body, &evt); err != nil {
+		pkg.Log().Errorw("failed to unmarshal event", "error", err, "msg_id", msg.MessageId)
 		msg.Nack(false, false)
 		return
 	}
 
 	key := getCacheKey(msg.MessageId)
 	if msg.MessageId != "" {
-		exists, _ := cache.IsExist(ctx, key)
+		exists, err := cache.IsExist(ctx, key)
+		if err != nil {
+			pkg.Log().Warnw("failed to check idempotency key", "error", err, "msg_id", msg.MessageId)
+		}
 		if exists {
+			pkg.Log().Infow("message already processed, skipping", "msg_id", msg.MessageId, "type", evt.EventType)
 			msg.Ack(false)
 			return
 		}
 	}
 
 	if err := disp.Handle(ctx, evt); err != nil {
+		pkg.Log().Errorw("failed to handle event", "error", err, "type", evt.EventType)
 		handleRetry(msg)
 		return
 	}
 
 	if msg.MessageId != "" {
-		_ = cache.Set(ctx, key, "1", dedupTTL)
+		_ = cache.Set(ctx, key, "1", 24*time.Hour)
 	}
 
 	msg.Ack(false)
 }
 
 func getCacheKey(id string) string {
-	return dedupKeyPrefix + id
+	return fmt.Sprintf(cache.WorkerEmailProcessed+"%s", id)
 }

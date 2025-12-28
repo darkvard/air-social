@@ -19,11 +19,11 @@ var EventsExchange = ExchangeConfig{
 	Type: "topic",
 }
 
-var EmailRegisterQueueConfig = QueueConfig{
-	Queue:      "email_register_queue",
-	RoutingKey: "email.register",
+var EmailVerifyQueueConfig = QueueConfig{
+	Queue:      "email_verify_queue",
+	RoutingKey: "email.verify",
 
 	DeadLetterExchange:   EventsExchange.Name,
-	DeadLetterQueue:      "email_register_queue.dlq",
-	DeadLetterRoutingKey: "email.register.dlq",
+	DeadLetterQueue:      "email_verify_queue.dlq",
+	DeadLetterRoutingKey: "email.verify.dlq",
 }
