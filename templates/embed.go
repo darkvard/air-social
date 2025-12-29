@@ -7,5 +7,5 @@ const (
 	VerifyEmailPath = "email/verify_email.gohtml"
 )
 
-//go:embed email/*.gohtml
-var EmailFS embed.FS
+//go:embed email pages
+var TemplatesFS embed.FS

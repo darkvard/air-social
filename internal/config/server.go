@@ -6,6 +6,8 @@ type ServerConfig struct {
 	Env      string
 	BaseURL  string
 	Version  string
+	Username string
+	Password string
 }
 
 func ServerCfg() ServerConfig {
@@ -15,5 +17,7 @@ func ServerCfg() ServerConfig {
 		Env:      getString("APP_ENV", "development"),
 		BaseURL:  getString("APP_BASE_URL", "http://localhost:3000"),
 		Version:  getString("APP_VERSION", "v1"),
+		Username: getString("APP_BASIC_AUTH_USERNAME", "admin"),
+		Password: getString("APP_BASIC_AUTH_PASSWORD", "password"),
 	}
 }

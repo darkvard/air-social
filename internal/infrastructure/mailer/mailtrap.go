@@ -32,7 +32,7 @@ func (m *mailtrap) Send(env *domain.EmailEnvelope) error {
 	contentPath := env.TemplateFile
 
 	// parsing (merge layout + content)
-	t, err := template.ParseFS(templates.EmailFS, layoutPath, contentPath)
+	t, err := template.ParseFS(templates.TemplatesFS, layoutPath, contentPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse templates (%s + %s): %w", layoutPath, contentPath, err)
 	}

@@ -1,20 +1,30 @@
 package app
 
 import (
+	"html/template"
+
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/routes"
 	"air-social/internal/transport/http/handler"
 	"air-social/internal/transport/http/middleware"
 	"air-social/pkg"
+	"air-social/templates"
 )
 
 func (a *Application) NewRouter() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+
 	r.SetTrustedProxies(nil)
-	r.LoadHTMLGlob("templates/**/*")
+	r.SetHTMLTemplate(
+		template.Must(template.New("").ParseFS(
+			templates.TemplatesFS,
+			"*/*.gohtml",     // level 1, e.g. pages/login.gohtml
+		)),
+	)
+
 
 	h := a.Http.Handler
 	s := a.Http.Service
@@ -36,8 +46,9 @@ func (app *Application) commonRoutes(r *gin.Engine) {
 		pkg.NotFound(c, "Page not found")
 	})
 
-	r.GET(routes.Health, func(c *gin.Context) {
-		// todo: base auth
+	r.GET(routes.Health, gin.BasicAuth(
+		gin.Accounts{app.Config.Server.Username: app.Config.Server.Password},
+	), func(c *gin.Context) {
 		pkg.Success(c, app.HealthStatus())
 	})
 }
