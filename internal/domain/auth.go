@@ -18,8 +18,8 @@ type RefreshRequest struct {
 
 type LogoutRequest struct {
 	IsAllDevices bool   `json:"is_all_devices,omitempty"`
-	DeviceID   string `json:"-"`
-	UserID     int64  `json:"-"`
+	DeviceID     string `json:"-"`
+	UserID       int64  `json:"-"`
 }
 
 type ForgotPasswordRequest struct {

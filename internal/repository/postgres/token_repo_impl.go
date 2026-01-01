@@ -67,12 +67,12 @@ func (r *TokenRepoImpl) UpdateRevokedByDevice(ctx context.Context, userID int64,
 }
 
 func (r *TokenRepoImpl) DeleteExpiredAndRevoked(ctx context.Context, expiredBefore time.Time, revokedBefore time.Time) error {
-    query := `
+	query := `
         DELETE FROM refresh_tokens 
         WHERE (revoked_at < $1) OR (expires_at < $2)
     `
-    if _, err := r.db.ExecContext(ctx, query, revokedBefore, expiredBefore); err != nil {
-        return err
-    }
-    return nil
+	if _, err := r.db.ExecContext(ctx, query, revokedBefore, expiredBefore); err != nil {
+		return err
+	}
+	return nil
 }

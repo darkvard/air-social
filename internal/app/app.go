@@ -33,6 +33,7 @@ type Application struct {
 	Worker     *worker.Manager
 	Http       *provider.HttpProvider
 	Hub        *ws.Hub
+	Registry   routes.Registry
 }
 
 func NewApplication() (*Application, error) {
@@ -73,6 +74,7 @@ func NewApplication() (*Application, error) {
 		Worker:     workerManager,
 		Http:       httpServer,
 		Hub:        ws.NewHub(),
+		Registry:   rr,
 	}, nil
 }
 
@@ -93,7 +95,7 @@ func (a *Application) Cleanup() {
 
 func (a *Application) Run() {
 	gin.SetMode(gin.DebugMode)
-	
+
 	if err := a.Worker.Start(context.Background()); err != nil {
 		pkg.Log().Errorw("failed to start worker", "error", err)
 	}

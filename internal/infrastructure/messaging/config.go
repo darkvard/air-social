@@ -6,8 +6,8 @@ type ExchangeConfig struct {
 }
 
 type QueueConfig struct {
-	Queue      string
-	RoutingKey string
+	Queue                string
+	RoutingKey           string
 	DeadLetterQueue      string
 	DeadLetterRoutingKey string
 	DeadLetterExchange   string

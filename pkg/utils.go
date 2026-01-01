@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 )
- 
+
 // FormatTTLVerbose converts a time.Duration (TTL) into a human-readable string.
 // Example outputs:
 //

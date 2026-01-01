@@ -1,0 +1,316 @@
+basePath: /v1
+definitions:
+  domain.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  domain.LoginRequest:
+    properties:
+      device_id:
+        type: string
+      email:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - device_id
+    - email
+    - password
+    type: object
+  domain.LogoutRequest:
+    properties:
+      is_all_devices:
+        type: boolean
+    type: object
+  domain.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  domain.RegisterRequest:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      username:
+        maxLength: 30
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  domain.ResetPasswordRequest:
+    properties:
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
+  domain.TokenInfo:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+    type: object
+  domain.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      profile: {}
+      username:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  pkg.FieldError:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  pkg.ValidationResult:
+    properties:
+      errors:
+        items:
+          $ref: '#/definitions/pkg.FieldError'
+        type: array
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Backend service for Air Social application.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Air Social API
+  version: "1.0"
+paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Initiate password reset process. Sends an email containing a random
+        token to reset the password.
+      parameters:
+      - description: Forgot Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Instruction message
+          schema:
+            type: string
+      summary: Request password reset
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user credentials. Returns a JWT Access Token and a
+        Refresh Token.
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns user info and tokens
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revoke current device session or all sessions
+      parameters:
+      - description: Logout Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: logout success
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Use a valid Refresh Token to obtain a new pair of JWT Access/Refresh
+        tokens.
+      parameters:
+      - description: Refresh Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.TokenInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+      summary: Refresh access token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account. Sends a verification email with a random
+        token to the registered email address.
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+      summary: Register a new user account
+      tags:
+      - Auth
+  /auth/reset-password:
+    get:
+      description: Render the HTML page for resetting password using the random token
+        from email.
+      parameters:
+      - description: Random Reset Token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML Page
+          schema:
+            type: string
+      summary: Show reset password page
+      tags:
+      - Auth
+    post:
+      consumes:
+      - application/json
+      description: Update the user's password using the valid random token received
+        via email.
+      parameters:
+      - description: Reset Password Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: password update successfully
+          schema:
+            type: string
+      summary: Reset password
+      tags:
+      - Auth
+  /auth/verify-email:
+    get:
+      description: Verify user email address using the random token sent during registration.
+      parameters:
+      - description: Random Verification Token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML Page
+          schema:
+            type: string
+      summary: Verify email address
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

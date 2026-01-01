@@ -4,6 +4,8 @@ import (
 	"html/template"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"air-social/internal/routes"
 	"air-social/internal/transport/http/handler"
@@ -30,6 +32,9 @@ func (a *Application) NewRouter() *gin.Engine {
 	authMiddleware := middleware.AuthMiddleware(s.Token)
 
 	a.commonRoutes(r)
+
+	// Swagger Route
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	v1 := r.Group("/" + a.Config.Server.Version)
 	{

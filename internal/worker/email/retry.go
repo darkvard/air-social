@@ -27,7 +27,7 @@ func handleRetry(ctx context.Context, c cache.CacheStorage, msg amqp.Delivery, e
 	msg.Nack(false, false)
 	deleteRetryCount(ctx, key, c)
 }
- 
+
 func getRetryCount(ctx context.Context, key string, c cache.CacheStorage) int {
 	var retry int
 	_ = c.Get(ctx, key, &retry)

@@ -15,11 +15,11 @@ const (
 	Logout         = "/logout"
 )
 
-
 type Registry interface {
 	Prefix() string
 	VerifyEmailURL(token string) string
 	ResetPasswordURL(token string) string
+	SwaggerURL() string
 }
 
 type RegistryImpl struct {
@@ -44,4 +44,8 @@ func (r *RegistryImpl) VerifyEmailURL(token string) string {
 
 func (r *RegistryImpl) ResetPasswordURL(token string) string {
 	return fmt.Sprintf("%s%s%s?token=%s", r.Prefix(), AuthGroup, ResetPassword, token)
+}
+
+func (r *RegistryImpl) SwaggerURL() string {
+	return fmt.Sprintf("%s/swagger/index.html", r.baseURL)
 }

@@ -78,5 +78,3 @@ func handleMessage(
 
 	msg.Ack(false)
 }
-
- 

@@ -21,6 +21,17 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 	}
 }
 
+// Register godoc
+//
+//	@Summary		Register a new user account
+//	@Description	Create a new user account. Sends a verification email with a random token to the registered email address.
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		domain.RegisterRequest	true	"Register Request"
+//	@Success		200		{object}	domain.UserResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Router			/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req domain.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -37,6 +48,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	pkg.Success(c, result)
 }
 
+// Login godoc
+//
+//	@Summary		Login user
+//	@Description	Authenticate user credentials. Returns a JWT Access Token and a Refresh Token.
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		domain.LoginRequest		true	"Login Request"
+//	@Success		200		{object}	map[string]interface{}	"Returns user info and tokens"
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Router			/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req domain.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -56,6 +78,17 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
+// Refresh godoc
+//
+//	@Summary		Refresh access token
+//	@Description	Use a valid Refresh Token to obtain a new pair of JWT Access/Refresh tokens.
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		domain.RefreshRequest	true	"Refresh Request"
+//	@Success		200		{object}	domain.TokenInfo
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Router			/auth/refresh [post]
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req domain.RefreshRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -72,6 +105,17 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 	pkg.Success(c, tokens)
 }
 
+// Logout godoc
+//
+//	@Summary		Logout user
+//	@Description	Revoke current device session or all sessions
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		domain.LogoutRequest	true	"Logout Request"
+//	@Success		200		{string}	string					"logout success"
+//	@Router			/auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req domain.LogoutRequest
 	_ = c.ShouldBindJSON(&req)
@@ -92,6 +136,15 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	pkg.Success(c, "logout success")
 }
 
+// VerifyEmail godoc
+//
+//	@Summary		Verify email address
+//	@Description	Verify user email address using the random token sent during registration.
+//	@Tags			Auth
+//	@Produce		html
+//	@Param			token	query		string	true	"Random Verification Token"
+//	@Success		200		{string}	string	"HTML Page"
+//	@Router			/auth/verify-email [get]
 func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
@@ -107,6 +160,16 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	c.HTML(200, "verification.gohtml", gin.H{"Success": true})
 }
 
+// ForgotPassword godoc
+//
+//	@Summary		Request password reset
+//	@Description	Initiate password reset process. Sends an email containing a random token to reset the password.
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		domain.ForgotPasswordRequest	true	"Forgot Password Request"
+//	@Success		200		{string}	string							"Instruction message"
+//	@Router			/auth/forgot-password [post]
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req domain.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -123,6 +186,15 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	pkg.Success(c, "If the email exists, we have sent instructions on how to reset your password.")
 }
 
+// ShowResetPasswordPage godoc
+//
+//	@Summary		Show reset password page
+//	@Description	Render the HTML page for resetting password using the random token from email.
+//	@Tags			Auth
+//	@Produce		html
+//	@Param			token	query		string	true	"Random Reset Token"
+//	@Success		200		{string}	string	"HTML Page"
+//	@Router			/auth/reset-password [get]
 func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
@@ -142,6 +214,16 @@ func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 	c.HTML(200, "reset_password.gohtml", gin.H{"Success": true})
 }
 
+// ResetPassword godoc
+//
+//	@Summary		Reset password
+//	@Description	Update the user's password using the valid random token received via email.
+//	@Tags			Auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		domain.ResetPasswordRequest	true	"Reset Password Request"
+//	@Success		200		{string}	string						"password update successfully"
+//	@Router			/auth/reset-password [post]
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req domain.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

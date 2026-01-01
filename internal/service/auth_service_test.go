@@ -139,6 +139,10 @@ func (m *MockRoutes) Prefix() string {
 	return m.Called().String(0)
 }
 
+func (m *MockRoutes) SwaggerURL() string {
+	return m.Called().String(0)
+}
+
 func TestAuthService_Register(t *testing.T) {
 	mockUsers := new(MockUserService)
 	mockCache := new(MockCache)

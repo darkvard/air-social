@@ -26,8 +26,8 @@ var (
 )
 
 var (
-	ErrTokenExpired  = errors.New("token has expired")
-	ErrTokenRevoked  = errors.New("token has been revoked")
+	ErrTokenExpired = errors.New("token has expired")
+	ErrTokenRevoked = errors.New("token has been revoked")
 )
 
 const (
@@ -75,26 +75,26 @@ func MapPostgresError(err error) error {
 }
 
 func IsPermanentError(err error) bool {
-    if err == nil {
-        return false
-    }
+	if err == nil {
+		return false
+	}
 
-    msg := err.Error()
+	msg := err.Error()
 
-    switch {
-    case strings.Contains(msg, "html/template"):
-        return true
-    case strings.Contains(msg, "json:"):
-        return true
-    case strings.Contains(msg, "marshal"):
-        return true
-    case strings.Contains(msg, "unmarshal"):
-        return true
-    case strings.Contains(msg, "nil pointer"):
-        return true
-    case strings.Contains(msg, "index out of range"):
-        return true
-    }
+	switch {
+	case strings.Contains(msg, "html/template"):
+		return true
+	case strings.Contains(msg, "json:"):
+		return true
+	case strings.Contains(msg, "marshal"):
+		return true
+	case strings.Contains(msg, "unmarshal"):
+		return true
+	case strings.Contains(msg, "nil pointer"):
+		return true
+	case strings.Contains(msg, "index out of range"):
+		return true
+	}
 
-    return false
+	return false
 }

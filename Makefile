@@ -157,16 +157,14 @@ test-bench-pkg:
 	@go test -bench=. -benchmem $(pkg)	
 
 
-# ===================== AIR =====================
+# ===================== Other =====================
 
-# Air.toml references this:
+# Air reload, air.toml references this:
 .PHONY: air-build
 air-build:
 	@go build -buildvcs=false -o ./tmp/main ./cmd/api
 
-
-# ===================== RABBIT MQ ======================
-
+# Rabbit Message Queue
 .PHONY: rabbitmq-ui
 rabbitmq-ui:
 	@echo "🐰 RabbitMQ Management UI"
@@ -177,3 +175,13 @@ rabbitmq-ui:
 	@echo "----------------------------------"
 	@xdg-open http://localhost:$(RABBITMQ_UI_PORT) >/dev/null 2>&1 &
 
+
+# Swagger api documentation
+SWAGGER_MAIN_FILE := cmd/api/main.go
+.PHONY: docs
+docs:
+	@echo "1. Formatting Swagger annotations..."
+	@swag fmt
+	@echo "2. Generating Swagger files..."
+	@swag init -g $(SWAGGER_MAIN_FILE) --output docs
+	@echo "Done"

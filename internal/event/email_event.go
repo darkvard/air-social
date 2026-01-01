@@ -29,7 +29,6 @@ func (e *EmailHandleImpl) Handle(ctx context.Context, evt domain.EventPayload) e
 	}
 }
 
-
 func (e *EmailHandleImpl) verifyEmail(evt domain.EventPayload) error {
 	var payload domain.EventEmailData
 	if err := parsePayloadData(evt, &payload); err != nil {
@@ -64,7 +63,7 @@ func parsePayloadData(evt domain.EventPayload, target any) error {
 
 func (e *EmailHandleImpl) sendEmail(env *domain.EmailEnvelope, email, tag string) error {
 	if err := e.sender.Send(env); err != nil {
-		pkg.Log().Errorw("failed to send email","tag", tag, "error", err, "to", email)
+		pkg.Log().Errorw("failed to send email", "tag", tag, "error", err, "to", email)
 		return err
 	}
 	return nil
