@@ -92,6 +92,21 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	pkg.Success(c, "logout success")
 }
 
+func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		c.HTML(400, "verification.gohtml", gin.H{"Success": false})
+		return
+	}
+
+	if err := h.auth.VerifyEmail(c.Request.Context(), token); err != nil {
+		c.HTML(400, "verification.gohtml", gin.H{"Success": false})
+		return
+	}
+
+	c.HTML(200, "verification.gohtml", gin.H{"Success": true})
+}
+
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req domain.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -108,21 +123,36 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	pkg.Success(c, "If the email exists, we have sent instructions on how to reset your password.")
 }
 
-func (h *AuthHandler) ResetPassword(c *gin.Context) {
-	pkg.Success(c, "test")
-}
-
-func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
-		c.HTML(400, "verification.gohtml", gin.H{"Success": false})
+		c.HTML(400, "reset_password.gohtml", gin.H{"Success": false})
 		return
 	}
 
-	if err := h.auth.VerifyEmail(c.Request.Context(), token); err != nil {
-		c.HTML(400, "verification.gohtml", gin.H{"Success": false})
+	if err := h.auth.ResetPassword(
+		c.Request.Context(),
+		&domain.ResetPasswordRequest{Token: token, Password: ""},
+		true,
+	); err != nil {
+		c.HTML(400, "reset_password.gohtml", gin.H{"Success": false})
 		return
 	}
 
-	c.HTML(200, "verification.gohtml", gin.H{"Success": true})
+	c.HTML(200, "reset_password.gohtml", gin.H{"Success": true})
+}
+
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req domain.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	if err := h.auth.ResetPassword(c.Request.Context(), &req, false); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, "password update successfully")
 }

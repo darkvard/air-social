@@ -3,9 +3,7 @@ package email
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
-	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
@@ -23,7 +21,6 @@ func consumeLoop(
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -41,7 +38,7 @@ func consumeLoop(
 
 func handleMessage(
 	ctx context.Context,
-	cache cache.CacheStorage,
+	c cache.CacheStorage,
 	msg amqp.Delivery,
 	disp domain.EventHandler,
 ) {
@@ -52,9 +49,9 @@ func handleMessage(
 		return
 	}
 
-	key := getCacheKey(msg.MessageId)
+	key := cache.GetEmailProcessedKey(msg.MessageId)
 	if msg.MessageId != "" {
-		exists, err := cache.IsExist(ctx, key)
+		exists, err := c.IsExist(ctx, key)
 		if err != nil {
 			pkg.Log().Warnw("failed to check idempotency key", "error", err, "msg_id", msg.MessageId)
 		}
@@ -69,19 +66,17 @@ func handleMessage(
 		if pkg.IsPermanentError(err) {
 			pkg.Log().Errorw("permanent error detected, dropping", "error", err, "msg_id", msg.MessageId)
 			msg.Nack(false, false)
-			deleteRetryCount(ctx, getRetryKey(msg), cache)
+			deleteRetryCount(ctx, cache.GetEmailRetryKey(msg.MessageId), c)
 		} else {
-			handleRetry(ctx, cache, msg, err)
+			handleRetry(ctx, c, msg, err)
 		}
 		return
 	}
 	if msg.MessageId != "" {
-		_ = cache.Set(ctx, key, "1", 24*time.Hour)
+		_ = c.Set(ctx, key, "1", cache.OneDayTime)
 	}
 
 	msg.Ack(false)
 }
 
-func getCacheKey(id string) string {
-	return fmt.Sprintf(cache.WorkerEmailProcessed+"%s", id)
-}
+ 

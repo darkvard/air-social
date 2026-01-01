@@ -38,6 +38,11 @@ func (m *MockUserService) VerifyEmail(ctx context.Context, email string) error {
 	return args.Error(0)
 }
 
+func (m *MockUserService) UpdatePassword(ctx context.Context, email, newPassword string) error {
+	args := m.Called(ctx, email, newPassword)
+	return args.Error(0)
+}
+
 type MockToken struct {
 	mock.Mock
 }

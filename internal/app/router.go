@@ -21,10 +21,9 @@ func (a *Application) NewRouter() *gin.Engine {
 	r.SetHTMLTemplate(
 		template.Must(template.New("").ParseFS(
 			templates.TemplatesFS,
-			"*/*.gohtml",     // level 1, e.g. pages/login.gohtml
+			"*/*.gohtml", // level 1, e.g. pages/login.gohtml
 		)),
 	)
-
 
 	h := a.Http.Handler
 	s := a.Http.Service
@@ -60,6 +59,7 @@ func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, authMiddleware gin.
 		auth.POST(routes.Login, h.Login)
 		auth.POST(routes.Refresh, h.Refresh)
 		auth.POST(routes.ForgotPassword, h.ForgotPassword)
+		auth.GET(routes.ResetPassword, h.ShowResetPasswordPage)
 		auth.POST(routes.ResetPassword, h.ResetPassword)
 		auth.GET(routes.VerifyEmail, h.VerifyEmail)
 	}

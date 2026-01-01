@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -13,9 +14,35 @@ const (
 	WorkerEmailRetry     = "worker:email:retry:"
 )
 
+const (
+	OneMinuteTime      = 1 * time.Minute
+	FiveMinutesTime    = 5 * time.Minute
+	TenMinutesTime     = 10 * time.Minute
+	FifteenMinutesTime = 15 * time.Minute
+	ThirtyMinutesTime  = 30 * time.Minute
+	OneHourTime        = 1 * time.Hour
+	OneDayTime         = 24 * time.Hour
+)
+
 type CacheStorage interface {
 	Get(ctx context.Context, key string, dst any) error
 	Set(ctx context.Context, key string, val any, ttl time.Duration) error
 	Delete(ctx context.Context, key string) error
 	IsExist(ctx context.Context, key string) (bool, error)
+}
+
+func GetEmailVerificationKey(token string) string {
+	return fmt.Sprintf(WorkerEmailVerify+"%s", token)
+}
+
+func GetEmailProcessedKey(token string) string {
+	return fmt.Sprintf(WorkerEmailProcessed+"%s", token)
+}
+
+func GetEmailResetPasswordKey(token string) string {
+	return fmt.Sprintf(WorkerEmailReset+"%s", token)
+}
+
+func GetEmailRetryKey(token string) string {
+	return fmt.Sprintf(WorkerEmailRetry+"%s", token)
 }

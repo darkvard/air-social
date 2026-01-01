@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,7 +23,7 @@ type AuthService interface {
 	Logout(ctx context.Context, req *domain.LogoutRequest) error
 	VerifyEmail(ctx context.Context, token string) error
 	ForgotPassword(ctx context.Context, req *domain.ForgotPasswordRequest) error
-	ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest) error
+	ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest, isValidateReturn bool) error
 }
 
 type AuthServiceImpl struct {
@@ -56,20 +55,36 @@ func (s *AuthServiceImpl) Register(ctx context.Context, req *domain.RegisterRequ
 	if err != nil {
 		return nil, err
 	}
-
-	input := &domain.CreateUserInput{
+	user, err := s.users.CreateUser(ctx, &domain.CreateUserInput{
 		Email:        req.Email,
 		Username:     req.Username,
 		PasswordHash: hashedPwd,
-	}
-
-	user, err := s.users.CreateUser(ctx, input)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.sendEmailVerify(ctx, user.Email, user.Username); err != nil {
-		pkg.Log().Errorw("failed to send verification email", "error", err, "user_id", user.ID, "email", user.Email)
+	eventID := uuid.NewString()
+	ttl := cache.ThirtyMinutesTime
+	token := uuid.NewString()
+	if err := s.storeEmailVerification(ctx, token, user.Email, ttl); err != nil {
+		pkg.Log().Errorw("failed to store verification email", "error", err, "event", eventID, "email", user.Email)
+	}
+	if err := s.publisher.Publish(
+		ctx, mess.EmailVerifyQueueConfig.RoutingKey,
+		domain.EventPayload{
+			EventID:   eventID,
+			EventType: domain.EmailVerify,
+			Timestamp: time.Now(),
+			Data: domain.EventEmailData{
+				Email:  user.Email,
+				Name:   user.Username,
+				Link:   s.routes.VerifyEmailURL(token),
+				Expiry: pkg.FormatTTLVerbose(ttl),
+			},
+		},
+	); err != nil {
+		pkg.Log().Errorw("failed to send verification email", "error", err, "event", eventID, "email", user.Email)
 	}
 
 	return user, nil
@@ -89,42 +104,24 @@ func hashPassword(plainText string) (string, error) {
 	return string(hash), err
 }
 
-func (s *AuthServiceImpl) sendEmailVerify(ctx context.Context, email, name string) error {
-	token := uuid.NewString()
-	key := getEmailVerificationKey(token)
-	ttl := 24 * time.Hour
-
-	if err := s.cache.Set(ctx, key, email, ttl); err != nil {
-		return err
-	}
-
-	verifyData := domain.EventEmailData{
-		Email:  email,
-		Name:   name,
-		Link:   s.routes.VerifyEmailURL(token),
-		Expiry: pkg.FormatTTLVerbose(ttl),
-	}
-
-	payload := domain.EventPayload{
-		EventID:   uuid.NewString(),
-		EventType: domain.EmailVerify,
-		Timestamp: time.Now(),
-		Data:      verifyData,
-	}
-
-	return s.publisher.Publish(ctx, mess.EmailVerifyQueueConfig.RoutingKey, payload)
+func (s *AuthServiceImpl) storeEmailVerification(ctx context.Context, token, email string, ttl time.Duration) error {
+	return s.cache.Set(ctx, cache.GetEmailVerificationKey(token), email, ttl)
 }
 
-func getEmailVerificationKey(token string) string {
-	return fmt.Sprintf(cache.WorkerEmailVerify+"%s", token)
+func (s *AuthServiceImpl) getEmailVerification(ctx context.Context, token string) (string, error) {
+	var email string
+	if err := s.cache.Get(ctx, cache.GetEmailVerificationKey(token), &email); err != nil {
+		return "", err
+	}
+	return email, nil
 }
 
 func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, token string) error {
-	key := getEmailVerificationKey(token)
-	var email string
-	if err := s.cache.Get(ctx, key, &email); err != nil || email == "" {
+	email, err := s.getEmailVerification(ctx, token)
+	if err != nil {
 		return err
 	}
+
 	return s.users.VerifyEmail(ctx, email)
 }
 
@@ -188,34 +185,50 @@ func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, req *domain.Forgot
 	}
 
 	token := uuid.NewString()
-	key := getEmailResetPasswordKey(token)
-	ttl := 15 * time.Minute
-	if err := s.cache.Set(ctx, key, user.Email, ttl); err != nil {
+	ttl := cache.FifteenMinutesTime
+	if err := s.storeEmailResetPassword(ctx, user.Email, token, ttl); err != nil {
 		return err
-	}
-
-	resetData := domain.EventEmailData{
-		Email:  user.Email,
-		Name:   user.Username,
-		Link:   s.routes.ResetPasswordURL(token),
-		Expiry: pkg.FormatTTLVerbose(ttl),
 	}
 
 	payload := domain.EventPayload{
 		EventID:   uuid.NewString(),
 		EventType: domain.EmailResetPassword,
 		Timestamp: time.Now(),
-		Data:      resetData,
+		Data: domain.EventEmailData{
+			Email:  user.Email,
+			Name:   user.Username,
+			Link:   s.routes.ResetPasswordURL(token),
+			Expiry: pkg.FormatTTLVerbose(ttl),
+		},
 	}
 
 	return s.publisher.Publish(ctx, mess.EmailResetPasswordQueueConfig.RoutingKey, payload)
 }
 
-func getEmailResetPasswordKey(token string) string {
-	return fmt.Sprintf(cache.WorkerEmailReset+"%s", token)
+func (s *AuthServiceImpl) getEmailResetPassword(ctx context.Context, token string) (string, error) {
+	var email string
+	if err := s.cache.Get(ctx, cache.GetEmailResetPasswordKey(token), &email); err != nil {
+		return "", err
+	}
+	return email, nil
 }
 
-func (s *AuthServiceImpl) ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest) error {
-	// check redis
-	return nil
+func (s *AuthServiceImpl) storeEmailResetPassword(ctx context.Context, email, token string, ttl time.Duration) error {
+	return s.cache.Set(ctx, cache.GetEmailResetPasswordKey(token), email, ttl)
+}
+
+func (s *AuthServiceImpl) ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest, isValidateReturn bool) error {
+	email, err := s.getEmailResetPassword(ctx, req.Token)
+	if err != nil {
+		return err
+	}
+	if isValidateReturn {
+		return nil
+	}
+
+	hashedPwd, err := hashPassword(req.Password)
+	if err != nil {
+		return err
+	}
+	return s.users.UpdatePassword(ctx, email, hashedPwd)
 }

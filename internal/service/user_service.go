@@ -11,6 +11,7 @@ type UserService interface {
 	CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error)
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 	VerifyEmail(ctx context.Context, email string) error
+	UpdatePassword(ctx context.Context, email, newPassword string) error
 }
 
 type UserServiceImpl struct {
@@ -58,5 +59,15 @@ func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
 	}
 
 	user.Verified = true
+	return s.repo.Update(ctx, user)
+}
+
+func (s *UserServiceImpl) UpdatePassword(ctx context.Context, email, newPassword string) error {
+	user, err := s.GetByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = newPassword
 	return s.repo.Update(ctx, user)
 }

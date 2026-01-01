@@ -2,7 +2,6 @@ package email
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -14,7 +13,7 @@ import (
 const defaultMaxRetry = 3
 
 func handleRetry(ctx context.Context, c cache.CacheStorage, msg amqp.Delivery, err error) {
-	key := getRetryKey(msg)
+	key := cache.GetEmailRetryKey(msg.MessageId)
 	retry := getRetryCount(ctx, key, c)
 
 	if retry < defaultMaxRetry {
@@ -28,11 +27,7 @@ func handleRetry(ctx context.Context, c cache.CacheStorage, msg amqp.Delivery, e
 	msg.Nack(false, false)
 	deleteRetryCount(ctx, key, c)
 }
-
-func getRetryKey(msg amqp.Delivery) string {
-	return fmt.Sprintf(cache.WorkerEmailRetry+"%s", msg.MessageId)
-}
-
+ 
 func getRetryCount(ctx context.Context, key string, c cache.CacheStorage) int {
 	var retry int
 	_ = c.Get(ctx, key, &retry)
