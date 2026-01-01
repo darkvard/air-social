@@ -3,6 +3,7 @@ package pkg
 import (
 	"database/sql"
 	"errors"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -71,4 +72,29 @@ func MapPostgresError(err error) error {
 	}
 
 	return ErrDatabase
+}
+
+func IsPermanentError(err error) bool {
+    if err == nil {
+        return false
+    }
+
+    msg := err.Error()
+
+    switch {
+    case strings.Contains(msg, "html/template"):
+        return true
+    case strings.Contains(msg, "json:"):
+        return true
+    case strings.Contains(msg, "marshal"):
+        return true
+    case strings.Contains(msg, "unmarshal"):
+        return true
+    case strings.Contains(msg, "nil pointer"):
+        return true
+    case strings.Contains(msg, "index out of range"):
+        return true
+    }
+
+    return false
 }

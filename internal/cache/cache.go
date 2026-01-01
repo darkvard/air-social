@@ -9,6 +9,8 @@ import (
 const (
 	WorkerEmailProcessed = "worker:email:processed:"
 	WorkerEmailVerify    = "worker:email:verify:"
+	WorkerEmailReset     = "worker:email:reset:"
+	WorkerEmailRetry     = "worker:email:retry:"
 )
 
 type CacheStorage interface {

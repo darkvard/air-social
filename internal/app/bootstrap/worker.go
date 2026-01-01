@@ -15,6 +15,7 @@ import (
 func NewWorkerManager(conn *amqp.Connection, c cache.CacheStorage, mCfg config.MailConfig) *worker.Manager {
 	sender := mailer.NewMailtrap(mCfg)
 	handler := event.NewEmailHandler(sender)
-	emailWorker := email.NewEmailWorker(conn, c, mess.EventsExchange, mess.EmailVerifyQueueConfig, handler)
-	return worker.NewManager(emailWorker)
+	verifyWorker := email.NewEmailWorker(conn, c, mess.EventsExchange, mess.EmailVerifyQueueConfig, handler)
+	resetPasswordWorker := email.NewEmailWorker(conn, c, mess.EventsExchange, mess.EmailResetPasswordQueueConfig, handler)
+	return worker.NewManager(verifyWorker, resetPasswordWorker)
 }

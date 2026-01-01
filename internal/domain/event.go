@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	EmailVerify = "email.verify"
+	EmailVerify        = "email.verify"
+	EmailResetPassword = "email.reset.password"
 )
 
 type EventHandler interface {
@@ -25,7 +26,7 @@ type EventPayload struct {
 	Data      any       `json:"data"`
 }
 
-type EventEmailVerify struct {
+type EventEmailData struct {
 	Email  string `json:"email"`
 	Name   string `json:"name"`
 	Link   string `json:"link"`

@@ -122,6 +122,10 @@ type MockRoutes struct {
 	mock.Mock
 }
 
+func (m *MockRoutes) ResetPasswordURL(token string) string {
+	return m.Called(token).String(0)
+}
+
 func (m *MockRoutes) VerifyEmailURL(token string) string {
 	return m.Called(token).String(0)
 }

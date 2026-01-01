@@ -59,8 +59,8 @@ func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, authMiddleware gin.
 		auth.POST(routes.Register, h.Register)
 		auth.POST(routes.Login, h.Login)
 		auth.POST(routes.Refresh, h.Refresh)
-		auth.POST(routes.ResetPassword, h.ResetPassword)
 		auth.POST(routes.ForgotPassword, h.ForgotPassword)
+		auth.POST(routes.ResetPassword, h.ResetPassword)
 		auth.GET(routes.VerifyEmail, h.VerifyEmail)
 	}
 	protected := auth.Group("").Use(authMiddleware)

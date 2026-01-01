@@ -66,11 +66,15 @@ func handleMessage(
 	}
 
 	if err := disp.Handle(ctx, evt); err != nil {
-		pkg.Log().Errorw("failed to handle event", "error", err, "type", evt.EventType)
-		handleRetry(msg)
+		if pkg.IsPermanentError(err) {
+			pkg.Log().Errorw("permanent error detected, dropping", "error", err, "msg_id", msg.MessageId)
+			msg.Nack(false, false)
+			deleteRetryCount(ctx, getRetryKey(msg), cache)
+		} else {
+			handleRetry(ctx, cache, msg, err)
+		}
 		return
 	}
-
 	if msg.MessageId != "" {
 		_ = cache.Set(ctx, key, "1", 24*time.Hour)
 	}

@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain"
@@ -91,11 +93,23 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 }
 
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req domain.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
 
+	if err := h.auth.ForgotPassword(c.Request.Context(), &req); err != nil {
+		if errors.Is(err, pkg.ErrInternal) {
+			pkg.Log().Errorw("failed to forgot password", "error", err)
+		}
+	}
+
+	pkg.Success(c, "If the email exists, we have sent instructions on how to reset your password.")
 }
 
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
-
+	pkg.Success(c, "test")
 }
 
 func (h *AuthHandler) VerifyEmail(c *gin.Context) {

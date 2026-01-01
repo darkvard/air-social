@@ -23,6 +23,8 @@ type AuthService interface {
 	Refresh(ctx context.Context, req *domain.RefreshRequest) (*domain.TokenInfo, error)
 	Logout(ctx context.Context, req *domain.LogoutRequest) error
 	VerifyEmail(ctx context.Context, token string) error
+	ForgotPassword(ctx context.Context, req *domain.ForgotPasswordRequest) error
+	ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest) error
 }
 
 type AuthServiceImpl struct {
@@ -96,15 +98,11 @@ func (s *AuthServiceImpl) sendEmailVerify(ctx context.Context, email, name strin
 		return err
 	}
 
-	verifyData := domain.EventEmailVerify{
+	verifyData := domain.EventEmailData{
 		Email:  email,
 		Name:   name,
 		Link:   s.routes.VerifyEmailURL(token),
 		Expiry: pkg.FormatTTLVerbose(ttl),
-	}
-
-	if err := pkg.ValidateEventData(domain.EmailVerify, verifyData); err != nil {
-		return err
 	}
 
 	payload := domain.EventPayload{
@@ -181,4 +179,43 @@ func (s *AuthServiceImpl) Logout(ctx context.Context, req *domain.LogoutRequest)
 	} else {
 		return s.tokens.RevokeDeviceSession(ctx, req.UserID, req.DeviceID)
 	}
+}
+
+func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, req *domain.ForgotPasswordRequest) error {
+	user, err := s.users.GetByEmail(ctx, req.Email)
+	if err != nil {
+		return err
+	}
+
+	token := uuid.NewString()
+	key := getEmailResetPasswordKey(token)
+	ttl := 15 * time.Minute
+	if err := s.cache.Set(ctx, key, user.Email, ttl); err != nil {
+		return err
+	}
+
+	resetData := domain.EventEmailData{
+		Email:  user.Email,
+		Name:   user.Username,
+		Link:   s.routes.ResetPasswordURL(token),
+		Expiry: pkg.FormatTTLVerbose(ttl),
+	}
+
+	payload := domain.EventPayload{
+		EventID:   uuid.NewString(),
+		EventType: domain.EmailResetPassword,
+		Timestamp: time.Now(),
+		Data:      resetData,
+	}
+
+	return s.publisher.Publish(ctx, mess.EmailResetPasswordQueueConfig.RoutingKey, payload)
+}
+
+func getEmailResetPasswordKey(token string) string {
+	return fmt.Sprintf(cache.WorkerEmailReset+"%s", token)
+}
+
+func (s *AuthServiceImpl) ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest) error {
+	// check redis
+	return nil
 }

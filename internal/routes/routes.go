@@ -19,6 +19,7 @@ const (
 type Registry interface {
 	Prefix() string
 	VerifyEmailURL(token string) string
+	ResetPasswordURL(token string) string
 }
 
 type RegistryImpl struct {
@@ -39,4 +40,8 @@ func (r *RegistryImpl) Prefix() string {
 
 func (r *RegistryImpl) VerifyEmailURL(token string) string {
 	return fmt.Sprintf("%s%s%s?token=%s", r.Prefix(), AuthGroup, VerifyEmail, token)
+}
+
+func (r *RegistryImpl) ResetPasswordURL(token string) string {
+	return fmt.Sprintf("%s%s%s?token=%s", r.Prefix(), AuthGroup, ResetPassword, token)
 }
