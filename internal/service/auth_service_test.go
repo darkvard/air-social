@@ -225,6 +225,343 @@ func TestAuthService_Register(t *testing.T) {
 	}
 }
 
+func TestAuthService_Refresh(t *testing.T) {
+	mockToken := new(MockToken)
+	authService := NewAuthService(nil, mockToken, nil, nil, nil)
+
+	req := &domain.RefreshRequest{
+		RefreshToken: "refresh-token",
+	}
+	tokenInfo := &domain.TokenInfo{
+		AccessToken:  "new-access",
+		RefreshToken: "new-refresh",
+	}
+
+	tests := []struct {
+		name          string
+		setupMocks    func()
+		expectedResp  *domain.TokenInfo
+		expectedError error
+	}{
+		{
+			name: "success",
+			setupMocks: func() {
+				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(tokenInfo, nil)
+			},
+			expectedResp:  tokenInfo,
+			expectedError: nil,
+		},
+		{
+			name: "token expired",
+			setupMocks: func() {
+				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(nil, pkg.ErrTokenExpired)
+			},
+			expectedResp:  nil,
+			expectedError: pkg.ErrUnauthorized,
+		},
+		{
+			name: "token revoked",
+			setupMocks: func() {
+				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(nil, pkg.ErrTokenRevoked)
+			},
+			expectedResp:  nil,
+			expectedError: pkg.ErrUnauthorized,
+		},
+		{
+			name: "internal error",
+			setupMocks: func() {
+				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(nil, assert.AnError)
+			},
+			expectedResp:  nil,
+			expectedError: pkg.ErrInternal,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockToken.ExpectedCalls = nil
+			mockToken.Calls = nil
+			tc.setupMocks()
+
+			resp, err := authService.Refresh(context.Background(), req)
+
+			if tc.expectedError != nil {
+				assert.ErrorIs(t, err, tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedResp, resp)
+			}
+			mockToken.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAuthService_Logout(t *testing.T) {
+	mockToken := new(MockToken)
+	authService := NewAuthService(nil, mockToken, nil, nil, nil)
+
+	tests := []struct {
+		name          string
+		req           *domain.LogoutRequest
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "logout current device",
+			req: &domain.LogoutRequest{
+				UserID:       1,
+				DeviceID:     "device-1",
+				IsAllDevices: false,
+			},
+			setupMocks: func() {
+				mockToken.On("RevokeDeviceSession", mock.Anything, int64(1), "device-1").Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "logout all devices",
+			req: &domain.LogoutRequest{
+				UserID:       1,
+				IsAllDevices: true,
+			},
+			setupMocks: func() {
+				mockToken.On("RevokeAllUserSessions", mock.Anything, int64(1)).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error",
+			req: &domain.LogoutRequest{
+				UserID:       1,
+				DeviceID:     "device-1",
+				IsAllDevices: false,
+			},
+			setupMocks: func() {
+				mockToken.On("RevokeDeviceSession", mock.Anything, int64(1), "device-1").Return(assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockToken.ExpectedCalls = nil
+			mockToken.Calls = nil
+			tc.setupMocks()
+
+			err := authService.Logout(context.Background(), tc.req)
+
+			if tc.expectedError != nil {
+				assert.ErrorIs(t, err, tc.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+			mockToken.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAuthService_VerifyEmail(t *testing.T) {
+	mockUsers := new(MockUserService)
+	mockCache := new(MockCache)
+	authService := NewAuthService(mockUsers, nil, nil, nil, mockCache)
+
+	token := "verify-token"
+	email := "test@example.com"
+
+	tests := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "success",
+			setupMocks: func() {
+				mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).
+					Run(func(args mock.Arguments) {
+						arg := args.Get(2).(*string)
+						*arg = email
+					}).Return(nil)
+				mockUsers.On("VerifyEmail", mock.Anything, email).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "token not found in cache",
+			setupMocks: func() {
+				mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+		{
+			name: "user verify failed",
+			setupMocks: func() {
+				mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).
+					Run(func(args mock.Arguments) {
+						arg := args.Get(2).(*string)
+						*arg = email
+					}).Return(nil)
+				mockUsers.On("VerifyEmail", mock.Anything, email).Return(assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockUsers.ExpectedCalls = nil
+			mockUsers.Calls = nil
+			mockCache.ExpectedCalls = nil
+			mockCache.Calls = nil
+			tc.setupMocks()
+
+			err := authService.VerifyEmail(context.Background(), token)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			mockUsers.AssertExpectations(t)
+			mockCache.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAuthService_ForgotPassword(t *testing.T) {
+	mockUsers := new(MockUserService)
+	mockCache := new(MockCache)
+	mockQueue := new(MockQueue)
+	mockRoutes := new(MockRoutes)
+	authService := NewAuthService(mockUsers, nil, mockQueue, mockRoutes, mockCache)
+
+	req := &domain.ForgotPasswordRequest{Email: "test@example.com"}
+	user := &domain.User{Email: "test@example.com", Username: "test"}
+
+	tests := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "success",
+			setupMocks: func() {
+				mockUsers.On("GetByEmail", mock.Anything, req.Email).Return(user, nil)
+				mockCache.On("Set", mock.Anything, mock.Anything, req.Email, mock.Anything).Return(nil)
+				mockRoutes.On("ResetPasswordURL", mock.Anything).Return("http://reset.link")
+				mockQueue.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "user not found",
+			setupMocks: func() {
+				mockUsers.On("GetByEmail", mock.Anything, req.Email).Return(nil, assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockUsers.ExpectedCalls = nil
+			mockUsers.Calls = nil
+			mockCache.ExpectedCalls = nil
+			mockCache.Calls = nil
+			mockQueue.ExpectedCalls = nil
+			mockQueue.Calls = nil
+			mockRoutes.ExpectedCalls = nil
+			mockRoutes.Calls = nil
+			tc.setupMocks()
+
+			err := authService.ForgotPassword(context.Background(), req)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			mockUsers.AssertExpectations(t)
+			mockCache.AssertExpectations(t)
+			mockQueue.AssertExpectations(t)
+			mockRoutes.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAuthService_ResetPassword(t *testing.T) {
+	mockUsers := new(MockUserService)
+	mockCache := new(MockCache)
+	authService := NewAuthService(mockUsers, nil, nil, nil, mockCache)
+
+	req := &domain.ResetPasswordRequest{
+		Token:    "reset-token",
+		Password: "new-password",
+	}
+	email := "test@example.com"
+
+	tests := []struct {
+		name             string
+		isValidateReturn bool
+		setupMocks       func()
+		expectedError    error
+	}{
+		{
+			name:             "success update password",
+			isValidateReturn: false,
+			setupMocks: func() {
+				mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).
+					Run(func(args mock.Arguments) {
+						arg := args.Get(2).(*string)
+						*arg = email
+					}).Return(nil)
+				mockUsers.On("UpdatePassword", mock.Anything, email, mock.Anything).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:             "validate only success",
+			isValidateReturn: true,
+			setupMocks: func() {
+				mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).
+					Run(func(args mock.Arguments) {
+						arg := args.Get(2).(*string)
+						*arg = email
+					}).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:             "token invalid",
+			isValidateReturn: false,
+			setupMocks: func() {
+				mockCache.On("Get", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockUsers.ExpectedCalls = nil
+			mockUsers.Calls = nil
+			mockCache.ExpectedCalls = nil
+			mockCache.Calls = nil
+			tc.setupMocks()
+
+			err := authService.ResetPassword(context.Background(), req, tc.isValidateReturn)
+
+			if tc.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			mockUsers.AssertExpectations(t)
+			mockCache.AssertExpectations(t)
+		})
+	}
+}
+
 func TestAuthService_Login(t *testing.T) {
 	mockUsers := new(MockUserService)
 	mockCache := new(MockCache)
