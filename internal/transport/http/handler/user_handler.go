@@ -19,6 +19,16 @@ func NewUserHandler(user service.UserService) *UserHandler {
 	}
 }
 
+// Profile godoc
+//
+//	@Summary		Get user profile
+//	@Description	Get current user profile information
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	domain.UserResponse
+//	@Router			/users/me [get]
 func (h *UserHandler) Profile(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
 	if err != nil {
@@ -35,6 +45,18 @@ func (h *UserHandler) Profile(c *gin.Context) {
 	pkg.Success(c, user)
 }
 
+// UpdateProfile godoc
+//
+//	@Summary		Update user profile
+//	@Description	Update user profile information
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		domain.UpdateProfileRequest	true	"Update Profile Request"
+//	@Success		200		{object}	domain.UserResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Router			/users/me [patch]
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
 	if err != nil {
@@ -58,6 +80,18 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 
 }
 
+// ChangePassword godoc
+//
+//	@Summary		Change password
+//	@Description	Change user password
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		domain.ChangePasswordRequest	true	"Change Password Request"
+//	@Success		200		{string}	string							"password changed successfully"
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Router			/users/password [put]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
 	if err != nil {
@@ -84,6 +118,17 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	pkg.Success(c, "password changed successfully")
 }
 
+// UpdateAvatar godoc
+//
+//	@Summary		Update avatar
+//	@Description	Upload and update user avatar image
+//	@Tags			User
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			avatar	formData	file	true	"Avatar file"
+//	@Success		200		{object}	domain.UserResponse
+//	@Router			/users/avatar [post]
 func (h *UserHandler) UpdateAvatar(c *gin.Context) {
 
 }
