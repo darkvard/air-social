@@ -15,60 +15,61 @@ import (
 )
 
 func (a *Application) NewRouter() *gin.Engine {
-	r := gin.New()
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
+	e := a.setupEngine()
+	h := a.Http.Handler
+	s := a.Http.Service
 
-	r.SetTrustedProxies(nil)
-	r.SetHTMLTemplate(
+	basic := gin.BasicAuth(
+		gin.Accounts{
+			a.Config.Server.Username: a.Config.Server.Password,
+		},
+	)
+	auth := middleware.Auth(s.Token)
+
+	v1 := e.Group("/" + a.Config.Server.Version)
+	{
+		commonRoutes(v1, h.Health, basic)
+		authRoutes(v1, h.Auth, auth)
+		// userRoutes(v1, h.User, authMiddleware())
+	}
+	return e
+}
+
+func (a *Application) setupEngine() *gin.Engine {
+	e := gin.New()
+	e.Use(gin.Logger())
+	e.Use(gin.Recovery())
+	e.SetTrustedProxies(nil)
+	e.SetHTMLTemplate(
 		template.Must(template.New("").ParseFS(
 			templates.TemplatesFS,
 			"*/*.gohtml", // level 1, e.g. pages/login.gohtml
 		)),
 	)
-
-	h := a.Http.Handler
-	s := a.Http.Service
-	authMiddleware := middleware.AuthMiddleware(s.Token)
-
-	a.commonRoutes(r)
-
-	// Swagger Route
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	v1 := r.Group("/" + a.Config.Server.Version)
-	{
-		authRoutes(v1, h.Auth, authMiddleware)
-		// userRoutes(v1, h.User, authMiddleware())
-	}
-
-	return r
+	e.NoRoute(func(c *gin.Context) { pkg.NotFound(c, "Page not found") })
+	return e
 }
 
-func (app *Application) commonRoutes(r *gin.Engine) {
-	r.NoRoute(func(c *gin.Context) {
-		pkg.NotFound(c, "Page not found")
-	})
-
-	r.GET(routes.Health, gin.BasicAuth(
-		gin.Accounts{app.Config.Server.Username: app.Config.Server.Password},
-	), func(c *gin.Context) {
-		pkg.Success(c, app.HealthStatus())
-	})
+func commonRoutes(rg *gin.RouterGroup, h *handler.HealthHandler, basic gin.HandlerFunc) {
+	r := rg.Group("")
+	{
+		r.GET(routes.Health, basic, h.HealthCheck)
+		r.GET(routes.SwaggerAny, ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 }
 
-func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, authMiddleware gin.HandlerFunc) {
-	auth := rg.Group(routes.AuthGroup)
+func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, auth gin.HandlerFunc) {
+	publish := rg.Group(routes.AuthGroup)
 	{
-		auth.POST(routes.Register, h.Register)
-		auth.POST(routes.Login, h.Login)
-		auth.POST(routes.Refresh, h.Refresh)
-		auth.POST(routes.ForgotPassword, h.ForgotPassword)
-		auth.GET(routes.ResetPassword, h.ShowResetPasswordPage)
-		auth.POST(routes.ResetPassword, h.ResetPassword)
-		auth.GET(routes.VerifyEmail, h.VerifyEmail)
+		publish.POST(routes.Register, h.Register)
+		publish.POST(routes.Login, h.Login)
+		publish.POST(routes.Refresh, h.Refresh)
+		publish.POST(routes.ForgotPassword, h.ForgotPassword)
+		publish.GET(routes.ResetPassword, h.ShowResetPasswordPage)
+		publish.POST(routes.ResetPassword, h.ResetPassword)
+		publish.GET(routes.VerifyEmail, h.VerifyEmail)
 	}
-	protected := auth.Group("").Use(authMiddleware)
+	protected := publish.Group("").Use(auth)
 	{
 		protected.POST(routes.Logout, h.Logout)
 	}

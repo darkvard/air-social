@@ -13,6 +13,7 @@ const (
 	ForgotPassword = "/forgot-password"
 	VerifyEmail    = "/verify-email"
 	Logout         = "/logout"
+	SwaggerAny     = "/swagger/*any"
 )
 
 type Registry interface {
@@ -47,5 +48,5 @@ func (r *RegistryImpl) ResetPasswordURL(token string) string {
 }
 
 func (r *RegistryImpl) SwaggerURL() string {
-	return fmt.Sprintf("%s/swagger/index.html", r.baseURL)
+	return fmt.Sprintf("%s/swagger/index.html", r.Prefix())
 }

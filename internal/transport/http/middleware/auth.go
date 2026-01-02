@@ -13,7 +13,7 @@ type authContextKey string
 
 const AuthPayloadKey authContextKey = "auth_payload"
 
-func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
+func Auth(tokenService service.TokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get raw token string
 		tokenString, err := pkg.ExtractTokenFromHeader(c)

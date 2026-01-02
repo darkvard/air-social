@@ -308,6 +308,23 @@ paths:
       summary: Verify email address
       tags:
       - Auth
+  /health:
+    get:
+      description: Check the health status of the application components (DB, etc.)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BasicAuth: []
+      summary: Health Check
+      tags:
+      - Health
 securityDefinitions:
   BearerAuth:
     in: header

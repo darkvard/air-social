@@ -1,13 +1,20 @@
 package provider
 
-import "air-social/internal/transport/http/handler"
+import (
+	"air-social/internal/transport/http/handler"
+)
 
 type HandlerProvider struct {
-	Auth *handler.AuthHandler
+	Health *handler.HealthHandler
+	Auth   *handler.AuthHandler
 }
 
-func NewHandlerProvider(service *ServiceProvider) *HandlerProvider {
+func NewHandlerProvider(
+	deps *Container,
+	service *ServiceProvider,
+) *HandlerProvider {
 	return &HandlerProvider{
-		Auth: handler.NewAuthHandler(service.Auth),
+		Health: handler.NewHealthHandler(deps.DB, deps.Redis, deps.Rabbit),
+		Auth:   handler.NewAuthHandler(service.Auth),
 	}
 }

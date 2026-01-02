@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -57,13 +56,16 @@ func NewApplication() (*Application, error) {
 	rr := routes.NewRegistry(cfg.Server.BaseURL, cfg.Server.Version)
 
 	// http
-	httpServer := provider.NewHttpProvider(
-		db,
-		cfg.Token,
-		cache,
-		rabbitPublisher,
-		rr,
-	)
+	deps := &provider.Container{
+		DB:       db,
+		Redis:    rc,
+		Rabbit:   rabbitConn,
+		Config:   cfg,
+		Cache:    cache,
+		Pub:      rabbitPublisher,
+		Registry: rr,
+	}
+	httpServer := provider.NewHttpProvider(deps)
 
 	return &Application{
 		Config:     cfg,
@@ -102,36 +104,4 @@ func (a *Application) Run() {
 
 	port := fmt.Sprintf(":%s", a.Config.Server.Port)
 	a.NewRouter().Run(port)
-}
-
-func (a *Application) HealthStatus() any {
-	type HealthResult struct {
-		Status    string `json:"status"`
-		DB        string `json:"db"`
-		Redis     string `json:"redis"`
-		Timestamp string `json:"timestamp"`
-	}
-
-	ok := "ok"
-	dbStatus := ok
-	if err := a.DB.Ping(); err != nil {
-		dbStatus = err.Error()
-	}
-	redisStatus := ok
-	if err := a.Redis.Ping(context.Background()).Err(); err != nil {
-		redisStatus = err.Error()
-	}
-	status := ok
-	if dbStatus != ok || redisStatus != ok {
-		status = "error"
-	}
-
-	result := HealthResult{
-		Status:    status,
-		DB:        dbStatus,
-		Redis:     redisStatus,
-		Timestamp: time.Now().Format(time.RFC3339),
-	}
-
-	return result
 }
