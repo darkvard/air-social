@@ -37,7 +37,7 @@ func (a *Application) setupEngine() *gin.Engine {
 	e.Use(gin.Recovery())
 	e.SetTrustedProxies(nil)
 	e.HandleMethodNotAllowed = true
-	
+
 	e.SetHTMLTemplate(
 		template.Must(template.New("").ParseFS(
 			templates.TemplatesFS,
@@ -72,20 +72,19 @@ func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, mw *middleware.Mana
 	{
 		auth.GET(routes.ResetPassword, h.ShowResetPasswordPage)
 		auth.GET(routes.VerifyEmail, h.VerifyEmail)
-	}
 
-	jwm := auth.Group("").Use(mw.JSONOnly)
-	{
-		jwm.POST(routes.Register, h.Register)
-		jwm.POST(routes.Login, h.Login)
-		jwm.POST(routes.Refresh, h.Refresh)
-		jwm.POST(routes.ForgotPassword, h.ForgotPassword)
-		jwm.POST(routes.ResetPassword, h.ResetPassword)
-	}
-
-	protected := auth.Group("").Use(mw.Auth)
-	{
-		protected.POST(routes.Logout, h.Logout)
+		jwm := auth.Group("").Use(mw.JSONOnly)
+		{
+			jwm.POST(routes.Register, h.Register)
+			jwm.POST(routes.Login, h.Login)
+			jwm.POST(routes.Refresh, h.Refresh)
+			jwm.POST(routes.ForgotPassword, h.ForgotPassword)
+			jwm.POST(routes.ResetPassword, h.ResetPassword)
+		}
+		protected := auth.Group("").Use(mw.Auth)
+		{
+			protected.POST(routes.Logout, h.Logout)
+		}
 	}
 }
 
@@ -93,13 +92,12 @@ func userRoutes(rg *gin.RouterGroup, h *handler.UserHandler, mw *middleware.Mana
 	protected := rg.Group(routes.UserGroup, mw.Auth)
 	{
 		protected.GET(routes.Me, h.Profile)
-		protected.PUT(routes.Password, h.ChangePassword)
 
 		jmw := protected.Group("").Use(mw.JSONOnly)
 		{
+			jmw.PUT(routes.Password, h.ChangePassword)
 			jmw.PATCH(routes.Me, h.UpdateProfile)
 		}
-
 		fmw := protected.Group("").Use(mw.MultipartOnly)
 		{
 			fmw.POST(routes.Avatar, h.UpdateAvatar)

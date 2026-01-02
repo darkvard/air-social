@@ -14,7 +14,8 @@ type UserService interface {
 	GetByID(ctx context.Context, id int64) (*domain.UserResponse, error)
 	VerifyEmail(ctx context.Context, email string) error
 	UpdatePassword(ctx context.Context, email, pwd string) error
-	UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateRequest) (*domain.UserResponse, error)
+	ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error
+	UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateProfileRequest) (*domain.UserResponse, error)
 }
 
 type UserServiceImpl struct {
@@ -80,7 +81,26 @@ func (s *UserServiceImpl) UpdatePassword(ctx context.Context, email, pwd string)
 	return s.repo.Update(ctx, user)
 }
 
-func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateRequest) (*domain.UserResponse, error) {
+func (s *UserServiceImpl) ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error {
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if !verifyPassword(req.CurrentPassword, user.PasswordHash) {
+		return pkg.ErrInvalidCredentials
+	}
+
+	hashedPwd, err := hashPassword(req.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = hashedPwd
+	return s.repo.Update(ctx, user)
+}
+
+func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateProfileRequest) (*domain.UserResponse, error) {
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, err

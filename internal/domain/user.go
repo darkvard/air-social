@@ -39,24 +39,17 @@ type Profile struct {
 	Website    string `db:"website" json:"website"`
 }
 
-func (u *User) ToResponse() *UserResponse {
-	return &UserResponse{
-		ID:           u.ID,
-		Email:        u.Email,
-		Username:     u.Username,
-		Profile:      u.Profile,
-		Verified:     u.Verified,
-		CreatedAt:    u.CreatedAt,
-		PasswordHash: u.PasswordHash,
-	}
-}
-
-type UpdateRequest struct {
+type UpdateProfileRequest struct {
 	FullName *string `json:"full_name" binding:"omitempty,min=2,max=100"`
 	Bio      *string `json:"bio" binding:"omitempty,max=255"`
 	Location *string `json:"location" binding:"omitempty,max=100"`
 	Website  *string `json:"website" binding:"omitempty,max=255"`
 	Username *string `json:"username" binding:"omitempty,alphanum,min=3,max=50"`
+}
+
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=8,max=64"`
 }
 
 type UserResponse struct {
@@ -67,10 +60,22 @@ type UserResponse struct {
 	CreatedAt    time.Time `json:"created_at"`
 	PasswordHash string    `json:"-"`
 	Profile
-}	
+}
 
 type CreateUserInput struct {
 	Email        string
 	Username     string
 	PasswordHash string
+}
+
+func (u *User) ToResponse() *UserResponse {
+	return &UserResponse{
+		ID:           u.ID,
+		Email:        u.Email,
+		Username:     u.Username,
+		Profile:      u.Profile,
+		Verified:     u.Verified,
+		CreatedAt:    u.CreatedAt,
+		PasswordHash: u.PasswordHash,
+	}
 }

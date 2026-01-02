@@ -51,12 +51,17 @@ func (m *MockUserService) GetByID(ctx context.Context, id int64) (*domain.UserRe
 	return args.Get(0).(*domain.UserResponse), args.Error(1)
 }
 
-func (m *MockUserService) UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateRequest) (*domain.UserResponse, error) {
+func (m *MockUserService) UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateProfileRequest) (*domain.UserResponse, error) {
 	args := m.Called(ctx, userID, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*domain.UserResponse), args.Error(1)
+}
+
+func (m *MockUserService) ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error {
+	args := m.Called(ctx, userID, req)
+	return args.Error(0)
 }
 
 type MockToken struct {
