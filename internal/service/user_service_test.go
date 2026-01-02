@@ -84,7 +84,7 @@ func TestUserService_Create(t *testing.T) {
 				).Run(func(args mock.Arguments) {
 					u := args.Get(1).(*domain.User)
 					u.ID = 123
-					u.CreatedAt = time.Now()
+					u.CreatedAt = time.Now().UTC()
 				}).Return(nil)
 			},
 			expectedError: nil,

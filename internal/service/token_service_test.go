@@ -136,7 +136,7 @@ func TestTokenService_Refresh(t *testing.T) {
 		UserID:    1,
 		DeviceID:  "device-123",
 		TokenHash: hashedToken,
-		ExpiresAt: time.Now().Add(1 * time.Hour),
+		ExpiresAt: time.Now().UTC().Add(1 * time.Hour),
 	}
 
 	tests := []struct {
@@ -166,7 +166,7 @@ func TestTokenService_Refresh(t *testing.T) {
 			name: "token expired",
 			setupMocks: func() {
 				expiredToken := *dbToken
-				expiredToken.ExpiresAt = time.Now().Add(-1 * time.Hour)
+				expiredToken.ExpiresAt = time.Now().UTC().Add(-1 * time.Hour)
 				mockRepo.On("GetByHash", mock.Anything, hashedToken).Return(&expiredToken, nil)
 			},
 			expectedError: pkg.ErrTokenExpired,

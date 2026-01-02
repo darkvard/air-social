@@ -60,6 +60,6 @@ func (h *HealthHandler) HealthCheck(c *gin.Context) {
 		"db":        dbStatus,
 		"redis":     redisStatus,
 		"rabbitmq":  rabbitStatus,
-		"timestamp": time.Now().Format(time.RFC3339),
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	})
 }

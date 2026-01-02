@@ -83,7 +83,7 @@ func (r *rabbitMQ) messageHandle(ctx context.Context) {
 	for _, c := range messCases {
 		pkg.Log().Info("--------------------------------------------------------------------------------")
 		func() {
-			evt := initEvent(fmt.Sprintf("test-%d", time.Now().UnixNano()), c.key)
+			evt := initEvent(fmt.Sprintf("test-%d", time.Now().UTC().UnixNano()), c.key)
 
 			pubCtx, pubCancel := context.WithTimeout(ctx, 5*time.Second)
 			// Important: Defer is function-scoped. We use an anonymous function to ensure
@@ -117,7 +117,7 @@ func initEvent(name, key string) domain.EventPayload {
 	return domain.EventPayload{
 		EventID:   name,
 		EventType: key,
-		Timestamp: time.Now(),
+		Timestamp: time.Now().UTC(),
 		Data:      map[string]interface{}{},
 	}
 }

@@ -75,7 +75,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, req *domain.RegisterRequ
 		domain.EventPayload{
 			EventID:   eventID,
 			EventType: domain.EmailVerify,
-			Timestamp: time.Now(),
+			Timestamp: time.Now().UTC(),
 			Data: domain.EventEmailData{
 				Email:  user.Email,
 				Name:   user.Username,
@@ -187,7 +187,7 @@ func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, req *domain.Forgot
 	payload := domain.EventPayload{
 		EventID:   uuid.NewString(),
 		EventType: domain.EmailResetPassword,
-		Timestamp: time.Now(),
+		Timestamp: time.Now().UTC(),
 		Data: domain.EventEmailData{
 			Email:  user.Email,
 			Name:   user.Username,

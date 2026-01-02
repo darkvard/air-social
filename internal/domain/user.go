@@ -55,8 +55,8 @@ type UpdateRequest struct {
 	FullName *string `json:"full_name" binding:"omitempty,min=2,max=100"`
 	Bio      *string `json:"bio" binding:"omitempty,max=255"`
 	Location *string `json:"location" binding:"omitempty,max=100"`
-	Website  *string `json:"website" binding:"omitempty,url,max=255"`
-	Username *string `json:"username" binding:"omitempty,alphanum,min=3,max=30"`
+	Website  *string `json:"website" binding:"omitempty,max=255"`
+	Username *string `json:"username" binding:"omitempty,alphanum,min=3,max=50"`
 }
 
 type UserResponse struct {
@@ -67,7 +67,7 @@ type UserResponse struct {
 	CreatedAt    time.Time `json:"created_at"`
 	PasswordHash string    `json:"-"`
 	Profile
-}
+}	
 
 type CreateUserInput struct {
 	Email        string

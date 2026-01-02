@@ -59,7 +59,7 @@ func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, dev
 }
 
 func (s *TokenServiceImpl) generateAccessToken(userID int64, deviceID string) (string, error) {
-	now := time.Now()
+	now := time.Now().UTC()
 	claims := jwt.MapClaims{
 		pkg.JWTClaimSubject:   fmt.Sprintf("%d", userID),
 		pkg.JWTClaimDevice:    deviceID,
@@ -78,12 +78,14 @@ func (s *TokenServiceImpl) generateRefreshToken(userID int64, deviceID string) (
 	h := sha256.Sum256([]byte(raw))
 	hashed := hex.EncodeToString(h[:])
 
+	now := time.Now().UTC()
+
 	return raw, &domain.RefreshToken{
 		UserID:    userID,
 		DeviceID:  deviceID,
 		TokenHash: hashed,
-		ExpiresAt: time.Now().Add(s.cfg.RefreshTokenTTL),
-		CreatedAt: time.Now(),
+		ExpiresAt: now.Add(s.cfg.RefreshTokenTTL),
+		CreatedAt: now,
 	}
 }
 

@@ -14,6 +14,7 @@ type UserService interface {
 	GetByID(ctx context.Context, id int64) (*domain.UserResponse, error)
 	VerifyEmail(ctx context.Context, email string) error
 	UpdatePassword(ctx context.Context, email, pwd string) error
+	UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateRequest) (*domain.UserResponse, error)
 }
 
 type UserServiceImpl struct {
@@ -63,7 +64,7 @@ func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
 	if err != nil {
 		return err
 	}
-	now := time.Now().UTC().Truncate(time.Second)
+	now := time.Now().UTC()
 	user.Verified = true
 	user.VerifiedAt = &now
 	return s.repo.Update(ctx, user)
@@ -77,4 +78,33 @@ func (s *UserServiceImpl) UpdatePassword(ctx context.Context, email, pwd string)
 
 	user.PasswordHash = pwd
 	return s.repo.Update(ctx, user)
+}
+
+func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateRequest) (*domain.UserResponse, error) {
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.FullName != nil {
+		user.FullName = *req.FullName
+	}
+	if req.Bio != nil {
+		user.Bio = *req.Bio
+	}
+	if req.Location != nil {
+		user.Location = *req.Location
+	}
+	if req.Website != nil {
+		user.Website = *req.Website
+	}
+	if req.Username != nil {
+		user.Username = *req.Username
+	}
+
+	if err := s.repo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return user.ToResponse(), nil
 }

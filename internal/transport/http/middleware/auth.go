@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
+	"air-social/internal/config"
 	"air-social/internal/domain"
 	"air-social/internal/service"
 	"air-social/pkg"
@@ -57,6 +58,14 @@ func Auth(tokenService service.TokenService) gin.HandlerFunc {
 		c.Set(AuthPayloadKey, payload)
 		c.Next()
 	}
+}
+
+func Basic(cfg config.ServerConfig) gin.HandlerFunc {
+	return gin.BasicAuth(
+		gin.Accounts{
+			cfg.Username: cfg.Password,
+		},
+	)
 }
 
 func GetAuthPayload(c *gin.Context) (*domain.AuthPayload, error) {

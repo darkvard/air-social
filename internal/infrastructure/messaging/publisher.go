@@ -101,7 +101,7 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any)
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
 			MessageId:    uuid.NewString(),
-			Timestamp:    time.Now(),
+			Timestamp:    time.Now().UTC(),
 			Body:         body,
 		},
 	); err != nil {

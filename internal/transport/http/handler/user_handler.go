@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
+	"air-social/internal/domain"
 	"air-social/internal/service"
 	"air-social/internal/transport/http/middleware"
 	"air-social/pkg"
@@ -35,6 +36,25 @@ func (h *UserHandler) Profile(c *gin.Context) {
 }
 
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
+	payload, err := middleware.GetAuthPayload(c)
+	if err != nil {
+		pkg.Unauthorized(c, err.Error())
+		return
+	}
+
+	var req domain.UpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	user, err := h.user.UpdateProfile(c.Request.Context(), payload.UserID, &req)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, user)
 
 }
 
