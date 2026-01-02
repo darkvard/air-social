@@ -120,6 +120,33 @@ endif
 	@$(MIGRATE_CMD) force $(version)
 
 
+# ---- Reset Database (Drop & Create only) ----
+# Usage:
+#   make reset-db
+# Note: 
+#   1. Kills all active connections (DataGrip, App...)
+#   2. Drops the database (Data loss!)
+#   3. Creates a new EMPTY database.
+#   4. DOES NOT run migrations (You must run 'make migrate-up' manually).
+.PHONY: reset-db
+reset-db:
+	@echo "🔄 Starting database container..."
+	@docker compose up -d db
+	@sleep 2
+
+	@echo "🛑 Killing connections to $(DB_NAME)..."
+	@docker compose exec db psql -U $(DB_USER) -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$(DB_NAME)' AND pid <> pg_backend_pid();"
+	
+	@echo "🗑️ Dropping database $(DB_NAME)..."
+	@docker compose exec db psql -U $(DB_USER) -d postgres -c "DROP DATABASE IF EXISTS $(DB_NAME);"
+
+	@echo "✨ Creating empty database $(DB_NAME)..."
+	@docker compose exec db psql -U $(DB_USER) -d postgres -c "CREATE DATABASE $(DB_NAME);"
+	
+	@echo "✅ Database reset done! (Empty DB created)"
+	@echo "👉 Next step: Run 'make migrate-up' to create tables."
+
+
 # ===================== TESTING ======================
 
 
