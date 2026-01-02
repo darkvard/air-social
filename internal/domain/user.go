@@ -33,12 +33,13 @@ type UpdateRequest struct {
 }
 
 type UserResponse struct {
-	ID        int64     `json:"id"`
-	Email     string    `json:"email"`
-	Username  string    `json:"username"`
-	Profile   any       `json:"profile,omitempty"`
-	Verified  bool      `json:"verified"`
-	CreatedAt time.Time `json:"created_at"`
+	ID           int64     `json:"id"`
+	Email        string    `json:"email"`
+	Username     string    `json:"username"`
+	Profile      any       `json:"profile,omitempty"`
+	Verified     bool      `json:"verified"`
+	CreatedAt    time.Time `json:"created_at"`
+	PasswordHash string    `json:"-"`
 }
 
 type CreateUserInput struct {

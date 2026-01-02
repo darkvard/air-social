@@ -30,7 +30,7 @@ func (a *Application) NewRouter() *gin.Engine {
 	{
 		commonRoutes(v1, h.Health, basic)
 		authRoutes(v1, h.Auth, auth)
-		// userRoutes(v1, h.User, authMiddleware())
+		userRoutes(v1, h.User, auth)
 	}
 	return e
 }
@@ -75,15 +75,12 @@ func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, auth gin.HandlerFun
 	}
 }
 
-// func userRoutes(rg *gin.RouterGroup, h *handler.UserHandler, auth gin.HandlerFunc) {
-// 	users := rg.Group("/users", auth)
-// 	{
-// 		me := users.Group("/me")
-// 		{
-// 			me.GET("", h.GetProfile)
-// 			me.PUT("", h.UpdateProfile)
-// 			me.PUT("/password", h.ChangePassword)
-// 			me.POST("/avatar", h.UpdateAvatar)
-// 		}
-// 	}
-// }
+func userRoutes(rg *gin.RouterGroup, h *handler.UserHandler, auth gin.HandlerFunc) {
+	protected := rg.Group(routes.UserGroup, auth)
+	{
+		protected.GET(routes.Me, h.Profile)
+		protected.PUT(routes.Me, h.UpdateProfile)
+		protected.PUT(routes.Password, h.ChangePassword)
+		protected.POST(routes.Avatar, h.UpdateAvatar)
+	}
+}

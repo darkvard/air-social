@@ -25,12 +25,12 @@ func (m *MockUserService) CreateUser(ctx context.Context, in *domain.CreateUserI
 	return args.Get(0).(*domain.UserResponse), args.Error(1)
 }
 
-func (m *MockUserService) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (m *MockUserService) GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error) {
 	args := m.Called(ctx, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.User), args.Error(1)
+	return args.Get(0).(*domain.UserResponse), args.Error(1)
 }
 
 func (m *MockUserService) VerifyEmail(ctx context.Context, email string) error {
@@ -41,6 +41,14 @@ func (m *MockUserService) VerifyEmail(ctx context.Context, email string) error {
 func (m *MockUserService) UpdatePassword(ctx context.Context, email, newPassword string) error {
 	args := m.Called(ctx, email, newPassword)
 	return args.Error(0)
+}
+
+func (m *MockUserService) GetByID(ctx context.Context, id int64) (*domain.UserResponse, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.UserResponse), args.Error(1)
 }
 
 type MockToken struct {

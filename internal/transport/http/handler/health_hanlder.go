@@ -27,7 +27,7 @@ func NewHealthHandler(db *sqlx.DB, redis *goredis.Client, rabbit *amqp.Connectio
 
 // HealthCheck godoc
 //
-//	@Summary		Health Check
+//	@Summary		Health check
 //	@Description	Check the health status of the application components
 //	@Tags			Health
 //	@Produce		json

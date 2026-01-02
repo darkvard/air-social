@@ -16,6 +16,13 @@ const (
 	SwaggerAny     = "/swagger/*any"
 )
 
+const (
+	UserGroup = "/users"
+	Me        = "/me"
+	Avatar    = "/avatar"
+	Password  = "/password"
+)
+
 type Registry interface {
 	Prefix() string
 	VerifyEmailURL(token string) string

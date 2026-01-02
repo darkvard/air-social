@@ -7,6 +7,7 @@ import (
 type HandlerProvider struct {
 	Health *handler.HealthHandler
 	Auth   *handler.AuthHandler
+	User   *handler.UserHandler
 }
 
 func NewHandlerProvider(
@@ -16,5 +17,6 @@ func NewHandlerProvider(
 	return &HandlerProvider{
 		Health: handler.NewHealthHandler(deps.DB, deps.Redis, deps.Rabbit),
 		Auth:   handler.NewAuthHandler(service.Auth),
+		User:   handler.NewUserHandler(service.User),
 	}
 }

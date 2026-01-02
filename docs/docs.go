@@ -315,7 +315,7 @@ const docTemplate = `{
                         "BasicAuth": []
                     }
                 ],
-                "description": "Check the health status of the application components (DB, etc.)",
+                "description": "Check the health status of the application components",
                 "produces": [
                     "application/json"
                 ],

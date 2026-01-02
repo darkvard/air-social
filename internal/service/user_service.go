@@ -9,9 +9,10 @@ import (
 
 type UserService interface {
 	CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error)
-	GetByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error)
+	GetByID(ctx context.Context, id int64) (*domain.UserResponse, error)
 	VerifyEmail(ctx context.Context, email string) error
-	UpdatePassword(ctx context.Context, email, newPassword string) error
+	UpdatePassword(ctx context.Context, email, pwd string) error
 }
 
 type UserServiceImpl struct {
@@ -38,36 +39,52 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserI
 		return nil, err
 	}
 
-	return &domain.UserResponse{
-		ID:        u.ID,
-		Email:     u.Email,
-		Username:  u.Username,
-		Profile:   u.Profile,
-		Verified:  u.Verified,
-		CreatedAt: u.CreatedAt,
-	}, nil
+	return s.toUserResponse(u), nil
 }
 
-func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	return s.repo.GetByEmail(ctx, email)
+func (s *UserServiceImpl) toUserResponse(u *domain.User) *domain.UserResponse {
+	return &domain.UserResponse{
+		ID:           u.ID,
+		Email:        u.Email,
+		Username:     u.Username,
+		Profile:      u.Profile,
+		Verified:     u.Verified,
+		CreatedAt:    u.CreatedAt,
+		PasswordHash: u.PasswordHash,
+	}
+}
+
+func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error) {
+	user, err := s.repo.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return s.toUserResponse(user), nil
+}
+
+func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (*domain.UserResponse, error) {
+	user, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return s.toUserResponse(user), nil
 }
 
 func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
-	user, err := s.GetByEmail(ctx, email)
+	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return err
 	}
-
 	user.Verified = true
 	return s.repo.Update(ctx, user)
 }
 
-func (s *UserServiceImpl) UpdatePassword(ctx context.Context, email, newPassword string) error {
-	user, err := s.GetByEmail(ctx, email)
+func (s *UserServiceImpl) UpdatePassword(ctx context.Context, email, pwd string) error {
+	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return err
 	}
 
-	user.PasswordHash = newPassword
+	user.PasswordHash = pwd
 	return s.repo.Update(ctx, user)
 }
