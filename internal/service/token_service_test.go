@@ -46,26 +46,6 @@ func (m *MockTokenRepository) DeleteExpiredAndRevoked(ctx context.Context, expir
 	return m.Called(ctx, expiredThreshold, revokedThreshold).Error(0)
 }
 
-type MockCacheStorage struct {
-	mock.Mock
-}
-
-func (m *MockCacheStorage) Get(ctx context.Context, key string, dst any) error {
-	return m.Called(ctx, key, dst).Error(0)
-}
-
-func (m *MockCacheStorage) Set(ctx context.Context, key string, val any, ttl time.Duration) error {
-	return m.Called(ctx, key, val, ttl).Error(0)
-}
-
-func (m *MockCacheStorage) Delete(ctx context.Context, key string) error {
-	return m.Called(ctx, key).Error(0)
-}
-
-func (m *MockCacheStorage) IsExist(ctx context.Context, key string) (bool, error) {
-	return m.Called(ctx, key).Get(0).(bool), m.Called(ctx, key).Error(1)
-}
-
 func TestTokenService_CreateSession(t *testing.T) {
 	mockRepo := new(MockTokenRepository)
 	cfg := config.TokenConfig{
@@ -111,6 +91,17 @@ func TestTokenService_CreateSession(t *testing.T) {
 				assert.Nil(t, tokenInfo)
 			},
 			expectedError: assert.AnError,
+		},
+		{
+			name: "revoke device session fails but create continues",
+			setupMocks: func() {
+				mockRepo.On("UpdateRevokedByDevice", mock.Anything, userID, deviceID).Return(assert.AnError)
+				mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
+			},
+			checkResult: func(t *testing.T, tokenInfo *domain.TokenInfo) {
+				assert.NotNil(t, tokenInfo)
+			},
+			expectedError: nil,
 		},
 	}
 
@@ -278,52 +269,161 @@ func TestTokenService_Validate(t *testing.T) {
 	}
 }
 
-func TestTokenService_Revoke(t *testing.T) {
-	ctx := context.Background()
+func TestTokenService_RevokeSingle(t *testing.T) {
+	mockRepo := new(MockTokenRepository)
+	service := NewTokenService(mockRepo, config.TokenConfig{})
+	token := "some-token"
+	hashed := service.hashToken(token)
 
-	t.Run("RevokeSingle", func(t *testing.T) {
-		mockRepo := new(MockTokenRepository)
-		service := NewTokenService(mockRepo, config.TokenConfig{})
+	tests := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "success",
+			setupMocks: func() {
+				mockRepo.On("GetByHash", mock.Anything, hashed).Return(&domain.RefreshToken{ID: 1}, nil)
+				mockRepo.On("UpdateRevoked", mock.Anything, int64(1)).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "token not found",
+			setupMocks: func() {
+				mockRepo.On("GetByHash", mock.Anything, hashed).Return(nil, pkg.ErrNotFound)
+			},
+			expectedError: pkg.ErrNotFound,
+		},
+		{
+			name: "update failed",
+			setupMocks: func() {
+				mockRepo.On("GetByHash", mock.Anything, hashed).Return(&domain.RefreshToken{ID: 1}, nil)
+				mockRepo.On("UpdateRevoked", mock.Anything, int64(1)).Return(assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+	}
 
-		mockRepo.On("GetByHash", ctx, mock.Anything).Return(&domain.RefreshToken{ID: 1}, nil)
-		mockRepo.On("UpdateRevoked", ctx, int64(1)).Return(nil)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockRepo.Calls = nil
+			mockRepo.ExpectedCalls = nil
+			tc.setupMocks()
+			err := service.RevokeSingle(context.Background(), token)
+			assert.ErrorIs(t, err, tc.expectedError)
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
 
-		err := service.RevokeSingle(ctx, "some-token")
-		assert.NoError(t, err)
-		mockRepo.AssertExpectations(t)
-	})
+func TestTokenService_RevokeDeviceSession(t *testing.T) {
+	mockRepo := new(MockTokenRepository)
+	service := NewTokenService(mockRepo, config.TokenConfig{})
 
-	t.Run("RevokeDeviceSession", func(t *testing.T) {
-		mockRepo := new(MockTokenRepository)
-		service := NewTokenService(mockRepo, config.TokenConfig{})
+	tests := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "success",
+			setupMocks: func() {
+				mockRepo.On("UpdateRevokedByDevice", mock.Anything, int64(1), "device-1").Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error",
+			setupMocks: func() {
+				mockRepo.On("UpdateRevokedByDevice", mock.Anything, int64(1), "device-1").Return(assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+	}
 
-		mockRepo.On("UpdateRevokedByDevice", ctx, int64(1), "device-1").Return(nil)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockRepo.Calls = nil
+			mockRepo.ExpectedCalls = nil
+			tc.setupMocks()
+			err := service.RevokeDeviceSession(context.Background(), 1, "device-1")
+			assert.ErrorIs(t, err, tc.expectedError)
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
 
-		err := service.RevokeDeviceSession(ctx, 1, "device-1")
-		assert.NoError(t, err)
-		mockRepo.AssertExpectations(t)
-	})
+func TestTokenService_RevokeAllUserSessions(t *testing.T) {
+	mockRepo := new(MockTokenRepository)
+	service := NewTokenService(mockRepo, config.TokenConfig{})
 
-	t.Run("RevokeAllUserSessions", func(t *testing.T) {
-		mockRepo := new(MockTokenRepository)
-		service := NewTokenService(mockRepo, config.TokenConfig{})
+	tests := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "success",
+			setupMocks: func() {
+				mockRepo.On("UpdateRevokedByUser", mock.Anything, int64(1)).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error",
+			setupMocks: func() {
+				mockRepo.On("UpdateRevokedByUser", mock.Anything, int64(1)).Return(assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+	}
 
-		mockRepo.On("UpdateRevokedByUser", ctx, int64(1)).Return(nil)
-
-		err := service.RevokeAllUserSessions(ctx, 1)
-		assert.NoError(t, err)
-		mockRepo.AssertExpectations(t)
-	})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockRepo.Calls = nil
+			mockRepo.ExpectedCalls = nil
+			tc.setupMocks()
+			err := service.RevokeAllUserSessions(context.Background(), 1)
+			assert.ErrorIs(t, err, tc.expectedError)
+			mockRepo.AssertExpectations(t)
+		})
+	}
 }
 
 func TestTokenService_CleanupDatabase(t *testing.T) {
 	mockRepo := new(MockTokenRepository)
 	service := NewTokenService(mockRepo, config.TokenConfig{})
-	ctx := context.Background()
 
-	mockRepo.On("DeleteExpiredAndRevoked", ctx, mock.Anything, mock.Anything).Return(nil)
+	tests := []struct {
+		name          string
+		setupMocks    func()
+		expectedError error
+	}{
+		{
+			name: "success",
+			setupMocks: func() {
+				mockRepo.On("DeleteExpiredAndRevoked", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error",
+			setupMocks: func() {
+				mockRepo.On("DeleteExpiredAndRevoked", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError)
+			},
+			expectedError: assert.AnError,
+		},
+	}
 
-	err := service.CleanupDatabase(ctx)
-	assert.NoError(t, err)
-	mockRepo.AssertExpectations(t)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockRepo.Calls = nil
+			mockRepo.ExpectedCalls = nil
+			tc.setupMocks()
+			err := service.CleanupDatabase(context.Background())
+			assert.ErrorIs(t, err, tc.expectedError)
+			mockRepo.AssertExpectations(t)
+		})
+	}
 }
