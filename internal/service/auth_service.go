@@ -140,13 +140,7 @@ func (s *AuthServiceImpl) Login(ctx context.Context, req *domain.LoginRequest) (
 		return nil, nil, err
 	}
 
-	return &domain.UserResponse{
-		ID:        user.ID,
-		Email:     user.Email,
-		Username:  user.Username,
-		Profile:   user.Profile,
-		CreatedAt: user.CreatedAt,
-	}, tokens, nil
+	return user, tokens, nil
 }
 
 func verifyPassword(plainPassword, hashPassword string) bool {

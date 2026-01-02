@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"air-social/internal/domain"
 	"air-social/pkg"
@@ -32,26 +33,13 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserI
 		Email:        in.Email,
 		Username:     in.Username,
 		PasswordHash: in.PasswordHash,
-		Profile:      nil,
 	}
 
 	if err := s.repo.Create(ctx, u); err != nil {
 		return nil, err
 	}
 
-	return s.toUserResponse(u), nil
-}
-
-func (s *UserServiceImpl) toUserResponse(u *domain.User) *domain.UserResponse {
-	return &domain.UserResponse{
-		ID:           u.ID,
-		Email:        u.Email,
-		Username:     u.Username,
-		Profile:      u.Profile,
-		Verified:     u.Verified,
-		CreatedAt:    u.CreatedAt,
-		PasswordHash: u.PasswordHash,
-	}
+	return u.ToResponse(), nil
 }
 
 func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error) {
@@ -59,7 +47,7 @@ func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain
 	if err != nil {
 		return nil, err
 	}
-	return s.toUserResponse(user), nil
+	return user.ToResponse(), nil
 }
 
 func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (*domain.UserResponse, error) {
@@ -67,7 +55,7 @@ func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (*domain.UserRe
 	if err != nil {
 		return nil, err
 	}
-	return s.toUserResponse(user), nil
+	return user.ToResponse(), nil
 }
 
 func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
@@ -75,7 +63,9 @@ func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
 	if err != nil {
 		return err
 	}
+	now := time.Now().UTC().Truncate(time.Second)
 	user.Verified = true
+	user.VerifiedAt = &now
 	return s.repo.Update(ctx, user)
 }
 

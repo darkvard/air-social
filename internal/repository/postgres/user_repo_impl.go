@@ -19,8 +19,8 @@ func NewUserRepoImpl(db *sqlx.DB) *UserRepoImpl {
 
 func (r *UserRepoImpl) Create(ctx context.Context, user *domain.User) error {
 	query := `
-        INSERT INTO users (email, username, password_hash, profile)
-        VALUES (:email, :username, :password_hash, :profile)
+        INSERT INTO users (email, username, password_hash)
+        VALUES (:email, :username, :password_hash)
         RETURNING id, created_at, updated_at, version
     `
 	rows, err := r.db.NamedQueryContext(ctx, query, user)
@@ -59,7 +59,12 @@ func (r *UserRepoImpl) Update(ctx context.Context, u *domain.User) error {
 		UPDATE users
 		SET username = :username, 
 			password_hash = :password_hash, 
-			profile = :profile, 
+			full_name = :full_name,
+			bio = :bio,
+			avatar = :avatar,
+			cover_image = :cover_image,
+			location = :location,
+			website = :website,
 			verified = :verified, 
 			verified_at = :verified_at, 
 			updated_at = NOW(), 

@@ -39,14 +39,15 @@ type Profile struct {
 	Website    string `db:"website" json:"website"`
 }
 
-func (u *User) ToResponse() UserResponse {
-	return UserResponse{
-		ID:        u.ID,
-		Email:     u.Email,
-		Username:  u.Username,
-		Profile:   u.Profile,
-		Verified:  u.Verified,
-		CreatedAt: u.CreatedAt,
+func (u *User) ToResponse() *UserResponse {
+	return &UserResponse{
+		ID:           u.ID,
+		Email:        u.Email,
+		Username:     u.Username,
+		Profile:      u.Profile,
+		Verified:     u.Verified,
+		CreatedAt:    u.CreatedAt,
+		PasswordHash: u.PasswordHash,
 	}
 }
 

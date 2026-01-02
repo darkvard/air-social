@@ -444,7 +444,7 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 	authService := NewAuthService(mockUsers, nil, mockQueue, mockRoutes, mockCache)
 
 	req := &domain.ForgotPasswordRequest{Email: "test@example.com"}
-	user := &domain.User{Email: "test@example.com", Username: "test"}
+	user := &domain.UserResponse{Email: "test@example.com", Username: "test"}
 
 	tests := []struct {
 		name          string
@@ -586,7 +586,7 @@ func TestAuthService_Login(t *testing.T) {
 	}
 
 	hashedPwd, _ := hashPassword(loginReq.Password)
-	user := &domain.User{
+	user := &domain.UserResponse{
 		ID:           1,
 		Email:        loginReq.Email,
 		Username:     "tester",
@@ -644,10 +644,11 @@ func TestAuthService_Login(t *testing.T) {
 				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(tokenInfo, nil)
 			},
 			expectedUserResp: &domain.UserResponse{
-				ID:        user.ID,
-				Email:     user.Email,
-				Username:  user.Username,
-				CreatedAt: user.CreatedAt,
+				ID:           user.ID,
+				Email:        user.Email,
+				Username:     user.Username,
+				CreatedAt:    user.CreatedAt,
+				PasswordHash: user.PasswordHash,
 			},
 			expectedTokenInfo: tokenInfo,
 			expectedError:     nil,
