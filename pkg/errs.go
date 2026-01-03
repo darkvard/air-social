@@ -9,20 +9,20 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("not found")
-	ErrAlreadyExists = errors.New("already exists")
-	ErrConflict      = errors.New("conflict")
-	ErrInvalidData   = errors.New("invalid data")
-	ErrDatabase      = errors.New("database error")
-	ErrKeyNotFound   = errors.New("key not found")
+	ErrNotFound      = errors.New("the requested resource was not found")
+	ErrAlreadyExists = errors.New("this resource already exists")
+	ErrConflict      = errors.New("a conflict occurred with the resource's current state")
+	ErrInvalidData   = errors.New("the provided data is invalid")
+	ErrDatabase      = errors.New("a database error occurred")
+	ErrKeyNotFound   = errors.New("a required key was not found")
+	ErrSamePassword  = errors.New("new password must be different from current password")
 )
 
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUnauthorized       = errors.New("unauthorized")
-	ErrForbidden          = errors.New("forbidden")
-	ErrInvalidInput       = errors.New("invalid input")
-	ErrInternal           = errors.New("internal error")
+	ErrUnauthorized       = errors.New("authentication failed or is missing")
+	ErrForbidden          = errors.New("you do not have permission to perform this action")
+	ErrInternal           = errors.New("an internal server error occurred")
 )
 
 var (

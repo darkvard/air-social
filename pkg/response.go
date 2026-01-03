@@ -69,20 +69,22 @@ func HandleValidateError(c *gin.Context, err error) {
 }
 
 func HandleServiceError(c *gin.Context, err error) {
+	msg := err.Error()
 	switch err {
-	case ErrInvalidCredentials:
-		Unauthorized(c, "email or password is incorrect1")
-	case ErrAlreadyExists:
-		Conflict(c, "resource already exists")
-	case ErrNotFound:
-		NotFound(c, "resource not found")
 	case ErrUnauthorized:
-		Unauthorized(c, "unauthorized")
+		Unauthorized(c, msg)
 	case ErrForbidden:
-		Forbidden(c, "forbidden")
-	case ErrInvalidInput, ErrInvalidData:
-		BadRequest(c, "invalid data")
+		Forbidden(c, msg)
+	case ErrInvalidCredentials:
+		Unauthorized(c, msg)
+	case ErrAlreadyExists:
+		Conflict(c, msg)
+	case ErrNotFound:
+		NotFound(c, msg)
+	case ErrInvalidData, ErrSamePassword:
+		BadRequest(c, msg)
 	default:
-		InternalError(c, "internal server error")
+		Log().Errorw("unhandled service error", "error", err)
+		InternalError(c, "an unexpected error occurred")
 	}
 }

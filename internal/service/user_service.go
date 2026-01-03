@@ -87,6 +87,10 @@ func (s *UserServiceImpl) ChangePassword(ctx context.Context, userID int64, req 
 		return err
 	}
 
+	if req.NewPassword == req.CurrentPassword {
+		return pkg.ErrSamePassword
+	}
+
 	if !verifyPassword(req.CurrentPassword, user.PasswordHash) {
 		return pkg.ErrInvalidCredentials
 	}

@@ -105,11 +105,6 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if req.NewPassword == req.CurrentPassword {
-		pkg.BadRequest(c, "new password must be different from current password")
-		return
-	}
-
 	if err := h.user.ChangePassword(c.Request.Context(), payload.UserID, &req); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
