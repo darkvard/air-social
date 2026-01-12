@@ -5,8 +5,11 @@ import (
 	"fmt"
 
 	_ "air-social/docs"
-	"air-social/internal/app"
 	"air-social/internal/config"
+	"air-social/internal/di"
+	transport "air-social/internal/transport/http"
+	"air-social/internal/transport/ws"
+	"air-social/internal/worker"
 	"air-social/pkg"
 )
 
@@ -29,29 +32,35 @@ import (
 // @in							header
 // @name						Authorization
 func main() {
-	app, err := app.NewApplication()
+	cfg := config.Load()
+	urls := transport.NewURLFactory(cfg.Server.BaseURL, cfg.Server.Version)
+
+	infra, err := di.NewInfra(*cfg)
 	if err != nil {
 		panic(err)
 	}
-	defer app.Cleanup()
+	defer infra.Close()
 
-	pkg.NewLogger(app.Config.Server.Env)
-	welcome(app.Config.Server, app.Registry.SwaggerURL())
-
-	app.Run()
-}
-
-func welcome(server config.ServerConfig, swaggerURL string) {
-	info := struct {
-		ContainerPort string `json:"container_port"`
-		HostPort      string `json:"host_port"`
-		SwaggerURL    string `json:"swagger_url"`
-	}{
-		ContainerPort: server.Port,
-		HostPort:      server.HostPort,
-		SwaggerURL:    swaggerURL,
+	services, err := di.NewServices(*cfg, infra, urls)
+	if err != nil {
+		panic(err)
 	}
 
+	printWelcome(cfg, urls.SwaggerURL())
+
+	NewApp(
+		transport.NewServer(*cfg, services, infra),
+		worker.NewWorker(infra.Rabbit, services.Cache, cfg.Mailer),
+		ws.NewHub(),
+	).Run()
+}
+
+func printWelcome(cfg *config.Config, swaggerURL string) {
+	info := map[string]string{
+		"container_port": cfg.Server.Port,
+		"host_port":      cfg.Server.HostPort,
+		"swagger_url":    swaggerURL,
+	}
 	data, _ := json.MarshalIndent(info, "", "  ")
 	pkg.Log().Info("server started")
 	fmt.Println(string(data))

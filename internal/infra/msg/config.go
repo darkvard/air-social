@@ -1,4 +1,4 @@
-package messaging
+package msg
 
 type ExchangeConfig struct {
 	Name string

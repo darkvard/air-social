@@ -3,10 +3,10 @@ package email
 import (
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	mess "air-social/internal/infrastructure/messaging"
+	"air-social/internal/infra/msg"
 )
 
-func setupExchange(ch *amqp.Channel, cfg mess.ExchangeConfig) error {
+func setupExchange(ch *amqp.Channel, cfg msg.ExchangeConfig) error {
 	return ch.ExchangeDeclare(
 		cfg.Name,
 		cfg.Type,
@@ -18,7 +18,7 @@ func setupExchange(ch *amqp.Channel, cfg mess.ExchangeConfig) error {
 	)
 }
 
-func setupQueue(ch *amqp.Channel, cfg mess.QueueConfig) (string, error) {
+func setupQueue(ch *amqp.Channel, cfg msg.QueueConfig) (string, error) {
 	args := amqp.Table{}
 	if cfg.DeadLetterExchange != "" && cfg.DeadLetterRoutingKey != "" {
 		args["x-dead-letter-exchange"] = cfg.DeadLetterExchange
@@ -46,7 +46,7 @@ func setupQueue(ch *amqp.Channel, cfg mess.QueueConfig) (string, error) {
 	return q.Name, nil
 }
 
-func declareAndBindDLQ(ch *amqp.Channel, cfg mess.QueueConfig) error {
+func declareAndBindDLQ(ch *amqp.Channel, cfg msg.QueueConfig) error {
 	if _, err := ch.QueueDeclare(
 		cfg.DeadLetterQueue,
 		true, // durable
@@ -70,8 +70,8 @@ func declareAndBindDLQ(ch *amqp.Channel, cfg mess.QueueConfig) error {
 func bindQueue(
 	ch *amqp.Channel,
 	queue string,
-	eCfg mess.ExchangeConfig,
-	qCfg mess.QueueConfig,
+	eCfg msg.ExchangeConfig,
+	qCfg msg.QueueConfig,
 ) error {
 	return ch.QueueBind(
 		queue,

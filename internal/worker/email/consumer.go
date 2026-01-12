@@ -7,14 +7,13 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	"air-social/internal/cache"
 	"air-social/internal/domain"
 	"air-social/pkg"
 )
 
 func consumeLoop(
 	ctx context.Context,
-	cache cache.CacheStorage,
+	cache domain.CacheStorage,
 	msgs <-chan amqp.Delivery,
 	disp domain.EventHandler,
 	done <-chan struct{},
@@ -38,7 +37,7 @@ func consumeLoop(
 
 func handleMessage(
 	ctx context.Context,
-	c cache.CacheStorage,
+	c domain.CacheStorage,
 	msg amqp.Delivery,
 	disp domain.EventHandler,
 ) {
@@ -49,7 +48,7 @@ func handleMessage(
 		return
 	}
 
-	key := cache.GetEmailProcessedKey(msg.MessageId)
+	key := domain.GetEmailProcessedKey(msg.MessageId)
 	if msg.MessageId != "" {
 		exists, err := c.IsExist(ctx, key)
 		if err != nil {
@@ -66,14 +65,14 @@ func handleMessage(
 		if pkg.IsPermanentError(err) {
 			pkg.Log().Errorw("permanent error detected, dropping", "error", err, "msg_id", msg.MessageId)
 			msg.Nack(false, false)
-			deleteRetryCount(ctx, cache.GetEmailRetryKey(msg.MessageId), c)
+			deleteRetryCount(ctx, domain.GetEmailRetryKey(msg.MessageId), c)
 		} else {
 			handleRetry(ctx, c, msg, err)
 		}
 		return
 	}
 	if msg.MessageId != "" {
-		_ = c.Set(ctx, key, "1", cache.OneDayTime)
+		_ = c.Set(ctx, key, "1", domain.OneDayTime)
 	}
 
 	msg.Ack(false)

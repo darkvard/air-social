@@ -7,9 +7,8 @@ import (
 
 	"github.com/rabbitmq/amqp091-go"
 
-	"air-social/internal/cache"
 	"air-social/internal/domain"
-	mess "air-social/internal/infrastructure/messaging"
+	"air-social/internal/infra/msg"
 	"air-social/internal/worker"
 	"air-social/internal/worker/email"
 	"air-social/pkg"
@@ -23,17 +22,17 @@ const (
 )
 
 type rabbitMQ struct {
-	publisher *mess.Publisher
+	publisher *msg.Publisher
 	workerMgr *worker.Manager
 }
 
-func newRabbitMQ(conn *amqp091.Connection, c cache.CacheStorage) *rabbitMQ {
+func newRabbitMQ(conn *amqp091.Connection, c domain.CacheStorage) *rabbitMQ {
 	mgr := worker.NewManager(
 		email.NewEmailWorker(
 			conn,
 			c,
-			mess.EventsExchange,
-			mess.QueueConfig{
+			msg.EventsExchange,
+			msg.QueueConfig{
 				Queue:      "email.interaction.q",
 				RoutingKey: "email.*",
 			},
@@ -41,9 +40,9 @@ func newRabbitMQ(conn *amqp091.Connection, c cache.CacheStorage) *rabbitMQ {
 		),
 	)
 
-	pub, err := mess.NewPublisher(
+	pub, err := msg.NewPublisher(
 		conn,
-		mess.EventsExchange,
+		msg.EventsExchange,
 		10,
 	)
 	if err != nil {
@@ -56,7 +55,7 @@ func newRabbitMQ(conn *amqp091.Connection, c cache.CacheStorage) *rabbitMQ {
 	}
 }
 
-func TestRabbitMQ(conn *amqp091.Connection, c cache.CacheStorage) {
+func TestRabbitMQ(conn *amqp091.Connection, c domain.CacheStorage) {
 	mq := newRabbitMQ(conn, c)
 	mq.testing()
 }
@@ -69,7 +68,7 @@ func (r *rabbitMQ) testing() {
 	time.Sleep(time.Second)
 
 	r.messageHandle(ctx)
-	r.stopWorker()
+	r.stopWorker(ctx)
 }
 
 func (r *rabbitMQ) startWorker(ctx context.Context) {
@@ -122,6 +121,6 @@ func initEvent(name, key string) domain.EventPayload {
 	}
 }
 
-func (r *rabbitMQ) stopWorker() {
-	r.workerMgr.Stop()
+func (r *rabbitMQ) stopWorker(ctx context.Context) {
+	r.workerMgr.Stop(ctx)
 }

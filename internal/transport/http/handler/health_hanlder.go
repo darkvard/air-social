@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/minio/minio-go/v7"
 	amqp "github.com/rabbitmq/amqp091-go"
 	goredis "github.com/redis/go-redis/v9"
 
@@ -15,13 +16,15 @@ type HealthHandler struct {
 	db     *sqlx.DB
 	redis  *goredis.Client
 	rabbit *amqp.Connection
+	minio  *minio.Client
 }
 
-func NewHealthHandler(db *sqlx.DB, redis *goredis.Client, rabbit *amqp.Connection) *HealthHandler {
+func NewHealthHandler(db *sqlx.DB, redis *goredis.Client, rabbit *amqp.Connection, minio *minio.Client) *HealthHandler {
 	return &HealthHandler{
 		db:     db,
 		redis:  redis,
 		rabbit: rabbit,
+		minio:  minio,
 	}
 }
 
@@ -39,6 +42,7 @@ func (h *HealthHandler) HealthCheck(c *gin.Context) {
 	dbStatus := "ok"
 	redisStatus := "ok"
 	rabbitStatus := "ok"
+	minioStatus := "ok"
 
 	if err := h.db.Ping(); err != nil {
 		dbStatus = err.Error()
@@ -55,11 +59,17 @@ func (h *HealthHandler) HealthCheck(c *gin.Context) {
 		status = "error"
 	}
 
+	if _, err := h.minio.ListBuckets(c.Request.Context()); err != nil {
+		minioStatus = err.Error()
+		status = "error"
+	}
+
 	pkg.Success(c, gin.H{
 		"status":    status,
 		"db":        dbStatus,
 		"redis":     redisStatus,
 		"rabbitmq":  rabbitStatus,
+		"minio":     minioStatus,
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	})
 }

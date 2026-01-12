@@ -17,6 +17,7 @@ type Config struct {
 	Token    TokenConfig
 	Mailer   MailConfig
 	RabbitMQ RabbitMQConfig
+	MinIO    FileStorageConfig
 	Limiter  RateLimiterConfig
 }
 
@@ -36,6 +37,7 @@ func Load() *Config {
 		Token:    TokenCfg(),
 		Mailer:   MailCfg(),
 		RabbitMQ: RabbitMQCfg(),
+		MinIO:    LoadFileStorageConfig(),
 		Limiter:  RateLimiterConfig{},
 	}
 }
@@ -46,6 +48,18 @@ func getString(k, d string) string {
 		return d
 	}
 	return v
+}
+
+func getBool(k string, d bool) bool {
+	v := os.Getenv(k)
+	if v == "" {
+		return d
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return d
+	}
+	return b
 }
 
 func getInt(k string, d int) int {

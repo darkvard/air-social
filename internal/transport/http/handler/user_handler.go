@@ -10,12 +10,12 @@ import (
 )
 
 type UserHandler struct {
-	user service.UserService
+	users service.UserService
 }
 
 func NewUserHandler(user service.UserService) *UserHandler {
 	return &UserHandler{
-		user: user,
+		users: user,
 	}
 }
 
@@ -36,7 +36,7 @@ func (h *UserHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.user.GetByID(c.Request.Context(), payload.UserID)
+	user, err := h.users.GetByID(c.Request.Context(), payload.UserID)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -70,7 +70,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.user.UpdateProfile(c.Request.Context(), payload.UserID, &req)
+	user, err := h.users.UpdateProfile(c.Request.Context(), payload.UserID, &req)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -105,7 +105,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.user.ChangePassword(c.Request.Context(), payload.UserID, &req); err != nil {
+	if err := h.users.ChangePassword(c.Request.Context(), payload.UserID, &req); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -125,5 +125,32 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Success		200		{object}	domain.UserResponse
 //	@Router			/users/avatar [post]
 func (h *UserHandler) UpdateAvatar(c *gin.Context) {
+	payload, err := middleware.GetAuthPayload(c)
+	if err != nil {
+		pkg.Unauthorized(c, err.Error())
+		return
+	}
+
+	fileHeader, err := c.FormFile("avatar")
+	if err != nil {
+		pkg.BadRequest(c, "File avatar is required")
+		return
+	}
+
+	if fileHeader.Size > 5*1024*1024 {
+		pkg.BadRequest(c, "File to large (Max 5MB)")
+		return
+	}
+
+	url, err := h.users.UpdateAvatar(c.Request.Context(), payload.UserID, fileHeader)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, gin.H{
+		"message": "Avatar update successfully",
+		"url":     url,
+	})
 
 }

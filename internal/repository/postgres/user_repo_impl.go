@@ -84,3 +84,17 @@ func (r *UserRepoImpl) Update(ctx context.Context, u *domain.User) error {
 
 	return pkg.ErrNotFound
 }
+
+func (r *UserRepoImpl) UpdateAvatar(ctx context.Context, userID int64, avatarURL string) error {
+	query := `
+		UPDATE users
+		SET avatar = :avatar
+		WHERE id = :id
+	`
+
+	_, err := r.db.ExecContext(ctx, query, avatarURL, userID)
+	if err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	return nil
+}

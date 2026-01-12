@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"mime/multipart"
 	"testing"
 	"time"
 
@@ -62,6 +63,11 @@ func (m *MockUserService) UpdateProfile(ctx context.Context, userID int64, req *
 func (m *MockUserService) ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error {
 	args := m.Called(ctx, userID, req)
 	return args.Error(0)
+}
+
+func (m *MockUserService) UpdateAvatar(ctx context.Context, userID int64, fileHeader *multipart.FileHeader) (string, error) {
+	args := m.Called(ctx, userID, fileHeader)
+	return args.String(0), args.Error(1)
 }
 
 type MockToken struct {
@@ -144,23 +150,23 @@ func (m *MockCache) IsExist(ctx context.Context, key string) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
-type MockRoutes struct {
+type MockURL struct {
 	mock.Mock
 }
 
-func (m *MockRoutes) ResetPasswordURL(token string) string {
+func (m *MockURL) ResetPasswordURL(token string) string {
 	return m.Called(token).String(0)
 }
 
-func (m *MockRoutes) VerifyEmailURL(token string) string {
+func (m *MockURL) VerifyEmailURL(token string) string {
 	return m.Called(token).String(0)
 }
 
-func (m *MockRoutes) Prefix() string {
+func (m *MockURL) Prefix() string {
 	return m.Called().String(0)
 }
 
-func (m *MockRoutes) SwaggerURL() string {
+func (m *MockURL) SwaggerURL() string {
 	return m.Called().String(0)
 }
 
@@ -169,9 +175,9 @@ func TestAuthService_Register(t *testing.T) {
 	mockCache := new(MockCache)
 	mockToken := new(MockToken)
 	mockQueue := new(MockQueue)
-	mockRoutes := new(MockRoutes)
+	mockUrl := new(MockURL)
 
-	authService := NewAuthService(mockUsers, mockToken, mockQueue, mockRoutes, mockCache)
+	authService := NewAuthService(mockUsers, mockToken, mockUrl, mockQueue, mockCache)
 
 	validReq := &domain.RegisterRequest{
 		Email:    "test@example.com",
@@ -201,7 +207,7 @@ func TestAuthService_Register(t *testing.T) {
 					}, nil)
 
 				mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				mockRoutes.On("VerifyEmailURL", mock.Anything).Return("http://test.link")
+				mockUrl.On("VerifyEmailURL", mock.Anything).Return("http://test.link")
 				mockQueue.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedError: nil,
@@ -224,8 +230,8 @@ func TestAuthService_Register(t *testing.T) {
 			mockCache.Calls = nil
 			mockQueue.ExpectedCalls = nil
 			mockQueue.Calls = nil
-			mockRoutes.ExpectedCalls = nil
-			mockRoutes.Calls = nil
+			mockUrl.ExpectedCalls = nil
+			mockUrl.Calls = nil
 
 			tc.setupMocks(mockUsers)
 			res, err := authService.Register(context.Background(), tc.input)
@@ -241,7 +247,7 @@ func TestAuthService_Register(t *testing.T) {
 			mockUsers.AssertExpectations(t)
 			mockCache.AssertExpectations(t)
 			mockQueue.AssertExpectations(t)
-			mockRoutes.AssertExpectations(t)
+			mockUrl.AssertExpectations(t)
 		})
 	}
 }
@@ -453,8 +459,8 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 	mockUsers := new(MockUserService)
 	mockCache := new(MockCache)
 	mockQueue := new(MockQueue)
-	mockRoutes := new(MockRoutes)
-	authService := NewAuthService(mockUsers, nil, mockQueue, mockRoutes, mockCache)
+	mockURL := new(MockURL)
+	authService := NewAuthService(mockUsers, nil, mockURL, mockQueue, mockCache)
 
 	req := &domain.ForgotPasswordRequest{Email: "test@example.com"}
 	user := &domain.UserResponse{Email: "test@example.com", Username: "test"}
@@ -469,7 +475,7 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 			setupMocks: func() {
 				mockUsers.On("GetByEmail", mock.Anything, req.Email).Return(user, nil)
 				mockCache.On("Set", mock.Anything, mock.Anything, req.Email, mock.Anything).Return(nil)
-				mockRoutes.On("ResetPasswordURL", mock.Anything).Return("http://reset.link")
+				mockURL.On("ResetPasswordURL", mock.Anything).Return("http://reset.link")
 				mockQueue.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedError: nil,
@@ -491,8 +497,8 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 			mockCache.Calls = nil
 			mockQueue.ExpectedCalls = nil
 			mockQueue.Calls = nil
-			mockRoutes.ExpectedCalls = nil
-			mockRoutes.Calls = nil
+			mockURL.ExpectedCalls = nil
+			mockURL.Calls = nil
 			tc.setupMocks()
 
 			err := authService.ForgotPassword(context.Background(), req)
@@ -505,7 +511,7 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 			mockUsers.AssertExpectations(t)
 			mockCache.AssertExpectations(t)
 			mockQueue.AssertExpectations(t)
-			mockRoutes.AssertExpectations(t)
+			mockURL.AssertExpectations(t)
 		})
 	}
 }
@@ -588,9 +594,9 @@ func TestAuthService_Login(t *testing.T) {
 	mockCache := new(MockCache)
 	mockToken := new(MockToken)
 	mockQueue := new(MockQueue)
-	mockRoutes := new(MockRoutes)
+	mockURL := new(MockURL)
 
-	authService := NewAuthService(mockUsers, mockToken, mockQueue, mockRoutes, mockCache)
+	authService := NewAuthService(mockUsers, mockToken, mockURL, mockQueue, mockCache)
 
 	loginReq := &domain.LoginRequest{
 		Email:    "test@example.com",

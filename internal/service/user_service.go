@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"mime/multipart"
 	"time"
 
 	"air-social/internal/domain"
 	"air-social/pkg"
 )
 
+// todo: ko dung con tro cho dto
 type UserService interface {
 	CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error)
 	GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error)
@@ -16,14 +18,19 @@ type UserService interface {
 	UpdatePassword(ctx context.Context, email, pwd string) error
 	ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error
 	UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateProfileRequest) (*domain.UserResponse, error)
+	UpdateAvatar(ctx context.Context, userID int64, fileHeader *multipart.FileHeader) (string, error)
 }
 
 type UserServiceImpl struct {
-	repo domain.UserRepository
+	repo    domain.UserRepository
+	storage domain.FileStorage
 }
 
-func NewUserService(repo domain.UserRepository) *UserServiceImpl {
-	return &UserServiceImpl{repo: repo}
+func NewUserService(repo domain.UserRepository, storage domain.FileStorage) *UserServiceImpl {
+	return &UserServiceImpl{
+		repo:    repo,
+		storage: storage,
+	}
 }
 
 func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error) {
@@ -131,4 +138,19 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req *
 	}
 
 	return user.ToResponse(), nil
+}
+
+func (s *UserServiceImpl) UpdateAvatar(ctx context.Context, userID int64, fileHeader *multipart.FileHeader) (string, error) {
+	file, err := fileHeader.Open()
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	avatarURL, err := s.storage.UploadFile(ctx, file, fileHeader, "avatars")
+	if err != nil {
+		return "", err
+	}
+
+	return avatarURL, nil
 }

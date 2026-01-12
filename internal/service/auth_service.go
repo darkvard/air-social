@@ -9,10 +9,8 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"air-social/internal/cache"
 	"air-social/internal/domain"
-	mess "air-social/internal/infrastructure/messaging"
-	"air-social/internal/routes"
+	"air-social/internal/infra/msg"
 	"air-social/pkg"
 )
 
@@ -29,23 +27,23 @@ type AuthService interface {
 type AuthServiceImpl struct {
 	users     UserService
 	tokens    TokenService
+	url       domain.URLFactory
 	publisher domain.EventPublisher
-	routes    routes.Registry
-	cache     cache.CacheStorage
+	cache     domain.CacheStorage
 }
 
 func NewAuthService(
 	us UserService,
 	ts TokenService,
+	ru domain.URLFactory,
 	pub domain.EventPublisher,
-	rr routes.Registry,
-	cs cache.CacheStorage,
+	cs domain.CacheStorage,
 ) *AuthServiceImpl {
 	return &AuthServiceImpl{
 		users:     us,
 		tokens:    ts,
+		url:       ru,
 		publisher: pub,
-		routes:    rr,
 		cache:     cs,
 	}
 }
@@ -65,13 +63,13 @@ func (s *AuthServiceImpl) Register(ctx context.Context, req *domain.RegisterRequ
 	}
 
 	eventID := uuid.NewString()
-	ttl := cache.ThirtyMinutesTime
+	ttl := domain.ThirtyMinutesTime
 	token := uuid.NewString()
 	if err := s.storeEmailVerification(ctx, token, user.Email, ttl); err != nil {
 		pkg.Log().Errorw("failed to store verification email", "error", err, "event", eventID, "email", user.Email)
 	}
 	if err := s.publisher.Publish(
-		ctx, mess.EmailVerifyQueueConfig.RoutingKey,
+		ctx, msg.EmailVerifyQueueConfig.RoutingKey,
 		domain.EventPayload{
 			EventID:   eventID,
 			EventType: domain.EmailVerify,
@@ -79,7 +77,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, req *domain.RegisterRequ
 			Data: domain.EventEmailData{
 				Email:  user.Email,
 				Name:   user.Username,
-				Link:   s.routes.VerifyEmailURL(token),
+				Link:   s.url.VerifyEmailURL(token),
 				Expiry: pkg.FormatTTLVerbose(ttl),
 			},
 		},
@@ -105,12 +103,12 @@ func hashPassword(plainText string) (string, error) {
 }
 
 func (s *AuthServiceImpl) storeEmailVerification(ctx context.Context, token, email string, ttl time.Duration) error {
-	return s.cache.Set(ctx, cache.GetEmailVerificationKey(token), email, ttl)
+	return s.cache.Set(ctx, domain.GetEmailVerificationKey(token), email, ttl)
 }
 
 func (s *AuthServiceImpl) getEmailVerification(ctx context.Context, token string) (string, error) {
 	var email string
-	if err := s.cache.Get(ctx, cache.GetEmailVerificationKey(token), &email); err != nil {
+	if err := s.cache.Get(ctx, domain.GetEmailVerificationKey(token), &email); err != nil {
 		return "", err
 	}
 	return email, nil
@@ -179,7 +177,7 @@ func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, req *domain.Forgot
 	}
 
 	token := uuid.NewString()
-	ttl := cache.FifteenMinutesTime
+	ttl := domain.FifteenMinutesTime
 	if err := s.storeEmailResetPassword(ctx, user.Email, token, ttl); err != nil {
 		return err
 	}
@@ -191,24 +189,24 @@ func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, req *domain.Forgot
 		Data: domain.EventEmailData{
 			Email:  user.Email,
 			Name:   user.Username,
-			Link:   s.routes.ResetPasswordURL(token),
+			Link:   s.url.ResetPasswordURL(token),
 			Expiry: pkg.FormatTTLVerbose(ttl),
 		},
 	}
 
-	return s.publisher.Publish(ctx, mess.EmailResetPasswordQueueConfig.RoutingKey, payload)
+	return s.publisher.Publish(ctx, msg.EmailResetPasswordQueueConfig.RoutingKey, payload)
 }
 
 func (s *AuthServiceImpl) getEmailResetPassword(ctx context.Context, token string) (string, error) {
 	var email string
-	if err := s.cache.Get(ctx, cache.GetEmailResetPasswordKey(token), &email); err != nil {
+	if err := s.cache.Get(ctx, domain.GetEmailResetPasswordKey(token), &email); err != nil {
 		return "", err
 	}
 	return email, nil
 }
 
 func (s *AuthServiceImpl) storeEmailResetPassword(ctx context.Context, email, token string, ttl time.Duration) error {
-	return s.cache.Set(ctx, cache.GetEmailResetPasswordKey(token), email, ttl)
+	return s.cache.Set(ctx, domain.GetEmailResetPasswordKey(token), email, ttl)
 }
 
 func (s *AuthServiceImpl) ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest, isValidateReturn bool) error {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"mime/multipart"
 	"testing"
 	"time"
 
@@ -32,6 +33,7 @@ func (m *MockUserRepo) GetByID(ctx context.Context, id int64) (*domain.User, err
 	return args.Get(0).(*domain.User), args.Error(1)
 
 }
+
 func (m *MockUserRepo) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	args := m.Called(ctx, email)
 	if args.Get(0) == nil {
@@ -40,9 +42,26 @@ func (m *MockUserRepo) GetByEmail(ctx context.Context, email string) (*domain.Us
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
+func (m *MockUserRepo) UpdateAvatar(ctx context.Context, userID int64, avatarURL string) error {
+	return m.Called(ctx, userID, avatarURL).Error(0)
+}
+
+type MockFile struct {
+	mock.Mock
+}
+
+func (m *MockFile) UploadFile(ctx context.Context, file multipart.File, header *multipart.FileHeader, folder string) (string, error) {
+	args := m.Called(ctx, file, header, folder)
+	return args.String(0), args.Error(1)
+}
+
+func (m *MockFile) DeleteFile(ctx context.Context, path string) error {
+	return m.Called(ctx, path).Error(0)
+}
+
 func TestUserService_Create(t *testing.T) {
 	mockRepo := new(MockUserRepo)
-	service := NewUserService(mockRepo)
+	service := NewUserService(mockRepo, nil)
 
 	input := &domain.CreateUserInput{
 		Email:        "email@example.com",
