@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"path/filepath"
+
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain"
@@ -10,12 +12,12 @@ import (
 )
 
 type UserHandler struct {
-	users service.UserService
+	srv service.UserService
 }
 
-func NewUserHandler(user service.UserService) *UserHandler {
+func NewUserHandler(srv service.UserService) *UserHandler {
 	return &UserHandler{
-		users: user,
+		srv: srv,
 	}
 }
 
@@ -36,7 +38,7 @@ func (h *UserHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.users.GetByID(c.Request.Context(), payload.UserID)
+	user, err := h.srv.GetByID(c.Request.Context(), payload.UserID)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -70,7 +72,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.users.UpdateProfile(c.Request.Context(), payload.UserID, &req)
+	user, err := h.srv.UpdateProfile(c.Request.Context(), payload.UserID, &req)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -105,7 +107,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.users.ChangePassword(c.Request.Context(), payload.UserID, &req); err != nil {
+	if err := h.srv.ChangePassword(c.Request.Context(), payload.UserID, &req); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -113,44 +115,91 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	pkg.Success(c, "password changed successfully")
 }
 
-// UpdateAvatar godoc
+// PresignedFileUpload godoc
 //
-//	@Summary		Update avatar
-//	@Description	Upload and update user avatar image
+//	@Summary		Get presigned upload URL
+//	@Description	Generate a presigned URL for uploading a file (avatar or cover) to object storage.
 //	@Tags			User
-//	@Accept			multipart/form-data
+//	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			avatar	formData	file	true	"Avatar file"
-//	@Success		200		{object}	domain.UserResponse
-//	@Router			/users/avatar [post]
-func (h *UserHandler) UpdateAvatar(c *gin.Context) {
+//	@Param			request	body		domain.PresignedFileUploadRequest	true	"Presigned Upload Request"
+//	@Success		200		{object}	domain.PresignedFileResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Router			/users/file/presigned [post]
+func (h *UserHandler) PresignedFileUpload(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
 	}
 
-	fileHeader, err := c.FormFile("avatar")
+	var req domain.PresignedFileUploadRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	if v := pkg.ValidateImageFile(req.FileName); v != nil {
+		pkg.HandleValidationResult(c, v)
+		return
+	}
+
+	res, err := h.srv.PresignedImageUpload(
+		c.Request.Context(),
+		domain.PresignedFile{
+			UserID: payload.UserID,
+			Ext:    filepath.Ext(req.FileName),
+			Typ:    domain.FileType(req.FileType),
+		},
+	)
+
 	if err != nil {
-		pkg.BadRequest(c, "File avatar is required")
+		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	if fileHeader.Size > 5*1024*1024 {
-		pkg.BadRequest(c, "File to large (Max 5MB)")
+	pkg.Success(c, res)
+}
+
+// ConfirmFileUpload godoc
+//
+//	@Summary		Confirm file upload
+//	@Description	Confirm that the file has been uploaded successfully and update the user profile with the new image URL.
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		domain.ConfirmFileUploadRequest	true	"Confirm Upload Request"
+//	@Success		200		{object}	map[string]string				"Returns upload success message and public URL"
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Router			/users/file/confirm [post]
+func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
+	payload, err := middleware.GetAuthPayload(c)
+	if err != nil {
+		pkg.Unauthorized(c, err.Error())
 		return
 	}
 
-	url, err := h.users.UpdateAvatar(c.Request.Context(), payload.UserID, fileHeader)
+	var req domain.ConfirmFileUploadRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	finalURL, err := h.srv.ConfirmImageUpload(c.Request.Context(), domain.ConfirmFile{
+		UserID:     payload.UserID,
+		ObjectName: req.ObjectName,
+		Typ:        domain.FileType(req.FileType),
+	})
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
 	pkg.Success(c, gin.H{
-		"message": "Avatar update successfully",
-		"url":     url,
+		"message": "Upload success",
+		"url":     finalURL,
 	})
 
 }

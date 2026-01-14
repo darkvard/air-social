@@ -2,8 +2,11 @@ package service
 
 import (
 	"context"
-	"mime/multipart"
+	"errors"
+	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 
 	"air-social/internal/domain"
 	"air-social/pkg"
@@ -18,18 +21,24 @@ type UserService interface {
 	UpdatePassword(ctx context.Context, email, pwd string) error
 	ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error
 	UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateProfileRequest) (*domain.UserResponse, error)
-	UpdateAvatar(ctx context.Context, userID int64, fileHeader *multipart.FileHeader) (string, error)
+
+	PresignedImageUpload(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error)
+	ConfirmImageUpload(ctx context.Context, input domain.ConfirmFile) (string, error)
 }
 
 type UserServiceImpl struct {
 	repo    domain.UserRepository
 	storage domain.FileStorage
+	cache   domain.CacheStorage
+	cfg     domain.FileConfig
 }
 
-func NewUserService(repo domain.UserRepository, storage domain.FileStorage) *UserServiceImpl {
+func NewUserService(repo domain.UserRepository, storage domain.FileStorage, cache domain.CacheStorage, cfg domain.FileConfig) *UserServiceImpl {
 	return &UserServiceImpl{
 		repo:    repo,
 		storage: storage,
+		cache:   cache,
+		cfg:     cfg,
 	}
 }
 
@@ -140,17 +149,75 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req *
 	return user.ToResponse(), nil
 }
 
-func (s *UserServiceImpl) UpdateAvatar(ctx context.Context, userID int64, fileHeader *multipart.FileHeader) (string, error) {
-	file, err := fileHeader.Open()
+func (s *UserServiceImpl) PresignedImageUpload(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error) {
+	fileName := fmt.Sprintf("%d_%s%s", time.Now().Unix(), uuid.New().String(), input.Ext)
+	objectName := fmt.Sprintf("users/%d/%s/%s", input.UserID, input.Typ, fileName)
+	bucketName := s.getBucketName(true)
+
+	uploadURL, err := s.storage.GetPresignedPutURL(ctx, bucketName, objectName, domain.UploadExpiry)
+	if err != nil {
+		return domain.PresignedFileResponse{}, err
+	}
+
+	if err := s.storeUploadSession(ctx, objectName, input.UserID); err != nil {
+		return domain.PresignedFileResponse{}, err
+	}
+
+	return domain.PresignedFileResponse{
+		UploadURL:     uploadURL,
+		ObjectName:    objectName,
+		ExpirySeconds: int64(domain.UploadExpiry.Seconds()),
+	}, nil
+}
+
+func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFile) (string, error) {
+	bucketName := s.getBucketName(true)
+
+	if err := s.verifyUploadSession(ctx, input.ObjectName, input.UserID); err != nil {
+		return "", err
+	}
+
+	exists, err := s.storage.StatFile(ctx, bucketName, input.ObjectName)
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
-
-	avatarURL, err := s.storage.UploadFile(ctx, file, fileHeader, "avatars")
-	if err != nil {
-		return "", err
+	if !exists {
+		return "", errors.New("file not found or upload failed")
 	}
 
-	return avatarURL, nil
+	fullPublicURL := s.buildPublicURL(bucketName, input.ObjectName)
+	if err = s.repo.UpdateProfileImages(ctx, input.UserID, fullPublicURL, input.Typ); err != nil {
+		return "", err
+	}
+	return fullPublicURL, nil
+}
+
+func (s *UserServiceImpl) getBucketName(isPublic bool) string {
+	if isPublic {
+		return s.cfg.BucketPublic
+	}
+	return s.cfg.BucketPrivate
+}
+
+func (s *UserServiceImpl) buildPublicURL(bucket, objectName string) string {
+	return fmt.Sprintf("%s/%s/%s", s.cfg.PublicURL, bucket, objectName)
+}
+
+func (s *UserServiceImpl) storeUploadSession(ctx context.Context, objectName string, userID int64) error {
+	key := domain.GetUploadImageKey(objectName)
+	return s.cache.Set(ctx, key, userID, domain.UploadExpiry)
+}
+
+func (s *UserServiceImpl) verifyUploadSession(ctx context.Context, objectName string, userID int64) error {
+	key := domain.GetUploadImageKey(objectName)
+	var cachedUserID int64
+	if err := s.cache.Get(ctx, key, &cachedUserID); err != nil {
+		return errors.New("upload session expired or invalid")
+	}
+
+	if cachedUserID != userID {
+		return pkg.ErrUnauthorized
+	}
+	_ = s.cache.Delete(ctx, key)
+	return nil
 }

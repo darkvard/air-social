@@ -13,6 +13,7 @@ const (
 	WorkerEmailVerify    = "worker:email:verify:"
 	WorkerEmailReset     = "worker:email:reset:"
 	WorkerEmailRetry     = "worker:email:retry:"
+	UploadImageVerify    = "upload:verify:"
 )
 
 const (
@@ -46,4 +47,8 @@ func GetEmailResetPasswordKey(token string) string {
 
 func GetEmailRetryKey(token string) string {
 	return fmt.Sprintf(WorkerEmailRetry+"%s", token)
+}
+
+func GetUploadImageKey(objectName string) string {
+	return fmt.Sprintf(UploadImageVerify+"%s", objectName)
 }

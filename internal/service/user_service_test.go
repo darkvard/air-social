@@ -42,8 +42,8 @@ func (m *MockUserRepo) GetByEmail(ctx context.Context, email string) (*domain.Us
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-func (m *MockUserRepo) UpdateAvatar(ctx context.Context, userID int64, avatarURL string) error {
-	return m.Called(ctx, userID, avatarURL).Error(0)
+func (m *MockUserRepo) UpdateProfileImages(ctx context.Context, userID int64, url string, imageType domain.FileType) error {
+	return m.Called(ctx, userID, imageType).Error(0)
 }
 
 type MockFile struct {
@@ -61,7 +61,7 @@ func (m *MockFile) DeleteFile(ctx context.Context, path string) error {
 
 func TestUserService_Create(t *testing.T) {
 	mockRepo := new(MockUserRepo)
-	service := NewUserService(mockRepo, nil)
+	service := NewUserService(mockRepo, nil, nil, domain.FileConfig{})
 
 	input := &domain.CreateUserInput{
 		Email:        "email@example.com",

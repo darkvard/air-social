@@ -10,7 +10,7 @@ type UserRepository interface {
 	Update(ctx context.Context, user *User) error
 	GetByID(ctx context.Context, id int64) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
-	UpdateAvatar(ctx context.Context, userID int64, avatarURL string) error
+	UpdateProfileImages(ctx context.Context, userID int64, url string, imageType FileType) error
 }
 
 type User struct {

@@ -26,7 +26,12 @@ type ServiceContainer struct {
 
 func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) (*ServiceContainer, error) {
 	// file
-	fileStorage := storage.NewMinioStorage(ifc.Minio, cfg.MinIO)
+	fileStorage := storage.NewMinioStorage(ifc.Minio)
+	fileConfig := domain.FileConfig{
+		PublicURL:     cfg.MinIO.PublicURL,
+		BucketPublic:  cfg.MinIO.BucketPublic,
+		BucketPrivate: cfg.MinIO.BucketPrivate,
+	}
 
 	// cache
 	if ifc.Redis == nil {
@@ -46,7 +51,7 @@ func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) 
 
 	// services
 	tokenSvc := service.NewTokenService(tokenRepo, cfg.Token)
-	userSvc := service.NewUserService(userRepo, fileStorage)
+	userSvc := service.NewUserService(userRepo, fileStorage, cacheStorage, fileConfig)
 	authSvc := service.NewAuthService(userSvc, tokenSvc, url, eventQueue, cacheStorage)
 
 	return &ServiceContainer{

@@ -85,16 +85,22 @@ func (r *UserRepoImpl) Update(ctx context.Context, u *domain.User) error {
 	return pkg.ErrNotFound
 }
 
-func (r *UserRepoImpl) UpdateAvatar(ctx context.Context, userID int64, avatarURL string) error {
+func (r *UserRepoImpl) UpdateProfileImages(ctx context.Context, userID int64, url string, imageType domain.FileType) error {
+	var col string
+	switch imageType {
+	case domain.AvatarType:
+		col = "avatar"
+	case domain.CoverType:
+		col = "cover_image"
+	default:
+		return pkg.ErrInvalidData
+	}
 	query := `
 		UPDATE users
-		SET avatar = :avatar
+		SET ` + col + ` = :url
 		WHERE id = :id
 	`
 
-	_, err := r.db.ExecContext(ctx, query, avatarURL, userID)
-	if err != nil {
-		return pkg.MapPostgresError(err)
-	}
-	return nil
+	_, err := r.db.ExecContext(ctx, query, userID, url)
+	return err
 }

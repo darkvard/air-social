@@ -45,6 +45,18 @@ func NewInfra(cfg config.Config) (*InfraContainer, error) {
 	}, nil
 }
 
+func (i *InfraContainer) Close() {
+	if i.Rabbit != nil {
+		i.Rabbit.Close()
+	}
+	if i.Redis != nil {
+		i.Redis.Close()
+	}
+	if i.DB != nil {
+		i.DB.Close()
+	}
+}
+
 func newDatabase(ps config.PostgresConfig) (*sqlx.DB, error) {
 	db, err := sqlx.Open("pgx", ps.DSN)
 	if err != nil {
@@ -74,14 +86,14 @@ func newRedisClient(rc config.RedisConfig) *redis.Client {
 }
 
 func newRabbitMQ(cfg config.RabbitMQConfig) *amqp.Connection {
-	conn, err := amqp.Dial(cfg.URL)
+	conn, err := amqp.Dial(cfg.ConnURL)
 	if err != nil {
 		panic(err)
 	}
 	return conn
 }
 
-func newMinioClient(cfg config.FileStorageConfig) (*minio.Client, error) {
+func newMinioClient(cfg config.MinioStorageConfig) (*minio.Client, error) {
 	minioClient, err := minio.New(cfg.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
 		Secure: cfg.UserSSl,
@@ -90,30 +102,46 @@ func newMinioClient(cfg config.FileStorageConfig) (*minio.Client, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	exists, err := minioClient.BucketExists(ctx, cfg.Bucket)
-	if err != nil {
-		return nil, fmt.Errorf("check bucket exists: %w", err)
-	}
-	if !exists {
-		if err := minioClient.MakeBucket(ctx, cfg.Bucket, minio.MakeBucketOptions{}); err != nil {
-			return nil, fmt.Errorf("create bucket: %w", err)
+	buckets := []string{cfg.BucketPublic, cfg.BucketPrivate}
+
+	for _, bucketName := range buckets {
+		err := ensureBucketExists(ctx, minioClient, bucketName, cfg.BucketPublic)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	return minioClient, nil
 }
 
-func (i *InfraContainer) Close() {
-	if i.Rabbit != nil {
-		i.Rabbit.Close()
+func ensureBucketExists(ctx context.Context, client *minio.Client, bucketName, publicName string) error {
+	exists, err := client.BucketExists(ctx, bucketName)
+	if err != nil {
+		return fmt.Errorf("check bucket %s error: %w", bucketName, err)
 	}
-	if i.Redis != nil {
-		i.Redis.Close()
+
+	if !exists {
+		if err := client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{}); err != nil {
+			return fmt.Errorf("create bucket %s error: %w", bucketName, err)
+		}
+
+		if bucketName == publicName {
+			policy := fmt.Sprintf(`{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {"Effect": "Allow", "Principal": {"AWS": ["*"]}, "Action": ["s3:GetObject"], "Resource": ["arn:aws:s3:::%s/*"]}
+                ]
+            }`, bucketName)
+
+			if err := client.SetBucketPolicy(ctx, bucketName, policy); err != nil {
+				return fmt.Errorf("set public policy error: %w", err)
+			}
+			fmt.Printf("Set public policy for: %s\n", bucketName)
+		}
 	}
-	if i.DB != nil {
-		i.DB.Close()
-	}
+
+	return nil
 }

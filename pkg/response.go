@@ -58,14 +58,18 @@ func InternalError(c *gin.Context, msg string) {
 
 func HandleValidateError(c *gin.Context, err error) {
 	if v := ValidateRequestError(err); v != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code":    http.StatusBadRequest,
-			"message": "invalid request payload",
-			"errors":  v.Errors,
-		})
+		HandleValidationResult(c, v)
 		return
 	}
 	BadRequest(c, "invalid request")
+}
+
+func HandleValidationResult(c *gin.Context, v *ValidationResult) {
+	c.JSON(http.StatusBadRequest, gin.H{
+		"code":    http.StatusBadRequest,
+		"message": "invalid request payload",
+		"errors":  v.Errors,
+	})
 }
 
 func HandleServiceError(c *gin.Context, err error) {

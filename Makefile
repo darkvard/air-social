@@ -29,7 +29,7 @@ logs:
 
 .PHONY: ps
 ps:
-	@docker compose ps
+	@docker compose ps -a
 
 ## Utils
 
@@ -190,17 +190,6 @@ test-bench-pkg:
 .PHONY: air-build
 air-build:
 	@go build -buildvcs=false -o ./tmp/main ./cmd/api
-
-# Rabbit Message Queue
-.PHONY: rabbitmq-ui
-rabbitmq-ui:
-	@echo "🐰 RabbitMQ Management UI"
-	@echo "----------------------------------"
-	@echo "URL      : http://localhost:$(RABBITMQ_UI_PORT)"
-	@echo "Username : $(RABBITMQ_USER)"
-	@echo "Password : $(RABBITMQ_PASS)"
-	@echo "----------------------------------"
-	@xdg-open http://localhost:$(RABBITMQ_UI_PORT) >/dev/null 2>&1 &
 
 
 # Swagger api documentation

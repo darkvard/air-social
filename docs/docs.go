@@ -336,16 +336,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/avatar": {
+        "/users/file/confirm": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Upload and update user avatar image",
+                "description": "Confirm that the file has been uploaded successfully and update the user profile with the new image URL.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -353,21 +353,77 @@ const docTemplate = `{
                 "tags": [
                     "User"
                 ],
-                "summary": "Update avatar",
+                "summary": "Confirm file upload",
                 "parameters": [
                     {
-                        "type": "file",
-                        "description": "Avatar file",
-                        "name": "avatar",
-                        "in": "formData",
-                        "required": true
+                        "description": "Confirm Upload Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.ConfirmFileUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns upload success message and public URL",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/file/presigned": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate a presigned URL for uploading a file (avatar or cover) to object storage.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get presigned upload URL",
+                "parameters": [
+                    {
+                        "description": "Presigned Upload Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.PresignedFileUploadRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.UserResponse"
+                            "$ref": "#/definitions/domain.PresignedFileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
                         }
                     }
                 }
@@ -508,6 +564,25 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.ConfirmFileUploadRequest": {
+            "type": "object",
+            "required": [
+                "file_type",
+                "object_name"
+            ],
+            "properties": {
+                "file_type": {
+                    "type": "string",
+                    "enum": [
+                        "avatar",
+                        "cover"
+                    ]
+                },
+                "object_name": {
+                    "type": "string"
+                }
+            }
+        },
         "domain.ForgotPasswordRequest": {
             "type": "object",
             "required": [
@@ -546,6 +621,40 @@ const docTemplate = `{
             "properties": {
                 "is_all_devices": {
                     "type": "boolean"
+                }
+            }
+        },
+        "domain.PresignedFileResponse": {
+            "type": "object",
+            "properties": {
+                "expiry": {
+                    "type": "string"
+                },
+                "object_name": {
+                    "type": "string"
+                },
+                "upload_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.PresignedFileUploadRequest": {
+            "type": "object",
+            "required": [
+                "file_name",
+                "file_type"
+            ],
+            "properties": {
+                "file_name": {
+                    "type": "string"
+                },
+                "file_type": {
+                    "description": "Validate enum",
+                    "type": "string",
+                    "enum": [
+                        "avatar",
+                        "cover"
+                    ]
                 }
             }
         },

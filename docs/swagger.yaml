@@ -12,6 +12,19 @@ definitions:
     - current_password
     - new_password
     type: object
+  domain.ConfirmFileUploadRequest:
+    properties:
+      file_type:
+        enum:
+        - avatar
+        - cover
+        type: string
+      object_name:
+        type: string
+    required:
+    - file_type
+    - object_name
+    type: object
   domain.ForgotPasswordRequest:
     properties:
       email:
@@ -39,6 +52,29 @@ definitions:
     properties:
       is_all_devices:
         type: boolean
+    type: object
+  domain.PresignedFileResponse:
+    properties:
+      expiry:
+        type: string
+      object_name:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  domain.PresignedFileUploadRequest:
+    properties:
+      file_name:
+        type: string
+      file_type:
+        description: Validate enum
+        enum:
+        - avatar
+        - cover
+        type: string
+    required:
+    - file_name
+    - file_type
     type: object
   domain.RefreshRequest:
     properties:
@@ -368,27 +404,64 @@ paths:
       summary: Health check
       tags:
       - Health
-  /users/avatar:
+  /users/file/confirm:
     post:
       consumes:
-      - multipart/form-data
-      description: Upload and update user avatar image
+      - application/json
+      description: Confirm that the file has been uploaded successfully and update
+        the user profile with the new image URL.
       parameters:
-      - description: Avatar file
-        in: formData
-        name: avatar
+      - description: Confirm Upload Request
+        in: body
+        name: request
         required: true
-        type: file
+        schema:
+          $ref: '#/definitions/domain.ConfirmFileUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns upload success message and public URL
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+      security:
+      - BearerAuth: []
+      summary: Confirm file upload
+      tags:
+      - User
+  /users/file/presigned:
+    post:
+      consumes:
+      - application/json
+      description: Generate a presigned URL for uploading a file (avatar or cover)
+        to object storage.
+      parameters:
+      - description: Presigned Upload Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.PresignedFileUploadRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.UserResponse'
+            $ref: '#/definitions/domain.PresignedFileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
       security:
       - BearerAuth: []
-      summary: Update avatar
+      summary: Get presigned upload URL
       tags:
       - User
   /users/me:

@@ -32,7 +32,7 @@ func (a *App) Run() {
 	go a.ws.Run()
 	go func() {
 		if err := a.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			pkg.Log().Error("HTTP server listen: %s\n", err)
+			pkg.Log().Errorw("http server listen failed", "error", err)
 		}
 	}()
 	a.awaitSignal()
@@ -46,17 +46,17 @@ func (a *App) awaitSignal() {
 }
 
 func (a *App) shutdown() {
-	pkg.Log().Info("Shutting down server...")
+	pkg.Log().Infow("shutting down server")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := a.worker.Stop(ctx); err != nil {
-		pkg.Log().Error("Worker forced to shutdown: ", err)
-
-	}
 	if err := a.httpSrv.Shutdown(ctx); err != nil {
-		pkg.Log().Error("Server forced to shutdown: ", err)
+		pkg.Log().Errorw("server forced to shutdown", "error", err)
 	}
-	pkg.Log().Info("Server exiting")
+
+	if err := a.worker.Stop(ctx); err != nil {
+		pkg.Log().Errorw("worker forced to shutdown", "error", err)
+	}
+	pkg.Log().Infow("server exiting")
 }

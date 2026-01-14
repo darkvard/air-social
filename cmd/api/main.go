@@ -57,9 +57,11 @@ func main() {
 
 func printWelcome(cfg *config.Config, swaggerURL string) {
 	info := map[string]string{
-		"container_port": cfg.Server.Port,
-		"host_port":      cfg.Server.HostPort,
-		"swagger_url":    swaggerURL,
+		"container_port":    cfg.Server.Port,
+		"host_port":         cfg.Server.HostPort,
+		"rabbit_mq_manager": cfg.RabbitMQ.ManagementURL,
+		"minio_manager":     cfg.MinIO.PublicURL,
+		"swagger_url":       swaggerURL,
 	}
 	data, _ := json.MarshalIndent(info, "", "  ")
 	pkg.Log().Info("server started")

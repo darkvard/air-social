@@ -17,7 +17,7 @@ type Config struct {
 	Token    TokenConfig
 	Mailer   MailConfig
 	RabbitMQ RabbitMQConfig
-	MinIO    FileStorageConfig
+	MinIO    MinioStorageConfig
 	Limiter  RateLimiterConfig
 }
 
@@ -37,7 +37,7 @@ func Load() *Config {
 		Token:    TokenCfg(),
 		Mailer:   MailCfg(),
 		RabbitMQ: RabbitMQCfg(),
-		MinIO:    LoadFileStorageConfig(),
+		MinIO:    MinStorageConfig(),
 		Limiter:  RateLimiterConfig{},
 	}
 }

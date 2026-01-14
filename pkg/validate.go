@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -45,5 +46,22 @@ func ValidateRequestError(err error) *ValidationResult {
 		return &result
 	}
 
+	return nil
+}
+
+func isImageFile(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+	return allowed[ext]
+}
+
+func ValidateImageFile(filename string) *ValidationResult {
+	if !isImageFile(filename) {
+		return &ValidationResult{
+			Errors: []FieldError{
+				{Field: "file_name", Message: "invalid file extension (allowed: .jpg, .jpeg, .png, .webp)"},
+			},
+		}
+	}
 	return nil
 }

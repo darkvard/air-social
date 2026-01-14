@@ -76,40 +76,42 @@ func commonRoutes(rg *gin.RouterGroup, ifc *di.InfraContainer, mw *middleware.Ma
 
 func authRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Manager) {
 	h := handler.NewAuthHandler(svc.Auth)
-	auth := rg.Group(AuthGroup)
+	a := rg.Group(AuthGroup)
 	{
-		auth.GET(ResetPassword, h.ShowResetPasswordPage)
-		auth.GET(VerifyEmail, h.VerifyEmail)
+		a.GET(ResetPassword, h.ShowResetPasswordPage)
+		a.GET(VerifyEmail, h.VerifyEmail)
 
-		jmw := auth.Group("").Use(mw.JSONOnly)
+		j := a.Group("").Use(mw.JSONOnly)
 		{
-			jmw.POST(Register, h.Register)
-			jmw.POST(Login, h.Login)
-			jmw.POST(Refresh, h.Refresh)
-			jmw.POST(ForgotPassword, h.ForgotPassword)
-			jmw.POST(ResetPassword, h.ResetPassword)
+			j.POST(Register, h.Register)
+			j.POST(Login, h.Login)
+			j.POST(Refresh, h.Refresh)
+			j.POST(ForgotPassword, h.ForgotPassword)
+			j.POST(ResetPassword, h.ResetPassword)
 		}
-		protected := auth.Group("").Use(mw.Auth)
+		p := a.Group("").Use(mw.Auth)
 		{
-			protected.POST(Logout, h.Logout)
+			p.POST(Logout, h.Logout)
 		}
 	}
 }
 
 func userRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Manager) {
 	h := handler.NewUserHandler(svc.User)
-	protected := rg.Group(UserGroup, mw.Auth)
+	p := rg.Group(UserGroup, mw.Auth)
 	{
-		protected.GET(Me, h.Profile)
+		p.GET(Me, h.Profile)
 
-		jmw := protected.Group("").Use(mw.JSONOnly)
+		j := p.Group("").Use(mw.JSONOnly)
 		{
-			jmw.PUT(Password, h.ChangePassword)
-			jmw.PATCH(Me, h.UpdateProfile)
+			j.PUT(Password, h.ChangePassword)
+			j.PATCH(Me, h.UpdateProfile)
 		}
-		fmw := protected.Group("").Use(mw.MultipartOnly)
+
+		f := p.Group(FileGroup)
 		{
-			fmw.POST(Avatar, h.UpdateAvatar)
+			f.POST(Presigned, h.PresignedFileUpload)
+			f.POST(Confirm, h.ConfirmFileUpload)
 		}
 	}
 }

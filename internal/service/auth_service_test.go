@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"mime/multipart"
 	"testing"
 	"time"
 
@@ -65,9 +64,20 @@ func (m *MockUserService) ChangePassword(ctx context.Context, userID int64, req 
 	return args.Error(0)
 }
 
-func (m *MockUserService) UpdateAvatar(ctx context.Context, userID int64, fileHeader *multipart.FileHeader) (string, error) {
-	args := m.Called(ctx, userID, fileHeader)
-	return args.String(0), args.Error(1)
+func (m *MockUserService) PresignedImageUpload(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error) {
+	args := m.Called(ctx, input)
+	if args.Get(0) == nil {
+		return domain.PresignedFileResponse{}, args.Error(1)
+	}
+	return args.Get(0).(domain.PresignedFileResponse), args.Error(1)
+}
+
+func (m *MockUserService) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFile) (string, error) {
+	args := m.Called(ctx, input)
+	if args.Get(0) == nil {
+		return "", args.Error(1)
+	}
+	return args.Get(0).(string), args.Error(1)
 }
 
 type MockToken struct {
