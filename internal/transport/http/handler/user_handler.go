@@ -124,7 +124,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Param			request	body		domain.ConfirmFileUploadRequest	true	"Confirm Upload Request"
 //	@Success		200		{object}	map[string]string				"Returns upload success message and public URL"
 //	@Failure		400		{object}	pkg.ValidationResult
-//	@Router			/users/file/confirm [post]
+//	@Router			/users/profile-image/confirm [post]
 func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
 	if err != nil {

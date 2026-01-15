@@ -105,6 +105,6 @@ func (r *UserRepoImpl) UpdateProfileImages(ctx context.Context, userID int64, ur
 		"url": url,
 		"id":  userID,
 	})
-	
+
 	return pkg.MapPostgresError(err)
 }

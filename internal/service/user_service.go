@@ -145,7 +145,7 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.C
 	if err != nil {
 		return "", err
 	}
-	
+
 	oldURL := s.getOldImageURL(ctx, input.UserID, input.Typ)
 
 	if err = s.repo.UpdateProfileImages(ctx, input.UserID, fullPublicURL, input.Typ); err != nil {

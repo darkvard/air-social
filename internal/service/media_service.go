@@ -13,6 +13,14 @@ import (
 	"air-social/pkg"
 )
 
+// MediaService handles file upload flow:
+// 1. Presigned: Client requests a presigned URL (GetPresignedURL).
+// 2. Upload: Client uploads file directly to Storage (MinIO/S3) using the URL.
+//   - Method: PUT
+//   - Body: Binary file data
+//   - Header: Host: minio:9000 (Required if running in local Docker env to match signature)
+//
+// 3. Confirm: Client calls backend to confirm upload (ConfirmUpload). Backend verifies and updates DB.
 type MediaService interface {
 	GetPresignedURL(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error)
 	ConfirmUpload(ctx context.Context, objectName string, userID int64) (string, error)
@@ -33,6 +41,13 @@ func NewMediaService(storage domain.FileStorage, cache domain.CacheStorage, cfg 
 	}
 }
 
+// GetPresignedURL generates a temporary URL for uploading files.
+//
+// Usage for Client:
+//   - Method: PUT
+//   - URL: The 'upload_url' returned from this function.
+//   - Body: The raw binary content of the file.
+//   - Headers: If Env is 'development', set 'Host: minio:9000' to match the signature.
 func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error) {
 	objectName := s.generateObjectKey(input)
 	bucketName := s.cfg.BucketPublic
@@ -40,6 +55,14 @@ func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.Pre
 	uploadURL, err := s.storage.GetPresignedPutURL(ctx, bucketName, objectName, domain.UploadExpiry)
 	if err != nil {
 		return domain.PresignedFileResponse{}, err
+	}
+
+	// Fix for local development (Docker network vs Host network)
+	// MinIO returns internal URL (http://minio:9000/...), but client (browser) needs localhost.
+	// We replace the host but keep the signature valid.
+	// Client MUST send 'Host: minio:9000' header if the signature was generated for 'minio:9000'.
+	if s.cfg.Env != "production" {
+		uploadURL = strings.Replace(uploadURL, "http://minio", "http://localhost", 1)
 	}
 
 	if err := s.saveUploadSession(ctx, objectName, input.UserID); err != nil {

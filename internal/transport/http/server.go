@@ -18,7 +18,6 @@ import (
 	"air-social/templates"
 )
 
-
 const (
 	Health     = "/health"
 	SwaggerAny = "/swagger/*any"
@@ -48,7 +47,6 @@ const (
 	ConfirmUpload   = "/confirm"
 )
 
-
 func NewServer(cfg config.Config, svc *di.ServiceContainer, ifc *di.InfraContainer) *http.Server {
 	e := setupEngine()
 	mw := middleware.NewManager(cfg.Server, svc.Token)
@@ -75,6 +73,7 @@ func setupEngine() *gin.Engine {
 	e.Use(gin.Recovery())
 	e.SetTrustedProxies(nil)
 	e.HandleMethodNotAllowed = true
+	
 
 	e.SetHTMLTemplate(
 		template.Must(template.New("").ParseFS(

@@ -11,7 +11,7 @@ const (
 )
 
 const (
-	UploadExpiry = 15 * time.Minute
+	UploadExpiry = 30 * time.Minute
 )
 
 type FileStorage interface {
@@ -36,6 +36,7 @@ type ConfirmFile struct {
 }
 
 type FileConfig struct {
+	Env           string
 	PublicURL     string
 	BucketPublic  string
 	BucketPrivate string

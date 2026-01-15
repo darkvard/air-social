@@ -55,8 +55,8 @@ definitions:
     type: object
   domain.PresignedFileResponse:
     properties:
-      expiry:
-        type: string
+      expiry_seconds:
+        type: integer
       object_name:
         type: string
       upload_url:
@@ -404,43 +404,11 @@ paths:
       summary: Health check
       tags:
       - Health
-  /users/file/confirm:
+  /media/presigned:
     post:
       consumes:
       - application/json
-      description: Confirm that the file has been uploaded successfully and update
-        the user profile with the new image URL.
-      parameters:
-      - description: Confirm Upload Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/domain.ConfirmFileUploadRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Returns upload success message and public URL
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pkg.ValidationResult'
-      security:
-      - BearerAuth: []
-      summary: Confirm file upload
-      tags:
-      - User
-  /users/file/presigned:
-    post:
-      consumes:
-      - application/json
-      description: Generate a presigned URL for uploading a file (avatar or cover)
-        to object storage.
+      description: Generate a presigned URL for uploading a file to object storage.
       parameters:
       - description: Presigned Upload Request
         in: body
@@ -463,7 +431,7 @@ paths:
       - BearerAuth: []
       summary: Get presigned upload URL
       tags:
-      - User
+      - Media
   /users/me:
     get:
       consumes:
@@ -534,6 +502,37 @@ paths:
       security:
       - BearerAuth: []
       summary: Change password
+      tags:
+      - User
+  /users/profile-image/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Confirm that the file has been uploaded successfully and update
+        the user profile with the new image URL.
+      parameters:
+      - description: Confirm Upload Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.ConfirmFileUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns upload success message and public URL
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+      security:
+      - BearerAuth: []
+      summary: Confirm file upload
       tags:
       - User
 securityDefinitions:

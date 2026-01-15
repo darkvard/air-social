@@ -3,6 +3,11 @@ services:
     build: .
     container_name: app
     restart: always
+    tty: true
+    environment:
+      - APP_ENV=development
+      - TERM=xterm-256color
+      - CLICOLOR_FORCE=1
     ports:
       - "${APP_HOST_PORT}:${APP_PORT}"
     volumes:

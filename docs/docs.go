@@ -336,14 +336,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/file/confirm": {
+        "/media/presigned": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Confirm that the file has been uploaded successfully and update the user profile with the new image URL.",
+                "description": "Generate a presigned URL for uploading a file to object storage.",
                 "consumes": [
                     "application/json"
                 ],
@@ -351,55 +351,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User"
-                ],
-                "summary": "Confirm file upload",
-                "parameters": [
-                    {
-                        "description": "Confirm Upload Request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/domain.ConfirmFileUploadRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Returns upload success message and public URL",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.ValidationResult"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/file/presigned": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Generate a presigned URL for uploading a file (avatar or cover) to object storage.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
+                    "Media"
                 ],
                 "summary": "Get presigned upload URL",
                 "parameters": [
@@ -544,6 +496,54 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/profile-image/confirm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Confirm that the file has been uploaded successfully and update the user profile with the new image URL.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Confirm file upload",
+                "parameters": [
+                    {
+                        "description": "Confirm Upload Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.ConfirmFileUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns upload success message and public URL",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -627,8 +627,8 @@ const docTemplate = `{
         "domain.PresignedFileResponse": {
             "type": "object",
             "properties": {
-                "expiry": {
-                    "type": "string"
+                "expiry_seconds": {
+                    "type": "integer"
                 },
                 "object_name": {
                     "type": "string"

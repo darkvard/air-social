@@ -1,6 +1,5 @@
 package domain
 
-
 import (
 	"context"
 	"fmt"
