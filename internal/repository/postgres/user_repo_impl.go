@@ -101,6 +101,10 @@ func (r *UserRepoImpl) UpdateProfileImages(ctx context.Context, userID int64, ur
 		WHERE id = :id
 	`
 
-	_, err := r.db.ExecContext(ctx, query, userID, url)
-	return err
+	_, err := r.db.NamedExecContext(ctx, query, map[string]any{
+		"url": url,
+		"id":  userID,
+	})
+	
+	return pkg.MapPostgresError(err)
 }

@@ -21,6 +21,7 @@ type ServiceContainer struct {
 
 	Auth  service.AuthService
 	User  service.UserService
+	Media service.MediaService
 	Token service.TokenService
 }
 
@@ -51,7 +52,8 @@ func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) 
 
 	// services
 	tokenSvc := service.NewTokenService(tokenRepo, cfg.Token)
-	userSvc := service.NewUserService(userRepo, fileStorage, cacheStorage, fileConfig)
+	mediaSvc := service.NewMediaService(fileStorage, cacheStorage, fileConfig)
+	userSvc := service.NewUserService(userRepo, mediaSvc)
 	authSvc := service.NewAuthService(userSvc, tokenSvc, url, eventQueue, cacheStorage)
 
 	return &ServiceContainer{
@@ -61,6 +63,7 @@ func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) 
 
 		Auth:  authSvc,
 		User:  userSvc,
+		Media: mediaSvc,
 		Token: tokenSvc,
 	}, nil
 }

@@ -18,6 +18,37 @@ import (
 	"air-social/templates"
 )
 
+
+const (
+	Health     = "/health"
+	SwaggerAny = "/swagger/*any"
+)
+
+const (
+	AuthGroup      = "/auth"
+	Register       = "/register"
+	Login          = "/login"
+	Refresh        = "/refresh"
+	ResetPassword  = "/reset-password"
+	ForgotPassword = "/forgot-password"
+	VerifyEmail    = "/verify-email"
+	Logout         = "/logout"
+)
+
+const (
+	UserGroup    = "/users"
+	Me           = "/me"
+	Password     = "/password"
+	ProfileImage = "/profile-image"
+)
+
+const (
+	MediaGroup      = "/media"
+	PresignedUpload = "/presigned"
+	ConfirmUpload   = "/confirm"
+)
+
+
 func NewServer(cfg config.Config, svc *di.ServiceContainer, ifc *di.InfraContainer) *http.Server {
 	e := setupEngine()
 	mw := middleware.NewManager(cfg.Server, svc.Token)
@@ -26,6 +57,7 @@ func NewServer(cfg config.Config, svc *di.ServiceContainer, ifc *di.InfraContain
 		commonRoutes(v, ifc, mw)
 		authRoutes(v, svc, mw)
 		userRoutes(v, svc, mw)
+		mediaRoutes(v, svc, mw)
 	}
 
 	return &http.Server{
@@ -106,12 +138,15 @@ func userRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Ma
 		{
 			j.PUT(Password, h.ChangePassword)
 			j.PATCH(Me, h.UpdateProfile)
+			j.POST(ProfileImage+ConfirmUpload, h.ConfirmFileUpload)
 		}
+	}
+}
 
-		f := p.Group(FileGroup)
-		{
-			f.POST(Presigned, h.PresignedFileUpload)
-			f.POST(Confirm, h.ConfirmFileUpload)
-		}
+func mediaRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Manager) {
+	h := handler.NewMediaHandler(svc.Media)
+	m := rg.Group(MediaGroup, mw.Auth)
+	{
+		m.POST(PresignedUpload, h.PresignedUpload)
 	}
 }

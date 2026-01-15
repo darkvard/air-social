@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"path/filepath"
-
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain"
@@ -113,53 +111,6 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	}
 
 	pkg.Success(c, "password changed successfully")
-}
-
-// PresignedFileUpload godoc
-//
-//	@Summary		Get presigned upload URL
-//	@Description	Generate a presigned URL for uploading a file (avatar or cover) to object storage.
-//	@Tags			User
-//	@Accept			json
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			request	body		domain.PresignedFileUploadRequest	true	"Presigned Upload Request"
-//	@Success		200		{object}	domain.PresignedFileResponse
-//	@Failure		400		{object}	pkg.ValidationResult
-//	@Router			/users/file/presigned [post]
-func (h *UserHandler) PresignedFileUpload(c *gin.Context) {
-	payload, err := middleware.GetAuthPayload(c)
-	if err != nil {
-		pkg.Unauthorized(c, err.Error())
-		return
-	}
-
-	var req domain.PresignedFileUploadRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		pkg.HandleValidateError(c, err)
-		return
-	}
-
-	if v := pkg.ValidateImageFile(req.FileName); v != nil {
-		pkg.HandleValidationResult(c, v)
-		return
-	}
-
-	res, err := h.srv.PresignedImageUpload(
-		c.Request.Context(),
-		domain.PresignedFile{
-			UserID: payload.UserID,
-			Ext:    filepath.Ext(req.FileName),
-			Typ:    domain.FileType(req.FileType),
-		},
-	)
-
-	if err != nil {
-		pkg.HandleServiceError(c, err)
-		return
-	}
-
-	pkg.Success(c, res)
 }
 
 // ConfirmFileUpload godoc

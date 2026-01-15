@@ -61,7 +61,7 @@ func (m *MockFile) DeleteFile(ctx context.Context, path string) error {
 
 func TestUserService_Create(t *testing.T) {
 	mockRepo := new(MockUserRepo)
-	service := NewUserService(mockRepo, nil, nil, domain.FileConfig{})
+	service := NewUserService(mockRepo, nil)
 
 	input := &domain.CreateUserInput{
 		Email:        "email@example.com",
