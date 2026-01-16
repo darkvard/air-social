@@ -50,7 +50,7 @@ const (
 func NewServer(cfg config.Config, svc *di.ServiceContainer, ifc *di.InfraContainer) *http.Server {
 	e := setupEngine()
 	mw := middleware.NewManager(cfg.Server, svc.Token)
-	v := e.Group("/" + cfg.Server.Version)
+	v := e.Group("api/" + cfg.Server.Version)
 	{
 		commonRoutes(v, ifc, mw)
 		authRoutes(v, svc, mw)

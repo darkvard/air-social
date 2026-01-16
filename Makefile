@@ -4,7 +4,7 @@ include .env
 
 .PHONY: up
 up:
-	@echo "🚀 Starting all services (app + db + redis)"
+	@echo "🚀 Starting all services"
 	@docker compose up -d
 
 .PHONY: down
