@@ -1,4 +1,4 @@
 package config
 
-type RateLimiterConfig struct {
+type RateLimiterCfg struct {
 }

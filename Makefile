@@ -49,6 +49,10 @@ sh-redis:
 sh-rabbitmq:
 	@docker compose exec rabbitmq sh
 
+.PHONY: sh-nginx
+sh-nginx:
+	@docker compose exec nginx sh	
+
 # ===================== MIGRATIONS ======================
 
 

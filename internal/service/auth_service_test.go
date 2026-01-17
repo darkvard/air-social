@@ -164,19 +164,31 @@ type MockURL struct {
 	mock.Mock
 }
 
-func (m *MockURL) ResetPasswordURL(token string) string {
+func (m *MockURL) ResetPasswordLink(token string) string {
 	return m.Called(token).String(0)
 }
 
-func (m *MockURL) VerifyEmailURL(token string) string {
+func (m *MockURL) VerifyEmailLink(token string) string {
 	return m.Called(token).String(0)
 }
 
-func (m *MockURL) Prefix() string {
+func (m *MockURL) APIRouterPath() string {
 	return m.Called().String(0)
 }
 
-func (m *MockURL) SwaggerURL() string {
+func (m *MockURL) SwaggerUI() string {
+	return m.Called().String(0)
+}
+
+func (m *MockURL) MinioConsoleUI() string {
+	return m.Called().String(0)
+
+}
+func (m *MockURL) RabbitMQDashboardUI() string {
+	return m.Called().String(0)
+}
+
+func (m *MockURL) FileStorageBaseURL() string {
 	return m.Called().String(0)
 }
 

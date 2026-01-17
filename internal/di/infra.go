@@ -86,7 +86,7 @@ func newRedisClient(rc config.RedisConfig) *redis.Client {
 }
 
 func newRabbitMQ(cfg config.RabbitMQConfig) *amqp.Connection {
-	conn, err := amqp.Dial(cfg.ConnURL)
+	conn, err := amqp.Dial(cfg.URL)
 	if err != nil {
 		panic(err)
 	}

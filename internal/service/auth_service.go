@@ -77,7 +77,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, req *domain.RegisterRequ
 			Data: domain.EventEmailData{
 				Email:  user.Email,
 				Name:   user.Username,
-				Link:   s.url.VerifyEmailURL(token),
+				Link:   s.url.VerifyEmailLink(token),
 				Expiry: pkg.FormatTTLVerbose(ttl),
 			},
 		},
@@ -189,7 +189,7 @@ func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, req *domain.Forgot
 		Data: domain.EventEmailData{
 			Email:  user.Email,
 			Name:   user.Username,
-			Link:   s.url.ResetPasswordURL(token),
+			Link:   s.url.ResetPasswordLink(token),
 			Expiry: pkg.FormatTTLVerbose(ttl),
 		},
 	}

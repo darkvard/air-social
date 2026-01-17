@@ -43,10 +43,15 @@ func (h *MediaHandler) PresignedUpload(c *gin.Context) {
 		pkg.HandleValidateError(c, err)
 		return
 	}
-
 	if v := pkg.ValidateImageFile(req.FileName); v != nil {
 		pkg.HandleValidationResult(c, v)
 		return
+	}
+
+	folder := "misc"
+	switch domain.FileType(req.FileType) {
+	case domain.AvatarType, domain.CoverType:
+		folder = "users"
 	}
 
 	res, err := h.srv.GetPresignedURL(
@@ -54,7 +59,7 @@ func (h *MediaHandler) PresignedUpload(c *gin.Context) {
 		domain.PresignedFile{
 			UserID: payload.UserID,
 			Ext:    filepath.Ext(req.FileName),
-			Folder: "users", // Default folder for now. Later can be mapped from req.FileType
+			Folder: folder,
 			Typ:    domain.FileType(req.FileType),
 		},
 	)

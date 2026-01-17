@@ -48,7 +48,7 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserI
 		return nil, err
 	}
 
-	return u.ToResponse(), nil
+	return s.mapToResponse(u), nil
 }
 
 func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error) {
@@ -56,7 +56,7 @@ func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain
 	if err != nil {
 		return nil, err
 	}
-	return user.ToResponse(), nil
+	return s.mapToResponse(user), nil
 }
 
 func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (*domain.UserResponse, error) {
@@ -64,7 +64,7 @@ func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (*domain.UserRe
 	if err != nil {
 		return nil, err
 	}
-	return user.ToResponse(), nil
+	return s.mapToResponse(user), nil
 }
 
 func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
@@ -137,25 +137,27 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req *
 		return nil, err
 	}
 
-	return user.ToResponse(), nil
+	return s.mapToResponse(user), nil
 }
 
 func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFile) (string, error) {
-	fullPublicURL, err := s.media.ConfirmUpload(ctx, input.ObjectName, input.UserID)
+	objectName, err := s.media.ConfirmUpload(ctx, input.ObjectName, input.UserID)
 	if err != nil {
 		return "", err
 	}
 
 	oldURL := s.getOldImageURL(ctx, input.UserID, input.Typ)
 
-	if err = s.repo.UpdateProfileImages(ctx, input.UserID, fullPublicURL, input.Typ); err != nil {
+	// Save objectName to DB
+	if err = s.repo.UpdateProfileImages(ctx, input.UserID, objectName, input.Typ); err != nil {
 		return "", err
 	}
-	if oldURL != "" && oldURL != fullPublicURL {
+	if oldURL != "" && oldURL != objectName {
 		_ = s.media.DeleteFile(ctx, oldURL)
 	}
 
-	return fullPublicURL, nil
+	// Return full URL for API response
+	return s.media.GetPublicURL(objectName), nil
 }
 
 func (s *UserServiceImpl) getOldImageURL(ctx context.Context, userID int64, typ domain.FileType) string {
@@ -172,4 +174,11 @@ func (s *UserServiceImpl) getOldImageURL(ctx context.Context, userID int64, typ 
 		oldURL = user.CoverImage
 	}
 	return oldURL
+}
+
+func (s *UserServiceImpl) mapToResponse(u *domain.User) *domain.UserResponse {
+	res := u.ToResponse()
+	res.Avatar = s.media.GetPublicURL(res.Avatar)
+	res.CoverImage = s.media.GetPublicURL(res.CoverImage)
+	return res
 }

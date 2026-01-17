@@ -15,10 +15,10 @@ const (
 )
 
 type FileStorage interface {
+	// GetEndpoint returns the internal endpoint used by the backend to communicate with storage. // e.g., "minio:9000" (docker network)
+	GetEndpoint() string
 	GetPresignedPutURL(ctx context.Context, bucket, objectName string, expiry time.Duration) (string, error)
-
 	StatFile(ctx context.Context, bucket, objectName string) (bool, error)
-
 	DeleteFile(ctx context.Context, bucket, objectName string) error
 }
 
@@ -36,7 +36,8 @@ type ConfirmFile struct {
 }
 
 type FileConfig struct {
-	Env           string
+	// PublicURL is the external URL accessible by clients (browsers).
+	// e.g., "http://localhost/air-social-public" (via Nginx)
 	PublicURL     string
 	BucketPublic  string
 	BucketPrivate string

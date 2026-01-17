@@ -19,17 +19,18 @@ type ServiceContainer struct {
 	Cache domain.CacheStorage
 	File  domain.FileStorage
 
-	Auth  service.AuthService
-	User  service.UserService
-	Media service.MediaService
-	Token service.TokenService
+	Auth   service.AuthService
+	User   service.UserService
+	Media  service.MediaService
+	Token  service.TokenService
+	Health service.HealthService
 }
 
 func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) (*ServiceContainer, error) {
 	// file
 	fileStorage := storage.NewMinioStorage(ifc.Minio)
 	fileConfig := domain.FileConfig{
-		PublicURL:     cfg.MinIO.PublicURL,
+		PublicURL:     url.FileStorageBaseURL(),
 		BucketPublic:  cfg.MinIO.BucketPublic,
 		BucketPrivate: cfg.MinIO.BucketPrivate,
 	}
@@ -51,6 +52,7 @@ func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) 
 	tokenRepo := postgres.NewTokenRepository(ifc.DB)
 
 	// services
+	healthSvc := service.NewHealthService(ifc.DB, ifc.Redis, ifc.Rabbit, ifc.Minio, url)
 	tokenSvc := service.NewTokenService(tokenRepo, cfg.Token)
 	mediaSvc := service.NewMediaService(fileStorage, cacheStorage, fileConfig)
 	userSvc := service.NewUserService(userRepo, mediaSvc)
@@ -61,10 +63,11 @@ func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) 
 		Cache: cacheStorage,
 		File:  fileStorage,
 
-		Auth:  authSvc,
-		User:  userSvc,
-		Media: mediaSvc,
-		Token: tokenSvc,
+		Auth:   authSvc,
+		User:   userSvc,
+		Media:  mediaSvc,
+		Token:  tokenSvc,
+		Health: healthSvc,
 	}, nil
 }
 

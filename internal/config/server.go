@@ -1,23 +1,25 @@
 package config
 
 type ServerConfig struct {
-	Port     string
-	HostPort string
-	Env      string
-	BaseURL  string
-	Version  string
-	Username string
-	Password string
+	Env          string
+	AppName      string
+	Protocol     string
+	Domain       string
+	Version      string
+	Port         string
+	AuthUsername string
+	AuthPassword string
 }
 
 func ServerCfg() ServerConfig {
 	return ServerConfig{
-		Port:     getString("APP_PORT", "8080"),
-		HostPort: getString("APP_HOST_PORT", "3000"),
-		Env:      getString("APP_ENV", "development"),
-		BaseURL:  getString("APP_BASE_URL", "http://localhost:3000"),
-		Version:  getString("APP_VERSION", "v1"),
-		Username: getString("APP_BASIC_AUTH_USERNAME", "admin"),
-		Password: getString("APP_BASIC_AUTH_PASSWORD", "password"),
+		Env:          getString("APP_ENV", "development"),
+		AppName:      getString("APP_NAME", "air-social"),
+		Protocol:     getString("APP_PROTOCOL", "http"),
+		Domain:       getString("APP_DOMAIN", "localhost"),
+		Version:      getString("APP_VERSION", "v1"),
+		Port:         getString("APP_PORT", "8080"),
+		AuthUsername: getString("APP_BASIC_AUTH_USERNAME", "admin"),
+		AuthPassword: getString("APP_BASIC_AUTH_PASSWORD", "password"),
 	}
 }

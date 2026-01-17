@@ -15,9 +15,29 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:3000",
-    "basePath": "/v1",
+    "host": "localhost",
+    "basePath": "/air-social/api/v1",
     "paths": {
+        "/": {
+            "get": {
+                "description": "Render the HTML welcome page with API status and version",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Show welcome page",
+                "responses": {
+                    "200": {
+                        "description": "HTML Page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/forgot-password": {
             "post": {
                 "description": "Initiate password reset process. Sends an email containing a random token to reset the password.",

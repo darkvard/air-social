@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+
+	"air-social/pkg"
 )
 
 type Config struct {
-	AppEnv   string
 	Server   ServerConfig
 	Postgres PostgresConfig
 	Redis    RedisConfig
@@ -18,27 +19,29 @@ type Config struct {
 	Mailer   MailConfig
 	RabbitMQ RabbitMQConfig
 	MinIO    MinioStorageConfig
-	Limiter  RateLimiterConfig
+	Limiter  RateLimiterCfg
 }
 
-func Load() *Config {
+func Load() Config {
 	envFile := ".env"
-	if os.Getenv("APP_ENV") == "debug" {
+	if os.Getenv("APP_ENV") == pkg.DEBUG {
 		envFile = ".env.local"
 	}
 	if err := godotenv.Load(envFile); err != nil {
 		log.Fatal("No .env file found")
 	}
 
-	return &Config{
-		Server:   ServerCfg(),
+	serverCfg := ServerCfg()
+
+	return Config{
+		Server:   serverCfg,
 		Postgres: PostgresCfg(),
 		Redis:    RedisCfg(),
 		Token:    TokenCfg(),
 		Mailer:   MailCfg(),
 		RabbitMQ: RabbitMQCfg(),
-		MinIO:    MinStorageConfig(),
-		Limiter:  RateLimiterConfig{},
+		MinIO:    MinStorageCfg(serverCfg.AppName),
+		Limiter:  RateLimiterCfg{},
 	}
 }
 

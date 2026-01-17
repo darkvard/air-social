@@ -24,6 +24,26 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/": {
+            "get": {
+                "description": "Render the HTML welcome page with API status and version",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Show welcome page",
+                "responses": {
+                    "200": {
+                        "description": "HTML Page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/forgot-password": {
             "post": {
                 "description": "Initiate password reset process. Sends an email containing a random token to reset the password.",
@@ -827,8 +847,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:3000",
-	BasePath:         "/v1",
+	Host:             "localhost",
+	BasePath:         "/air-social/api/v1",
 	Schemes:          []string{},
 	Title:            "Air Social API",
 	Description:      "Backend service for Air Social application.",

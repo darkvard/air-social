@@ -63,7 +63,7 @@ func Auth(tokenService service.TokenService) gin.HandlerFunc {
 func Basic(cfg config.ServerConfig) gin.HandlerFunc {
 	return gin.BasicAuth(
 		gin.Accounts{
-			cfg.Username: cfg.Password,
+			cfg.AuthUsername: cfg.AuthPassword,
 		},
 	)
 }

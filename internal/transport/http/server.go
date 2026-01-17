@@ -12,6 +12,7 @@ import (
 
 	"air-social/internal/config"
 	"air-social/internal/di"
+	"air-social/internal/domain"
 	"air-social/internal/transport/http/handler"
 	"air-social/internal/transport/http/middleware"
 	"air-social/pkg"
@@ -47,12 +48,13 @@ const (
 	ConfirmUpload   = "/confirm"
 )
 
-func NewServer(cfg config.Config, svc *di.ServiceContainer, ifc *di.InfraContainer) *http.Server {
+func NewServer(cfg config.Config, svc *di.ServiceContainer, ifc *di.InfraContainer, urls domain.URLFactory) *http.Server {
 	e := setupEngine()
 	mw := middleware.NewManager(cfg.Server, svc.Token)
-	v := e.Group("api/" + cfg.Server.Version)
+
+	v := e.Group(urls.APIRouterPath())
 	{
-		commonRoutes(v, ifc, mw)
+		commonRoutes(v, svc, mw)
 		authRoutes(v, svc, mw)
 		userRoutes(v, svc, mw)
 		mediaRoutes(v, svc, mw)
@@ -73,7 +75,6 @@ func setupEngine() *gin.Engine {
 	e.Use(gin.Recovery())
 	e.SetTrustedProxies(nil)
 	e.HandleMethodNotAllowed = true
-	
 
 	e.SetHTMLTemplate(
 		template.Must(template.New("").ParseFS(
@@ -96,12 +97,12 @@ func setupEngine() *gin.Engine {
 	return e
 }
 
-func commonRoutes(rg *gin.RouterGroup, ifc *di.InfraContainer, mw *middleware.Manager) {
-	h := handler.NewHealthHandler(ifc.DB, ifc.Redis, ifc.Rabbit, ifc.Minio)
-	r := rg.Group("")
+func commonRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Manager) {
+	h := handler.NewHealthHandler(svc.Health)
 	{
-		r.GET(Health, mw.Basic, h.HealthCheck)
-		r.GET(SwaggerAny, ginSwagger.WrapHandler(swaggerFiles.Handler))
+		rg.GET("", h.Welcome)
+		rg.GET(Health, mw.Basic, h.HealthCheck)
+		rg.GET(SwaggerAny, ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 }
 

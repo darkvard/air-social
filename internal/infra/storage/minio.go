@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -38,4 +39,9 @@ func (m *minioStorage) StatFile(ctx context.Context, bucket, objectName string) 
 
 func (m *minioStorage) DeleteFile(ctx context.Context, bucket, objectName string) error {
 	return m.client.RemoveObject(ctx, bucket, objectName, minio.RemoveObjectOptions{})
+}
+
+// Assuming HTTP for internal communication within Docker network
+func (s *minioStorage) GetEndpoint() string {
+	return fmt.Sprintf("http://%s", s.client.EndpointURL().Host)
 }

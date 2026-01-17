@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+const (
+	DEVELOPMENT = "development"
+	PRODUCTION  = "production"
+	DEBUG       = "debug"
+)
+
 // FormatTTLVerbose converts a time.Duration (TTL) into a human-readable string.
 // Example outputs:
 //
