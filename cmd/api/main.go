@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	_ "air-social/docs"
+	_ "air-social/docs/swagger"
 	"air-social/internal/config"
 	"air-social/internal/di"
 	"air-social/internal/domain"

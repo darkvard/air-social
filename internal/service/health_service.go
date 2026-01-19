@@ -17,8 +17,6 @@ type HealthService interface {
 	GetAppInfo() map[string]interface{}
 }
 
- 
-
 type HealthServiceImpl struct {
 	DB     *sqlx.DB
 	Redis  *goredis.Client
@@ -33,7 +31,7 @@ func NewHealthService(db *sqlx.DB, redis *goredis.Client, rabbit *amqp.Connectio
 		Redis:  redis,
 		Rabbit: rabbit,
 		Minio:  minio,
-		url:   url,
+		url:    url,
 	}
 }
 

@@ -197,19 +197,6 @@ info:
   title: Air Social API
   version: "1.0"
 paths:
-  /:
-    get:
-      description: Render the HTML welcome page with API status and version
-      produces:
-      - text/html
-      responses:
-        "200":
-          description: HTML Page
-          schema:
-            type: string
-      summary: Show welcome page
-      tags:
-      - Health
   /auth/forgot-password:
     post:
       consumes:

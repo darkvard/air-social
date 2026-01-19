@@ -11,6 +11,7 @@ services:
     environment:
       - APP_DOMAIN=${APP_DOMAIN}
       - APP_NAME=${APP_NAME:-air-social}
+      - NGINX_TIMEOUT=60s
     volumes:
       - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
     depends_on:
@@ -40,7 +41,7 @@ services:
       - CLICOLOR_FORCE=1
       - FILE_STORAGE_PUBLIC_URL=${APP_PROTOCOL}://${APP_DOMAIN}/${APP_NAME:-air-social}-public
     expose:
-      - "8080" 
+      - "8080"
     volumes:
       - .:/app
     depends_on:
@@ -52,15 +53,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-    # healthcheck:
-    #   test:
-    #     [
-           
-    #     ]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
-    #   start_period: 40s  
     networks:
       - air-social-network
 

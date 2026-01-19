@@ -31,6 +31,13 @@ logs:
 ps:
 	@docker compose ps -a
 
+.PHONY: debug
+debug:
+	@echo "Starting debug dependencies..."
+	@docker compose up -d nginx db redis rabbitmq minio 
+	@echo "🛑 Killing Docker App container to use Local Debugger..."
+	@docker compose stop app
+
 ## Utils
 
 .PHONY: sh-app
@@ -203,5 +210,5 @@ docs:
 	@echo "1. Formatting Swagger annotations..."
 	@swag fmt
 	@echo "2. Generating Swagger files..."
-	@swag init -g $(SWAGGER_MAIN_FILE) --output docs
+	@swag init -g $(SWAGGER_MAIN_FILE) --output docs/swagger
 	@echo "Done"

@@ -19,14 +19,20 @@ func NewHealthHandler(srv service.HealthService) *HealthHandler {
 	}
 }
 
-// Welcome renders the landing page
+// HealthCheck godoc
 //
-//	@Summary		Show welcome page
-//	@Description	Render the HTML welcome page with API status and version
+//	@Summary		Health check
+//	@Description	Check the health status of the application components
 //	@Tags			Health
-//	@Produce		html
-//	@Success		200	{string}	string	"HTML Page"
-//	@Router			/ [get]
+//	@Produce		json
+//	@Security		BasicAuth
+//	@Success		200	{object}	map[string]string
+//	@Router			/health [get]
+func (h *HealthHandler) HealthCheck(c *gin.Context) {
+	_, details := h.srv.Check(c.Request.Context())
+	pkg.Success(c, details)
+}
+
 func (h *HealthHandler) Welcome(c *gin.Context) {
 	isHealthy, _ := h.srv.Check(c.Request.Context())
 	appInfo := h.srv.GetAppInfo()
@@ -43,18 +49,4 @@ func (h *HealthHandler) Welcome(c *gin.Context) {
 	maps.Copy(data, appInfo)
 
 	c.HTML(httpCode, "welcome.gohtml", data)
-}
-
-// HealthCheck godoc
-//
-//	@Summary		Health check
-//	@Description	Check the health status of the application components
-//	@Tags			Health
-//	@Produce		json
-//	@Security		BasicAuth
-//	@Success		200	{object}	map[string]string
-//	@Router			/health [get]
-func (h *HealthHandler) HealthCheck(c *gin.Context) {
-	_, details := h.srv.Check(c.Request.Context())
-	pkg.Success(c, details)
 }
