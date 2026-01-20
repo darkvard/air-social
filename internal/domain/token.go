@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
@@ -34,6 +33,10 @@ type TokenInfo struct {
 	TokenType    string `json:"token_type"`
 }
 
-func BlockedAccessTokenKey(jwtID string) string {
-	return fmt.Sprintf("token:block:%v", jwtID)
+func EmptyTokenInfo() TokenInfo {
+	return TokenInfo{}
+}
+
+func EmptyRefreshToken() RefreshToken {
+	return RefreshToken{}
 }

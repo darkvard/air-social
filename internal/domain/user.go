@@ -63,14 +63,14 @@ type UserResponse struct {
 	Profile
 }
 
-type CreateUserInput struct {
+type CreateUserRequest struct {
 	Email        string
 	Username     string
 	PasswordHash string
 }
 
-func (u *User) ToResponse() *UserResponse {
-	return &UserResponse{
+func (u *User) ToResponse() UserResponse {
+	return UserResponse{
 		ID:           u.ID,
 		Email:        u.Email,
 		Username:     u.Username,
@@ -79,4 +79,8 @@ func (u *User) ToResponse() *UserResponse {
 		CreatedAt:    u.CreatedAt,
 		PasswordHash: u.PasswordHash,
 	}
+}
+
+func EmptyUserResponse() UserResponse {
+	return UserResponse{}
 }

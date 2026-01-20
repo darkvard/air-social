@@ -63,7 +63,7 @@ func TestTokenService_CreateSession(t *testing.T) {
 	tests := []struct {
 		name          string
 		setupMocks    func()
-		checkResult   func(t *testing.T, tokenInfo *domain.TokenInfo)
+		checkResult   func(t *testing.T, tokenInfo domain.TokenInfo)
 		expectedError error
 	}{
 		{
@@ -72,7 +72,7 @@ func TestTokenService_CreateSession(t *testing.T) {
 				mockRepo.On("UpdateRevokedByDevice", mock.Anything, userID, deviceID).Return(nil)
 				mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 			},
-			checkResult: func(t *testing.T, tokenInfo *domain.TokenInfo) {
+			checkResult: func(t *testing.T, tokenInfo domain.TokenInfo) {
 				assert.NotNil(t, tokenInfo)
 				assert.NotEmpty(t, tokenInfo.AccessToken)
 				assert.NotEmpty(t, tokenInfo.RefreshToken)
@@ -87,8 +87,8 @@ func TestTokenService_CreateSession(t *testing.T) {
 				mockRepo.On("UpdateRevokedByDevice", mock.Anything, userID, deviceID).Return(nil)
 				mockRepo.On("Create", mock.Anything, mock.Anything).Return(assert.AnError)
 			},
-			checkResult: func(t *testing.T, tokenInfo *domain.TokenInfo) {
-				assert.Nil(t, tokenInfo)
+			checkResult: func(t *testing.T, tokenInfo domain.TokenInfo) {
+				assert.Zero(t, tokenInfo)
 			},
 			expectedError: assert.AnError,
 		},
@@ -98,7 +98,7 @@ func TestTokenService_CreateSession(t *testing.T) {
 				mockRepo.On("UpdateRevokedByDevice", mock.Anything, userID, deviceID).Return(assert.AnError)
 				mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
 			},
-			checkResult: func(t *testing.T, tokenInfo *domain.TokenInfo) {
+			checkResult: func(t *testing.T, tokenInfo domain.TokenInfo) {
 				assert.NotNil(t, tokenInfo)
 			},
 			expectedError: nil,
@@ -202,7 +202,7 @@ func TestTokenService_Refresh(t *testing.T) {
 			if tc.expectedError == nil {
 				assert.NotNil(t, tokenInfo)
 			} else {
-				assert.Nil(t, tokenInfo)
+				assert.Empty(t, tokenInfo)
 			}
 			mockRepo.AssertExpectations(t)
 		})

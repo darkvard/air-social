@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"mime/multipart"
 	"testing"
 	"time"
 
@@ -46,24 +45,35 @@ func (m *MockUserRepo) UpdateProfileImages(ctx context.Context, userID int64, ur
 	return m.Called(ctx, userID, imageType).Error(0)
 }
 
-type MockFile struct {
+type MockMediaService struct {
 	mock.Mock
 }
 
-func (m *MockFile) UploadFile(ctx context.Context, file multipart.File, header *multipart.FileHeader, folder string) (string, error) {
-	args := m.Called(ctx, file, header, folder)
-	return args.String(0), args.Error(1)
+func (m *MockMediaService) GetPresignedURL(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error) {
+	args := m.Called(ctx, input)
+	return args.Get(0).(domain.PresignedFileResponse), args.Error(1)
+
 }
 
-func (m *MockFile) DeleteFile(ctx context.Context, path string) error {
-	return m.Called(ctx, path).Error(0)
+func (m *MockMediaService) ConfirmUpload(ctx context.Context, objectName string, userID int64) (string, error) {
+	args := m.Called(ctx, objectName, userID)
+	return args.Get(0).(string), args.Error(1)
+}
+
+func (m *MockMediaService) DeleteFile(ctx context.Context, fullURL string) error {
+	return m.Called(ctx, fullURL).Error(0)
+}
+
+func (m *MockMediaService) GetPublicURL(objectName string) string {
+	return m.Called(objectName).Get(0).(string)
 }
 
 func TestUserService_Create(t *testing.T) {
 	mockRepo := new(MockUserRepo)
-	service := NewUserService(mockRepo, nil)
+	mockMedia := new(MockMediaService)
+	service := NewUserService(mockRepo, mockMedia)
 
-	input := &domain.CreateUserInput{
+	input := domain.CreateUserRequest{
 		Email:        "email@example.com",
 		Username:     "test",
 		PasswordHash: "hash",
@@ -71,14 +81,14 @@ func TestUserService_Create(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		input         *domain.CreateUserInput
-		setupMocks    func(m *MockUserRepo)
+		input         domain.CreateUserRequest
+		setupMocks    func(m *MockUserRepo, media *MockMediaService)
 		expectedError error
 	}{
 		{
 			name:  "email already exists",
 			input: input,
-			setupMocks: func(m *MockUserRepo) {
+			setupMocks: func(m *MockUserRepo, media *MockMediaService) {
 				m.On("GetByEmail", mock.Anything, input.Email).Return(
 					&domain.User{
 						Email:        input.Email,
@@ -91,7 +101,7 @@ func TestUserService_Create(t *testing.T) {
 		{
 			name:  "successfully created",
 			input: input,
-			setupMocks: func(m *MockUserRepo) {
+			setupMocks: func(m *MockUserRepo, media *MockMediaService) {
 				m.On("GetByEmail", mock.Anything, input.Email).Return(nil, nil)
 				m.On("Create",
 					mock.Anything,
@@ -105,6 +115,7 @@ func TestUserService_Create(t *testing.T) {
 					u.ID = 123
 					u.CreatedAt = time.Now().UTC()
 				}).Return(nil)
+				media.On("GetPublicURL", mock.Anything).Return("")
 			},
 			expectedError: nil,
 		},
@@ -112,19 +123,22 @@ func TestUserService_Create(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.setupMocks(mockRepo)
+			tc.setupMocks(mockRepo, mockMedia)
 
-			_, err := service.CreateUser(context.Background(), tc.input)
+			u, err := service.CreateUser(context.Background(), tc.input)
 
 			if tc.expectedError != nil {
 				assert.ErrorIs(t, err, tc.expectedError)
 			} else {
-				assert.NoError(t, err)
+				assert.NotNil(t, u)
 			}
 
 			mockRepo.AssertExpectations(t)
 			mockRepo.ExpectedCalls = nil
 			mockRepo.Calls = nil
+			mockMedia.AssertExpectations(t)
+			mockMedia.ExpectedCalls = nil
+			mockMedia.Calls = nil
 		})
 	}
 

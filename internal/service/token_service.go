@@ -16,8 +16,8 @@ import (
 )
 
 type TokenService interface {
-	CreateSession(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error)
-	Refresh(ctx context.Context, refreshToken string) (*domain.TokenInfo, error)
+	CreateSession(ctx context.Context, userID int64, deviceID string) (domain.TokenInfo, error)
+	Refresh(ctx context.Context, refreshToken string) (domain.TokenInfo, error)
 	RevokeSingle(ctx context.Context, refreshToken string) error
 	RevokeDeviceSession(ctx context.Context, userID int64, deviceID string) error
 	RevokeAllUserSessions(ctx context.Context, userID int64) error
@@ -34,23 +34,25 @@ func NewTokenService(repo domain.TokenRepository, cfg config.TokenConfig) *Token
 	return &TokenServiceImpl{repo: repo, cfg: cfg}
 }
 
-func (s *TokenServiceImpl) CreateSession(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error) {
+func (s *TokenServiceImpl) CreateSession(ctx context.Context, userID int64, deviceID string) (domain.TokenInfo, error) {
 	s.RevokeDeviceSession(ctx, userID, deviceID)
 	return s.generateTokens(ctx, userID, deviceID)
 }
 
-func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error) {
+func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, deviceID string) (domain.TokenInfo, error) {
+	empty := domain.EmptyTokenInfo()
+
 	access, err := s.generateAccessToken(userID, deviceID)
 	if err != nil {
-		return nil, err
+		return empty, err
 	}
 
 	raw, refresh := s.generateRefreshToken(userID, deviceID)
 	if err := s.repo.Create(ctx, refresh); err != nil {
-		return nil, err
+		return empty, err
 	}
 
-	return &domain.TokenInfo{
+	return domain.TokenInfo{
 		AccessToken:  access,
 		RefreshToken: raw,
 		ExpiresIn:    int64(s.cfg.AccessTokenTTL.Seconds()),
@@ -94,40 +96,42 @@ func (s *TokenServiceImpl) hashToken(raw string) string {
 	return hex.EncodeToString(h[:])
 }
 
-func (s *TokenServiceImpl) Refresh(ctx context.Context, refreshToken string) (*domain.TokenInfo, error) {
+func (s *TokenServiceImpl) Refresh(ctx context.Context, refreshToken string) (domain.TokenInfo, error) {
+	empty := domain.EmptyTokenInfo()
 	dbToken, err := s.verifyRefreshToken(ctx, refreshToken)
 	if err != nil {
-		return nil, err
+		return empty, err
 	}
 
 	newTokens, err := s.rotateSession(ctx, dbToken)
 	if err != nil {
-		return nil, err
+		return empty, err
 	}
 
 	return newTokens, nil
 }
 
-func (s *TokenServiceImpl) verifyRefreshToken(ctx context.Context, rawRefreshToken string) (*domain.RefreshToken, error) {
+func (s *TokenServiceImpl) verifyRefreshToken(ctx context.Context, rawRefreshToken string) (domain.RefreshToken, error) {
+	empty := domain.EmptyRefreshToken()
 	dbToken, err := s.repo.GetByHash(ctx, s.hashToken(rawRefreshToken))
 	if err != nil {
-		return nil, pkg.ErrNotFound
+		return empty, pkg.ErrNotFound
 	}
 
 	if dbToken.RevokedAt != nil {
 		_ = s.repo.UpdateRevokedByUser(ctx, dbToken.UserID)
-		return nil, pkg.ErrTokenRevoked
+		return empty, pkg.ErrTokenRevoked
 	}
 
 	if dbToken.ExpiresAt.Before(time.Now()) {
-		return nil, pkg.ErrTokenExpired
+		return empty, pkg.ErrTokenExpired
 	}
-	return dbToken, nil
+	return *dbToken, nil
 }
 
-func (s *TokenServiceImpl) rotateSession(ctx context.Context, oldToken *domain.RefreshToken) (*domain.TokenInfo, error) {
+func (s *TokenServiceImpl) rotateSession(ctx context.Context, oldToken domain.RefreshToken) (domain.TokenInfo, error) {
 	if err := s.repo.UpdateRevoked(ctx, oldToken.ID); err != nil {
-		return nil, err
+		return domain.EmptyTokenInfo(), err
 	}
 
 	return s.generateTokens(ctx, oldToken.UserID, oldToken.DeviceID)

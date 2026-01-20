@@ -159,3 +159,20 @@ This is often due to the Firewall blocking the connection from the Docker Networ
 sudo ufw allow 8080/tcp
 sudo ufw reload
 ```
+
+## 6. Switching Back to Normal Mode
+
+When running the app normally (inside Docker), you **MUST disable** `docker-compose.override.yml`, otherwise Nginx causes a **502 Bad Gateway**.
+
+### The Reason (Host Gateway)
+The override file uses `extra_hosts: host-gateway`, forcing Nginx to route traffic to your **Host Machine** (where the Debugger was), instead of the **Docker Container**.
+* **Debug Mode:** Nginx -> Host Machine (VSCode) ✅
+* **Normal Mode (with override active):** Nginx -> Host Machine (Empty) ❌ -> **502 Error**
+
+### Solution
+**Option 1: Comment Out**
+Comment out all lines in `docker-compose.override.yml` to disable the `host-gateway` routing.
+
+**Option 2: Delete File**
+```bash
+rm docker-compose.override.yml

@@ -14,7 +14,7 @@ import (
 
 type HealthService interface {
 	Check(ctx context.Context) (bool, map[string]string)
-	GetAppInfo() map[string]interface{}
+	GetAppInfo() map[string]any
 }
 
 type HealthServiceImpl struct {
@@ -75,8 +75,8 @@ func (s *HealthServiceImpl) Check(ctx context.Context) (bool, map[string]string)
 	return isHealthy, details
 }
 
-func (s *HealthServiceImpl) GetAppInfo() map[string]interface{} {
-	return map[string]interface{}{
+func (s *HealthServiceImpl) GetAppInfo() map[string]any {
+	return map[string]any{
 		"Title":   "Air Social API",
 		"DocsURL": s.url.SwaggerUI(),
 	}

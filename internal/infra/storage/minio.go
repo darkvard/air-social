@@ -18,6 +18,7 @@ func NewMinioStorage(client *minio.Client) *minioStorage {
 	}
 }
 
+// todo: update to PresignedPostPolicy
 func (m *minioStorage) GetPresignedPutURL(ctx context.Context, bucket, objectName string, expiry time.Duration) (string, error) {
 	url, err := m.client.PresignedPutObject(ctx, bucket, objectName, expiry)
 	if err != nil {

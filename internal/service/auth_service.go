@@ -15,13 +15,13 @@ import (
 )
 
 type AuthService interface {
-	Register(ctx context.Context, req *domain.RegisterRequest) (*domain.UserResponse, error)
-	Login(ctx context.Context, req *domain.LoginRequest) (*domain.UserResponse, *domain.TokenInfo, error)
-	Refresh(ctx context.Context, req *domain.RefreshRequest) (*domain.TokenInfo, error)
-	Logout(ctx context.Context, req *domain.LogoutRequest) error
+	Register(ctx context.Context, req domain.RegisterRequest) (domain.UserResponse, error)
+	Login(ctx context.Context, req domain.LoginRequest) (domain.UserResponse, domain.TokenInfo, error)
+	Refresh(ctx context.Context, req domain.RefreshRequest) (domain.TokenInfo, error)
+	Logout(ctx context.Context, req domain.LogoutRequest) error
 	VerifyEmail(ctx context.Context, token string) error
-	ForgotPassword(ctx context.Context, req *domain.ForgotPasswordRequest) error
-	ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest, isValidateReturn bool) error
+	ForgotPassword(ctx context.Context, req domain.ForgotPasswordRequest) error
+	ResetPassword(ctx context.Context, req domain.ResetPasswordRequest, isValidateReturn bool) error
 }
 
 type AuthServiceImpl struct {
@@ -48,18 +48,18 @@ func NewAuthService(
 	}
 }
 
-func (s *AuthServiceImpl) Register(ctx context.Context, req *domain.RegisterRequest) (*domain.UserResponse, error) {
+func (s *AuthServiceImpl) Register(ctx context.Context, req domain.RegisterRequest) (domain.UserResponse, error) {
 	hashedPwd, err := hashPassword(req.Password)
 	if err != nil {
-		return nil, err
+		return domain.UserResponse{}, err
 	}
-	user, err := s.users.CreateUser(ctx, &domain.CreateUserInput{
+	user, err := s.users.CreateUser(ctx, domain.CreateUserRequest{
 		Email:        req.Email,
 		Username:     req.Username,
 		PasswordHash: hashedPwd,
 	})
 	if err != nil {
-		return nil, err
+		return domain.UserResponse{}, err
 	}
 
 	eventID := uuid.NewString()
@@ -123,19 +123,22 @@ func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, token string) error {
 	return s.users.VerifyEmail(ctx, email)
 }
 
-func (s *AuthServiceImpl) Login(ctx context.Context, req *domain.LoginRequest) (*domain.UserResponse, *domain.TokenInfo, error) {
+func (s *AuthServiceImpl) Login(ctx context.Context, req domain.LoginRequest) (domain.UserResponse, domain.TokenInfo, error) {
+	emptyToken := domain.EmptyTokenInfo()
+	emptyUser := domain.EmptyUserResponse()
+	
 	user, err := s.users.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, nil, pkg.ErrInvalidCredentials
+		return emptyUser, emptyToken, pkg.ErrInvalidCredentials
 	}
 
 	if !verifyPassword(req.Password, user.PasswordHash) {
-		return nil, nil, pkg.ErrInvalidCredentials
+		return emptyUser, emptyToken, pkg.ErrInvalidCredentials
 	}
 
 	tokens, err := s.tokens.CreateSession(ctx, user.ID, req.DeviceID)
 	if err != nil {
-		return nil, nil, err
+		return emptyUser, emptyToken, err
 	}
 
 	return user, tokens, nil
@@ -147,22 +150,23 @@ func verifyPassword(plainPassword, hashPassword string) bool {
 	return err == nil
 }
 
-func (s *AuthServiceImpl) Refresh(ctx context.Context, req *domain.RefreshRequest) (*domain.TokenInfo, error) {
+func (s *AuthServiceImpl) Refresh(ctx context.Context, req domain.RefreshRequest) (domain.TokenInfo, error) {
+	empty := domain.EmptyTokenInfo()
 	tokens, err := s.tokens.Refresh(ctx, req.RefreshToken)
 	if err != nil {
 		switch {
 		case errors.Is(err, pkg.ErrTokenExpired),
 			errors.Is(err, pkg.ErrTokenRevoked),
 			errors.Is(err, pkg.ErrNotFound):
-			return nil, pkg.ErrUnauthorized
+			return empty, pkg.ErrUnauthorized
 		default:
-			return nil, pkg.ErrInternal
+			return empty, pkg.ErrInternal
 		}
 	}
 	return tokens, nil
 }
 
-func (s *AuthServiceImpl) Logout(ctx context.Context, req *domain.LogoutRequest) error {
+func (s *AuthServiceImpl) Logout(ctx context.Context, req domain.LogoutRequest) error {
 	if req.IsAllDevices {
 		return s.tokens.RevokeAllUserSessions(ctx, req.UserID)
 	} else {
@@ -170,7 +174,7 @@ func (s *AuthServiceImpl) Logout(ctx context.Context, req *domain.LogoutRequest)
 	}
 }
 
-func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, req *domain.ForgotPasswordRequest) error {
+func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, req domain.ForgotPasswordRequest) error {
 	user, err := s.users.GetByEmail(ctx, req.Email)
 	if err != nil {
 		return err
@@ -209,7 +213,7 @@ func (s *AuthServiceImpl) storeEmailResetPassword(ctx context.Context, email, to
 	return s.cache.Set(ctx, domain.GetEmailResetPasswordKey(token), email, ttl)
 }
 
-func (s *AuthServiceImpl) ResetPassword(ctx context.Context, req *domain.ResetPasswordRequest, isValidateReturn bool) error {
+func (s *AuthServiceImpl) ResetPassword(ctx context.Context, req domain.ResetPasswordRequest, isValidateReturn bool) error {
 	email, err := s.getEmailResetPassword(ctx, req.Token)
 	if err != nil {
 		return err

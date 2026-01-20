@@ -39,7 +39,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	result, err := h.auth.Register(c.Request.Context(), &req)
+	result, err := h.auth.Register(c.Request.Context(), req)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -66,7 +66,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, token, err := h.auth.Login(c.Request.Context(), &req)
+	user, token, err := h.auth.Login(c.Request.Context(), req)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -96,7 +96,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	tokens, err := h.auth.Refresh(c.Request.Context(), &req)
+	tokens, err := h.auth.Refresh(c.Request.Context(), req)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -129,7 +129,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	req.UserID = payload.UserID
 	req.DeviceID = payload.DeviceID
 
-	if err := h.auth.Logout(c.Request.Context(), &req); err != nil {
+	if err := h.auth.Logout(c.Request.Context(), req); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -177,7 +177,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.auth.ForgotPassword(c.Request.Context(), &req); err != nil {
+	if err := h.auth.ForgotPassword(c.Request.Context(), req); err != nil {
 		if errors.Is(err, pkg.ErrInternal) {
 			pkg.Log().Errorw("failed to forgot password", "error", err)
 		}
@@ -204,7 +204,7 @@ func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 
 	if err := h.auth.ResetPassword(
 		c.Request.Context(),
-		&domain.ResetPasswordRequest{Token: token, Password: ""},
+		domain.ResetPasswordRequest{Token: token, Password: ""},
 		true,
 	); err != nil {
 		c.HTML(400, "reset_password.gohtml", gin.H{"Success": false})
@@ -231,7 +231,7 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.auth.ResetPassword(c.Request.Context(), &req, false); err != nil {
+	if err := h.auth.ResetPassword(c.Request.Context(), req, false); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}

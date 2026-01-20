@@ -8,16 +8,14 @@ import (
 	"air-social/pkg"
 )
 
-// todo: ko dung con tro cho dto
 type UserService interface {
-	CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error)
-	GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error)
-	GetByID(ctx context.Context, id int64) (*domain.UserResponse, error)
+	CreateUser(ctx context.Context, req domain.CreateUserRequest) (domain.UserResponse, error)
+	GetByEmail(ctx context.Context, email string) (domain.UserResponse, error)
+	GetByID(ctx context.Context, id int64) (domain.UserResponse, error)
 	VerifyEmail(ctx context.Context, email string) error
-	UpdatePassword(ctx context.Context, email, pwd string) error
-	ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error
-	UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateProfileRequest) (*domain.UserResponse, error)
-
+	UpdatePassword(ctx context.Context, email, password string) error
+	ChangePassword(ctx context.Context, userID int64, req domain.ChangePasswordRequest) error
+	UpdateProfile(ctx context.Context, userID int64, req domain.UpdateProfileRequest) (domain.UserResponse, error)
 	ConfirmImageUpload(ctx context.Context, input domain.ConfirmFile) (string, error)
 }
 
@@ -33,9 +31,10 @@ func NewUserService(repo domain.UserRepository, media MediaService) *UserService
 	}
 }
 
-func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error) {
+func (s *UserServiceImpl) CreateUser(ctx context.Context, in domain.CreateUserRequest) (domain.UserResponse, error) {
+	empty := domain.EmptyUserResponse()
 	if existing, _ := s.repo.GetByEmail(ctx, in.Email); existing != nil {
-		return nil, pkg.ErrAlreadyExists
+		return empty, pkg.ErrAlreadyExists
 	}
 
 	u := &domain.User{
@@ -45,24 +44,24 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, in *domain.CreateUserI
 	}
 
 	if err := s.repo.Create(ctx, u); err != nil {
-		return nil, err
+		return empty, err
 	}
 
 	return s.mapToResponse(u), nil
 }
 
-func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error) {
+func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (domain.UserResponse, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return domain.EmptyUserResponse(), err
 	}
 	return s.mapToResponse(user), nil
 }
 
-func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (*domain.UserResponse, error) {
+func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (domain.UserResponse, error) {
 	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return domain.EmptyUserResponse(), err
 	}
 	return s.mapToResponse(user), nil
 }
@@ -88,7 +87,7 @@ func (s *UserServiceImpl) UpdatePassword(ctx context.Context, email, pwd string)
 	return s.repo.Update(ctx, user)
 }
 
-func (s *UserServiceImpl) ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error {
+func (s *UserServiceImpl) ChangePassword(ctx context.Context, userID int64, req domain.ChangePasswordRequest) error {
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		return err
@@ -111,10 +110,12 @@ func (s *UserServiceImpl) ChangePassword(ctx context.Context, userID int64, req 
 	return s.repo.Update(ctx, user)
 }
 
-func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateProfileRequest) (*domain.UserResponse, error) {
+func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req domain.UpdateProfileRequest) (domain.UserResponse, error) {
+	empty := domain.EmptyUserResponse()
+	
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
-		return nil, err
+		return empty, err
 	}
 
 	if req.FullName != nil {
@@ -134,7 +135,7 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req *
 	}
 
 	if err := s.repo.Update(ctx, user); err != nil {
-		return nil, err
+		return empty, err
 	}
 
 	return s.mapToResponse(user), nil
@@ -148,7 +149,6 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.C
 
 	oldURL := s.getOldImageURL(ctx, input.UserID, input.Typ)
 
-	// Save objectName to DB
 	if err = s.repo.UpdateProfileImages(ctx, input.UserID, objectName, input.Typ); err != nil {
 		return "", err
 	}
@@ -156,7 +156,6 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.C
 		_ = s.media.DeleteFile(ctx, oldURL)
 	}
 
-	// Return full URL for API response
 	return s.media.GetPublicURL(objectName), nil
 }
 
@@ -176,7 +175,7 @@ func (s *UserServiceImpl) getOldImageURL(ctx context.Context, userID int64, typ 
 	return oldURL
 }
 
-func (s *UserServiceImpl) mapToResponse(u *domain.User) *domain.UserResponse {
+func (s *UserServiceImpl) mapToResponse(u *domain.User) domain.UserResponse {
 	res := u.ToResponse()
 	res.Avatar = s.media.GetPublicURL(res.Avatar)
 	res.CoverImage = s.media.GetPublicURL(res.CoverImage)

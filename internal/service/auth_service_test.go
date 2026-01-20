@@ -17,51 +17,36 @@ type MockUserService struct {
 	mock.Mock
 }
 
-func (m *MockUserService) CreateUser(ctx context.Context, in *domain.CreateUserInput) (*domain.UserResponse, error) {
-	args := m.Called(ctx, in)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.UserResponse), args.Error(1)
+func (m *MockUserService) CreateUser(ctx context.Context, req domain.CreateUserRequest) (domain.UserResponse, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(domain.UserResponse), args.Error(1)
 }
 
-func (m *MockUserService) GetByEmail(ctx context.Context, email string) (*domain.UserResponse, error) {
+func (m *MockUserService) GetByEmail(ctx context.Context, email string) (domain.UserResponse, error) {
 	args := m.Called(ctx, email)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.UserResponse), args.Error(1)
+	return args.Get(0).(domain.UserResponse), args.Error(1)
 }
 
 func (m *MockUserService) VerifyEmail(ctx context.Context, email string) error {
-	args := m.Called(ctx, email)
-	return args.Error(0)
+	return m.Called(ctx, email).Error(0)
 }
 
 func (m *MockUserService) UpdatePassword(ctx context.Context, email, newPassword string) error {
-	args := m.Called(ctx, email, newPassword)
-	return args.Error(0)
+	return m.Called(ctx, email, newPassword).Error(0)
 }
 
-func (m *MockUserService) GetByID(ctx context.Context, id int64) (*domain.UserResponse, error) {
+func (m *MockUserService) GetByID(ctx context.Context, id int64) (domain.UserResponse, error) {
 	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.UserResponse), args.Error(1)
+	return args.Get(0).(domain.UserResponse), args.Error(1)
 }
 
-func (m *MockUserService) UpdateProfile(ctx context.Context, userID int64, req *domain.UpdateProfileRequest) (*domain.UserResponse, error) {
+func (m *MockUserService) UpdateProfile(ctx context.Context, userID int64, req domain.UpdateProfileRequest) (domain.UserResponse, error) {
 	args := m.Called(ctx, userID, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.UserResponse), args.Error(1)
+	return args.Get(0).(domain.UserResponse), args.Error(1)
 }
 
-func (m *MockUserService) ChangePassword(ctx context.Context, userID int64, req *domain.ChangePasswordRequest) error {
-	args := m.Called(ctx, userID, req)
-	return args.Error(0)
+func (m *MockUserService) ChangePassword(ctx context.Context, userID int64, req domain.ChangePasswordRequest) error {
+	return m.Called(ctx, userID, req).Error(0)
 }
 
 func (m *MockUserService) PresignedImageUpload(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error) {
@@ -84,20 +69,14 @@ type MockToken struct {
 	mock.Mock
 }
 
-func (m *MockToken) CreateSession(ctx context.Context, userID int64, deviceID string) (*domain.TokenInfo, error) {
+func (m *MockToken) CreateSession(ctx context.Context, userID int64, deviceID string) (domain.TokenInfo, error) {
 	args := m.Called(ctx, userID, deviceID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.TokenInfo), args.Error(1)
+	return args.Get(0).(domain.TokenInfo), args.Error(1)
 }
 
-func (m *MockToken) Refresh(ctx context.Context, refreshToken string) (*domain.TokenInfo, error) {
+func (m *MockToken) Refresh(ctx context.Context, refreshToken string) (domain.TokenInfo, error) {
 	args := m.Called(ctx, refreshToken)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*domain.TokenInfo), args.Error(1)
+	return args.Get(0).(domain.TokenInfo), args.Error(1)
 }
 
 func (m *MockToken) RevokeSingle(ctx context.Context, refreshToken string) error {
@@ -201,7 +180,7 @@ func TestAuthService_Register(t *testing.T) {
 
 	authService := NewAuthService(mockUsers, mockToken, mockUrl, mockQueue, mockCache)
 
-	validReq := &domain.RegisterRequest{
+	validReq := domain.RegisterRequest{
 		Email:    "test@example.com",
 		Username: "tester",
 		Password: "123456",
@@ -209,7 +188,7 @@ func TestAuthService_Register(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		input         *domain.RegisterRequest
+		input         domain.RegisterRequest
 		setupMocks    func(u *MockUserService)
 		expectedError error
 	}{
@@ -217,19 +196,19 @@ func TestAuthService_Register(t *testing.T) {
 			name:  "success",
 			input: validReq,
 			setupMocks: func(u *MockUserService) {
-				u.On("CreateUser", mock.Anything, mock.MatchedBy(func(input *domain.CreateUserInput) bool {
+				u.On("CreateUser", mock.Anything, mock.MatchedBy(func(input domain.CreateUserRequest) bool {
 					return input.Email == validReq.Email &&
 						input.Username == validReq.Username &&
 						input.PasswordHash != "" && input.PasswordHash != validReq.Password
 				})).
-					Return(&domain.UserResponse{
+					Return(domain.UserResponse{
 						ID:       1,
 						Email:    validReq.Email,
 						Username: validReq.Username,
 					}, nil)
 
 				mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				mockUrl.On("VerifyEmailURL", mock.Anything).Return("http://test.link")
+				mockUrl.On("VerifyEmailLink", mock.Anything).Return("http://test.link")
 				mockQueue.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedError: nil,
@@ -238,7 +217,7 @@ func TestAuthService_Register(t *testing.T) {
 			name:  "create user error",
 			input: validReq,
 			setupMocks: func(u *MockUserService) {
-				u.On("CreateUser", mock.Anything, mock.Anything).Return(nil, assert.AnError)
+				u.On("CreateUser", mock.Anything, mock.Anything).Return(domain.EmptyUserResponse(), assert.AnError)
 			},
 			expectedError: assert.AnError,
 		},
@@ -278,18 +257,19 @@ func TestAuthService_Refresh(t *testing.T) {
 	mockToken := new(MockToken)
 	authService := NewAuthService(nil, mockToken, nil, nil, nil)
 
-	req := &domain.RefreshRequest{
+	req := domain.RefreshRequest{
 		RefreshToken: "refresh-token",
 	}
-	tokenInfo := &domain.TokenInfo{
+	tokenInfo := domain.TokenInfo{
 		AccessToken:  "new-access",
 		RefreshToken: "new-refresh",
 	}
+	emptyTokenInfo := domain.EmptyTokenInfo()
 
 	tests := []struct {
 		name          string
 		setupMocks    func()
-		expectedResp  *domain.TokenInfo
+		expectedResp  domain.TokenInfo
 		expectedError error
 	}{
 		{
@@ -303,25 +283,25 @@ func TestAuthService_Refresh(t *testing.T) {
 		{
 			name: "token expired",
 			setupMocks: func() {
-				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(nil, pkg.ErrTokenExpired)
+				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(emptyTokenInfo, pkg.ErrTokenExpired)
 			},
-			expectedResp:  nil,
+			expectedResp:  emptyTokenInfo,
 			expectedError: pkg.ErrUnauthorized,
 		},
 		{
 			name: "token revoked",
 			setupMocks: func() {
-				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(nil, pkg.ErrTokenRevoked)
+				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(emptyTokenInfo, pkg.ErrTokenRevoked)
 			},
-			expectedResp:  nil,
+			expectedResp:  emptyTokenInfo,
 			expectedError: pkg.ErrUnauthorized,
 		},
 		{
 			name: "internal error",
 			setupMocks: func() {
-				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(nil, assert.AnError)
+				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(emptyTokenInfo, assert.AnError)
 			},
-			expectedResp:  nil,
+			expectedResp:  emptyTokenInfo,
 			expectedError: pkg.ErrInternal,
 		},
 	}
@@ -351,13 +331,13 @@ func TestAuthService_Logout(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		req           *domain.LogoutRequest
+		req           domain.LogoutRequest
 		setupMocks    func()
 		expectedError error
 	}{
 		{
 			name: "logout current device",
-			req: &domain.LogoutRequest{
+			req: domain.LogoutRequest{
 				UserID:       1,
 				DeviceID:     "device-1",
 				IsAllDevices: false,
@@ -369,7 +349,7 @@ func TestAuthService_Logout(t *testing.T) {
 		},
 		{
 			name: "logout all devices",
-			req: &domain.LogoutRequest{
+			req: domain.LogoutRequest{
 				UserID:       1,
 				IsAllDevices: true,
 			},
@@ -380,7 +360,7 @@ func TestAuthService_Logout(t *testing.T) {
 		},
 		{
 			name: "error",
-			req: &domain.LogoutRequest{
+			req: domain.LogoutRequest{
 				UserID:       1,
 				DeviceID:     "device-1",
 				IsAllDevices: false,
@@ -484,8 +464,8 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 	mockURL := new(MockURL)
 	authService := NewAuthService(mockUsers, nil, mockURL, mockQueue, mockCache)
 
-	req := &domain.ForgotPasswordRequest{Email: "test@example.com"}
-	user := &domain.UserResponse{Email: "test@example.com", Username: "test"}
+	req := domain.ForgotPasswordRequest{Email: "test@example.com"}
+	user := domain.UserResponse{Email: "test@example.com", Username: "test"}
 
 	tests := []struct {
 		name          string
@@ -497,7 +477,7 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 			setupMocks: func() {
 				mockUsers.On("GetByEmail", mock.Anything, req.Email).Return(user, nil)
 				mockCache.On("Set", mock.Anything, mock.Anything, req.Email, mock.Anything).Return(nil)
-				mockURL.On("ResetPasswordURL", mock.Anything).Return("http://reset.link")
+				mockURL.On("ResetPasswordLink", mock.Anything).Return("http://reset.link")
 				mockQueue.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			expectedError: nil,
@@ -505,7 +485,7 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 		{
 			name: "user not found",
 			setupMocks: func() {
-				mockUsers.On("GetByEmail", mock.Anything, req.Email).Return(nil, assert.AnError)
+				mockUsers.On("GetByEmail", mock.Anything, req.Email).Return(domain.EmptyUserResponse(), assert.AnError)
 			},
 			expectedError: assert.AnError,
 		},
@@ -543,7 +523,7 @@ func TestAuthService_ResetPassword(t *testing.T) {
 	mockCache := new(MockCache)
 	authService := NewAuthService(mockUsers, nil, nil, nil, mockCache)
 
-	req := &domain.ResetPasswordRequest{
+	req := domain.ResetPasswordRequest{
 		Token:    "reset-token",
 		Password: "new-password",
 	}
@@ -620,14 +600,14 @@ func TestAuthService_Login(t *testing.T) {
 
 	authService := NewAuthService(mockUsers, mockToken, mockURL, mockQueue, mockCache)
 
-	loginReq := &domain.LoginRequest{
+	loginReq := domain.LoginRequest{
 		Email:    "test@example.com",
 		Password: "password123",
 		DeviceID: "device-123",
 	}
 
 	hashedPwd, _ := hashPassword(loginReq.Password)
-	user := &domain.UserResponse{
+	user := domain.UserResponse{
 		ID:           1,
 		Email:        loginReq.Email,
 		Username:     "tester",
@@ -635,26 +615,27 @@ func TestAuthService_Login(t *testing.T) {
 		CreatedAt:    time.Now().UTC(),
 	}
 
-	tokenInfo := &domain.TokenInfo{
+	tokenInfo := domain.TokenInfo{
 		AccessToken:  "access-token",
 		RefreshToken: "refresh-token",
 		ExpiresIn:    3600,
 		TokenType:    "Bearer",
 	}
 
+
 	tests := []struct {
 		name              string
-		input             *domain.LoginRequest
+		input             domain.LoginRequest
 		setupMocks        func()
-		expectedUserResp  *domain.UserResponse
-		expectedTokenInfo *domain.TokenInfo
+		expectedUserResp  domain.UserResponse
+		expectedTokenInfo domain.TokenInfo
 		expectedError     error
 	}{
 		{
 			name:  "user not found",
 			input: loginReq,
 			setupMocks: func() {
-				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(nil, assert.AnError)
+				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(domain.EmptyUserResponse(), assert.AnError)
 			},
 			expectedError: pkg.ErrInvalidCredentials,
 		},
@@ -662,9 +643,9 @@ func TestAuthService_Login(t *testing.T) {
 			name:  "invalid password",
 			input: loginReq,
 			setupMocks: func() {
-				badUser := *user
+				badUser := user
 				badUser.PasswordHash, _ = hashPassword("wrong-password")
-				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(&badUser, nil)
+				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(badUser, nil)
 			},
 			expectedError: pkg.ErrInvalidCredentials,
 		},
@@ -673,7 +654,7 @@ func TestAuthService_Login(t *testing.T) {
 			input: loginReq,
 			setupMocks: func() {
 				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil)
-				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(nil, assert.AnError)
+				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(domain.EmptyTokenInfo(), assert.AnError)
 			},
 			expectedError: assert.AnError,
 		},
@@ -684,7 +665,7 @@ func TestAuthService_Login(t *testing.T) {
 				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil)
 				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(tokenInfo, nil)
 			},
-			expectedUserResp: &domain.UserResponse{
+			expectedUserResp: domain.UserResponse{
 				ID:           user.ID,
 				Email:        user.Email,
 				Username:     user.Username,

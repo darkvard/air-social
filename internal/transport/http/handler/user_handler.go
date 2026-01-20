@@ -70,7 +70,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.srv.UpdateProfile(c.Request.Context(), payload.UserID, &req)
+	user, err := h.srv.UpdateProfile(c.Request.Context(), payload.UserID, req)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -105,7 +105,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.srv.ChangePassword(c.Request.Context(), payload.UserID, &req); err != nil {
+	if err := h.srv.ChangePassword(c.Request.Context(), payload.UserID, req); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
