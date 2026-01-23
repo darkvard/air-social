@@ -54,6 +54,18 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
                     }
                 }
             }
@@ -95,6 +107,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
                     }
                 }
             }
@@ -133,6 +157,18 @@ const docTemplate = `{
                         "description": "logout success",
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
                         }
                     }
                 }
@@ -174,6 +210,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
                     }
                 }
             }
@@ -213,6 +261,24 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
                         }
                     }
                 }
@@ -275,6 +341,24 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
                     }
                 }
             }
@@ -332,6 +416,12 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
                     }
                 }
             }
@@ -377,6 +467,18 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
                     }
                 }
             }
@@ -404,6 +506,24 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/domain.UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
                         }
                     }
                 }
@@ -447,6 +567,30 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
                         }
                     }
                 }
@@ -493,6 +637,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
                     }
                 }
             }
@@ -522,7 +684,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.ConfirmFileUploadRequest"
+                            "$ref": "#/definitions/domain.ConfirmProfileImageRequest"
                         }
                     }
                 ],
@@ -540,6 +702,24 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
                         }
                     }
                 }
@@ -564,21 +744,36 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.ConfirmFileUploadRequest": {
+        "domain.ConfirmProfileImageRequest": {
             "type": "object",
             "required": [
-                "file_type",
-                "object_name"
+                "domain",
+                "feature",
+                "object_key"
             ],
             "properties": {
-                "file_type": {
-                    "type": "string",
+                "domain": {
+                    "enum": [
+                        "users"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.UploadDomain"
+                        }
+                    ]
+                },
+                "feature": {
                     "enum": [
                         "avatar",
                         "cover"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.UploadFeature"
+                        }
                     ]
                 },
-                "object_name": {
+                "object_key": {
                     "type": "string"
                 }
             }
@@ -630,7 +825,16 @@ const docTemplate = `{
                 "expiry_seconds": {
                     "type": "integer"
                 },
-                "object_name": {
+                "form_data": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "object_key": {
+                    "type": "string"
+                },
+                "public_url": {
                     "type": "string"
                 },
                 "upload_url": {
@@ -641,20 +845,49 @@ const docTemplate = `{
         "domain.PresignedFileUploadRequest": {
             "type": "object",
             "required": [
+                "domain",
+                "feature",
                 "file_name",
+                "file_size",
                 "file_type"
             ],
             "properties": {
+                "domain": {
+                    "enum": [
+                        "users",
+                        "posts",
+                        "groups",
+                        "messages"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.UploadDomain"
+                        }
+                    ]
+                },
+                "feature": {
+                    "enum": [
+                        "avatar",
+                        "cover",
+                        "feed_image",
+                        "feed_video",
+                        "voice_chat",
+                        "attachment"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/domain.UploadFeature"
+                        }
+                    ]
+                },
                 "file_name": {
                     "type": "string"
                 },
+                "file_size": {
+                    "type": "integer"
+                },
                 "file_type": {
-                    "description": "Validate enum",
-                    "type": "string",
-                    "enum": [
-                        "avatar",
-                        "cover"
-                    ]
+                    "type": "string"
                 }
             }
         },
@@ -754,6 +987,40 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.UploadDomain": {
+            "type": "string",
+            "enum": [
+                "users",
+                "posts",
+                "groups",
+                "messages"
+            ],
+            "x-enum-varnames": [
+                "DomainUser",
+                "DomainPost",
+                "DomainGroup",
+                "DomainMessage"
+            ]
+        },
+        "domain.UploadFeature": {
+            "type": "string",
+            "enum": [
+                "avatar",
+                "cover",
+                "feed_image",
+                "feed_video",
+                "voice_chat",
+                "attachment"
+            ],
+            "x-enum-varnames": [
+                "FeatureAvatar",
+                "FeatureCover",
+                "FeatureFeedImage",
+                "FeatureFeedVideo",
+                "FeatureVoiceChat",
+                "FeatureAttachment"
+            ]
+        },
         "domain.UserResponse": {
             "type": "object",
             "properties": {
@@ -798,6 +1065,18 @@ const docTemplate = `{
                 "field": {
                     "type": "string"
                 },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "pkg.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
                 "message": {
                     "type": "string"
                 }

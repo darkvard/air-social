@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/url"
+	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -14,19 +14,11 @@ import (
 	"air-social/pkg"
 )
 
-// MediaService handles file upload flow:
-// 1. Presigned: Client requests a presigned URL (GetPresignedURL).
-// 2. Upload: Client uploads file directly to Storage (MinIO/S3) using the URL.
-//   - Method: PUT
-//   - Body: Binary file data
-//   - Header: Host: minio:9000 (Required if running in local Docker env to match signature)
-//
-// 3. Confirm: Client calls backend to confirm upload (ConfirmUpload). Backend verifies and updates DB.
 type MediaService interface {
-	GetPresignedURL(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error)
-	ConfirmUpload(ctx context.Context, objectName string, userID int64) (string, error)
-	DeleteFile(ctx context.Context, fullURL string) error
-	GetPublicURL(objectName string) string
+	GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFileResponse, error)
+	ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
+	DeleteFile(ctx context.Context, objectKey string) error
+	GetPublicURL(objectKey string) string
 }
 
 type MediaServiceImpl struct {
@@ -43,51 +35,91 @@ func NewMediaService(storage domain.FileStorage, cache domain.CacheStorage, cfg 
 	}
 }
 
-// GetPresignedURL generates a temporary URL for uploading files.
-//
-// Usage for Client:
-//   - Method: PUT
-//   - URL: The 'upload_url' returned from this function.
-//   - Body: The raw binary content of the file.
-//
-// Note: Client MUST send 'Host: minio:9000' header so MinIO can validate the signature.
-func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error) {
-	objectName := s.generateObjectKey(input)
-	bucketName := s.cfg.BucketPublic
-
-	uploadURL, err := s.storage.GetPresignedPutURL(ctx, bucketName, objectName, domain.UploadExpiry)
+func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFileResponse, error) {
+	rule, err := s.getValidationRules(input.Domain, input.Feature)
 	if err != nil {
 		return domain.PresignedFileResponse{}, err
 	}
 
-	// Parse the signed URL returned by MinIO to get the query parameters (signature, etc.)
-	u, err := url.Parse(uploadURL)
-	if err != nil {
-		return domain.PresignedFileResponse{}, fmt.Errorf("failed to parse presigned url: %w", err)
+	if err := s.validateRequest(input, rule); err != nil {
+		return domain.PresignedFileResponse{}, err
 	}
 
-	// Construct the Public URL: PublicDomain + / + ObjectName + ? + QueryParams
-	// Example: http://localhost/air-social-public/users/1/avatar.jpg?X-Amz-Signature=...
-	finalURL := fmt.Sprintf("%s/%s?%s", s.cfg.PublicURL, objectName, u.RawQuery)
+	loc := domain.StorageLocation{
+		Bucket: s.cfg.BucketPublic,
+		Key:    s.generateObjectKey(input),
+	}
+	constraints := domain.UploadConstraints{
+		Expiry:      domain.UploadExpiry,
+		ContentType: input.FileType,
+		MaxSize:     rule.MaxBytes,
+	}
 
-	if err := s.saveUploadSession(ctx, objectName, input.UserID); err != nil {
+	result, err := s.storage.GetPresignedPostPolicy(ctx, loc, constraints)
+	if err != nil {
+		return domain.PresignedFileResponse{}, err
+	}
+	if err := s.saveUploadSession(ctx, loc.Key, input.UserID); err != nil {
 		return domain.PresignedFileResponse{}, err
 	}
 
 	return domain.PresignedFileResponse{
-		UploadURL:     finalURL,
-		ObjectName:    objectName,
+		UploadURL:     result.UploadURL,
+		FormData:      result.FormData,
+		ObjectKey:     loc.Key,
+		PublicURL:     s.GetPublicURL(loc.Key),
 		ExpirySeconds: int64(domain.UploadExpiry.Seconds()),
 	}, nil
 }
 
-func (s *MediaServiceImpl) generateObjectKey(input domain.PresignedFile) string {
-	fileName := fmt.Sprintf("%d_%s%s", time.Now().Unix(), uuid.New().String(), input.Ext)
+func (s *MediaServiceImpl) getValidationRules(d domain.UploadDomain, f domain.UploadFeature) (domain.UploadRule, error) {
+	switch d {
+	case domain.DomainUser:
+		if f == domain.FeatureAvatar || f == domain.FeatureCover {
+			return domain.UploadRule{MaxBytes: domain.Limit5MB, AllowedTypes: domain.ImageAllowedTypes}, nil
+		}
 
-	// Flexible folder structure
-	// e.g: users/123/avatar/timestamp_uuid.jpg
-	// e.g: posts/123/image/timestamp_uuid.jpg
-	return fmt.Sprintf("%s/%d/%s/%s", input.Folder, input.UserID, input.Typ, fileName)
+	case domain.DomainPost:
+		if f == domain.FeatureFeedImage {
+			return domain.UploadRule{MaxBytes: domain.Limit10MB, AllowedTypes: domain.ImageAllowedTypes}, nil
+		}
+		if f == domain.FeatureFeedVideo {
+			return domain.UploadRule{MaxBytes: domain.Limit100MB, AllowedTypes: domain.VideoAllowedTypes}, nil
+		}
+
+	case domain.DomainMessage:
+		if f == domain.FeatureVoiceChat {
+			return domain.UploadRule{MaxBytes: domain.Limit10MB, AllowedTypes: domain.AudioAllowedTypes}, nil
+		}
+		if f == domain.FeatureFeedImage {
+			return domain.UploadRule{MaxBytes: domain.Limit10MB, AllowedTypes: domain.ImageAllowedTypes}, nil
+		}
+	}
+
+	return domain.UploadRule{}, pkg.ErrFileUnsupported
+}
+
+func (s *MediaServiceImpl) validateRequest(input domain.PresignedFileParams, rule domain.UploadRule) error {
+	if input.FileSize > rule.MaxBytes {
+		return fmt.Errorf("%w (limit: %d bytes)", pkg.ErrFileTooLarge, rule.MaxBytes)
+	}
+
+	isValidType := slices.Contains(rule.AllowedTypes, input.FileType)
+
+	if !isValidType {
+		return fmt.Errorf("%w (allowed: %s)", pkg.ErrFileTypeInvalid, strings.Join(rule.AllowedTypes, ", "))
+	}
+
+	return nil
+}
+
+// Format: {domain}/{entity_id}/{feature}/{timestamp}_{uuid}{ext}
+func (s *MediaServiceImpl) generateObjectKey(input domain.PresignedFileParams) string {
+	ext := filepath.Ext(input.FileName)
+	uid := uuid.New().String()
+	timestamp := time.Now().Unix()
+	fileName := fmt.Sprintf("%d_%s%s", timestamp, uid, ext)
+	return fmt.Sprintf("%s/%d/%s/%s", input.Domain, input.UserID, input.Feature, fileName)
 }
 
 func (s *MediaServiceImpl) saveUploadSession(ctx context.Context, objectName string, userID int64) error {
@@ -95,31 +127,34 @@ func (s *MediaServiceImpl) saveUploadSession(ctx context.Context, objectName str
 	return s.cache.Set(ctx, key, userID, domain.UploadExpiry)
 }
 
-func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, objectName string, userID int64) (string, error) {
-	if err := s.verifyUploadSession(ctx, objectName, userID); err != nil {
+func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error) {
+	loc := domain.StorageLocation{
+		Bucket: s.cfg.BucketPublic,
+		Key:    input.ObjectKey,
+	}
+
+	if err := s.verifyUploadSession(ctx, loc.Key, input.UserID); err != nil {
 		return "", err
 	}
 
-	exists, err := s.storage.StatFile(ctx, s.cfg.BucketPublic, objectName)
+	exists, err := s.storage.StatFile(ctx, loc)
 	if err != nil {
 		return "", err
 	}
 	if !exists {
-		return "", errors.New("file not found in storage")
+		return "", pkg.ErrNotFound
 	}
 
-	s.removeUploadSession(ctx, objectName)
+	s.removeUploadSession(ctx, loc.Key)
 
-	return objectName, nil
+	return loc.Key, nil
 }
 
 func (s *MediaServiceImpl) verifyUploadSession(ctx context.Context, objectName string, userID int64) error {
-	key := domain.GetUploadImageKey(objectName)
 	var cachedUserID int64
-	if err := s.cache.Get(ctx, key, &cachedUserID); err != nil {
-		return errors.New("upload session expired or invalid")
+	if err := s.cache.Get(ctx, domain.GetUploadImageKey(objectName), &cachedUserID); err != nil {
+		return pkg.ErrSessionExpired
 	}
-
 	if cachedUserID != userID {
 		return pkg.ErrUnauthorized
 	}
@@ -127,26 +162,22 @@ func (s *MediaServiceImpl) verifyUploadSession(ctx context.Context, objectName s
 }
 
 func (s *MediaServiceImpl) removeUploadSession(ctx context.Context, objectName string) error {
-	key := domain.GetUploadImageKey(objectName)
-	return s.cache.Delete(ctx, key)
+	return s.cache.Delete(ctx, domain.GetUploadImageKey(objectName))
 }
 
-func (s *MediaServiceImpl) DeleteFile(ctx context.Context, fullURL string) error {
-	objectName := fullURL
-
-	// If input is a full URL, strip the public domain prefix to get the object name
-	// Example: http://localhost/public/users/1.jpg -> users/1.jpg
-	if strings.HasPrefix(fullURL, "http") {
-		prefix := fmt.Sprintf("%s/", s.cfg.PublicURL)
-		objectName = strings.TrimPrefix(fullURL, prefix)
+func (s *MediaServiceImpl) DeleteFile(ctx context.Context, objectKey string) error {
+	loc := domain.StorageLocation{
+		Bucket: s.cfg.BucketPublic,
+		Key:    objectKey,
 	}
 
-	return s.storage.DeleteFile(ctx, s.cfg.BucketPublic, objectName)
+	return s.storage.DeleteFile(ctx, loc)
 }
 
-func (s *MediaServiceImpl) GetPublicURL(objectName string) string {
-	if objectName == "" {
+func (s *MediaServiceImpl) GetPublicURL(objectKey string) string {
+	if objectKey == "" {
 		return ""
 	}
-	return fmt.Sprintf("%s/%s", s.cfg.PublicURL, objectName)
+	baseURL := strings.TrimSuffix(s.cfg.PublicPathPrefix, "/")
+	return fmt.Sprintf("%s/%s", baseURL, objectKey)
 }

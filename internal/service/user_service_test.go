@@ -41,22 +41,22 @@ func (m *MockUserRepo) GetByEmail(ctx context.Context, email string) (*domain.Us
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-func (m *MockUserRepo) UpdateProfileImages(ctx context.Context, userID int64, url string, imageType domain.FileType) error {
-	return m.Called(ctx, userID, imageType).Error(0)
+func (m *MockUserRepo) UpdateProfileImages(ctx context.Context, userID int64, url string, feature domain.UploadFeature) error {
+	return m.Called(ctx, userID, url, feature).Error(0)
 }
 
 type MockMediaService struct {
 	mock.Mock
 }
 
-func (m *MockMediaService) GetPresignedURL(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error) {
+func (m *MockMediaService) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFileResponse, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(domain.PresignedFileResponse), args.Error(1)
 
 }
 
-func (m *MockMediaService) ConfirmUpload(ctx context.Context, objectName string, userID int64) (string, error) {
-	args := m.Called(ctx, objectName, userID)
+func (m *MockMediaService) ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error) {
+	args := m.Called(ctx, input)
 	return args.Get(0).(string), args.Error(1)
 }
 
@@ -73,7 +73,7 @@ func TestUserService_Create(t *testing.T) {
 	mockMedia := new(MockMediaService)
 	service := NewUserService(mockRepo, mockMedia)
 
-	input := domain.CreateUserRequest{
+	input := domain.CreateUserParams{
 		Email:        "email@example.com",
 		Username:     "test",
 		PasswordHash: "hash",
@@ -81,7 +81,7 @@ func TestUserService_Create(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		input         domain.CreateUserRequest
+		input         domain.CreateUserParams
 		setupMocks    func(m *MockUserRepo, media *MockMediaService)
 		expectedError error
 	}{

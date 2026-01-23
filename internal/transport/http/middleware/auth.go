@@ -49,7 +49,7 @@ func Auth(tokenService service.TokenService) gin.HandlerFunc {
 
 		deviceID := pkg.GetStringClaims(clams, pkg.JWTClaimDevice)
 
-		payload := &domain.AuthPayload{
+		payload := &domain.AuthParams{
 			UserID:   userID,
 			DeviceID: deviceID,
 		}
@@ -68,13 +68,13 @@ func Basic(cfg config.ServerConfig) gin.HandlerFunc {
 	)
 }
 
-func GetAuthPayload(c *gin.Context) (*domain.AuthPayload, error) {
+func GetAuthPayload(c *gin.Context) (*domain.AuthParams, error) {
 	value, exists := c.Get(AuthPayloadKey)
 	if !exists {
 		return nil, pkg.ErrUnauthorized
 	}
 
-	payload, ok := value.(*domain.AuthPayload)
+	payload, ok := value.(*domain.AuthParams)
 	if !ok {
 		return nil, pkg.ErrUnauthorized
 	}

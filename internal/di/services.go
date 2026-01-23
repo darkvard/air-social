@@ -30,9 +30,9 @@ func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) 
 	// file
 	fileStorage := storage.NewMinioStorage(ifc.Minio)
 	fileConfig := domain.FileConfig{
-		PublicURL:     url.FileStorageBaseURL(),
-		BucketPublic:  cfg.MinIO.BucketPublic,
-		BucketPrivate: cfg.MinIO.BucketPrivate,
+		PublicPathPrefix: url.FileStorageBaseURL(),
+		BucketPublic:     cfg.MinIO.BucketPublic,
+		BucketPrivate:    cfg.MinIO.BucketPrivate,
 	}
 
 	// cache

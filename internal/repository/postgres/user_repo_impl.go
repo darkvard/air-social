@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 
@@ -85,21 +86,18 @@ func (r *UserRepoImpl) Update(ctx context.Context, u *domain.User) error {
 	return pkg.ErrNotFound
 }
 
-func (r *UserRepoImpl) UpdateProfileImages(ctx context.Context, userID int64, url string, imageType domain.FileType) error {
+func (r *UserRepoImpl) UpdateProfileImages(ctx context.Context, userID int64, url string, feature domain.UploadFeature) error {
 	var col string
-	switch imageType {
-	case domain.AvatarType:
+	switch feature {
+	case domain.FeatureAvatar:
 		col = "avatar"
-	case domain.CoverType:
+	case domain.FeatureCover:
 		col = "cover_image"
 	default:
-		return pkg.ErrInvalidData
+		return fmt.Errorf("update profile: unsupported feature %s", feature)
 	}
-	query := `
-		UPDATE users
-		SET ` + col + ` = :url
-		WHERE id = :id
-	`
+
+	query := fmt.Sprintf(`UPDATE users SET %s = :url WHERE id = :id`, col)
 
 	_, err := r.db.NamedExecContext(ctx, query, map[string]any{
 		"url": url,

@@ -32,11 +32,3 @@ type TokenInfo struct {
 	ExpiresIn    int64  `json:"expires_in"`
 	TokenType    string `json:"token_type"`
 }
-
-func EmptyTokenInfo() TokenInfo {
-	return TokenInfo{}
-}
-
-func EmptyRefreshToken() RefreshToken {
-	return RefreshToken{}
-}

@@ -27,6 +27,7 @@ func NewHealthHandler(srv service.HealthService) *HealthHandler {
 //	@Produce		json
 //	@Security		BasicAuth
 //	@Success		200	{object}	map[string]string
+//	@Failure		401	{object}	pkg.Response
 //	@Router			/health [get]
 func (h *HealthHandler) HealthCheck(c *gin.Context) {
 	_, details := h.srv.Check(c.Request.Context())

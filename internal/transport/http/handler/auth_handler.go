@@ -31,6 +31,9 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 //	@Param			request	body		domain.RegisterRequest	true	"Register Request"
 //	@Success		200		{object}	domain.UserResponse
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		409		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req domain.RegisterRequest
@@ -58,6 +61,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 //	@Param			request	body		domain.LoginRequest		true	"Login Request"
 //	@Success		200		{object}	map[string]interface{}	"Returns user info and tokens"
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req domain.LoginRequest
@@ -88,6 +93,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 //	@Param			request	body		domain.RefreshRequest	true	"Refresh Request"
 //	@Success		200		{object}	domain.TokenInfo
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/refresh [post]
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	var req domain.RefreshRequest
@@ -115,6 +122,8 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 //	@Security		BearerAuth
 //	@Param			request	body		domain.LogoutRequest	true	"Logout Request"
 //	@Success		200		{string}	string					"logout success"
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	var req domain.LogoutRequest
@@ -169,6 +178,8 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 //	@Produce		json
 //	@Param			request	body		domain.ForgotPasswordRequest	true	"Forgot Password Request"
 //	@Success		200		{string}	string							"Instruction message"
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/forgot-password [post]
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	var req domain.ForgotPasswordRequest
@@ -178,7 +189,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 	}
 
 	if err := h.auth.ForgotPassword(c.Request.Context(), req); err != nil {
-		if errors.Is(err, pkg.ErrInternal) {
+		if !errors.Is(err, pkg.ErrNotFound) {
 			pkg.Log().Errorw("failed to forgot password", "error", err)
 		}
 	}
@@ -223,6 +234,9 @@ func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 //	@Produce		json
 //	@Param			request	body		domain.ResetPasswordRequest	true	"Reset Password Request"
 //	@Success		200		{string}	string						"password update successfully"
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/reset-password [post]
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req domain.ResetPasswordRequest

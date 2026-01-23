@@ -10,7 +10,7 @@ type UserRepository interface {
 	Update(ctx context.Context, user *User) error
 	GetByID(ctx context.Context, id int64) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
-	UpdateProfileImages(ctx context.Context, userID int64, url string, imageType FileType) error
+	UpdateProfileImages(ctx context.Context, userID int64, url string, feature UploadFeature) error
 }
 
 type User struct {
@@ -53,6 +53,12 @@ type ChangePasswordRequest struct {
 	NewPassword     string `json:"new_password" binding:"required,min=8,max=64"`
 }
 
+type ConfirmProfileImageRequest struct {
+	ObjectKey string        `json:"object_key" binding:"required"`
+	Domain    UploadDomain  `json:"domain" binding:"required,oneof=users"`
+	Feature   UploadFeature `json:"feature" binding:"required,oneof=avatar cover"`
+}
+
 type UserResponse struct {
 	ID           int64     `json:"id"`
 	Email        string    `json:"email"`
@@ -63,7 +69,7 @@ type UserResponse struct {
 	Profile
 }
 
-type CreateUserRequest struct {
+type CreateUserParams struct {
 	Email        string
 	Username     string
 	PasswordHash string
@@ -79,8 +85,4 @@ func (u *User) ToResponse() UserResponse {
 		CreatedAt:    u.CreatedAt,
 		PasswordHash: u.PasswordHash,
 	}
-}
-
-func EmptyUserResponse() UserResponse {
-	return UserResponse{}
 }

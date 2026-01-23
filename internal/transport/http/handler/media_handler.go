@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"path/filepath"
-
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain"
@@ -30,6 +28,8 @@ func NewMediaHandler(srv service.MediaService) *MediaHandler {
 //	@Param			request	body		domain.PresignedFileUploadRequest	true	"Presigned Upload Request"
 //	@Success		200		{object}	domain.PresignedFileResponse
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/media/presigned [post]
 func (h *MediaHandler) PresignedUpload(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
@@ -43,24 +43,16 @@ func (h *MediaHandler) PresignedUpload(c *gin.Context) {
 		pkg.HandleValidateError(c, err)
 		return
 	}
-	if v := pkg.ValidateImageFile(req.FileName); v != nil {
-		pkg.HandleValidationResult(c, v)
-		return
-	}
-
-	folder := "misc"
-	switch domain.FileType(req.FileType) {
-	case domain.AvatarType, domain.CoverType:
-		folder = "users"
-	}
 
 	res, err := h.srv.GetPresignedURL(
 		c.Request.Context(),
-		domain.PresignedFile{
-			UserID: payload.UserID,
-			Ext:    filepath.Ext(req.FileName),
-			Folder: folder,
-			Typ:    domain.FileType(req.FileType),
+		domain.PresignedFileParams{
+			UserID:   payload.UserID,
+			FileName: req.FileName,
+			FileType: req.FileType,
+			FileSize: req.FileSize,
+			Domain:   req.Domain,
+			Feature:  req.Feature,
 		},
 	)
 

@@ -53,7 +53,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, req domain.RegisterReque
 	if err != nil {
 		return domain.UserResponse{}, err
 	}
-	user, err := s.users.CreateUser(ctx, domain.CreateUserRequest{
+	user, err := s.users.CreateUser(ctx, domain.CreateUserParams{
 		Email:        req.Email,
 		Username:     req.Username,
 		PasswordHash: hashedPwd,
@@ -124,12 +124,15 @@ func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, token string) error {
 }
 
 func (s *AuthServiceImpl) Login(ctx context.Context, req domain.LoginRequest) (domain.UserResponse, domain.TokenInfo, error) {
-	emptyToken := domain.EmptyTokenInfo()
-	emptyUser := domain.EmptyUserResponse()
-	
+	emptyToken := domain.TokenInfo{}
+	emptyUser := domain.UserResponse{}
+
 	user, err := s.users.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return emptyUser, emptyToken, pkg.ErrInvalidCredentials
+		if errors.Is(err, pkg.ErrNotFound) {
+			return emptyUser, emptyToken, pkg.ErrInvalidCredentials
+		}
+		return emptyUser, emptyToken, err
 	}
 
 	if !verifyPassword(req.Password, user.PasswordHash) {
@@ -151,17 +154,13 @@ func verifyPassword(plainPassword, hashPassword string) bool {
 }
 
 func (s *AuthServiceImpl) Refresh(ctx context.Context, req domain.RefreshRequest) (domain.TokenInfo, error) {
-	empty := domain.EmptyTokenInfo()
+	empty := domain.TokenInfo{}
 	tokens, err := s.tokens.Refresh(ctx, req.RefreshToken)
 	if err != nil {
-		switch {
-		case errors.Is(err, pkg.ErrTokenExpired),
-			errors.Is(err, pkg.ErrTokenRevoked),
-			errors.Is(err, pkg.ErrNotFound):
+		if errors.Is(err, pkg.ErrNotFound) {
 			return empty, pkg.ErrUnauthorized
-		default:
-			return empty, pkg.ErrInternal
 		}
+		return empty, err
 	}
 	return tokens, nil
 }

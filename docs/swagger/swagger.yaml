@@ -12,18 +12,25 @@ definitions:
     - current_password
     - new_password
     type: object
-  domain.ConfirmFileUploadRequest:
+  domain.ConfirmProfileImageRequest:
     properties:
-      file_type:
+      domain:
+        allOf:
+        - $ref: '#/definitions/domain.UploadDomain'
+        enum:
+        - users
+      feature:
+        allOf:
+        - $ref: '#/definitions/domain.UploadFeature'
         enum:
         - avatar
         - cover
-        type: string
-      object_name:
+      object_key:
         type: string
     required:
-    - file_type
-    - object_name
+    - domain
+    - feature
+    - object_key
     type: object
   domain.ForgotPasswordRequest:
     properties:
@@ -57,23 +64,48 @@ definitions:
     properties:
       expiry_seconds:
         type: integer
-      object_name:
+      form_data:
+        additionalProperties:
+          type: string
+        type: object
+      object_key:
+        type: string
+      public_url:
         type: string
       upload_url:
         type: string
     type: object
   domain.PresignedFileUploadRequest:
     properties:
-      file_name:
-        type: string
-      file_type:
-        description: Validate enum
+      domain:
+        allOf:
+        - $ref: '#/definitions/domain.UploadDomain'
+        enum:
+        - users
+        - posts
+        - groups
+        - messages
+      feature:
+        allOf:
+        - $ref: '#/definitions/domain.UploadFeature'
         enum:
         - avatar
         - cover
+        - feed_image
+        - feed_video
+        - voice_chat
+        - attachment
+      file_name:
+        type: string
+      file_size:
+        type: integer
+      file_type:
         type: string
     required:
+    - domain
+    - feature
     - file_name
+    - file_size
     - file_type
     type: object
   domain.RefreshRequest:
@@ -144,6 +176,34 @@ definitions:
         maxLength: 255
         type: string
     type: object
+  domain.UploadDomain:
+    enum:
+    - users
+    - posts
+    - groups
+    - messages
+    type: string
+    x-enum-varnames:
+    - DomainUser
+    - DomainPost
+    - DomainGroup
+    - DomainMessage
+  domain.UploadFeature:
+    enum:
+    - avatar
+    - cover
+    - feed_image
+    - feed_video
+    - voice_chat
+    - attachment
+    type: string
+    x-enum-varnames:
+    - FeatureAvatar
+    - FeatureCover
+    - FeatureFeedImage
+    - FeatureFeedVideo
+    - FeatureVoiceChat
+    - FeatureAttachment
   domain.UserResponse:
     properties:
       avatar:
@@ -173,6 +233,14 @@ definitions:
     properties:
       field:
         type: string
+      message:
+        type: string
+    type: object
+  pkg.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
       message:
         type: string
     type: object
@@ -217,6 +285,14 @@ paths:
           description: Instruction message
           schema:
             type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       summary: Request password reset
       tags:
       - Auth
@@ -245,6 +321,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       summary: Login user
       tags:
       - Auth
@@ -267,6 +351,14 @@ paths:
           description: logout success
           schema:
             type: string
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       security:
       - BearerAuth: []
       summary: Logout user
@@ -296,6 +388,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       summary: Refresh access token
       tags:
       - Auth
@@ -323,6 +423,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       summary: Register a new user account
       tags:
       - Auth
@@ -365,6 +477,18 @@ paths:
           description: password update successfully
           schema:
             type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       summary: Reset password
       tags:
       - Auth
@@ -399,6 +523,10 @@ paths:
             additionalProperties:
               type: string
             type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
       security:
       - BasicAuth: []
       summary: Health check
@@ -427,6 +555,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       security:
       - BearerAuth: []
       summary: Get presigned upload URL
@@ -444,6 +580,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/domain.UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       security:
       - BearerAuth: []
       summary: Get user profile
@@ -471,6 +619,22 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       security:
       - BearerAuth: []
       summary: Update user profile
@@ -499,6 +663,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       security:
       - BearerAuth: []
       summary: Change password
@@ -516,7 +692,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.ConfirmFileUploadRequest'
+          $ref: '#/definitions/domain.ConfirmProfileImageRequest'
       produces:
       - application/json
       responses:
@@ -530,6 +706,18 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
       security:
       - BearerAuth: []
       summary: Confirm file upload

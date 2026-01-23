@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -36,10 +37,6 @@ func Unauthorized(c *gin.Context, msg string) {
 	JSON(c, http.StatusUnauthorized, msg, nil)
 }
 
-func MissingAuthHeader(c *gin.Context) {
-	Unauthorized(c, "authorization header is required")
-}
-
 func Forbidden(c *gin.Context, msg string) {
 	JSON(c, http.StatusForbidden, msg, nil)
 }
@@ -58,35 +55,42 @@ func InternalError(c *gin.Context, msg string) {
 
 func HandleValidateError(c *gin.Context, err error) {
 	if v := ValidateRequestError(err); v != nil {
-		HandleValidationResult(c, v)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "invalid request payload",
+			"errors":  v.Errors,
+		})
 		return
 	}
 	BadRequest(c, "invalid request")
 }
 
-func HandleValidationResult(c *gin.Context, v *ValidationResult) {
-	c.JSON(http.StatusBadRequest, gin.H{
-		"code":    http.StatusBadRequest,
-		"message": "invalid request payload",
-		"errors":  v.Errors,
-	})
-}
-
 func HandleServiceError(c *gin.Context, err error) {
 	msg := err.Error()
-	switch err {
-	case ErrUnauthorized:
+	switch {
+	case errors.Is(err, ErrUnauthorized),
+		errors.Is(err, ErrInvalidCredentials),
+		errors.Is(err, ErrSessionExpired),
+		errors.Is(err, ErrTokenExpired),
+		errors.Is(err, ErrTokenRevoked):
 		Unauthorized(c, msg)
-	case ErrForbidden:
+
+	case errors.Is(err, ErrForbidden):
 		Forbidden(c, msg)
-	case ErrInvalidCredentials:
-		Unauthorized(c, msg)
-	case ErrAlreadyExists:
+
+	case errors.Is(err, ErrAlreadyExists), errors.Is(err, ErrConflict):
 		Conflict(c, msg)
-	case ErrNotFound:
+
+	case errors.Is(err, ErrNotFound):
 		NotFound(c, msg)
-	case ErrInvalidData, ErrSamePassword:
+
+	case errors.Is(err, ErrInvalidData),
+		errors.Is(err, ErrSamePassword),
+		errors.Is(err, ErrFileUnsupported),
+		errors.Is(err, ErrFileTypeInvalid),
+		errors.Is(err, ErrFileTooLarge):
 		BadRequest(c, msg)
+
 	default:
 		Log().Errorw("unhandled service error", "error", err)
 		InternalError(c, "an unexpected error occurred")

@@ -40,7 +40,7 @@ func (s *TokenServiceImpl) CreateSession(ctx context.Context, userID int64, devi
 }
 
 func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, deviceID string) (domain.TokenInfo, error) {
-	empty := domain.EmptyTokenInfo()
+	empty := domain.TokenInfo{}
 
 	access, err := s.generateAccessToken(userID, deviceID)
 	if err != nil {
@@ -97,7 +97,7 @@ func (s *TokenServiceImpl) hashToken(raw string) string {
 }
 
 func (s *TokenServiceImpl) Refresh(ctx context.Context, refreshToken string) (domain.TokenInfo, error) {
-	empty := domain.EmptyTokenInfo()
+	empty := domain.TokenInfo{}
 	dbToken, err := s.verifyRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return empty, err
@@ -112,7 +112,7 @@ func (s *TokenServiceImpl) Refresh(ctx context.Context, refreshToken string) (do
 }
 
 func (s *TokenServiceImpl) verifyRefreshToken(ctx context.Context, rawRefreshToken string) (domain.RefreshToken, error) {
-	empty := domain.EmptyRefreshToken()
+	empty := domain.RefreshToken{}
 	dbToken, err := s.repo.GetByHash(ctx, s.hashToken(rawRefreshToken))
 	if err != nil {
 		return empty, pkg.ErrNotFound
@@ -131,7 +131,7 @@ func (s *TokenServiceImpl) verifyRefreshToken(ctx context.Context, rawRefreshTok
 
 func (s *TokenServiceImpl) rotateSession(ctx context.Context, oldToken domain.RefreshToken) (domain.TokenInfo, error) {
 	if err := s.repo.UpdateRevoked(ctx, oldToken.ID); err != nil {
-		return domain.EmptyTokenInfo(), err
+		return domain.TokenInfo{}, err
 	}
 
 	return s.generateTokens(ctx, oldToken.UserID, oldToken.DeviceID)

@@ -31,7 +31,7 @@ type ResetPasswordRequest struct {
 	Password string `json:"password" binding:"required,min=8,max=64"`
 }
 
-type AuthPayload struct {
+type AuthParams struct {
 	UserID   int64
 	DeviceID string
 	Role     int64

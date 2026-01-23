@@ -9,25 +9,26 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("the requested resource was not found")
-	ErrAlreadyExists = errors.New("this resource already exists")
-	ErrConflict      = errors.New("a conflict occurred with the resource's current state")
-	ErrInvalidData   = errors.New("the provided data is invalid")
-	ErrDatabase      = errors.New("a database error occurred")
-	ErrKeyNotFound   = errors.New("a required key was not found")
+	ErrInternal    = errors.New("internal server error")
+	ErrNotFound    = errors.New("resource not found")
+	ErrConflict    = errors.New("resource conflict occurred")
+	ErrInvalidData = errors.New("the provided data is invalid")
+	ErrDatabase    = errors.New("database error occurred")
+
+	ErrAlreadyExists = errors.New("resource already exists")
+	ErrKeyNotFound   = errors.New("key was not found")
 	ErrSamePassword  = errors.New("new password must be different from current password")
-)
 
-var (
+	ErrSessionExpired     = errors.New("session has expired")
+	ErrUnauthorized       = errors.New("authentication required")
+	ErrForbidden          = errors.New("access denied")
 	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUnauthorized       = errors.New("authentication failed or is missing")
-	ErrForbidden          = errors.New("you do not have permission to perform this action")
-	ErrInternal           = errors.New("an internal server error occurred")
-)
+	ErrTokenExpired       = errors.New("token has expired")
+	ErrTokenRevoked       = errors.New("token has been revoked")
 
-var (
-	ErrTokenExpired = errors.New("token has expired")
-	ErrTokenRevoked = errors.New("token has been revoked")
+	ErrFileUnsupported = errors.New("file format not supported")
+	ErrFileTooLarge    = errors.New("file size exceeds limit")
+	ErrFileTypeInvalid = errors.New("detected file type is invalid")
 )
 
 const (

@@ -28,6 +28,9 @@ func NewUserHandler(srv service.UserService) *UserHandler {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Success		200	{object}	domain.UserResponse
+//	@Failure		401	{object}	pkg.Response
+//	@Failure		404	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
 //	@Router			/users/me [get]
 func (h *UserHandler) Profile(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
@@ -56,6 +59,10 @@ func (h *UserHandler) Profile(c *gin.Context) {
 //	@Param			request	body		domain.UpdateProfileRequest	true	"Update Profile Request"
 //	@Success		200		{object}	domain.UserResponse
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		409		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/users/me [patch]
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
@@ -91,6 +98,9 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 //	@Param			request	body		domain.ChangePasswordRequest	true	"Change Password Request"
 //	@Success		200		{string}	string							"password changed successfully"
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/users/password [put]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
@@ -121,9 +131,12 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		domain.ConfirmFileUploadRequest	true	"Confirm Upload Request"
-//	@Success		200		{object}	map[string]string				"Returns upload success message and public URL"
+//	@Param			request	body		domain.ConfirmProfileImageRequest	true	"Confirm Upload Request"
+//	@Success		200		{object}	map[string]string					"Returns upload success message and public URL"
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
 //	@Router			/users/profile-image/confirm [post]
 func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 	payload, err := middleware.GetAuthPayload(c)
@@ -132,24 +145,26 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 		return
 	}
 
-	var req domain.ConfirmFileUploadRequest
+	var req domain.ConfirmProfileImageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
 	}
 
-	finalURL, err := h.srv.ConfirmImageUpload(c.Request.Context(), domain.ConfirmFile{
-		UserID:     payload.UserID,
-		ObjectName: req.ObjectName,
-		Typ:        domain.FileType(req.FileType),
+	finalURL, err := h.srv.ConfirmImageUpload(c.Request.Context(), domain.ConfirmFileParams{
+		UserID:    payload.UserID,
+		ObjectKey: req.ObjectKey,
+		Domain:    req.Domain,
+		Feature:   req.Feature,
 	})
+
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
 	pkg.Success(c, gin.H{
-		"message": "Upload success",
+		"message": "Profile image updated successfully",
 		"url":     finalURL,
 	})
 

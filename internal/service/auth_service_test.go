@@ -17,7 +17,7 @@ type MockUserService struct {
 	mock.Mock
 }
 
-func (m *MockUserService) CreateUser(ctx context.Context, req domain.CreateUserRequest) (domain.UserResponse, error) {
+func (m *MockUserService) CreateUser(ctx context.Context, req domain.CreateUserParams) (domain.UserResponse, error) {
 	args := m.Called(ctx, req)
 	return args.Get(0).(domain.UserResponse), args.Error(1)
 }
@@ -49,15 +49,7 @@ func (m *MockUserService) ChangePassword(ctx context.Context, userID int64, req 
 	return m.Called(ctx, userID, req).Error(0)
 }
 
-func (m *MockUserService) PresignedImageUpload(ctx context.Context, input domain.PresignedFile) (domain.PresignedFileResponse, error) {
-	args := m.Called(ctx, input)
-	if args.Get(0) == nil {
-		return domain.PresignedFileResponse{}, args.Error(1)
-	}
-	return args.Get(0).(domain.PresignedFileResponse), args.Error(1)
-}
-
-func (m *MockUserService) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFile) (string, error) {
+func (m *MockUserService) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error) {
 	args := m.Called(ctx, input)
 	if args.Get(0) == nil {
 		return "", args.Error(1)
@@ -196,7 +188,7 @@ func TestAuthService_Register(t *testing.T) {
 			name:  "success",
 			input: validReq,
 			setupMocks: func(u *MockUserService) {
-				u.On("CreateUser", mock.Anything, mock.MatchedBy(func(input domain.CreateUserRequest) bool {
+				u.On("CreateUser", mock.Anything, mock.MatchedBy(func(input domain.CreateUserParams) bool {
 					return input.Email == validReq.Email &&
 						input.Username == validReq.Username &&
 						input.PasswordHash != "" && input.PasswordHash != validReq.Password
@@ -217,7 +209,7 @@ func TestAuthService_Register(t *testing.T) {
 			name:  "create user error",
 			input: validReq,
 			setupMocks: func(u *MockUserService) {
-				u.On("CreateUser", mock.Anything, mock.Anything).Return(domain.EmptyUserResponse(), assert.AnError)
+				u.On("CreateUser", mock.Anything, mock.Anything).Return(domain.UserResponse{}, assert.AnError)
 			},
 			expectedError: assert.AnError,
 		},
@@ -264,7 +256,7 @@ func TestAuthService_Refresh(t *testing.T) {
 		AccessToken:  "new-access",
 		RefreshToken: "new-refresh",
 	}
-	emptyTokenInfo := domain.EmptyTokenInfo()
+	emptyTokenInfo := domain.TokenInfo{}
 
 	tests := []struct {
 		name          string
@@ -286,7 +278,7 @@ func TestAuthService_Refresh(t *testing.T) {
 				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(emptyTokenInfo, pkg.ErrTokenExpired)
 			},
 			expectedResp:  emptyTokenInfo,
-			expectedError: pkg.ErrUnauthorized,
+			expectedError: pkg.ErrTokenExpired,
 		},
 		{
 			name: "token revoked",
@@ -294,7 +286,7 @@ func TestAuthService_Refresh(t *testing.T) {
 				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(emptyTokenInfo, pkg.ErrTokenRevoked)
 			},
 			expectedResp:  emptyTokenInfo,
-			expectedError: pkg.ErrUnauthorized,
+			expectedError: pkg.ErrTokenRevoked,
 		},
 		{
 			name: "internal error",
@@ -302,7 +294,7 @@ func TestAuthService_Refresh(t *testing.T) {
 				mockToken.On("Refresh", mock.Anything, req.RefreshToken).Return(emptyTokenInfo, assert.AnError)
 			},
 			expectedResp:  emptyTokenInfo,
-			expectedError: pkg.ErrInternal,
+			expectedError: assert.AnError,
 		},
 	}
 
@@ -485,7 +477,7 @@ func TestAuthService_ForgotPassword(t *testing.T) {
 		{
 			name: "user not found",
 			setupMocks: func() {
-				mockUsers.On("GetByEmail", mock.Anything, req.Email).Return(domain.EmptyUserResponse(), assert.AnError)
+				mockUsers.On("GetByEmail", mock.Anything, req.Email).Return(domain.UserResponse{}, assert.AnError)
 			},
 			expectedError: assert.AnError,
 		},
@@ -622,7 +614,6 @@ func TestAuthService_Login(t *testing.T) {
 		TokenType:    "Bearer",
 	}
 
-
 	tests := []struct {
 		name              string
 		input             domain.LoginRequest
@@ -635,7 +626,7 @@ func TestAuthService_Login(t *testing.T) {
 			name:  "user not found",
 			input: loginReq,
 			setupMocks: func() {
-				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(domain.EmptyUserResponse(), assert.AnError)
+				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(domain.UserResponse{}, pkg.ErrNotFound)
 			},
 			expectedError: pkg.ErrInvalidCredentials,
 		},
@@ -654,7 +645,7 @@ func TestAuthService_Login(t *testing.T) {
 			input: loginReq,
 			setupMocks: func() {
 				mockUsers.On("GetByEmail", mock.Anything, loginReq.Email).Return(user, nil)
-				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(domain.EmptyTokenInfo(), assert.AnError)
+				mockToken.On("CreateSession", mock.Anything, user.ID, loginReq.DeviceID).Return(domain.TokenInfo{}, assert.AnError)
 			},
 			expectedError: assert.AnError,
 		},

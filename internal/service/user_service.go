@@ -9,14 +9,14 @@ import (
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context, req domain.CreateUserRequest) (domain.UserResponse, error)
+	CreateUser(ctx context.Context, req domain.CreateUserParams) (domain.UserResponse, error)
 	GetByEmail(ctx context.Context, email string) (domain.UserResponse, error)
 	GetByID(ctx context.Context, id int64) (domain.UserResponse, error)
 	VerifyEmail(ctx context.Context, email string) error
 	UpdatePassword(ctx context.Context, email, password string) error
 	ChangePassword(ctx context.Context, userID int64, req domain.ChangePasswordRequest) error
 	UpdateProfile(ctx context.Context, userID int64, req domain.UpdateProfileRequest) (domain.UserResponse, error)
-	ConfirmImageUpload(ctx context.Context, input domain.ConfirmFile) (string, error)
+	ConfirmImageUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
 }
 
 type UserServiceImpl struct {
@@ -31,8 +31,8 @@ func NewUserService(repo domain.UserRepository, media MediaService) *UserService
 	}
 }
 
-func (s *UserServiceImpl) CreateUser(ctx context.Context, in domain.CreateUserRequest) (domain.UserResponse, error) {
-	empty := domain.EmptyUserResponse()
+func (s *UserServiceImpl) CreateUser(ctx context.Context, in domain.CreateUserParams) (domain.UserResponse, error) {
+	empty := domain.UserResponse{}
 	if existing, _ := s.repo.GetByEmail(ctx, in.Email); existing != nil {
 		return empty, pkg.ErrAlreadyExists
 	}
@@ -53,7 +53,7 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, in domain.CreateUserRe
 func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (domain.UserResponse, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
-		return domain.EmptyUserResponse(), err
+		return domain.UserResponse{}, err
 	}
 	return s.mapToResponse(user), nil
 }
@@ -61,7 +61,7 @@ func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (domain.
 func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (domain.UserResponse, error) {
 	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return domain.EmptyUserResponse(), err
+		return domain.UserResponse{}, err
 	}
 	return s.mapToResponse(user), nil
 }
@@ -111,8 +111,8 @@ func (s *UserServiceImpl) ChangePassword(ctx context.Context, userID int64, req 
 }
 
 func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req domain.UpdateProfileRequest) (domain.UserResponse, error) {
-	empty := domain.EmptyUserResponse()
-	
+	empty := domain.UserResponse{}
+
 	user, err := s.repo.GetByID(ctx, userID)
 	if err != nil {
 		return empty, err
@@ -141,38 +141,21 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, userID int64, req d
 	return s.mapToResponse(user), nil
 }
 
-func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFile) (string, error) {
-	objectName, err := s.media.ConfirmUpload(ctx, input.ObjectName, input.UserID)
+func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error) {
+	if input.Feature != domain.FeatureAvatar && input.Feature != domain.FeatureCover {
+		return "", pkg.ErrInvalidData
+	}
+
+	objectKey, err := s.media.ConfirmUpload(ctx, input)
 	if err != nil {
 		return "", err
 	}
 
-	oldURL := s.getOldImageURL(ctx, input.UserID, input.Typ)
-
-	if err = s.repo.UpdateProfileImages(ctx, input.UserID, objectName, input.Typ); err != nil {
+	if err = s.repo.UpdateProfileImages(ctx, input.UserID, objectKey, input.Feature); err != nil {
 		return "", err
 	}
-	if oldURL != "" && oldURL != objectName {
-		_ = s.media.DeleteFile(ctx, oldURL)
-	}
 
-	return s.media.GetPublicURL(objectName), nil
-}
-
-func (s *UserServiceImpl) getOldImageURL(ctx context.Context, userID int64, typ domain.FileType) string {
-	user, err := s.repo.GetByID(ctx, userID)
-	if err != nil {
-		return ""
-	}
-
-	var oldURL string
-	switch typ {
-	case domain.AvatarType:
-		oldURL = user.Avatar
-	case domain.CoverType:
-		oldURL = user.CoverImage
-	}
-	return oldURL
+	return s.media.GetPublicURL(objectKey), nil
 }
 
 func (s *UserServiceImpl) mapToResponse(u *domain.User) domain.UserResponse {
