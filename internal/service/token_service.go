@@ -75,14 +75,14 @@ func (s *TokenServiceImpl) generateAccessToken(userID int64, deviceID string) (s
 	return token.SignedString([]byte(s.cfg.Secret))
 }
 
-func (s *TokenServiceImpl) generateRefreshToken(userID int64, deviceID string) (string, *domain.RefreshToken) {
+func (s *TokenServiceImpl) generateRefreshToken(userID int64, deviceID string) (string, domain.RefreshToken) {
 	raw := uuid.NewString()
 	h := sha256.Sum256([]byte(raw))
 	hashed := hex.EncodeToString(h[:])
 
 	now := time.Now().UTC()
 
-	return raw, &domain.RefreshToken{
+	return raw, domain.RefreshToken{
 		UserID:    userID,
 		DeviceID:  deviceID,
 		TokenHash: hashed,
@@ -97,7 +97,7 @@ func (s *TokenServiceImpl) hashToken(raw string) string {
 }
 
 func (s *TokenServiceImpl) Refresh(ctx context.Context, refreshToken string) (domain.TokenInfo, error) {
-	empty := domain.TokenInfo{}
+	var empty domain.TokenInfo
 	dbToken, err := s.verifyRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return empty, err
@@ -112,21 +112,21 @@ func (s *TokenServiceImpl) Refresh(ctx context.Context, refreshToken string) (do
 }
 
 func (s *TokenServiceImpl) verifyRefreshToken(ctx context.Context, rawRefreshToken string) (domain.RefreshToken, error) {
-	empty := domain.RefreshToken{}
+	var empty domain.RefreshToken
 	dbToken, err := s.repo.GetByHash(ctx, s.hashToken(rawRefreshToken))
 	if err != nil {
-		return empty, pkg.ErrNotFound
+		return empty, pkg.ErrUnauthorized
 	}
 
 	if dbToken.RevokedAt != nil {
 		_ = s.repo.UpdateRevokedByUser(ctx, dbToken.UserID)
-		return empty, pkg.ErrTokenRevoked
+		return empty, pkg.ErrUnauthorized
 	}
 
 	if dbToken.ExpiresAt.Before(time.Now()) {
-		return empty, pkg.ErrTokenExpired
+		return empty, pkg.ErrUnauthorized
 	}
-	return *dbToken, nil
+	return dbToken, nil
 }
 
 func (s *TokenServiceImpl) rotateSession(ctx context.Context, oldToken domain.RefreshToken) (domain.TokenInfo, error) {

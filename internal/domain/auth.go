@@ -17,9 +17,7 @@ type RefreshRequest struct {
 }
 
 type LogoutRequest struct {
-	IsAllDevices bool   `json:"is_all_devices,omitempty"`
-	DeviceID     string `json:"-"`
-	UserID       int64  `json:"-"`
+	IsAllDevices bool `json:"is_all_devices,omitempty"`
 }
 
 type ForgotPasswordRequest struct {
@@ -31,8 +29,36 @@ type ResetPasswordRequest struct {
 	Password string `json:"password" binding:"required,min=8,max=64"`
 }
 
-type AuthParams struct {
+type LoginResponse struct {
+	User  UserResponse `json:"user"`
+	Token TokenInfo    `json:"token"`
+}
+
+type AuthClaims struct {
 	UserID   int64
 	DeviceID string
 	Role     int64
+}
+
+type LoginParams struct {
+	Email    string
+	Password string
+	DeviceID string
+}
+
+type RegisterParams struct {
+	Email    string
+	Username string
+	Password string
+}
+
+type LogoutParams struct {
+	UserID       int64
+	DeviceID     string
+	IsAllDevices bool
+}
+
+type ResetPasswordParams struct {
+	EmailToken string
+	Password   string
 }

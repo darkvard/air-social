@@ -9,26 +9,22 @@ import (
 )
 
 var (
-	ErrInternal    = errors.New("internal server error")
-	ErrNotFound    = errors.New("resource not found")
-	ErrConflict    = errors.New("resource conflict occurred")
-	ErrInvalidData = errors.New("the provided data is invalid")
-	ErrDatabase    = errors.New("database error occurred")
+	ErrInternal      = errors.New("internal server error")   // 500
+	ErrNotFound      = errors.New("resource not found")      // 404
+	ErrAlreadyExists = errors.New("resource already exists") // 409
+	ErrConflict      = errors.New("conflict error")          // 409
 
-	ErrAlreadyExists = errors.New("resource already exists")
-	ErrKeyNotFound   = errors.New("key was not found")
-	ErrSamePassword  = errors.New("new password must be different from current password")
+	ErrBadRequest   = errors.New("bad request")                                          // 400
+	ErrInvalidData  = errors.New("validation failed")                                    // 400
+	ErrSamePassword = errors.New("new password must be different from current password") // 400
 
-	ErrSessionExpired     = errors.New("session has expired")
-	ErrUnauthorized       = errors.New("authentication required")
-	ErrForbidden          = errors.New("access denied")
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrTokenExpired       = errors.New("token has expired")
-	ErrTokenRevoked       = errors.New("token has been revoked")
+	ErrInvalidCredentials = errors.New("email or password is incorrect") // 401
+	ErrUnauthorized       = errors.New("authentication required")        // 401
+	ErrForbidden          = errors.New("access denied")                  // 403
 
-	ErrFileUnsupported = errors.New("file format not supported")
-	ErrFileTooLarge    = errors.New("file size exceeds limit")
-	ErrFileTypeInvalid = errors.New("detected file type is invalid")
+	ErrFileUnsupported = errors.New("file format not supported")     // 400
+	ErrFileTooLarge    = errors.New("file size exceeds limit")       // 413
+	ErrFileTypeInvalid = errors.New("detected file type is invalid") // 400
 )
 
 const (
@@ -72,7 +68,7 @@ func MapPostgresError(err error) error {
 		return ErrConflict
 	}
 
-	return ErrDatabase
+	return err
 }
 
 func IsPermanentError(err error) bool {

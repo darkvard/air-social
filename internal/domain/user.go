@@ -69,9 +69,9 @@ type UserResponse struct {
 }
 
 type CreateUserParams struct {
-	Email        string
-	Username     string
-	PasswordHash string
+	Email          string
+	Username       string
+	PasswordHashed string
 }
 
 type UpdateProfileParams struct {

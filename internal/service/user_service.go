@@ -85,7 +85,7 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUse
 	user := &domain.User{
 		Email:        input.Email,
 		Username:     input.Username,
-		PasswordHash: input.PasswordHash,
+		PasswordHash: input.PasswordHashed,
 	}
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
@@ -177,7 +177,7 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.C
 
 	objectKey, err := s.mediaSvc.ConfirmUpload(ctx, input)
 	if err != nil {
-		return "", pkg.OrInternalError(err, pkg.ErrSessionExpired, pkg.ErrNotFound)
+		return "", pkg.OrInternalError(err, pkg.ErrBadRequest, pkg.ErrForbidden, pkg.ErrNotFound)
 	}
 
 	if err = s.userRepo.UpdateProfileImages(ctx, input.UserID, objectKey, input.Feature); err != nil {
@@ -187,7 +187,7 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.C
 	return s.mediaSvc.GetPublicURL(objectKey), nil
 }
 
-// internal helpers
+// Internal helpers
 
 func (s *UserServiceImpl) mapToResponse(user *domain.User) domain.UserResponse {
 	res := user.ToResponse()

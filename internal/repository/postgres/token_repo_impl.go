@@ -18,7 +18,7 @@ func NewTokenRepository(db *sqlx.DB) *TokenRepoImpl {
 	return &TokenRepoImpl{db: db}
 }
 
-func (r *TokenRepoImpl) Create(ctx context.Context, t *domain.RefreshToken) error {
+func (r *TokenRepoImpl) Create(ctx context.Context, t domain.RefreshToken) error {
 	query := `
 		INSERT INTO refresh_tokens (user_id, token_hash, expires_at, device_id)
 		VALUES (:user_id, :token_hash, :expires_at, :device_id)
@@ -29,7 +29,7 @@ func (r *TokenRepoImpl) Create(ctx context.Context, t *domain.RefreshToken) erro
 	return nil
 }
 
-func (r *TokenRepoImpl) GetByHash(ctx context.Context, hash string) (*domain.RefreshToken, error) {
+func (r *TokenRepoImpl) GetByHash(ctx context.Context, hash string) (domain.RefreshToken, error) {
 	query := `
 		SELECT id, user_id, token_hash, expires_at, revoked_at, created_at, device_id
 		FROM refresh_tokens
@@ -37,9 +37,9 @@ func (r *TokenRepoImpl) GetByHash(ctx context.Context, hash string) (*domain.Ref
 	`
 	var t domain.RefreshToken
 	if err := r.db.GetContext(ctx, &t, query, hash); err != nil {
-		return nil, pkg.MapPostgresError(err)
+		return domain.RefreshToken{}, pkg.MapPostgresError(err)
 	}
-	return &t, nil
+	return t, nil
 }
 
 func (r *TokenRepoImpl) UpdateRevoked(ctx context.Context, id int64) error {

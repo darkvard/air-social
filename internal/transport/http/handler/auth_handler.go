@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"errors"
-
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain"
@@ -12,12 +10,12 @@ import (
 )
 
 type AuthHandler struct {
-	auth service.AuthService
+	authSvc service.AuthService
 }
 
-func NewAuthHandler(authService service.AuthService) *AuthHandler {
+func NewAuthHandler(authSvc service.AuthService) *AuthHandler {
 	return &AuthHandler{
-		auth: authService,
+		authSvc: authSvc,
 	}
 }
 
@@ -31,7 +29,6 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 //	@Param			request	body		domain.RegisterRequest	true	"Register Request"
 //	@Success		200		{object}	domain.UserResponse
 //	@Failure		400		{object}	pkg.ValidationResult
-//	@Failure		401		{object}	pkg.Response
 //	@Failure		409		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/register [post]
@@ -42,7 +39,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	result, err := h.auth.Register(c.Request.Context(), req)
+	params := domain.RegisterParams{
+		Email:    req.Email,
+		Username: req.Username,
+		Password: req.Password,
+	}
+
+	result, err := h.authSvc.Register(c.Request.Context(), params)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -59,7 +62,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		domain.LoginRequest		true	"Login Request"
-//	@Success		200		{object}	map[string]interface{}	"Returns user info and tokens"
+//	@Success		200		{object}	domain.LoginResponse	"Returns user info and tokens"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -71,16 +74,19 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, token, err := h.auth.Login(c.Request.Context(), req)
+	params := domain.LoginParams{
+		Email:    req.Email,
+		Password: req.Password,
+		DeviceID: req.DeviceID,
+	}
+
+	res, err := h.authSvc.Login(c.Request.Context(), params)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, gin.H{
-		"user":  user,
-		"token": token,
-	})
+	pkg.Success(c, res)
 }
 
 // Refresh godoc
@@ -103,13 +109,13 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	tokens, err := h.auth.Refresh(c.Request.Context(), req)
+	res, err := h.authSvc.RefreshToken(c.Request.Context(), req.RefreshToken)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, tokens)
+	pkg.Success(c, res)
 }
 
 // Logout godoc
@@ -129,16 +135,19 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	var req domain.LogoutRequest
 	_ = c.ShouldBindJSON(&req)
 
-	payload, err := middleware.GetAuthPayload(c)
-	if err != nil || payload.UserID < 0 || payload.DeviceID == "" {
+	claims, err := middleware.GetAuthClaims(c)
+	if err != nil || claims.UserID < 0 || claims.DeviceID == "" {
 		pkg.Unauthorized(c, "unauthorized")
 		return
 	}
 
-	req.UserID = payload.UserID
-	req.DeviceID = payload.DeviceID
+	params := domain.LogoutParams{
+		UserID:       claims.UserID,
+		DeviceID:     claims.DeviceID,
+		IsAllDevices: req.IsAllDevices,
+	}
 
-	if err := h.auth.Logout(c.Request.Context(), req); err != nil {
+	if err := h.authSvc.Logout(c.Request.Context(), params); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -153,6 +162,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 //	@Produce		html
 //	@Param			token	query		string	true	"Random Verification Token"
 //	@Success		200		{string}	string	"HTML Page"
+//	@Failure		400		{string}	string	"HTML Page"
 //	@Router			/auth/verify-email [get]
 func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	token := c.Query("token")
@@ -161,7 +171,7 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	if err := h.auth.VerifyEmail(c.Request.Context(), token); err != nil {
+	if err := h.authSvc.VerifyEmail(c.Request.Context(), token); err != nil {
 		c.HTML(400, "verification.gohtml", gin.H{"Success": false})
 		return
 	}
@@ -188,11 +198,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.auth.ForgotPassword(c.Request.Context(), req); err != nil {
-		if !errors.Is(err, pkg.ErrNotFound) {
-			pkg.Log().Errorw("failed to forgot password", "error", err)
-		}
-	}
+	h.authSvc.ForgotPassword(c.Request.Context(), req.Email)
 
 	pkg.Success(c, "If the email exists, we have sent instructions on how to reset your password.")
 }
@@ -205,6 +211,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 //	@Produce		html
 //	@Param			token	query		string	true	"Random Reset Token"
 //	@Success		200		{string}	string	"HTML Page"
+//	@Failure		400		{string}	string	"HTML Page"
 //	@Router			/auth/reset-password [get]
 func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 	token := c.Query("token")
@@ -213,11 +220,7 @@ func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 		return
 	}
 
-	if err := h.auth.ResetPassword(
-		c.Request.Context(),
-		domain.ResetPasswordRequest{Token: token, Password: ""},
-		true,
-	); err != nil {
+	if !h.authSvc.IsResetPasswordTokenValid(c.Request.Context(), token) {
 		c.HTML(400, "reset_password.gohtml", gin.H{"Success": false})
 		return
 	}
@@ -245,7 +248,12 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.auth.ResetPassword(c.Request.Context(), req, false); err != nil {
+	params := domain.ResetPasswordParams{
+		EmailToken: req.Token,
+		Password:   req.Password,
+	}
+
+	if err := h.authSvc.ResetPassword(c.Request.Context(), params); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}

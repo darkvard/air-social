@@ -153,10 +153,10 @@ func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, input domain.Confi
 func (s *MediaServiceImpl) verifyUploadSession(ctx context.Context, objectName string, userID int64) error {
 	var cachedUserID int64
 	if err := s.cache.Get(ctx, domain.GetUploadImageKey(objectName), &cachedUserID); err != nil {
-		return pkg.ErrSessionExpired
+		return pkg.ErrBadRequest
 	}
 	if cachedUserID != userID {
-		return pkg.ErrUnauthorized
+		return pkg.ErrForbidden
 	}
 	return nil
 }

@@ -34,7 +34,7 @@ func (r *UserRepoImpl) Create(ctx context.Context, user *domain.User) error {
 		return rows.StructScan(user)
 	}
 
-	return pkg.ErrDatabase
+	return err
 }
 
 func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {

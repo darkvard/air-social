@@ -24,7 +24,7 @@ func (r *RedisCache) Get(ctx context.Context, key string, dst any) error {
 	data, err := r.client.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return fmt.Errorf("cache: %w", pkg.ErrKeyNotFound)
+			return fmt.Errorf("cache: %w", pkg.ErrNotFound)
 		}
 		return err
 	}

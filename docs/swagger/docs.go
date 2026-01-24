@@ -98,8 +98,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns user info and tokens",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/domain.LoginResponse"
                         }
                     },
                     "400": {
@@ -263,12 +262,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/pkg.ValidationResult"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
                     "409": {
                         "description": "Conflict",
                         "schema": {
@@ -305,6 +298,12 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
+                        "description": "HTML Page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
                         "description": "HTML Page",
                         "schema": {
                             "type": "string"
@@ -384,6 +383,12 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
+                        "description": "HTML Page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
                         "description": "HTML Page",
                         "schema": {
                             "type": "string"
@@ -683,11 +688,17 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/pkg.Response"
+                            "$ref": "#/definitions/pkg.ValidationResult"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/pkg.Response"
                         }
@@ -790,6 +801,17 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 64,
                     "minLength": 8
+                }
+            }
+        },
+        "domain.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "$ref": "#/definitions/domain.TokenInfo"
+                },
+                "user": {
+                    "$ref": "#/definitions/domain.UserResponse"
                 }
             }
         },

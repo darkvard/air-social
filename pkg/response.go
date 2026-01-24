@@ -13,7 +13,7 @@ type Response struct {
 	Data    any    `json:"data,omitempty"`
 }
 
-func JSON(c *gin.Context, status int, message string, data interface{}) {
+func JSON(c *gin.Context, status int, message string, data any) {
 	c.JSON(status, Response{
 		Code:    status,
 		Message: message,
@@ -25,7 +25,7 @@ func Success(c *gin.Context, data any) {
 	JSON(c, http.StatusOK, "ok", data)
 }
 
-func Created(c *gin.Context, data interface{}) {
+func Created(c *gin.Context, data any) {
 	JSON(c, http.StatusCreated, "created", data)
 }
 
@@ -53,6 +53,10 @@ func InternalError(c *gin.Context, msg string) {
 	JSON(c, http.StatusInternalServerError, msg, nil)
 }
 
+func EntityTooLarge(c *gin.Context, msg string) {
+	JSON(c, http.StatusRequestEntityTooLarge, msg, nil)
+}
+
 func HandleValidateError(c *gin.Context, err error) {
 	if v := ValidateRequestError(err); v != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -68,31 +72,27 @@ func HandleValidateError(c *gin.Context, err error) {
 func HandleServiceError(c *gin.Context, err error) {
 	msg := err.Error()
 	switch {
-	case errors.Is(err, ErrUnauthorized),
-		errors.Is(err, ErrInvalidCredentials),
-		errors.Is(err, ErrSessionExpired),
-		errors.Is(err, ErrTokenExpired),
-		errors.Is(err, ErrTokenRevoked):
+	case errors.Is(err, ErrUnauthorized), errors.Is(err, ErrInvalidCredentials):
 		Unauthorized(c, msg)
 
 	case errors.Is(err, ErrForbidden):
 		Forbidden(c, msg)
 
-	case errors.Is(err, ErrAlreadyExists), errors.Is(err, ErrConflict):
+	case errors.Is(err, ErrAlreadyExists):
 		Conflict(c, msg)
 
 	case errors.Is(err, ErrNotFound):
 		NotFound(c, msg)
 
-	case errors.Is(err, ErrInvalidData),
-		errors.Is(err, ErrSamePassword),
-		errors.Is(err, ErrFileUnsupported),
-		errors.Is(err, ErrFileTypeInvalid),
-		errors.Is(err, ErrFileTooLarge):
+	case errors.Is(err, ErrFileTooLarge):
+		EntityTooLarge(c, msg)
+
+	case errors.Is(err, ErrBadRequest), errors.Is(err, ErrInvalidData), errors.Is(err, ErrSamePassword),
+		errors.Is(err, ErrFileUnsupported), errors.Is(err, ErrFileTypeInvalid):
 		BadRequest(c, msg)
 
 	default:
-		Log().Errorw("unhandled service error", "error", err)
+		Log().Errorw("[SERVICE ERROR]", "error", err)
 		InternalError(c, "an unexpected error occurred")
 	}
 }
