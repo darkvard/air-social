@@ -99,3 +99,34 @@ func IsPermanentError(err error) bool {
 
 	return false
 }
+
+// SkipError checks if the given error matches the target error.
+// If it matches, it returns nil, otherwise, it returns the original error.
+func SkipError(original error, target error) error {
+	if errors.Is(original, target) {
+		return nil
+	}
+	return original
+}
+
+// OrInternalError acts as a security filter for errors.
+//
+// By default, it logs the original error and returns a generic pkg.ErrInternal
+// to prevent leaking sensitive system details (e.g., DB connection strings, SQL errors).
+// However, if the error is present in the 'allowedErrors' list,
+// it returns the original error to the client.
+func OrInternalError(original error, allowed ...error) error {
+	if original == nil {
+		return nil
+	}
+
+	for _, err := range allowed {
+		if errors.Is(original, err) {
+			return original
+		}
+	}
+
+	Log().Errorw("[INTERNAL ERROR]", "error", original)
+
+	return ErrInternal
+}

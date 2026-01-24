@@ -60,12 +60,11 @@ type ConfirmProfileImageRequest struct {
 }
 
 type UserResponse struct {
-	ID           int64     `json:"id"`
-	Email        string    `json:"email"`
-	Username     string    `json:"username"`
-	Verified     bool      `json:"verified"`
-	CreatedAt    time.Time `json:"created_at"`
-	PasswordHash string    `json:"-"`
+	ID        int64     `json:"id"`
+	Email     string    `json:"email"`
+	Username  string    `json:"username"`
+	Verified  bool      `json:"verified"`
+	CreatedAt time.Time `json:"created_at"`
 	Profile
 }
 
@@ -75,14 +74,28 @@ type CreateUserParams struct {
 	PasswordHash string
 }
 
+type UpdateProfileParams struct {
+	UserID   int64
+	FullName *string
+	Bio      *string
+	Location *string
+	Website  *string
+	Username *string
+}
+
+type ChangePasswordParams struct {
+	UserID          int64
+	CurrentPassword string
+	NewPassword     string
+}
+
 func (u *User) ToResponse() UserResponse {
 	return UserResponse{
-		ID:           u.ID,
-		Email:        u.Email,
-		Username:     u.Username,
-		Profile:      u.Profile,
-		Verified:     u.Verified,
-		CreatedAt:    u.CreatedAt,
-		PasswordHash: u.PasswordHash,
+		ID:        u.ID,
+		Email:     u.Email,
+		Username:  u.Username,
+		Profile:   u.Profile,
+		Verified:  u.Verified,
+		CreatedAt: u.CreatedAt,
 	}
 }

@@ -584,10 +584,6 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/pkg.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pkg.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -621,10 +617,6 @@ paths:
             $ref: '#/definitions/pkg.ValidationResult'
         "401":
           description: Unauthorized
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/pkg.Response'
         "409":
@@ -662,13 +654,9 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pkg.ValidationResult'
+            $ref: '#/definitions/pkg.Response'
         "401":
           description: Unauthorized
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/pkg.Response'
         "500":
@@ -705,7 +693,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pkg.ValidationResult'
+            $ref: '#/definitions/pkg.Response'
         "401":
           description: Unauthorized
           schema:

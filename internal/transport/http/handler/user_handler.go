@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain"
@@ -10,12 +12,12 @@ import (
 )
 
 type UserHandler struct {
-	srv service.UserService
+	userSvc service.UserService
 }
 
-func NewUserHandler(srv service.UserService) *UserHandler {
+func NewUserHandler(userSvc service.UserService) *UserHandler {
 	return &UserHandler{
-		srv: srv,
+		userSvc: userSvc,
 	}
 }
 
@@ -29,18 +31,21 @@ func NewUserHandler(srv service.UserService) *UserHandler {
 //	@Security		BearerAuth
 //	@Success		200	{object}	domain.UserResponse
 //	@Failure		401	{object}	pkg.Response
-//	@Failure		404	{object}	pkg.Response
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/users/me [get]
 func (h *UserHandler) Profile(c *gin.Context) {
-	payload, err := middleware.GetAuthPayload(c)
+	auth, err := middleware.GetAuthPayload(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
 	}
 
-	user, err := h.srv.GetByID(c.Request.Context(), payload.UserID)
+	user, err := h.userSvc.GetProfile(c.Request.Context(), auth.UserID)
 	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			pkg.Unauthorized(c, "account has been deleted or suspended")
+			return
+		}
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -59,13 +64,12 @@ func (h *UserHandler) Profile(c *gin.Context) {
 //	@Param			request	body		domain.UpdateProfileRequest	true	"Update Profile Request"
 //	@Success		200		{object}	domain.UserResponse
 //	@Failure		400		{object}	pkg.ValidationResult
-//	@Failure		401		{object}	pkg.Response
-//	@Failure		404		{object}	pkg.Response
 //	@Failure		409		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/me [patch]
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
-	payload, err := middleware.GetAuthPayload(c)
+	auth, err := middleware.GetAuthPayload(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
@@ -77,8 +81,21 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.srv.UpdateProfile(c.Request.Context(), payload.UserID, req)
+	params := domain.UpdateProfileParams{
+		UserID:   auth.UserID,
+		FullName: req.FullName,
+		Bio:      req.Bio,
+		Location: req.Location,
+		Website:  req.Website,
+		Username: req.Username,
+	}
+
+	user, err := h.userSvc.UpdateProfile(c.Request.Context(), params)
 	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			pkg.Unauthorized(c, "account has been deleted or suspended")
+			return
+		}
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -98,12 +115,12 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 //	@Param			request	body		domain.ChangePasswordRequest	true	"Change Password Request"
 //	@Success		200		{string}	string							"password changed successfully"
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
-//	@Failure		404		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/password [put]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
-	payload, err := middleware.GetAuthPayload(c)
+	auth, err := middleware.GetAuthPayload(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
@@ -115,7 +132,13 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.srv.ChangePassword(c.Request.Context(), payload.UserID, req); err != nil {
+	params := domain.ChangePasswordParams{
+		UserID:          auth.UserID,
+		CurrentPassword: req.CurrentPassword,
+		NewPassword:     req.NewPassword,
+	}
+
+	if err := h.userSvc.ChangePassword(c.Request.Context(), params); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -134,12 +157,13 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Param			request	body		domain.ConfirmProfileImageRequest	true	"Confirm Upload Request"
 //	@Success		200		{object}	map[string]string					"Returns upload success message and public URL"
 //	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		404		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/profile-image/confirm [post]
 func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
-	payload, err := middleware.GetAuthPayload(c)
+	auth, err := middleware.GetAuthPayload(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
@@ -151,13 +175,14 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 		return
 	}
 
-	finalURL, err := h.srv.ConfirmImageUpload(c.Request.Context(), domain.ConfirmFileParams{
-		UserID:    payload.UserID,
+	params := domain.ConfirmFileParams{
+		UserID:    auth.UserID,
 		ObjectKey: req.ObjectKey,
 		Domain:    req.Domain,
 		Feature:   req.Feature,
-	})
+	}
 
+	fileURL, err := h.userSvc.ConfirmImageUpload(c.Request.Context(), params)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
@@ -165,7 +190,7 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 
 	pkg.Success(c, gin.H{
 		"message": "Profile image updated successfully",
-		"url":     finalURL,
+		"url":     fileURL,
 	})
 
 }
