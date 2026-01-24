@@ -35,11 +35,11 @@ func (r *TokenRepoImpl) GetByHash(ctx context.Context, hash string) (domain.Refr
 		FROM refresh_tokens
 		WHERE token_hash = $1
 	`
-	var t domain.RefreshToken
-	if err := r.db.GetContext(ctx, &t, query, hash); err != nil {
+	var token domain.RefreshToken
+	if err := r.db.GetContext(ctx, &token, query, hash); err != nil {
 		return domain.RefreshToken{}, pkg.MapPostgresError(err)
 	}
-	return t, nil
+	return token, nil
 }
 
 func (r *TokenRepoImpl) UpdateRevoked(ctx context.Context, id int64) error {
@@ -53,7 +53,7 @@ func (r *TokenRepoImpl) UpdateRevoked(ctx context.Context, id int64) error {
 func (r *TokenRepoImpl) UpdateRevokedByUser(ctx context.Context, userID int64) error {
 	query := `UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1`
 	if _, err := r.db.ExecContext(ctx, query, userID); err != nil {
-		return err
+		return pkg.MapPostgresError(err)
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func (r *TokenRepoImpl) UpdateRevokedByUser(ctx context.Context, userID int64) e
 func (r *TokenRepoImpl) UpdateRevokedByDevice(ctx context.Context, userID int64, deviceID string) error {
 	query := `UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND device_id = $2`
 	if _, err := r.db.ExecContext(ctx, query, userID, deviceID); err != nil {
-		return err
+		return pkg.MapPostgresError(err)
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func (r *TokenRepoImpl) DeleteExpiredAndRevoked(ctx context.Context, expiredBefo
         WHERE (revoked_at < $1) OR (expires_at < $2)
     `
 	if _, err := r.db.ExecContext(ctx, query, revokedBefore, expiredBefore); err != nil {
-		return err
+		return pkg.MapPostgresError(err)
 	}
 	return nil
 }
