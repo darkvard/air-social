@@ -122,7 +122,5 @@ func OrInternalError(original error, allowed ...error) error {
 		}
 	}
 
-	Log().Errorw("[INTERNAL ERROR]", "error", original)
-
 	return ErrInternal
 }

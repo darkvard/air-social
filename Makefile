@@ -212,3 +212,11 @@ docs:
 	@echo "2. Generating Swagger files..."
 	@swag init -g $(SWAGGER_MAIN_FILE) --output docs/swagger
 	@echo "Done"
+
+# Generate mocks
+.PHONY: mocks
+mocks:
+	@echo "Generating mocks..."
+	@rm -rf internal/mocks/*
+	@mockery
+	@echo "Mocks generated successfully!"	
