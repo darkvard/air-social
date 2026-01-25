@@ -7,14 +7,14 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 
 	"air-social/internal/domain"
-	"air-social/internal/infra/msg"
+	"air-social/internal/infrastructure/rabbitmq"
 )
 
 type Worker struct {
 	conn  *amqp.Connection
 	cache domain.CacheStorage
-	eCfg  msg.ExchangeConfig
-	qCfg  msg.QueueConfig
+	eCfg  rabbitmq.ExchangeConfig
+	qCfg  rabbitmq.QueueConfig
 	disp  domain.EventHandler
 
 	ch   *amqp.Channel
@@ -25,9 +25,9 @@ type Worker struct {
 func NewEmailWorker(
 	conn *amqp.Connection,
 	cache domain.CacheStorage,
-	eCfg msg.ExchangeConfig,
-	qCfg msg.QueueConfig,
 	disp domain.EventHandler,
+	eCfg rabbitmq.ExchangeConfig,
+	qCfg rabbitmq.QueueConfig,
 ) *Worker {
 	return &Worker{
 		conn:  conn,

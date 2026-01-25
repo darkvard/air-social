@@ -10,15 +10,15 @@ import (
 	"air-social/pkg"
 )
 
-type UserRepoImpl struct {
+type userRepository struct {
 	db *sqlx.DB
 }
 
-func NewUserRepoImpl(db *sqlx.DB) *UserRepoImpl {
-	return &UserRepoImpl{db: db}
+func NewUserRepository(db *sqlx.DB) *userRepository {
+	return &userRepository{db: db}
 }
 
-func (r *UserRepoImpl) Create(ctx context.Context, user *domain.User) error {
+func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 	query := `
         INSERT INTO users (email, username, password_hash)
         VALUES (:email, :username, :password_hash)
@@ -37,7 +37,7 @@ func (r *UserRepoImpl) Create(ctx context.Context, user *domain.User) error {
 	return err
 }
 
-func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := ` SELECT * FROM users WHERE email = $1 `
 	var user domain.User
 	if err := r.db.GetContext(ctx, &user, query, email); err != nil {
@@ -46,7 +46,7 @@ func (r *UserRepoImpl) GetByEmail(ctx context.Context, email string) (*domain.Us
 	return &user, nil
 }
 
-func (r *UserRepoImpl) GetByID(ctx context.Context, id int64) (*domain.User, error) {
+func (r *userRepository) GetByID(ctx context.Context, id int64) (*domain.User, error) {
 	query := ` SELECT * FROM users WHERE id = $1 `
 	var user domain.User
 	if err := r.db.GetContext(ctx, &user, query, id); err != nil {
@@ -55,7 +55,7 @@ func (r *UserRepoImpl) GetByID(ctx context.Context, id int64) (*domain.User, err
 	return &user, nil
 }
 
-func (r *UserRepoImpl) Update(ctx context.Context, user *domain.User) error {
+func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 	query := `
 		UPDATE users
 		SET username = :username, 
@@ -86,7 +86,7 @@ func (r *UserRepoImpl) Update(ctx context.Context, user *domain.User) error {
 	return pkg.ErrNotFound
 }
 
-func (r *UserRepoImpl) UpdateProfileImages(ctx context.Context, userID int64, url string, feature domain.UploadFeature) error {
+func (r *userRepository) UpdateProfileImages(ctx context.Context, userID int64, url string, feature domain.UploadFeature) error {
 	var col string
 	switch feature {
 	case domain.FeatureAvatar:

@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -84,4 +85,25 @@ func plural(n int, unit string) string {
 		return "1 " + unit
 	}
 	return fmt.Sprintf("%d %ss", n, unit)
+}
+
+func Retry(ctx context.Context, attempts int, sleep time.Duration, fn func() error) error {
+	for i := range attempts {
+		if err := fn(); err == nil {
+			return nil // success
+		}
+
+		if i == attempts-1 { // failed
+			return fmt.Errorf("after %d attempts, last error: %w", attempts, fn())
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("retry cancelled: %w", ctx.Err())
+		case <-time.After(sleep):
+			continue
+		}
+	}
+
+	return fmt.Errorf("retry failed after %d attempts", attempts)
 }

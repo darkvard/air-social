@@ -1,4 +1,4 @@
-package storage
+package minio
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type minioStorage struct {
 	client *minio.Client
 }
 
-func NewMinioStorage(client *minio.Client) *minioStorage {
+func newMinioStorage(client *minio.Client) *minioStorage {
 	return &minioStorage{
 		client: client,
 	}

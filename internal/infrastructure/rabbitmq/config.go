@@ -1,4 +1,4 @@
-package msg
+package rabbitmq
 
 type ExchangeConfig struct {
 	Name string

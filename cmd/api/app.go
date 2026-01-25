@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"air-social/internal/transport/worker"
 	"air-social/internal/transport/ws"
-	"air-social/internal/worker"
 	"air-social/pkg"
 )
 

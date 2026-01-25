@@ -1,4 +1,4 @@
-package event
+package service
 
 import (
 	"context"
@@ -10,15 +10,19 @@ import (
 	"air-social/templates"
 )
 
-type EmailHandleImpl struct {
+type EmailService interface {
+	Handle(ctx context.Context, evt domain.EventPayload) error
+}
+
+type EmailServiceImpl struct {
 	sender domain.EmailSender
 }
 
-func NewEmailHandler(sender domain.EmailSender) *EmailHandleImpl {
-	return &EmailHandleImpl{sender: sender}
+func NewEmailService(sender domain.EmailSender) *EmailServiceImpl {
+	return &EmailServiceImpl{sender: sender}
 }
 
-func (e *EmailHandleImpl) Handle(ctx context.Context, evt domain.EventPayload) error {
+func (e *EmailServiceImpl) Handle(ctx context.Context, evt domain.EventPayload) error {
 	switch evt.EventType {
 	case domain.EmailVerify:
 		return e.verifyEmail(evt)
@@ -29,7 +33,7 @@ func (e *EmailHandleImpl) Handle(ctx context.Context, evt domain.EventPayload) e
 	}
 }
 
-func (e *EmailHandleImpl) verifyEmail(evt domain.EventPayload) error {
+func (e *EmailServiceImpl) verifyEmail(evt domain.EventPayload) error {
 	var payload domain.EventEmailData
 	if err := parsePayloadData(evt, &payload); err != nil {
 		return err
@@ -61,7 +65,7 @@ func parsePayloadData(evt domain.EventPayload, target any) error {
 	return nil
 }
 
-func (e *EmailHandleImpl) sendEmail(env *domain.EmailEnvelope, email, tag string) error {
+func (e *EmailServiceImpl) sendEmail(env *domain.EmailEnvelope, email, tag string) error {
 	if err := e.sender.Send(env); err != nil {
 		pkg.Log().Errorw("failed to send email", "tag", tag, "error", err, "to", email)
 		return err
@@ -69,7 +73,7 @@ func (e *EmailHandleImpl) sendEmail(env *domain.EmailEnvelope, email, tag string
 	return nil
 }
 
-func (e *EmailHandleImpl) resetPassword(evt domain.EventPayload) error {
+func (e *EmailServiceImpl) resetPassword(evt domain.EventPayload) error {
 	var payload domain.EventEmailData
 	if err := parsePayloadData(evt, &payload); err != nil {
 		return err

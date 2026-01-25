@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"air-social/internal/domain"
-	"air-social/internal/infra/msg"
+	"air-social/internal/infrastructure/rabbitmq"
 	"air-social/pkg"
 )
 
@@ -202,7 +202,7 @@ func (s *AuthServiceImpl) sendEmailVerification(ctx context.Context, email, user
 		Data:      data,
 	}
 
-	if err := s.event.Publish(ctx, msg.EmailVerifyQueueConfig.RoutingKey, payload); err != nil {
+	if err := s.event.Publish(ctx, rabbitmq.EmailVerifyQueueConfig.RoutingKey, payload); err != nil {
 		pkg.Log().Errorw("[EVENT QUEUE ERROR]", "from", "email_verification", "error", err)
 	}
 }
@@ -244,7 +244,7 @@ func (s *AuthServiceImpl) sendEmailResetPassword(ctx context.Context, email, use
 		Data:      data,
 	}
 
-	if err := s.event.Publish(ctx, msg.EmailResetPasswordQueueConfig.RoutingKey, payload); err != nil {
+	if err := s.event.Publish(ctx, rabbitmq.EmailResetPasswordQueueConfig.RoutingKey, payload); err != nil {
 		pkg.Log().Errorw("[EVENT QUEUE ERROR]", "from", "email_forgot_password", "error", err)
 	}
 }

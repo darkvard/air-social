@@ -8,9 +8,9 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 
 	"air-social/internal/domain"
-	"air-social/internal/infra/msg"
-	"air-social/internal/worker"
-	"air-social/internal/worker/email"
+	"air-social/internal/infrastructure/rabbitmq"
+	"air-social/internal/transport/worker"
+	"air-social/internal/transport/worker/email"
 	"air-social/pkg"
 )
 
@@ -22,27 +22,27 @@ const (
 )
 
 type rabbitMQ struct {
-	publisher *msg.Publisher
+	publisher *rabbitmq.Publisher
 	workerMgr *worker.Manager
 }
 
-func newRabbitMQ(conn *amqp091.Connection, c domain.CacheStorage) *rabbitMQ {
+func newRabbitMQ(conn *amqp091.Connection, cache domain.CacheStorage) *rabbitMQ {
 	mgr := worker.NewManager(
 		email.NewEmailWorker(
 			conn,
-			c,
-			msg.EventsExchange,
-			msg.QueueConfig{
+			cache,
+			newEventHandler(),
+			rabbitmq.EventsExchange,
+			rabbitmq.QueueConfig{
 				Queue:      "email.interaction.q",
 				RoutingKey: "email.*",
 			},
-			newEventHandler(),
 		),
 	)
 
-	pub, err := msg.NewPublisher(
+	pub, err := rabbitmq.NewPublisher(
 		conn,
-		msg.EventsExchange,
+		rabbitmq.EventsExchange,
 		10,
 	)
 	if err != nil {
