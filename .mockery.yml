@@ -1,21 +1,19 @@
-# --- General Configuration ---
-structname: "{{.InterfaceName}}"  # Use interface name for struct (e.g. UserRepo) to avoid stuttering
-pkgname: "mocks"                  # Set package name for generated files
-filename: "{{.InterfaceName}}.go" # Generate one public .go file per interface (not _test.go)
-dir: "internal/mocks"             # Centralized output directory for all mocks
-formatter: goimports              # Auto-format code using goimports
-inpackage: false                  # Generate mocks in a separate package, not side-by-side with source
-force-file-write: true            # Always overwrite existing files
+# .mockery.yaml
+structname: "{{.InterfaceName}}"
+pkgname: "mocks"
+filename: "{{.InterfaceName | snakecase}}.go"
 
-# --- Package Scanning ---
+dir: "internal/mocks"
+formatter: goimports
+inpackage: false
+force-file-write: true
+
 packages:
-  # 1. Domain Layer 
   air-social/internal/domain:
     config:
-      recursive: true             # Scan all sub-directories
-      all: true                   # Automatically mock all interfaces found
-
-  # 2. Service Layer  
+      recursive: true
+      all: true
+  
   air-social/internal/service:
     config:
       recursive: true
