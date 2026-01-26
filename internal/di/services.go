@@ -49,7 +49,10 @@ func NewServices(cfg config.Config, ifc *InfraContainer, url domain.URLFactory) 
 		BucketPublic:     cfg.MinIO.BucketPublic,
 		BucketPrivate:    cfg.MinIO.BucketPrivate,
 	})
-	healthService := service.NewHealthService(ifc.DB, ifc.Redis, ifc.Rabbit, ifc.Minio, url)
+	healthService := service.NewHealthService(ifc.DB, ifc.Redis, &rabbitmq.HealthChecker{
+		Conn: ifc.Rabbit,
+		URL:  cfg.RabbitMQ.URL,
+	}, ifc.Minio, url)
 	tokenService := service.NewTokenService(tokenRepository, cfg.Token)
 	userService := service.NewUserService(userRepository, mediaService)
 	authService := service.NewAuthService(userService, tokenService, url, eventPublisher, cacheCache)

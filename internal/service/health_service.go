@@ -4,9 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/minio/minio-go/v7"
-	amqp "github.com/rabbitmq/amqp091-go"
 	goredis "github.com/redis/go-redis/v9"
 
 	"air-social/internal/domain"
@@ -18,15 +16,31 @@ type HealthService interface {
 	GetAppInfo() map[string]any
 }
 
+type HealthDB interface {
+	Ping() error
+}
+
+type HealthRedis interface {
+	Ping(ctx context.Context) *goredis.StatusCmd
+}
+
+type HealthRabbit interface {
+	Ping() error
+}
+
+type HealthMinio interface {
+	ListBuckets(ctx context.Context) ([]minio.BucketInfo, error)
+}
+
 type HealthServiceImpl struct {
-	DB     *sqlx.DB
-	Redis  *goredis.Client
-	Rabbit *amqp.Connection
-	Minio  *minio.Client
+	DB     HealthDB
+	Redis  HealthRedis
+	Rabbit HealthRabbit
+	Minio  HealthMinio
 	url    domain.URLFactory
 }
 
-func NewHealthService(db *sqlx.DB, redis *goredis.Client, rabbit *amqp.Connection, minio *minio.Client, url domain.URLFactory) *HealthServiceImpl {
+func NewHealthService(db HealthDB, redis HealthRedis, rabbit HealthRabbit, minio HealthMinio, url domain.URLFactory) *HealthServiceImpl {
 	return &HealthServiceImpl{
 		DB:     db,
 		Redis:  redis,
@@ -58,8 +72,8 @@ func (s *HealthServiceImpl) Check(ctx context.Context) (bool, map[string]string)
 		isHealthy = false
 	}
 
-	if s.Rabbit.IsClosed() {
-		details["rabbitmq"] = "connection closed"
+	if err := s.Rabbit.Ping(); err != nil {
+		details["rabbitmq"] = err.Error()
 		status = "error"
 		isHealthy = false
 	}

@@ -19,8 +19,8 @@ services:
       - minio
       - rabbitmq
     healthcheck:
-      test: ["CMD", "service", "nginx", "status"]
-      interval: 10s
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 80 || exit 1"]
+      interval: 5s
       timeout: 5s
       retries: 3
     networks:
@@ -71,7 +71,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
     networks:
@@ -88,7 +88,7 @@ services:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
     networks:
@@ -112,7 +112,7 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
     networks:
@@ -137,8 +137,8 @@ services:
       - minio_data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
+      interval: 5s
+      timeout: 5s
       retries: 3
     networks:
       - air-social-network
