@@ -198,7 +198,7 @@ func (s *AuthServiceImpl) sendEmailVerification(ctx context.Context, email, user
 	payload := domain.EventPayload{
 		EventID:   id,
 		EventType: domain.EmailVerify,
-		Timestamp: time.Now().UTC(),
+		Timestamp: pkg.TimeNowUTC(),
 		Data:      data,
 	}
 
@@ -240,7 +240,7 @@ func (s *AuthServiceImpl) sendEmailResetPassword(ctx context.Context, email, use
 	payload := domain.EventPayload{
 		EventID:   uuid.NewString(),
 		EventType: domain.EmailResetPassword,
-		Timestamp: time.Now().UTC(),
+		Timestamp: pkg.TimeNowUTC(),
 		Data:      data,
 	}
 

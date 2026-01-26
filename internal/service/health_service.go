@@ -10,6 +10,7 @@ import (
 	goredis "github.com/redis/go-redis/v9"
 
 	"air-social/internal/domain"
+	"air-social/pkg"
 )
 
 type HealthService interface {
@@ -70,7 +71,7 @@ func (s *HealthServiceImpl) Check(ctx context.Context) (bool, map[string]string)
 	}
 
 	details["status"] = status
-	details["timestamp"] = time.Now().UTC().Format(time.RFC3339)
+	details["timestamp"] = pkg.TimeNowUTC().Format(time.RFC3339)
 
 	return isHealthy, details
 }

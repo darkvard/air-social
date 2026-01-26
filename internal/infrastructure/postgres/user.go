@@ -56,6 +56,8 @@ func (r *userRepository) GetByID(ctx context.Context, id int64) (*domain.User, e
 }
 
 func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
+	user.UpdatedAt = pkg.TimeNowUTC()
+
 	query := `
 		UPDATE users
 		SET username = :username, 
@@ -68,10 +70,10 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 			website = :website,
 			verified = :verified, 
 			verified_at = :verified_at, 
-			updated_at = NOW(), 
+			updated_at = ":updated_at", 
 			version = version + 1
 		WHERE id = :id AND version = :version
-		RETURNING updated_at, version
+		RETURNING version
 	`
 	rows, err := r.db.NamedQueryContext(ctx, query, user)
 	if err != nil {
@@ -80,7 +82,12 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 	defer rows.Close()
 
 	if rows.Next() {
-		return rows.StructScan(user)
+		var newVersion int
+        if err := rows.Scan(&newVersion); err != nil {
+             return err
+        }
+        user.Version = newVersion
+        return nil
 	}
 
 	return pkg.ErrNotFound

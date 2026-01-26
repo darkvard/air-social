@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
+
+	"air-social/pkg"
 )
 
 type pubChannel struct {
@@ -101,7 +102,7 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any)
 			ContentType:  "application/json",
 			DeliveryMode: amqp.Persistent,
 			MessageId:    uuid.NewString(),
-			Timestamp:    time.Now().UTC(),
+			Timestamp:    pkg.TimeNowUTC(),
 			Body:         body,
 		},
 	); err != nil {

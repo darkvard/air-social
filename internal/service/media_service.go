@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -117,7 +116,7 @@ func (s *MediaServiceImpl) validateRequest(input domain.PresignedFileParams, rul
 func (s *MediaServiceImpl) generateObjectKey(input domain.PresignedFileParams) string {
 	ext := filepath.Ext(input.FileName)
 	uid := uuid.New().String()
-	timestamp := time.Now().Unix()
+	timestamp := pkg.TimeNowUTC().Unix()
 	fileName := fmt.Sprintf("%d_%s%s", timestamp, uid, ext)
 	return fmt.Sprintf("%s/%d/%s/%s", input.Domain, input.UserID, input.Feature, fileName)
 }

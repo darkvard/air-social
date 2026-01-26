@@ -107,3 +107,7 @@ func Retry(ctx context.Context, attempts int, sleep time.Duration, fn func() err
 
 	return fmt.Errorf("retry failed after %d attempts", attempts)
 }
+
+func TimeNowUTC() time.Time {
+	return time.Now().UTC()
+}

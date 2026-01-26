@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"air-social/internal/domain"
 	"air-social/pkg"
@@ -163,7 +162,7 @@ func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
 		return err
 	}
 
-	now := time.Now().UTC()
+	now := pkg.TimeNowUTC()
 	user.Verified = true
 	user.VerifiedAt = &(now)
 

@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -85,7 +84,7 @@ func (s *TokenServiceImpl) RevokeAllUserSessions(ctx context.Context, userID int
 }
 
 func (s *TokenServiceImpl) CleanupDatabase(ctx context.Context) error {
-	threshold := time.Now().Add(-domain.AuditRetentionPeriod)
+	threshold := pkg.TimeNowUTC().Add(-domain.AuditRetentionPeriod)
 	if err := s.tokenRepo.DeleteExpiredAndRevoked(ctx, threshold, threshold); err != nil {
 		return pkg.OrInternalError(err)
 	}
@@ -119,7 +118,7 @@ func (s *TokenServiceImpl) verifyRefreshToken(ctx context.Context, rawRefreshTok
 		return empty, pkg.ErrUnauthorized
 	}
 
-	if dbToken.ExpiresAt.Before(time.Now()) {
+	if dbToken.ExpiresAt.Before(pkg.TimeNowUTC()) {
 		return empty, pkg.ErrUnauthorized
 	}
 	return dbToken, nil
@@ -157,7 +156,7 @@ func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, dev
 }
 
 func (s *TokenServiceImpl) generateAccessToken(userID int64, deviceID string) (string, error) {
-	now := time.Now().UTC()
+	now := pkg.TimeNowUTC()
 	claims := jwt.MapClaims{
 		pkg.JWTClaimSubject:   fmt.Sprintf("%d", userID),
 		pkg.JWTClaimDevice:    deviceID,
@@ -174,7 +173,7 @@ func (s *TokenServiceImpl) generateAccessToken(userID int64, deviceID string) (s
 func (s *TokenServiceImpl) generateRefreshToken(userID int64, deviceID string) (string, domain.RefreshToken) {
 	raw := uuid.NewString()
 	hashed := s.hashToken(raw)
-	now := time.Now().UTC()
+	now := pkg.TimeNowUTC()
 	expiresAt := now.Add(s.tokenCfg.RefreshTokenTTL)
 
 	return raw, domain.RefreshToken{

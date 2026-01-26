@@ -3,11 +3,11 @@ package minio
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/minio/minio-go/v7"
 
 	"air-social/internal/domain"
+	"air-social/pkg"
 )
 
 type minioStorage struct {
@@ -47,7 +47,7 @@ func (m *minioStorage) setupPostPolicy(loc domain.StorageLocation, constraints d
 	if err := policy.SetKey(loc.Key); err != nil {
 		return nil, err
 	}
-	if err := policy.SetExpires(time.Now().UTC().Add(constraints.Expiry)); err != nil {
+	if err := policy.SetExpires(pkg.TimeNowUTC().Add(constraints.Expiry)); err != nil {
 		return nil, err
 	}
 	if err := policy.SetContentType(constraints.ContentType); err != nil {

@@ -43,24 +43,24 @@ func (r *tokenRepository) GetByHash(ctx context.Context, hash string) (domain.Re
 }
 
 func (r *tokenRepository) UpdateRevoked(ctx context.Context, id int64) error {
-	query := `UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1`
-	if _, err := r.db.ExecContext(ctx, query, id); err != nil {
+	query := `UPDATE refresh_tokens SET revoked_at = $1 WHERE id = $2`
+	if _, err := r.db.ExecContext(ctx, query, pkg.TimeNowUTC(), id); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r *tokenRepository) UpdateRevokedByUser(ctx context.Context, userID int64) error {
-	query := `UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1`
-	if _, err := r.db.ExecContext(ctx, query, userID); err != nil {
+	query := `UPDATE refresh_tokens SET revoked_at = $1 WHERE user_id = $2`
+	if _, err := r.db.ExecContext(ctx, query, pkg.TimeNowUTC(), userID); err != nil {
 		return pkg.MapPostgresError(err)
 	}
 	return nil
 }
 
 func (r *tokenRepository) UpdateRevokedByDevice(ctx context.Context, userID int64, deviceID string) error {
-	query := `UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND device_id = $2`
-	if _, err := r.db.ExecContext(ctx, query, userID, deviceID); err != nil {
+	query := `UPDATE refresh_tokens SET revoked_at = $1 WHERE user_id = $2 AND device_id = $3`
+	if _, err := r.db.ExecContext(ctx, query, pkg.TimeNowUTC(), userID, deviceID); err != nil {
 		return pkg.MapPostgresError(err)
 	}
 	return nil
