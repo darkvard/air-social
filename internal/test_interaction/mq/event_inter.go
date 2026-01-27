@@ -20,8 +20,9 @@ func newEventHandler() *eventHandlerImpl {
 }
 
 func (e *eventHandlerImpl) Handle(ctx context.Context, evt domain.EventPayload) error {
-	e.callCount[evt.EventType]++
-	attempt := e.callCount[evt.EventType]
+	key := string(evt.EventType)
+	e.callCount[key]++
+	attempt := e.callCount[key]
 
 	logInfo(consumer, "handle event", "Type = %s", evt.EventType)
 

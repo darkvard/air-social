@@ -115,7 +115,7 @@ func (r *rabbitMQ) messageHandle(ctx context.Context) {
 func initEvent(name, key string) domain.EventPayload {
 	return domain.EventPayload{
 		EventID:   name,
-		EventType: key,
+		EventType: domain.EventType(key),
 		Timestamp: pkg.TimeNowUTC(),
 		Data:      map[string]interface{}{},
 	}

@@ -5,9 +5,11 @@ import (
 	"time"
 )
 
+type EventType string
+
 const (
-	EmailVerify        = "email.verify"
-	EmailResetPassword = "email.reset.password"
+	EmailVerify        EventType = "email.verify"
+	EmailResetPassword EventType = "email.reset.password"
 )
 
 type EventHandler interface {
@@ -21,7 +23,7 @@ type EventPublisher interface {
 
 type EventPayload struct {
 	EventID   string    `json:"event_id"`
-	EventType string    `json:"event_type"`
+	EventType EventType `json:"event_type"`
 	Timestamp time.Time `json:"timestamp"`
 	Data      any       `json:"data"`
 }
