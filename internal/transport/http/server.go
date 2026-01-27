@@ -11,7 +11,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"air-social/internal/config"
-	"air-social/internal/di"
 	"air-social/internal/domain"
 	"air-social/internal/transport/http/handler"
 	"air-social/internal/transport/http/middleware"
@@ -48,16 +47,23 @@ const (
 	ConfirmUpload   = "/confirm"
 )
 
-func NewServer(cfg config.Config, svc *di.ServiceContainer, ifc *di.InfraContainer, urls domain.URLFactory) *http.Server {
+func NewServer(
+	cfg config.Config,
+	urls domain.URLFactory,
+	mw *middleware.Manager,
+	authH *handler.AuthHandler,
+	userH *handler.UserHandler,
+	mediaH *handler.MediaHandler,
+	healthH *handler.HealthHandler,
+) *http.Server {
 	e := setupEngine()
-	mw := middleware.NewManager(cfg.Server, svc.Token)
 
 	v := e.Group(urls.APIRouterPath())
 	{
-		commonRoutes(v, svc, mw)
-		authRoutes(v, svc, mw)
-		userRoutes(v, svc, mw)
-		mediaRoutes(v, svc, mw)
+		commonRoutes(v, healthH, mw)
+		authRoutes(v, authH, mw)
+		userRoutes(v, userH, mw)
+		mediaRoutes(v, mediaH, mw)
 	}
 
 	return &http.Server{
@@ -97,8 +103,7 @@ func setupEngine() *gin.Engine {
 	return e
 }
 
-func commonRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Manager) {
-	h := handler.NewHealthHandler(svc.Health)
+func commonRoutes(rg *gin.RouterGroup, h *handler.HealthHandler, mw *middleware.Manager) {
 	{
 		rg.GET("", h.Welcome)
 		rg.GET(Health, mw.Basic, h.HealthCheck)
@@ -106,8 +111,7 @@ func commonRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.
 	}
 }
 
-func authRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Manager) {
-	h := handler.NewAuthHandler(svc.Auth)
+func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, mw *middleware.Manager) {
 	a := rg.Group(AuthGroup)
 	{
 		a.GET(ResetPassword, h.ShowResetPasswordPage)
@@ -128,8 +132,7 @@ func authRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Ma
 	}
 }
 
-func userRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Manager) {
-	h := handler.NewUserHandler(svc.User)
+func userRoutes(rg *gin.RouterGroup, h *handler.UserHandler, mw *middleware.Manager) {
 	p := rg.Group(UserGroup, mw.Auth)
 	{
 		p.GET(Me, h.Profile)
@@ -143,8 +146,7 @@ func userRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Ma
 	}
 }
 
-func mediaRoutes(rg *gin.RouterGroup, svc *di.ServiceContainer, mw *middleware.Manager) {
-	h := handler.NewMediaHandler(svc.Media)
+func mediaRoutes(rg *gin.RouterGroup, h *handler.MediaHandler, mw *middleware.Manager) {
 	m := rg.Group(MediaGroup, mw.Auth)
 	{
 		m.POST(PresignedUpload, h.PresignedUpload)

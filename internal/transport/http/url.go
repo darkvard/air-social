@@ -1,9 +1,11 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"air-social/internal/config"
+	"air-social/pkg"
 )
 
 type URLFactoryImpl struct {
@@ -54,7 +56,17 @@ func (r *URLFactoryImpl) RabbitMQDashboardUI() string {
 	return fmt.Sprintf("%s/rabbitmq/", r.baseURL())
 }
 
-// 4. Resources
 func (r *URLFactoryImpl) FileStorageBaseURL() string {
 	return fmt.Sprintf("%s/%s-public", r.baseURL(), r.appName)
+}
+
+func (r *URLFactoryImpl) PrintInfraConsole() {
+	info := map[string]string{
+		"swagger_docs":      r.SwaggerUI(),
+		"rabbit_mq_console": r.RabbitMQDashboardUI(),
+		"minio_console":     r.MinioConsoleUI(),
+	}
+	data, _ := json.MarshalIndent(info, "", "  ")
+	pkg.Log().Info("server started")
+	fmt.Println(string(data))
 }
