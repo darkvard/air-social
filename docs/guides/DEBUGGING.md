@@ -98,33 +98,34 @@ This file exposes ports to your host machine and configures Nginx to talk back t
 
 ```yaml
 services:
+  app:
+    profiles: ["disable_for_debug"]
+
   nginx:
     ports:
       - "80:80"
     environment:
-      - NGINX_TIMEOUT=3600s  
+      - NGINX_TIMEOUT=3600s
     extra_hosts:
       - "app:host-gateway"
-      - "minio:host-gateway"
-      - "rabbitmq:host-gateway"
 
   db:
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
   redis:
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
   rabbitmq:
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
 
   minio:
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
 ```
 
 ## 4. How to Debug
@@ -133,7 +134,7 @@ services:
 Run the following command to start all services (DB, Redis, Nginx...) **EXCEPT** the App service.
 
 ```bash
-make debug
+make up
 ```
 
 ### Step 2: Start App (Debugger)

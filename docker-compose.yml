@@ -14,10 +14,6 @@ services:
       - NGINX_TIMEOUT=60s
     volumes:
       - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
-    depends_on:
-      - app
-      - minio
-      - rabbitmq
     healthcheck:
       test: ["CMD-SHELL", "nc -z 127.0.0.1 80 || exit 1"]
       interval: 5s
@@ -67,6 +63,8 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -84,6 +82,8 @@ services:
     image: redis:8-alpine
     container_name: redis
     restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:

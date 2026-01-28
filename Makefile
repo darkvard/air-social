@@ -4,12 +4,12 @@ include .env
 
 .PHONY: up
 up:
-	@echo "🚀 Starting all services"
+	@echo "🚀 Starting services"
 	@docker compose up -d
 
 .PHONY: down
 down:
-	@echo "🛑 Stopping all services"
+	@echo "🛑 Stopping services"
 	@docker compose down
 
 .PHONY: restart
@@ -29,14 +29,7 @@ logs:
 
 .PHONY: ps
 ps:
-	@docker compose ps -a
-
-.PHONY: debug
-debug:
-	@echo "Starting debug dependencies..."
-	@docker compose up -d nginx db redis rabbitmq minio 
-	@echo "🛑 Killing Docker App container to use Local Debugger..."
-	@docker compose stop app
+	@docker compose ps -a 
 
 ## Utils
 
