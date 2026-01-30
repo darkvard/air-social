@@ -141,10 +141,17 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
+	tokenMeta, err := middleware.GetTokenMeta(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
 	params := domain.LogoutParams{
 		UserID:       claims.UserID,
 		DeviceID:     claims.DeviceID,
 		IsAllDevices: req.IsAllDevices,
+		Token:        tokenMeta,
 	}
 
 	if err := h.authSvc.Logout(c.Request.Context(), params); err != nil {

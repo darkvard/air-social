@@ -31,6 +31,10 @@ logs:
 ps:
 	@docker compose ps -a 
 
+.PHONY: debug
+debug:
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d	
+
 ## Utils
 
 .PHONY: sh-app

@@ -40,6 +40,11 @@ type AuthClaims struct {
 	Role     int64
 }
 
+type TokenMeta struct {
+	AccessToken string
+	ExpiresAt   int64
+}
+
 type LoginParams struct {
 	Email    string
 	Password string
@@ -56,6 +61,7 @@ type LogoutParams struct {
 	UserID       int64
 	DeviceID     string
 	IsAllDevices bool
+	Token        TokenMeta
 }
 
 type ResetPasswordParams struct {

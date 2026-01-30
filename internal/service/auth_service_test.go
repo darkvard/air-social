@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -197,43 +198,68 @@ func (s *authServiceSuite) TestLogin() {
 func (s *authServiceSuite) TestLogout() {
 	var userID int64 = 1
 	deviceID := "device-1"
+	tokenMeta := domain.TokenMeta{
+		AccessToken: "access-token",
+		ExpiresAt:   pkg.TimeNowUTC().Add(15 * time.Minute).Unix(),
+	}
 
 	tests := []struct {
 		name      string
 		input     domain.LogoutParams
-		setupMock func(t *mocks.TokenService)
+		setupMock func(t *mocks.TokenService, c *mocks.CacheStorage)
 		wantErr   error
 	}{
 		{
-			name: "logout_all_devices",
-			input: domain.LogoutParams{
-				UserID:       userID,
-				IsAllDevices: true,
-			},
-			setupMock: func(t *mocks.TokenService) {
-				t.EXPECT().RevokeAllUserSessions(mock.Anything, userID).Return(nil).Once()
-			},
-			wantErr: nil,
-		},
-		{
-			name: "logout_single_device",
+			name: "token_blocked",
 			input: domain.LogoutParams{
 				UserID:       userID,
 				DeviceID:     deviceID,
 				IsAllDevices: false,
+				Token:        tokenMeta,
 			},
-			setupMock: func(t *mocks.TokenService) {
-				t.EXPECT().RevokeDeviceSession(mock.Anything, userID, deviceID).Return(nil).Once()
+			setupMock: func(t *mocks.TokenService, c *mocks.CacheStorage) {
+				c.EXPECT().IsExist(mock.Anything, domain.GetBlacklistTokenKey(tokenMeta.AccessToken)).Return(true, nil).Once()
+			},
+			wantErr: pkg.ErrUnauthorized,
+		},
+		{
+			name: "logout_all_devices_success",
+			input: domain.LogoutParams{
+				UserID:       userID,
+				IsAllDevices: true,
+				Token:        tokenMeta,
+			},
+			setupMock: func(t *mocks.TokenService, c *mocks.CacheStorage) {
+				c.EXPECT().IsExist(mock.Anything, domain.GetBlacklistTokenKey(tokenMeta.AccessToken)).Return(false, nil).Once()
+				t.EXPECT().RevokeAllUserSessions(mock.Anything, userID).Return(nil).Once()
+				c.EXPECT().Set(mock.Anything, domain.GetBlacklistTokenKey(tokenMeta.AccessToken), "revoked", mock.Anything).Return(nil).Once()
 			},
 			wantErr: nil,
 		},
 		{
-			name: "error",
+			name: "logout_single_device_success",
+			input: domain.LogoutParams{
+				UserID:       userID,
+				DeviceID:     deviceID,
+				IsAllDevices: false,
+				Token:        tokenMeta,
+			},
+			setupMock: func(t *mocks.TokenService, c *mocks.CacheStorage) {
+				c.EXPECT().IsExist(mock.Anything, domain.GetBlacklistTokenKey(tokenMeta.AccessToken)).Return(false, nil).Once()
+				t.EXPECT().RevokeDeviceSession(mock.Anything, userID, deviceID).Return(nil).Once()
+				c.EXPECT().Set(mock.Anything, domain.GetBlacklistTokenKey(tokenMeta.AccessToken), "revoked", mock.Anything).Return(nil).Once()
+			},
+			wantErr: nil,
+		},
+		{
+			name: "revoke_error",
 			input: domain.LogoutParams{
 				UserID:       userID,
 				IsAllDevices: true,
+				Token:        tokenMeta,
 			},
-			setupMock: func(t *mocks.TokenService) {
+			setupMock: func(t *mocks.TokenService, c *mocks.CacheStorage) {
+				c.EXPECT().IsExist(mock.Anything, domain.GetBlacklistTokenKey(tokenMeta.AccessToken)).Return(false, nil).Once()
 				t.EXPECT().RevokeAllUserSessions(mock.Anything, userID).Return(assert.AnError).Once()
 			},
 			wantErr: pkg.ErrInternal,
@@ -243,10 +269,11 @@ func (s *authServiceSuite) TestLogout() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockToken := mocks.NewTokenService(s.T())
-			svc := NewAuthService(nil, mockToken, nil, nil, nil)
+			mockCache := mocks.NewCacheStorage(s.T())
+			svc := NewAuthService(nil, mockToken, nil, nil, mockCache)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockToken)
+				tc.setupMock(mockToken, mockCache)
 			}
 
 			err := svc.Logout(context.Background(), tc.input)
@@ -345,7 +372,7 @@ func (s *authServiceSuite) TestResetPassword() {
 					Run(func(ctx context.Context, key string, dest any) {
 						*dest.(*string) = email
 					}).Return(nil).Once()
-					
+
 				u.EXPECT().UpdatePassword(mock.Anything, email, mock.Anything).Return(nil).Once()
 			},
 			wantErr: nil,
@@ -400,7 +427,7 @@ func (s *authServiceSuite) TestVerifyEmail() {
 					Run(func(ctx context.Context, key string, dest any) {
 						*dest.(*string) = email
 					}).Return(nil).Once()
-					
+
 				u.EXPECT().VerifyEmail(mock.Anything, email).Return(nil).Once()
 			},
 			wantErr: nil,

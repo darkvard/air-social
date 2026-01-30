@@ -13,6 +13,7 @@ const (
 	WorkerEmailReset     = "worker:email:reset:"
 	WorkerEmailRetry     = "worker:email:retry:"
 	UploadImageVerify    = "upload:verify:"
+	BlacklistToken       = "blacklist:token:"
 )
 
 const (
@@ -50,4 +51,8 @@ func GetEmailRetryKey(token string) string {
 
 func GetUploadImageKey(objectName string) string {
 	return fmt.Sprintf(UploadImageVerify+"%s", objectName)
+}
+
+func GetBlacklistTokenKey(token string) string {
+	return fmt.Sprintf(BlacklistToken+"%s", token)
 }

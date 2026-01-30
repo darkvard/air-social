@@ -13,6 +13,7 @@ import (
 type authContextKey string
 
 const AuthPayloadKey authContextKey = "auth_payload"
+const TokenMetaKey authContextKey = "token_meta"
 
 func Auth(tokenService service.TokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -54,8 +55,14 @@ func Auth(tokenService service.TokenService) gin.HandlerFunc {
 			DeviceID: deviceID,
 		}
 
+		tokenMeta := domain.TokenMeta{
+			AccessToken: tokenString,
+			ExpiresAt:   pkg.GetInt64Claims(clams, pkg.JWTClaimExpiresAt),
+		}
+
 		// Set context
 		c.Set(AuthPayloadKey, payload)
+		c.Set(TokenMetaKey, tokenMeta)
 		c.Next()
 	}
 }
@@ -80,4 +87,18 @@ func GetAuthClaims(c *gin.Context) (*domain.AuthClaims, error) {
 	}
 
 	return payload, nil
+}
+
+func GetTokenMeta(c *gin.Context) (domain.TokenMeta, error) {
+	value, exists := c.Get(TokenMetaKey)
+	if !exists {
+		return domain.TokenMeta{}, pkg.ErrUnauthorized
+	}
+
+	meta, ok := value.(domain.TokenMeta)
+	if !ok {
+		return domain.TokenMeta{}, pkg.ErrUnauthorized
+	}
+
+	return meta, nil
 }

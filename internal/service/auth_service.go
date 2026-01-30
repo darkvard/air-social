@@ -68,11 +68,19 @@ func (s *AuthServiceImpl) Register(ctx context.Context, input domain.RegisterPar
 }
 
 func (s *AuthServiceImpl) Logout(ctx context.Context, input domain.LogoutParams) error {
+	if s.isBlockedAccessToken(ctx, input.Token.AccessToken) {
+		return pkg.ErrUnauthorized
+	}
+
 	var err error
 	if input.IsAllDevices {
 		err = s.tokenSvc.RevokeAllUserSessions(ctx, input.UserID)
 	} else {
 		err = s.tokenSvc.RevokeDeviceSession(ctx, input.UserID, input.DeviceID)
+	}
+
+	if err == nil {
+		s.blockAccessToken(ctx, input.Token)
 	}
 	return pkg.OrInternalError(err)
 }
@@ -262,3 +270,18 @@ func (s *AuthServiceImpl) getEmailResetPassword(ctx context.Context, token strin
 	}
 	return email, nil
 }
+
+func (s *AuthServiceImpl) isBlockedAccessToken(ctx context.Context, token string) bool {
+	key := domain.GetBlacklistTokenKey(token)
+	exists, _ := s.cache.IsExist(ctx, key)
+	return exists
+}
+
+func (s *AuthServiceImpl) blockAccessToken(ctx context.Context, token domain.TokenMeta) {
+	ttl := time.Until(time.Unix(token.ExpiresAt, 0))
+	if ttl > 0 {
+		key := domain.GetBlacklistTokenKey(token.AccessToken)
+		_ = s.cache.Set(ctx, key, "revoked", ttl)
+	}
+}
+ 

@@ -44,35 +44,18 @@ func (s *userServiceSuite) TestCreateUser() {
 		want      want
 	}{
 		{
-			name: "repo_get_error",
+			name: "repo_create_error",
 			args: args{
 				input: baseInput,
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
 				userRepo.EXPECT().
-					GetByEmail(mock.Anything, a.input.Email).
-					Return(nil, assert.AnError).
+					Create(mock.Anything, mock.Anything).
+					Return(assert.AnError).
 					Once()
 			},
 			want: want{
 				err:      pkg.ErrInternal,
-				response: domain.UserResponse{},
-			},
-		},
-		{
-			name: "repo_get_exists",
-			args: args{
-				input: baseInput,
-			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
-				foundUser := &domain.User{Email: a.input.Email}
-				userRepo.EXPECT().
-					GetByEmail(mock.Anything, a.input.Email).
-					Return(foundUser, nil).
-					Once()
-			},
-			want: want{
-				err:      pkg.ErrAlreadyExists,
 				response: domain.UserResponse{},
 			},
 		},
@@ -82,11 +65,6 @@ func (s *userServiceSuite) TestCreateUser() {
 				input: baseInput,
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
-				userRepo.EXPECT().
-					GetByEmail(mock.Anything, a.input.Email).
-					Return(nil, pkg.ErrNotFound).
-					Once()
-
 				userRepo.EXPECT().
 					Create(
 						mock.Anything,
@@ -632,7 +610,7 @@ func (s *userServiceSuite) TestChangePassword() {
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(&domain.User{PasswordHash: hashedPassword}, nil).Once()
-				
+
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
 					return verifyPassword(a.input.NewPassword, u.PasswordHash)
 				})).Return(nil).Once()
@@ -690,7 +668,7 @@ func (s *userServiceSuite) TestUpdatePassword() {
 			args: args{email: email, passwordHashed: newHash},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(&domain.User{Email: email}, nil).Once()
-				
+
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
 					return u.PasswordHash == a.passwordHashed
 				})).Return(nil).Once()

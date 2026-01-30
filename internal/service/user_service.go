@@ -73,14 +73,6 @@ func (s *UserServiceImpl) ResolveMediaURLs(res *domain.UserResponse) {
 func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUserParams) (domain.UserResponse, error) {
 	var empty domain.UserResponse
 
-	exists, err := s.GetByEmail(ctx, input.Email)
-	if err := pkg.SkipError(err, pkg.ErrNotFound); err != nil {
-		return empty, err
-	}
-	if exists != nil {
-		return empty, pkg.ErrAlreadyExists
-	}
-
 	user := &domain.User{
 		Email:        input.Email,
 		Username:     input.Username,
@@ -88,7 +80,7 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUse
 	}
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
-		return empty, pkg.OrInternalError(err)
+		return empty, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
 	}
 
 	return s.mapToResponse(user), nil
