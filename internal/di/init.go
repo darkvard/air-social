@@ -36,9 +36,9 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 		return handleError(err)
 	}
 
-	repositories := initRepository(infrastructures)
+	repositories := initRepositories(infrastructures)
 	services := initServices(cfg, url, infrastructures, repositories, adapters)
-	handlers := initHandlers(services)
+	handlers := initHandlers(services, url)
 	middlewares := middleware.NewManager(cfg.Server, services.Token)
 
 	server := transport.NewServer(cfg, url, middlewares, handlers.Auth, handlers.User, handlers.Media, handlers.Health)

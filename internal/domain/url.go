@@ -10,4 +10,6 @@ type URLFactory interface {
 
 	VerifyEmailLink(token string) string
 	ResetPasswordLink(token string) string
+
+	ResetPasswordEndpoint() string
 }

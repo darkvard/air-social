@@ -10,7 +10,7 @@ type Repositories struct {
 	Token domain.TokenRepository
 }
 
-func initRepository(infra *Infrastructures) *Repositories {
+func initRepositories(infra *Infrastructures) *Repositories {
 	return &Repositories{
 		User:  postgres.NewUserRepository(infra.DB),
 		Token: postgres.NewTokenRepository(infra.DB),

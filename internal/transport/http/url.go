@@ -70,3 +70,8 @@ func (r *URLFactoryImpl) PrintInfraConsole() {
 	pkg.Log().Info("server started")
 	fmt.Println(string(data))
 }
+
+
+func (r *URLFactoryImpl) ResetPasswordEndpoint() string {
+	return fmt.Sprintf("%s%s%s", r.apiBaseURL(), AuthGroup, ResetPassword)
+}

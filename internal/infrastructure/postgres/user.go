@@ -70,7 +70,7 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 			website = :website,
 			verified = :verified, 
 			verified_at = :verified_at, 
-			updated_at = ":updated_at", 
+			updated_at = :updated_at, 
 			version = version + 1
 		WHERE id = :id AND version = :version
 		RETURNING version
@@ -83,11 +83,11 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 
 	if rows.Next() {
 		var newVersion int
-        if err := rows.Scan(&newVersion); err != nil {
-             return err
-        }
-        user.Version = newVersion
-        return nil
+		if err := rows.Scan(&newVersion); err != nil {
+			return err
+		}
+		user.Version = newVersion
+		return nil
 	}
 
 	return pkg.ErrNotFound

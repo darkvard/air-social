@@ -211,6 +211,50 @@ func (_c *URLFactory_RabbitMQDashboardUI_Call) RunAndReturn(run func() string) *
 	return _c
 }
 
+// ResetPasswordEndpoint provides a mock function for the type URLFactory
+func (_mock *URLFactory) ResetPasswordEndpoint() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResetPasswordEndpoint")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// URLFactory_ResetPasswordEndpoint_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResetPasswordEndpoint'
+type URLFactory_ResetPasswordEndpoint_Call struct {
+	*mock.Call
+}
+
+// ResetPasswordEndpoint is a helper method to define mock.On call
+func (_e *URLFactory_Expecter) ResetPasswordEndpoint() *URLFactory_ResetPasswordEndpoint_Call {
+	return &URLFactory_ResetPasswordEndpoint_Call{Call: _e.mock.On("ResetPasswordEndpoint")}
+}
+
+func (_c *URLFactory_ResetPasswordEndpoint_Call) Run(run func()) *URLFactory_ResetPasswordEndpoint_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *URLFactory_ResetPasswordEndpoint_Call) Return(s string) *URLFactory_ResetPasswordEndpoint_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *URLFactory_ResetPasswordEndpoint_Call) RunAndReturn(run func() string) *URLFactory_ResetPasswordEndpoint_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ResetPasswordLink provides a mock function for the type URLFactory
 func (_mock *URLFactory) ResetPasswordLink(token string) string {
 	ret := _mock.Called(token)

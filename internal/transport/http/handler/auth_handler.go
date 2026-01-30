@@ -11,11 +11,13 @@ import (
 
 type AuthHandler struct {
 	authSvc service.AuthService
+	url     domain.URLFactory
 }
 
-func NewAuthHandler(authSvc service.AuthService) *AuthHandler {
+func NewAuthHandler(authSvc service.AuthService, url domain.URLFactory) *AuthHandler {
 	return &AuthHandler{
 		authSvc: authSvc,
+		url: url,
 	}
 }
 
@@ -232,7 +234,10 @@ func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 		return
 	}
 
-	c.HTML(200, "reset_password.gohtml", gin.H{"Success": true})
+	c.HTML(200, "reset_password.gohtml", gin.H{
+		"Success": true,
+		"ApiUrl":  h.url.ResetPasswordEndpoint(),
+	})
 }
 
 // ResetPassword godoc
