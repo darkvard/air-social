@@ -91,89 +91,32 @@ MINIO_BUCKET_PRIVATE=air-social-media-private
 MINIO_USE_SSL=false
 ```
 
-## 3. Docker Override (`docker-compose.override.yml`)
+## 3. Debug Workflow
 
-Create a file named `docker-compose.override.yml`.
-This file exposes ports to your host machine and configures Nginx to talk back to your host (where the Debugger is running).
+**Hybrid Setup:** Infrastructure (DB, Redis, Nginx, MQ) runs in Docker. The App runs on your Host (IDE).
 
-```yaml
-services:
-  app:
-    profiles: ["disable_for_debug"]
+### Commands
 
-  nginx:
-    ports:
-      - "80:80"
-    environment:
-      - NGINX_TIMEOUT=3600s
-    extra_hosts:
-      - "app:host-gateway"
+1.  **Start Infrastructure:**
 
-  db:
-    ports:
-      - "127.0.0.1:5432:5432"
+    ```bash
+    make debug
+    ```
 
-  redis:
-    ports:
-      - "127.0.0.1:6379:6379"
+2.  **Run App:**
+    Start the Go App in your IDE (Debug Mode).
 
-  rabbitmq:
-    ports:
-      - "127.0.0.1:5672:5672"
-      - "127.0.0.1:15672:15672"
+3.  **Stop Environment:**
+    ```bash
+    make down
+    ```
 
-  minio:
-    ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
-```
+## 4. Troubleshooting
 
-## 4. How to Debug
+- **Nginx 502 Bad Gateway:**
+  - _Cause:_ Host firewall blocks Docker from accessing IDE port 8080.
+  - _Fix (Ubuntu):_ `sudo ufw allow 8080/tcp`
 
-### Step 1: Start Infrastructure
-Run the following command to start all services (DB, Redis, Nginx...) **EXCEPT** the App service.
-
-```bash
-make up
-```
-
-### Step 2: Start App (Debugger)
-In VSCode, ensure **"Debug Go App"** is selected and press **F5**.
-The app will start on port `8080`.
-### Step 3: Stop
-When you are done, run:
-
-```bash
-make down
-```
-
-## 5. Troubleshooting
-
-### Firewall Issues
-If Nginx (running in Docker) cannot connect to your App (running on Host), you might see a **502 Bad Gateway** error.
-
-This is often due to the Firewall blocking the connection from the Docker Network to your Host's port 8080.
-
-**Fix:** Allow traffic on port 8080.
-```bash
-# Ubuntu (UFW)
-sudo ufw allow 8080/tcp
-sudo ufw reload
-```
-
-## 6. Switching Back to Normal Mode
-
-When running the app normally (inside Docker), you **MUST disable** `docker-compose.override.yml`, otherwise Nginx causes a **502 Bad Gateway**.
-
-### The Reason (Host Gateway)
-The override file uses `extra_hosts: host-gateway`, forcing Nginx to route traffic to your **Host Machine** (where the Debugger was), instead of the **Docker Container**.
-* **Debug Mode:** Nginx -> Host Machine (VSCode) ✅
-* **Normal Mode (with override active):** Nginx -> Host Machine (Empty) ❌ -> **502 Error**
-
-### Solution
-**Option 1: Comment Out**
-Comment out all lines in `docker-compose.override.yml` to disable the `host-gateway` routing.
-
-**Option 2: Delete File**
-```bash
-rm docker-compose.override.yml
+- **Connection Refused (DB/Redis/MQ...):**
+  - Ensure `.env.local` uses `localhost` or `127.0.0.1` (not service names).
+  - Check if services are running: `make ps`.
