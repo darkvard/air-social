@@ -154,13 +154,15 @@ definitions:
     type: object
   domain.TokenInfo:
     properties:
+      access_expire_at:
+        type: string
       access_token:
         type: string
-      expires_in:
-        type: integer
+      refresh_expire_at:
+        type: string
       refresh_token:
         type: string
-      token_type:
+      type:
         type: string
     type: object
   domain.UpdateProfileRequest:
@@ -248,6 +250,7 @@ definitions:
       code:
         type: integer
       data: {}
+      errors: {}
       message:
         type: string
     type: object

@@ -66,8 +66,7 @@ func (s *tokenServiceSuite) TestCreateSession() {
 			},
 			want: want{
 				tokenInfo: domain.TokenInfo{
-					TokenType: pkg.AuthorizationType,
-					ExpiresIn: int64(s.cfg.AccessTokenTTL.Seconds()),
+					Type: pkg.AuthorizationType,
 				},
 				err: nil,
 			},
@@ -94,8 +93,7 @@ func (s *tokenServiceSuite) TestCreateSession() {
 			},
 			want: want{
 				tokenInfo: domain.TokenInfo{
-					TokenType: pkg.AuthorizationType,
-					ExpiresIn: int64(s.cfg.AccessTokenTTL.Seconds()),
+					Type: pkg.AuthorizationType,
 				},
 				err: nil,
 			},
@@ -120,8 +118,9 @@ func (s *tokenServiceSuite) TestCreateSession() {
 				s.NoError(err)
 				s.NotEmpty(got.AccessToken)
 				s.NotEmpty(got.RefreshToken)
-				s.Equal(tc.want.tokenInfo.TokenType, got.TokenType)
-				s.Equal(tc.want.tokenInfo.ExpiresIn, got.ExpiresIn)
+				s.Equal(tc.want.tokenInfo.Type, got.Type)
+				s.WithinDuration(pkg.TimeNowUTC().Add(s.cfg.AccessTokenTTL), got.AccessExpireAt, 5*time.Second)
+				s.WithinDuration(pkg.TimeNowUTC().Add(s.cfg.RefreshTokenTTL), got.RefreshExpireAt, 5*time.Second)
 			}
 		})
 	}
@@ -417,7 +416,7 @@ func (s *tokenServiceSuite) TestCleanupDatabase() {
 
 func (s *tokenServiceSuite) TestValidate() {
 	svc := NewTokenService(nil, s.cfg)
-	validToken, _ := svc.generateAccessToken(1, "device-1")
+	validToken, _ := svc.generateAccessToken(1, "device-1", pkg.TimeNowUTC())
 
 	tests := []struct {
 		name        string
@@ -450,7 +449,7 @@ func (s *tokenServiceSuite) TestValidate() {
 				expiredCfg := s.cfg
 				expiredCfg.AccessTokenTTL = -1 * time.Hour
 				expiredSvc := NewTokenService(nil, expiredCfg)
-				t, _ := expiredSvc.generateAccessToken(1, "device-1")
+				t, _ := expiredSvc.generateAccessToken(1, "device-1", pkg.TimeNowUTC())
 				return t
 			}(),
 			cfg:       s.cfg,

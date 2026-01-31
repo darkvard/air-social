@@ -27,8 +27,9 @@ type RefreshToken struct {
 }
 
 type TokenInfo struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int64  `json:"expires_in"`
-	TokenType    string `json:"token_type"`
+	Type            string    `json:"type"`
+	AccessToken     string    `json:"access_token"`
+	RefreshToken    string    `json:"refresh_token"`
+	AccessExpireAt  time.Time `json:"access_expire_at"`
+	RefreshExpireAt time.Time `json:"refresh_expire_at"`
 }

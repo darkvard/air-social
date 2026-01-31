@@ -950,16 +950,19 @@ const docTemplate = `{
         "domain.TokenInfo": {
             "type": "object",
             "properties": {
+                "access_expire_at": {
+                    "type": "string"
+                },
                 "access_token": {
                     "type": "string"
                 },
-                "expires_in": {
-                    "type": "integer"
+                "refresh_expire_at": {
+                    "type": "string"
                 },
                 "refresh_token": {
                     "type": "string"
                 },
-                "token_type": {
+                "type": {
                     "type": "string"
                 }
             }
@@ -1081,6 +1084,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "data": {},
+                "errors": {},
                 "message": {
                     "type": "string"
                 }

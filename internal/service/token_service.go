@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -136,11 +137,12 @@ func (s *TokenServiceImpl) rotateSession(ctx context.Context, oldToken domain.Re
 func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, deviceID string) (domain.TokenInfo, error) {
 	var empty domain.TokenInfo
 
-	access, err := s.generateAccessToken(userID, deviceID)
+	now := pkg.TimeNowUTC()
+
+	access, err := s.generateAccessToken(userID, deviceID, now)
 	if err != nil {
 		return empty, pkg.OrInternalError(err)
 	}
-
 	raw, refresh := s.generateRefreshToken(userID, deviceID)
 
 	if err := s.tokenRepo.Create(ctx, refresh); err != nil {
@@ -148,15 +150,15 @@ func (s *TokenServiceImpl) generateTokens(ctx context.Context, userID int64, dev
 	}
 
 	return domain.TokenInfo{
-		AccessToken:  access,
-		RefreshToken: raw,
-		ExpiresIn:    int64(s.tokenCfg.AccessTokenTTL.Seconds()),
-		TokenType:    pkg.AuthorizationType,
+		AccessToken:     access,
+		RefreshToken:    raw,
+		AccessExpireAt:  now.Add(s.tokenCfg.AccessTokenTTL),
+		RefreshExpireAt: refresh.ExpiresAt,
+		Type:            pkg.AuthorizationType,
 	}, nil
 }
 
-func (s *TokenServiceImpl) generateAccessToken(userID int64, deviceID string) (string, error) {
-	now := pkg.TimeNowUTC()
+func (s *TokenServiceImpl) generateAccessToken(userID int64, deviceID string, now time.Time) (string, error) {
 	claims := jwt.MapClaims{
 		pkg.JWTClaimSubject:   fmt.Sprintf("%d", userID),
 		pkg.JWTClaimDevice:    deviceID,
