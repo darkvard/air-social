@@ -76,7 +76,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	}
 
 	var req domain.UpdateProfileRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := pkg.StrictBindJSON(c, &req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
 	}

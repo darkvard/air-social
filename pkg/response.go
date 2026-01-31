@@ -66,7 +66,7 @@ func HandleValidateError(c *gin.Context, err error) {
 		})
 		return
 	}
-	BadRequest(c, "invalid request")
+	BadRequest(c,  err.Error())
 }
 
 func HandleServiceError(c *gin.Context, err error) {

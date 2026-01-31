@@ -1,8 +1,11 @@
 package pkg
 
 import (
+	"encoding/json"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -46,4 +49,29 @@ func ValidateRequestError(err error) *ValidationResult {
 	}
 
 	return nil
+}
+
+// StrictBindJSON parses the Request Body into 'obj' with strict structure validation.
+//
+// Features:
+// 1. Strictness: Uses decoder.DisallowUnknownFields() to reject any unknown keys.
+//    This is crucial for structs using Pointers (e.g., PATCH requests) to prevent
+//    silent failures when client sends typo fields (e.g., "full_nme" instead of "full_name").
+//
+// 2. Validation: After decoding, it executes Gin's binding validator to check rules
+//    (e.g., min, max, email) on the fields that were present. It does NOT enforce
+//    presence (unless 'required' tag is used), making it safe for optional/partial updates.
+//
+// NOTE: 'obj' MUST be a pointer to a struct.
+func StrictBindJSON(c *gin.Context, obj any) error {
+	decoder := json.NewDecoder(c.Request.Body)
+	decoder.DisallowUnknownFields()
+
+	// Decode JSON
+	if err := decoder.Decode(obj); err != nil {
+		return err
+	}
+
+	// Validate struct (required, min, max...)
+	return binding.Validator.ValidateStruct(obj)
 }

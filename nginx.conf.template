@@ -18,10 +18,10 @@ upstream rabbitmq_console {
 # --- SERVER ---
 server {
     listen 80;
-    server_name ${APP_DOMAIN}; 
+    server_name ${SERVER_DOMAIN}; 
 
     # 1. API
-    location /${APP_NAME}/api/ {
+    location /${SERVER_NAME}/api/ {
         proxy_pass http://backend_api/api/;
         
         proxy_set_header Host $host;
@@ -34,8 +34,8 @@ server {
     }
 
     # 2. Public File
-    location /${APP_NAME}-public/ {
-        proxy_pass http://minio_storage/${APP_NAME}-public/;
+    location /${SERVER_NAME}-public/ {
+        proxy_pass http://minio_storage/${SERVER_NAME}-public/;
         proxy_set_header Host minio:9000;
     }
 

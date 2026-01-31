@@ -7,14 +7,16 @@ Setup the environment and run the full application stack using Docker.
 Create a `.env` file in the root directory. This configuration is optimized for the **Docker Internal Network**, allowing services to communicate via hostnames.
 
 ```ini
-# App
-APP_ENV=production
-APP_PORT=8080
-APP_NAME=air-social
-APP_DOMAIN=localhost
-APP_PROTOCOL=http
-APP_BASIC_AUTH_USERNAME=admin
-APP_BASIC_AUTH_PASSWORD=password
+# Server
+SERVER_ENV=dev
+SERVER_PORT=8080
+SERVER_NAME=air-social
+SERVER_DOMAIN=localhost
+SERVER_PROTOCOL=http
+SERVER_READ_TIMEOUT=5s
+SERVER_WRITE_TIMEOUT=10s
+SERVER_BASIC_AUTH_USERNAME=admin
+SERVER_BASIC_AUTH_PASSWORD=password
 
 # Database
 DB_USER=postgres

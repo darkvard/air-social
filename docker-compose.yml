@@ -9,8 +9,8 @@ services:
     ports:
       - "80:80"
     environment:
-      - APP_DOMAIN=${APP_DOMAIN}
-      - APP_NAME=${APP_NAME:-air-social}
+      - SERVER_DOMAIN=${SERVER_DOMAIN}
+      - SERVER_NAME=${SERVER_NAME:-air-social}
       - NGINX_TIMEOUT=60s
     volumes:
       - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
@@ -35,7 +35,7 @@ services:
     environment:
       - TERM=xterm-256color
       - CLICOLOR_FORCE=1
-      - FILE_STORAGE_PUBLIC_URL=${APP_PROTOCOL}://${APP_DOMAIN}/${APP_NAME:-air-social}-public
+      - FILE_STORAGE_PUBLIC_URL=${SERVER_PROTOCOL}://${SERVER_DOMAIN}/${SERVER_NAME:-air-social}-public
     expose:
       - "8080"
     volumes:
@@ -131,7 +131,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BROWSER_REDIRECT_URL: "${APP_PROTOCOL}://${APP_DOMAIN}/storage-admin"
+      MINIO_BROWSER_REDIRECT_URL: "${SERVER_PROTOCOL}://${SERVER_DOMAIN}/storage-admin"
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data

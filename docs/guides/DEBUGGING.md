@@ -18,7 +18,7 @@ Create or update the file `.vscode/launch.json` in the project root. This tells 
       "program": "${workspaceFolder}/cmd/api",
       "cwd": "${workspaceFolder}",
       "env": {
-        "APP_ENV": "debug"
+        "SERVER_ENV": "debug"
       },
       "envFile": "${workspaceFolder}/.env.local",
       "args": []
@@ -33,14 +33,16 @@ Create a file named `.env.local` in the project root.
 **Important:** All hostnames must be set to `localhost` because the App is running on your machine, not inside the Docker network.
 
 ```ini
-# App
-APP_ENV=debug
-APP_PORT=8080
-APP_NAME=air-social
-APP_DOMAIN=localhost
-APP_PROTOCOL=http
-APP_BASIC_AUTH_USERNAME=admin
-APP_BASIC_AUTH_PASSWORD=password
+# Server
+SERVER_ENV=debug
+SERVER_PORT=8080
+SERVER_NAME=air-social
+SERVER_DOMAIN=localhost
+SERVER_PROTOCOL=http
+SERVER_READ_TIMEOUT=3600s
+SERVER_WRITE_TIMEOUT=3600s
+SERVER_BASIC_AUTH_USERNAME=admin
+SERVER_BASIC_AUTH_PASSWORD=password
 
 # Database
 DB_USER=postgres

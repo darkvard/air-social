@@ -24,7 +24,7 @@ type Config struct {
 
 func Load() Config {
 	envFile := ".env"
-	if os.Getenv("APP_ENV") == pkg.DEBUG {
+	if os.Getenv("SERVER_ENV") == pkg.DEBUG {
 		envFile = ".env.local"
 	}
 	if err := godotenv.Load(envFile); err != nil {

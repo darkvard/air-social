@@ -7,6 +7,8 @@ services:
       - "80:80"
     environment:
       - NGINX_TIMEOUT=3600s
+      - SERVER_READ_TIMEOUT=3600s  
+      - SERVER_WRITE_TIMEOUT=3600s
     extra_hosts:
       - "app:host-gateway"
 
