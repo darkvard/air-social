@@ -642,7 +642,7 @@ paths:
       summary: Update user profile
       tags:
       - User
-  /users/password:
+  /users/me/password:
     put:
       consumes:
       - application/json
@@ -678,7 +678,7 @@ paths:
       summary: Change password
       tags:
       - User
-  /users/profile-image/confirm:
+  /users/me/profile-image/confirm:
     post:
       consumes:
       - application/json

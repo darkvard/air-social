@@ -71,7 +71,6 @@ func (r *URLFactoryImpl) PrintInfraConsole() {
 	fmt.Println(string(data))
 }
 
-
 func (r *URLFactoryImpl) ResetPasswordEndpoint() string {
 	return fmt.Sprintf("%s%s%s", r.apiBaseURL(), AuthGroup, ResetPassword)
 }

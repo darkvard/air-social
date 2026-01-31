@@ -284,4 +284,3 @@ func (s *AuthServiceImpl) blockAccessToken(ctx context.Context, token domain.Tok
 		_ = s.cache.Set(ctx, key, "revoked", ttl)
 	}
 }
- 

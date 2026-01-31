@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -110,4 +111,68 @@ func Retry(ctx context.Context, attempts int, sleep time.Duration, fn func() err
 
 func TimeNowUTC() time.Time {
 	return time.Now().UTC()
+}
+
+// IsStructNilOrEmpty checks if the input is nil, a nil pointer, or a struct with all zero/nil fields.
+// It is primarily used to validate PATCH requests where an empty payload ({}) must be rejected.
+func IsStructNilOrEmpty(d any) bool {
+	// 1. Safety check: nil interface is strictly empty.
+	if d == nil {
+		return true
+	}
+
+	v := reflect.ValueOf(d)
+
+	// 2. Handle Pointers: Check if the pointer itself is nil before dereferencing.
+	if v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return true // Nil pointer (e.g., var req *Request = nil) is empty.
+		}
+		v = v.Elem() // Dereference to access the actual struct value.
+	}
+
+	// 3. Type validation: Ensure we are inspecting a Struct.
+	if v.Kind() != reflect.Struct {
+		return false
+	}
+
+	// 4. Field Inspection: Iterate through all fields to find any non-zero value.
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+
+		// Skip unexported fields to prevent runtime panic.
+		if !field.CanInterface() {
+			continue
+		}
+
+		// Check if the field has a value.
+		if !field.IsZero() {
+			return false
+		}
+	}
+
+	// 5. Conclusion: No non-zero fields found -> Struct is empty.
+	return true
+}
+
+// IsNil checks if an interface holds a nil value, handling the "Typed Nil" problem in Go.
+func IsNil(i any) bool {
+	if i == nil {
+		return true
+	}
+
+	v := reflect.ValueOf(i)
+	kind := v.Kind()
+
+	// Only check IsNil for types that support it to avoid panic.
+	if kind == reflect.Pointer ||
+		kind == reflect.Interface ||
+		kind == reflect.Map ||
+		kind == reflect.Slice ||
+		kind == reflect.Chan ||
+		kind == reflect.Func {
+		return v.IsNil()
+	}
+
+	return false
 }

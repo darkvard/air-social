@@ -589,7 +589,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/password": {
+        "/users/me/password": {
             "put": {
                 "security": [
                     {
@@ -646,7 +646,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/profile-image/confirm": {
+        "/users/me/profile-image/confirm": {
             "post": {
                 "security": [
                     {

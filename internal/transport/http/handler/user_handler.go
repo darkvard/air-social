@@ -118,7 +118,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
-//	@Router			/users/password [put]
+//	@Router			/users/me/password [put]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
 	claims, err := middleware.GetAuthClaims(c)
 	if err != nil {
@@ -161,7 +161,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Failure		403		{object}	pkg.Response
 //	@Failure		404		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
-//	@Router			/users/profile-image/confirm [post]
+//	@Router			/users/me/profile-image/confirm [post]
 func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 	claims, err := middleware.GetAuthClaims(c)
 	if err != nil {

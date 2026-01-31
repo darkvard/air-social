@@ -135,13 +135,15 @@ func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, mw *middleware.Mana
 func userRoutes(rg *gin.RouterGroup, h *handler.UserHandler, mw *middleware.Manager) {
 	p := rg.Group(UserGroup, mw.Auth)
 	{
-		p.GET(Me, h.Profile)
-
-		j := p.Group("").Use(mw.JSONOnly)
+		m := p.Group(Me)
 		{
-			j.PUT(Password, h.ChangePassword)
-			j.PATCH(Me, h.UpdateProfile)
-			j.POST(ProfileImage+ConfirmUpload, h.ConfirmFileUpload)
+			m.GET("", h.Profile)
+			mj := m.Group("").Use(mw.JSONOnly)
+			{
+				mj.PATCH("", h.UpdateProfile)
+				mj.PUT(Password, h.ChangePassword)
+				mj.POST(ProfileImage+ConfirmUpload, h.ConfirmFileUpload)
+			}
 		}
 	}
 }

@@ -583,7 +583,7 @@
                 }
             }
         },
-        "/users/password": {
+        "/users/me/password": {
             "put": {
                 "security": [
                     {
@@ -640,7 +640,7 @@
                 }
             }
         },
-        "/users/profile-image/confirm": {
+        "/users/me/profile-image/confirm": {
             "post": {
                 "security": [
                     {

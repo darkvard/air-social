@@ -17,7 +17,7 @@ type AuthHandler struct {
 func NewAuthHandler(authSvc service.AuthService, url domain.URLFactory) *AuthHandler {
 	return &AuthHandler{
 		authSvc: authSvc,
-		url: url,
+		url:     url,
 	}
 }
 
