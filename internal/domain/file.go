@@ -8,11 +8,8 @@ import (
 const (
 	DomainUser    UploadDomain = "users"
 	DomainPost    UploadDomain = "posts"
-	DomainGroup   UploadDomain = "groups"
 	DomainMessage UploadDomain = "messages"
-)
 
-const (
 	FeatureAvatar     UploadFeature = "avatar"
 	FeatureCover      UploadFeature = "cover"
 	FeatureFeedImage  UploadFeature = "feed_image"
@@ -20,16 +17,13 @@ const (
 	FeatureVoiceChat  UploadFeature = "voice_chat"
 	FeatureAttachment UploadFeature = "attachment"
 )
-
 const (
+	PresignedUploadExpiry = 30 * time.Minute
+
 	Limit5MB   int64 = 5 * 1024 * 1024
 	Limit10MB  int64 = 10 * 1024 * 1024
 	Limit50MB  int64 = 50 * 1024 * 1024
 	Limit100MB int64 = 100 * 1024 * 1024
-)
-
-const (
-	UploadExpiry = 15 * time.Minute
 )
 
 var (
@@ -37,6 +31,28 @@ var (
 	VideoAllowedTypes = []string{"video/mp4", "video/quicktime", "video/webm"}
 	AudioAllowedTypes = []string{"audio/mpeg", "audio/wav", "audio/ogg", "audio/mp4"}
 )
+
+var FileUploadRules = map[UploadDomain]map[UploadFeature]UploadRule{
+	DomainUser: {
+		FeatureAvatar: {MaxBytes: Limit5MB, AllowedTypes: ImageAllowedTypes},
+		FeatureCover:  {MaxBytes: Limit5MB, AllowedTypes: ImageAllowedTypes},
+	},
+	DomainPost: {
+		FeatureFeedImage: {MaxBytes: Limit10MB, AllowedTypes: ImageAllowedTypes},
+		FeatureFeedVideo: {MaxBytes: Limit100MB, AllowedTypes: VideoAllowedTypes},
+	},
+	DomainMessage: {
+		FeatureVoiceChat:  {MaxBytes: Limit10MB, AllowedTypes: AudioAllowedTypes},
+		FeatureFeedImage:  {MaxBytes: Limit10MB, AllowedTypes: ImageAllowedTypes},
+		FeatureAttachment: {MaxBytes: Limit50MB, AllowedTypes: nil},
+	},
+}
+
+var ValidDomainFeatures = map[UploadDomain][]UploadFeature{
+	DomainUser:    {FeatureAvatar, FeatureCover},
+	DomainPost:    {FeatureFeedImage, FeatureFeedVideo},
+	DomainMessage: {FeatureAttachment, FeatureVoiceChat, FeatureFeedImage},
+}
 
 type FileStorage interface {
 	// Assuming HTTP for internal communication within Docker network. e.g. "minio:9000"
@@ -56,9 +72,9 @@ type UploadRule struct {
 }
 
 type FileConfig struct {
-	PublicPathPrefix string // e.g. "http://localhost/air-social-public" (via Nginx)
-	BucketPublic     string
-	BucketPrivate    string
+	DomainPublic  string
+	BucketPublic  string
+	BucketPrivate string
 }
 
 type StorageLocation struct {
@@ -78,7 +94,7 @@ type PresignedURLResult struct {
 }
 
 type PresignedFileParams struct {
-	UserID   int64
+	EntityID int64
 	FileName string
 	FileType string
 	FileSize int64
@@ -87,7 +103,7 @@ type PresignedFileParams struct {
 }
 
 type ConfirmFileParams struct {
-	UserID    int64
+	EntityID  int64
 	ObjectKey string
 	Domain    UploadDomain
 	Feature   UploadFeature
@@ -108,9 +124,9 @@ type ConfirmFileUploadRequest struct {
 }
 
 type PresignedFileResponse struct {
-	UploadURL     string            `json:"upload_url"`
-	FormData      map[string]string `json:"form_data"`
-	ObjectKey     string            `json:"object_key"`
-	PublicURL     string            `json:"public_url"`
-	ExpirySeconds int64             `json:"expiry_seconds"`
+	UploadURL string            `json:"upload_url"`
+	FormData  map[string]string `json:"form_data"`
+	ObjectKey string            `json:"object_key"`
+	PublicURL string            `json:"public_url"`
+	ExpireAt  time.Time         `json:"expire_at"`
 }

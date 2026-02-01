@@ -22,14 +22,12 @@ type MediaService interface {
 
 type MediaServiceImpl struct {
 	storage domain.FileStorage
-	cache   domain.CacheStorage
 	cfg     domain.FileConfig
 }
 
-func NewMediaService(storage domain.FileStorage, cache domain.CacheStorage, cfg domain.FileConfig) *MediaServiceImpl {
+func NewMediaService(storage domain.FileStorage, cfg domain.FileConfig) *MediaServiceImpl {
 	return &MediaServiceImpl{
 		storage: storage,
-		cache:   cache,
 		cfg:     cfg,
 	}
 }
@@ -37,12 +35,8 @@ func NewMediaService(storage domain.FileStorage, cache domain.CacheStorage, cfg 
 func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFileResponse, error) {
 	var empty domain.PresignedFileResponse
 
-	rule, err := s.getValidationRules(input.Domain, input.Feature)
+	rule, err := s.validateAndGetUploadRule(input)
 	if err != nil {
-		return empty, err
-	}
-
-	if err := s.validateRequest(input, rule); err != nil {
 		return empty, err
 	}
 
@@ -51,7 +45,7 @@ func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.Pre
 		Key:    s.generateObjectKey(input),
 	}
 	constraints := domain.UploadConstraints{
-		Expiry:      domain.UploadExpiry,
+		Expiry:      domain.PresignedUploadExpiry,
 		ContentType: input.FileType,
 		MaxSize:     rule.MaxBytes,
 	}
@@ -60,16 +54,17 @@ func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.Pre
 	if err != nil {
 		return empty, err
 	}
-	if err := s.saveUploadSession(ctx, loc.Key, input.UserID); err != nil {
-		return empty, err
-	}
+
+	// build public URL using config. MinIO returns internal Docker endpoint not accessible to clients.
+	baseURL := strings.TrimSuffix(s.cfg.DomainPublic, "/")
+	uploadURL := fmt.Sprintf("%s/%s", baseURL, s.cfg.BucketPublic)
 
 	return domain.PresignedFileResponse{
-		UploadURL:     result.UploadURL,
-		FormData:      result.FormData,
-		ObjectKey:     loc.Key,
-		PublicURL:     s.GetPublicURL(loc.Key),
-		ExpirySeconds: int64(domain.UploadExpiry.Seconds()),
+		UploadURL: uploadURL,
+		FormData:  result.FormData,
+		ObjectKey: loc.Key,
+		PublicURL: s.GetPublicURL(loc.Key),
+		ExpireAt:  pkg.TimeNowUTC().Add(domain.PresignedUploadExpiry),
 	}, nil
 }
 
@@ -79,7 +74,7 @@ func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, input domain.Confi
 		Key:    input.ObjectKey,
 	}
 
-	if err := s.verifyUploadSession(ctx, loc.Key, input.UserID); err != nil {
+	if err := s.validateUploadPath(input); err != nil {
 		return "", err
 	}
 
@@ -90,8 +85,6 @@ func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, input domain.Confi
 	if !exists {
 		return "", pkg.ErrNotFound
 	}
-
-	s.removeUploadSession(ctx, loc.Key)
 
 	return loc.Key, nil
 }
@@ -109,52 +102,11 @@ func (s *MediaServiceImpl) GetPublicURL(objectKey string) string {
 	if objectKey == "" {
 		return ""
 	}
-	baseURL := strings.TrimSuffix(s.cfg.PublicPathPrefix, "/")
-	return fmt.Sprintf("%s/%s", baseURL, objectKey)
+	baseURL := strings.TrimSuffix(s.cfg.DomainPublic, "/")
+	return fmt.Sprintf("%s/%s/%s", baseURL, s.cfg.BucketPublic, objectKey)
 }
 
 // Internal helpers
-
-func (s *MediaServiceImpl) getValidationRules(d domain.UploadDomain, f domain.UploadFeature) (domain.UploadRule, error) {
-	switch d {
-	case domain.DomainUser:
-		if f == domain.FeatureAvatar || f == domain.FeatureCover {
-			return domain.UploadRule{MaxBytes: domain.Limit5MB, AllowedTypes: domain.ImageAllowedTypes}, nil
-		}
-
-	case domain.DomainPost:
-		if f == domain.FeatureFeedImage {
-			return domain.UploadRule{MaxBytes: domain.Limit10MB, AllowedTypes: domain.ImageAllowedTypes}, nil
-		}
-		if f == domain.FeatureFeedVideo {
-			return domain.UploadRule{MaxBytes: domain.Limit100MB, AllowedTypes: domain.VideoAllowedTypes}, nil
-		}
-
-	case domain.DomainMessage:
-		if f == domain.FeatureVoiceChat {
-			return domain.UploadRule{MaxBytes: domain.Limit10MB, AllowedTypes: domain.AudioAllowedTypes}, nil
-		}
-		if f == domain.FeatureFeedImage {
-			return domain.UploadRule{MaxBytes: domain.Limit10MB, AllowedTypes: domain.ImageAllowedTypes}, nil
-		}
-	}
-
-	return domain.UploadRule{}, pkg.ErrFileUnsupported
-}
-
-func (s *MediaServiceImpl) validateRequest(input domain.PresignedFileParams, rule domain.UploadRule) error {
-	if input.FileSize > rule.MaxBytes {
-		return fmt.Errorf("%w (limit: %d bytes)", pkg.ErrFileTooLarge, rule.MaxBytes)
-	}
-
-	isValidType := slices.Contains(rule.AllowedTypes, input.FileType)
-
-	if !isValidType {
-		return fmt.Errorf("%w (allowed: %s)", pkg.ErrFileTypeInvalid, strings.Join(rule.AllowedTypes, ", "))
-	}
-
-	return nil
-}
 
 // Format: {domain}/{entity_id}/{feature}/{timestamp}_{uuid}{ext}
 func (s *MediaServiceImpl) generateObjectKey(input domain.PresignedFileParams) string {
@@ -162,25 +114,48 @@ func (s *MediaServiceImpl) generateObjectKey(input domain.PresignedFileParams) s
 	uid := uuid.New().String()
 	timestamp := pkg.TimeNowUTC().Unix()
 	fileName := fmt.Sprintf("%d_%s%s", timestamp, uid, ext)
-	return fmt.Sprintf("%s/%d/%s/%s", input.Domain, input.UserID, input.Feature, fileName)
+	return fmt.Sprintf("%s/%d/%s/%s", input.Domain, input.EntityID, input.Feature, fileName)
 }
 
-func (s *MediaServiceImpl) saveUploadSession(ctx context.Context, objectName string, userID int64) error {
-	key := domain.GetUploadImageKey(objectName)
-	return s.cache.Set(ctx, key, userID, domain.UploadExpiry)
+func (s *MediaServiceImpl) validateAndGetUploadRule(input domain.PresignedFileParams) (domain.UploadRule, error) {
+	var empty domain.UploadRule
+
+	features, ok := domain.FileUploadRules[input.Domain]
+	if !ok {
+		return empty, fmt.Errorf("%w: domain '%s' is not supported", pkg.ErrBadRequest, input.Domain)
+	}
+
+	rule, ok := features[input.Feature]
+	if !ok {
+		return empty, fmt.Errorf("%w: feature '%s' is not supported for domain '%s'", pkg.ErrBadRequest, input.Feature, input.Domain)
+	}
+
+	if input.FileSize > rule.MaxBytes {
+		return empty, fmt.Errorf("%w: file size %d bytes exceeds limit of %d bytes", pkg.ErrFileTooLarge, input.FileSize, rule.MaxBytes)
+	}
+
+	if !slices.Contains(rule.AllowedTypes, input.FileType) {
+		return empty, fmt.Errorf("%w: file type '%s' is not allowed, allowed types: %v", pkg.ErrBadRequest, input.FileType, rule.AllowedTypes)
+	}
+
+	return rule, nil
 }
 
-func (s *MediaServiceImpl) verifyUploadSession(ctx context.Context, objectName string, userID int64) error {
-	var cachedUserID int64
-	if err := s.cache.Get(ctx, domain.GetUploadImageKey(objectName), &cachedUserID); err != nil {
-		return pkg.ErrBadRequest
+func (s *MediaServiceImpl) validateUploadPath(input domain.ConfirmFileParams) error {
+	allowedFeatures, ok := domain.ValidDomainFeatures[input.Domain]
+	if !ok {
+		return fmt.Errorf("%w: domain '%s' not supported", pkg.ErrBadRequest, input.Domain)
 	}
-	if cachedUserID != userID {
-		return pkg.ErrForbidden
+
+	if !slices.Contains(allowedFeatures, input.Feature) {
+		return fmt.Errorf("%w: feature '%s' not allowed for domain '%s'", pkg.ErrBadRequest, input.Feature, input.Domain)
 	}
+
+	expectedPrefix := fmt.Sprintf("%s/%d/%s/", input.Domain, input.EntityID, input.Feature)
+
+	if !strings.HasPrefix(input.ObjectKey, expectedPrefix) {
+		return fmt.Errorf("%w: object key mismatch, expected prefix: %s", pkg.ErrForbidden, expectedPrefix)
+	}
+
 	return nil
-}
-
-func (s *MediaServiceImpl) removeUploadSession(ctx context.Context, objectName string) error {
-	return s.cache.Delete(ctx, domain.GetUploadImageKey(objectName))
 }

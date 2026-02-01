@@ -20,13 +20,18 @@ func NewMediaHandler(srv service.MediaService) *MediaHandler {
 // PresignedUpload godoc
 //
 //	@Summary		Get presigned upload URL
-//	@Description	Generate a presigned URL for uploading a file to object storage.
+//	@Description	Generates a presigned URL and policy signature for direct file upload to MinIO/S3.
+//	@Description
+//	@Description	**Client Integration:**
+//	@Description	* **Target:** Send a `POST` request to the returned `upload_url`.
+//	@Description	* **Payload:** Use `multipart/form-data`. Append all fields from `form_data` (must be FIRST) followed by the file binary (must be LAST).
+//	@Description	* **Success:** Upon successful upload (HTTP 204), confirm the `object_key` with the Backend database.
 //	@Tags			Media
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		domain.PresignedFileUploadRequest	true	"Presigned Upload Request"
-//	@Success		200		{object}	domain.PresignedFileResponse
+//	@Param			request	body		domain.PresignedFileUploadRequest	true	"File Metadata"
+//	@Success		200		{object}	domain.PresignedFileResponse		"Upload Credentials"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -47,7 +52,7 @@ func (h *MediaHandler) PresignedUpload(c *gin.Context) {
 	res, err := h.srv.GetPresignedURL(
 		c.Request.Context(),
 		domain.PresignedFileParams{
-			UserID:   payload.UserID,
+			EntityID: payload.UserID,
 			FileName: req.FileName,
 			FileType: req.FileType,
 			FileSize: req.FileSize,

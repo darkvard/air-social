@@ -53,7 +53,7 @@ func (m *minioStorage) setupPostPolicy(loc domain.StorageLocation, constraints d
 	if err := policy.SetContentType(constraints.ContentType); err != nil {
 		return nil, err
 	}
-	if err := policy.SetContentLengthRange(1024, constraints.MaxSize); err != nil {
+	if err := policy.SetContentLengthRange(1, constraints.MaxSize); err != nil {
 		return nil, err
 	}
 	return policy, nil

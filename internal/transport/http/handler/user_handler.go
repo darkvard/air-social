@@ -176,7 +176,7 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 	}
 
 	params := domain.ConfirmFileParams{
-		UserID:    claims.UserID,
+		EntityID:  claims.UserID,
 		ObjectKey: req.ObjectKey,
 		Domain:    req.Domain,
 		Feature:   req.Feature,

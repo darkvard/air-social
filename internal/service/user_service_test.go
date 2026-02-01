@@ -756,7 +756,7 @@ func (s *userServiceSuite) TestVerifyEmail() {
 
 func (s *userServiceSuite) TestConfirmImageUpload() {
 	userID := int64(1)
-	objectKey := "user/1/avatar/image.jpg"
+	objectKey := "users/1/avatar/image.jpg"
 	publicURL := "http://localhost/air-social-public/" + objectKey
 
 	type args struct {
@@ -782,7 +782,7 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 		{
 			name: "confirm_upload_error",
 			args: args{
-				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, UserID: userID},
+				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
 				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return("", pkg.ErrNotFound).Once()
@@ -793,11 +793,11 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 		{
 			name: "update_repo_error",
 			args: args{
-				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, UserID: userID},
+				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
 				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return(objectKey, nil).Once()
-				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.UserID, objectKey, a.input.Feature).Return(assert.AnError).Once()
+				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.EntityID, objectKey, a.input.Feature).Return(assert.AnError).Once()
 			},
 			wantURL: "",
 			wantErr: pkg.ErrInternal,
@@ -805,11 +805,11 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 		{
 			name: "success",
 			args: args{
-				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, UserID: userID},
+				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
 				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return(objectKey, nil).Once()
-				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.UserID, objectKey, a.input.Feature).Return(nil).Once()
+				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.EntityID, objectKey, a.input.Feature).Return(nil).Once()
 				mediaSvc.EXPECT().GetPublicURL(objectKey).Return(publicURL).Once()
 			},
 			wantURL: publicURL,

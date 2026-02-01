@@ -11,6 +11,7 @@ services:
     environment:
       - SERVER_DOMAIN=${SERVER_DOMAIN}
       - SERVER_NAME=${SERVER_NAME:-air-social}
+      - MINIO_BUCKET_PUBLIC=${MINIO_BUCKET_PUBLIC}
       - NGINX_TIMEOUT=60s
     volumes:
       - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro

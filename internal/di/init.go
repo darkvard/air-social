@@ -18,7 +18,7 @@ type Container struct {
 }
 
 func Initialize(cfg config.Config) (*Container, func(), error) {
-	url := transport.NewURLFactory(cfg.Server)
+	url := transport.NewURLFactory(cfg)
 	url.PrintInfraConsole()
 
 	infrastructures, cleanup, err := initInfrastructures(cfg)

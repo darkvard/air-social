@@ -22,10 +22,8 @@ var (
 	ErrUnauthorized       = errors.New("authentication required")        // 401
 	ErrForbidden          = errors.New("access denied")                  // 403
 
-	ErrFileUnsupported = errors.New("file format not supported")      // 400
-	ErrFileTooLarge    = errors.New("file size exceeds limit")        // 413
-	ErrFileTypeInvalid = errors.New("detected file type is invalid")  // 400
-	ErrEmptyBody       = errors.New("request body must not be empty") // 400
+	ErrFileTooLarge = errors.New("file size exceeds limit")        // 413
+	ErrEmptyBody    = errors.New("request body must not be empty") // 400
 )
 
 const (

@@ -35,16 +35,15 @@ const (
 )
 
 const (
-	UserGroup    = "/users"
-	Me           = "/me"
-	Password     = "/password"
-	ProfileImage = "/profile-image"
+	UserGroup = "/users"
+	Me        = "/me"
+	Password  = "/password"
 )
 
 const (
 	MediaGroup      = "/media"
 	PresignedUpload = "/presigned"
-	ConfirmUpload   = "/confirm"
+	Images          = "/images"
 )
 
 func NewServer(
@@ -92,65 +91,57 @@ func setupEngine() *gin.Engine {
 	e.NoRoute(func(c *gin.Context) { pkg.NotFound(c, "Page not found") })
 
 	e.NoMethod(func(c *gin.Context) {
-		allowedMethods := c.Writer.Header().Get("Allow")
-		c.JSON(http.StatusMethodNotAllowed, gin.H{
-			"code":    http.StatusMethodNotAllowed,
-			"message": "Method not allowed",
-			"details": "This endpoint only supports: " + allowedMethods,
-		})
+		allowed := c.Writer.Header().Get("Allow")
+		details := "This endpoint only supports: " + allowed
+		pkg.Error(c, http.StatusMethodNotAllowed, "Method not allowed", details)
 	})
 
 	return e
 }
 
-func commonRoutes(rg *gin.RouterGroup, h *handler.HealthHandler, mw *middleware.Manager) {
-	{
-		rg.GET("", h.Welcome)
-		rg.GET(Health, mw.Basic, h.HealthCheck)
-		rg.GET(SwaggerAny, ginSwagger.WrapHandler(swaggerFiles.Handler))
-	}
+func commonRoutes(g *gin.RouterGroup, h *handler.HealthHandler, m *middleware.Manager) {
+	g.GET("", h.Welcome)
+	g.GET(Health, m.Basic, h.HealthCheck)
+	g.GET(SwaggerAny, ginSwagger.WrapHandler(swaggerFiles.Handler))
 }
 
-func authRoutes(rg *gin.RouterGroup, h *handler.AuthHandler, mw *middleware.Manager) {
-	a := rg.Group(AuthGroup)
+func authRoutes(g *gin.RouterGroup, h *handler.AuthHandler, m *middleware.Manager) {
+	group := g.Group(AuthGroup)
 	{
-		a.GET(ResetPassword, h.ShowResetPasswordPage)
-		a.GET(VerifyEmail, h.VerifyEmail)
-
-		j := a.Group("").Use(mw.JSONOnly)
-		{
-			j.POST(Register, h.Register)
-			j.POST(Login, h.Login)
-			j.POST(Refresh, h.Refresh)
-			j.POST(ForgotPassword, h.ForgotPassword)
-			j.POST(ResetPassword, h.ResetPassword)
-		}
-		p := a.Group("").Use(mw.Auth)
-		{
-			p.POST(Logout, h.Logout)
-		}
+		group.GET(ResetPassword, h.ShowResetPasswordPage)
+		group.GET(VerifyEmail, h.VerifyEmail)
 	}
+
+	json := group.Group("").Use(m.JSONOnly)
+	{
+		json.POST(Register, h.Register)
+		json.POST(Login, h.Login)
+		json.POST(Refresh, h.Refresh)
+		json.POST(ForgotPassword, h.ForgotPassword)
+		json.POST(ResetPassword, h.ResetPassword)
+	}
+
+	auth := group.Group("").Use(m.Auth)
+	auth.POST(Logout, h.Logout)
 }
 
-func userRoutes(rg *gin.RouterGroup, h *handler.UserHandler, mw *middleware.Manager) {
-	p := rg.Group(UserGroup, mw.Auth)
+func userRoutes(g *gin.RouterGroup, h *handler.UserHandler, m *middleware.Manager) {
+	group := g.Group(UserGroup, m.Auth)
+
+	me := group.Group(Me)
 	{
-		m := p.Group(Me)
+		me.GET("", h.Profile)
+
+		json := me.Group("").Use(m.JSONOnly)
 		{
-			m.GET("", h.Profile)
-			mj := m.Group("").Use(mw.JSONOnly)
-			{
-				mj.PATCH("", h.UpdateProfile)
-				mj.PUT(Password, h.ChangePassword)
-				mj.POST(ProfileImage+ConfirmUpload, h.ConfirmFileUpload)
-			}
+			json.PATCH("", h.UpdateProfile)
+			json.PUT(Password, h.ChangePassword)
+			json.POST(Images, h.ConfirmFileUpload)
 		}
 	}
 }
 
-func mediaRoutes(rg *gin.RouterGroup, h *handler.MediaHandler, mw *middleware.Manager) {
-	m := rg.Group(MediaGroup, mw.Auth)
-	{
-		m.POST(PresignedUpload, h.PresignedUpload)
-	}
+func mediaRoutes(g *gin.RouterGroup, h *handler.MediaHandler, m *middleware.Manager) {
+	auth := g.Group(MediaGroup, m.Auth)
+	auth.POST(PresignedUpload, h.PresignedUpload)
 }

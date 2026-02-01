@@ -438,7 +438,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Generate a presigned URL for uploading a file to object storage.",
+                "description": "Generates a presigned URL and policy signature for direct file upload to MinIO/S3.\n\n**Client Integration:**\n* **Target:** Send a ` + "`" + `POST` + "`" + ` request to the returned ` + "`" + `upload_url` + "`" + `.\n* **Payload:** Use ` + "`" + `multipart/form-data` + "`" + `. Append all fields from ` + "`" + `form_data` + "`" + ` (must be FIRST) followed by the file binary (must be LAST).\n* **Success:** Upon successful upload (HTTP 204), confirm the ` + "`" + `object_key` + "`" + ` with the Backend database.",
                 "consumes": [
                     "application/json"
                 ],
@@ -451,7 +451,7 @@ const docTemplate = `{
                 "summary": "Get presigned upload URL",
                 "parameters": [
                     {
-                        "description": "Presigned Upload Request",
+                        "description": "File Metadata",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -462,7 +462,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Upload Credentials",
                         "schema": {
                             "$ref": "#/definitions/domain.PresignedFileResponse"
                         }
@@ -826,8 +826,8 @@ const docTemplate = `{
         "domain.PresignedFileResponse": {
             "type": "object",
             "properties": {
-                "expiry_seconds": {
-                    "type": "integer"
+                "expire_at": {
+                    "type": "string"
                 },
                 "form_data": {
                     "type": "object",
@@ -999,13 +999,11 @@ const docTemplate = `{
             "enum": [
                 "users",
                 "posts",
-                "groups",
                 "messages"
             ],
             "x-enum-varnames": [
                 "DomainUser",
                 "DomainPost",
-                "DomainGroup",
                 "DomainMessage"
             ]
         },

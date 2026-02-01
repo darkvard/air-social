@@ -9,18 +9,21 @@ import (
 )
 
 type URLFactoryImpl struct {
-	protocol string
-	domain   string
-	appName  string
-	version  string
+	protocol     string
+	domain       string
+	appName      string
+	version      string
+	bucketPublic string
 }
 
-func NewURLFactory(cfg config.ServerConfig) *URLFactoryImpl {
+func NewURLFactory(cfg config.Config) *URLFactoryImpl {
+	serverCfg := cfg.Server
 	return &URLFactoryImpl{
-		protocol: cfg.Protocol,
-		domain:   cfg.Domain,
-		appName:  cfg.AppName,
-		version:  cfg.Version,
+		protocol:     serverCfg.Protocol,
+		domain:       serverCfg.Domain,
+		appName:      serverCfg.AppName,
+		version:      serverCfg.Version,
+		bucketPublic: cfg.MinIO.BucketPublic,
 	}
 }
 
@@ -57,7 +60,7 @@ func (r *URLFactoryImpl) RabbitMQDashboardUI() string {
 }
 
 func (r *URLFactoryImpl) FileStorageBaseURL() string {
-	return fmt.Sprintf("%s/%s-public", r.baseURL(), r.appName)
+	return r.baseURL()
 }
 
 func (r *URLFactoryImpl) PrintInfraConsole() {

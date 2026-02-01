@@ -171,7 +171,7 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.C
 		return "", pkg.OrInternalError(err, pkg.ErrBadRequest, pkg.ErrForbidden, pkg.ErrNotFound)
 	}
 
-	if err = s.userRepo.UpdateProfileImages(ctx, input.UserID, objectKey, input.Feature); err != nil {
+	if err = s.userRepo.UpdateProfileImages(ctx, input.EntityID, objectKey, input.Feature); err != nil {
 		return "", pkg.OrInternalError(err)
 	}
 

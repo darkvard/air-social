@@ -34,8 +34,8 @@ server {
     }
 
     # 2. Public File
-    location /${SERVER_NAME}-public/ {
-        proxy_pass http://minio_storage/${SERVER_NAME}-public/;
+    location /${MINIO_BUCKET_PUBLIC}/ {
+        proxy_pass http://minio_storage/${MINIO_BUCKET_PUBLIC}/;
         proxy_set_header Host minio:9000;
     }
 

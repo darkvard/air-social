@@ -121,9 +121,7 @@ func HandleServiceError(c *gin.Context, err error) {
 	// 400 Bad Request
 	case errors.Is(err, ErrBadRequest),
 		errors.Is(err, ErrInvalidData),
-		errors.Is(err, ErrSamePassword),
-		errors.Is(err, ErrFileUnsupported),
-		errors.Is(err, ErrFileTypeInvalid):
+		errors.Is(err, ErrSamePassword):
 		BadRequest(c, msg)
 
 	// 500 Internal Server Error

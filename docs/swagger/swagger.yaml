@@ -69,8 +69,8 @@ definitions:
     type: object
   domain.PresignedFileResponse:
     properties:
-      expiry_seconds:
-        type: integer
+      expire_at:
+        type: string
       form_data:
         additionalProperties:
           type: string
@@ -189,13 +189,11 @@ definitions:
     enum:
     - users
     - posts
-    - groups
     - messages
     type: string
     x-enum-varnames:
     - DomainUser
     - DomainPost
-    - DomainGroup
     - DomainMessage
   domain.UploadFeature:
     enum:
@@ -549,9 +547,15 @@ paths:
     post:
       consumes:
       - application/json
-      description: Generate a presigned URL for uploading a file to object storage.
+      description: |-
+        Generates a presigned URL and policy signature for direct file upload to MinIO/S3.
+
+        **Client Integration:**
+        * **Target:** Send a `POST` request to the returned `upload_url`.
+        * **Payload:** Use `multipart/form-data`. Append all fields from `form_data` (must be FIRST) followed by the file binary (must be LAST).
+        * **Success:** Upon successful upload (HTTP 204), confirm the `object_key` with the Backend database.
       parameters:
-      - description: Presigned Upload Request
+      - description: File Metadata
         in: body
         name: request
         required: true
@@ -561,7 +565,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Upload Credentials
           schema:
             $ref: '#/definitions/domain.PresignedFileResponse'
         "400":
