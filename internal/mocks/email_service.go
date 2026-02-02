@@ -38,16 +38,16 @@ func (_m *EmailService) EXPECT() *EmailService_Expecter {
 	return &EmailService_Expecter{mock: &_m.Mock}
 }
 
-// Handle provides a mock function for the type EmailService
-func (_mock *EmailService) Handle(ctx context.Context, evt domain.EventPayload) error {
+// Dispatch provides a mock function for the type EmailService
+func (_mock *EmailService) Dispatch(ctx context.Context, evt domain.Event) error {
 	ret := _mock.Called(ctx, evt)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Handle")
+		panic("no return value specified for Dispatch")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.EventPayload) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.Event) error); ok {
 		r0 = returnFunc(ctx, evt)
 	} else {
 		r0 = ret.Error(0)
@@ -55,27 +55,27 @@ func (_mock *EmailService) Handle(ctx context.Context, evt domain.EventPayload) 
 	return r0
 }
 
-// EmailService_Handle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Handle'
-type EmailService_Handle_Call struct {
+// EmailService_Dispatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Dispatch'
+type EmailService_Dispatch_Call struct {
 	*mock.Call
 }
 
-// Handle is a helper method to define mock.On call
+// Dispatch is a helper method to define mock.On call
 //   - ctx context.Context
-//   - evt domain.EventPayload
-func (_e *EmailService_Expecter) Handle(ctx interface{}, evt interface{}) *EmailService_Handle_Call {
-	return &EmailService_Handle_Call{Call: _e.mock.On("Handle", ctx, evt)}
+//   - evt domain.Event
+func (_e *EmailService_Expecter) Dispatch(ctx interface{}, evt interface{}) *EmailService_Dispatch_Call {
+	return &EmailService_Dispatch_Call{Call: _e.mock.On("Dispatch", ctx, evt)}
 }
 
-func (_c *EmailService_Handle_Call) Run(run func(ctx context.Context, evt domain.EventPayload)) *EmailService_Handle_Call {
+func (_c *EmailService_Dispatch_Call) Run(run func(ctx context.Context, evt domain.Event)) *EmailService_Dispatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 domain.EventPayload
+		var arg1 domain.Event
 		if args[1] != nil {
-			arg1 = args[1].(domain.EventPayload)
+			arg1 = args[1].(domain.Event)
 		}
 		run(
 			arg0,
@@ -85,12 +85,12 @@ func (_c *EmailService_Handle_Call) Run(run func(ctx context.Context, evt domain
 	return _c
 }
 
-func (_c *EmailService_Handle_Call) Return(err error) *EmailService_Handle_Call {
+func (_c *EmailService_Dispatch_Call) Return(err error) *EmailService_Dispatch_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *EmailService_Handle_Call) RunAndReturn(run func(ctx context.Context, evt domain.EventPayload) error) *EmailService_Handle_Call {
+func (_c *EmailService_Dispatch_Call) RunAndReturn(run func(ctx context.Context, evt domain.Event) error) *EmailService_Dispatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

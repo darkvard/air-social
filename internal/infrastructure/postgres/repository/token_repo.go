@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"air-social/internal/domain"
+	"air-social/internal/infrastructure/postgres/model"
 	"air-social/pkg"
 )
 
@@ -23,7 +24,8 @@ func (r *tokenRepository) Create(ctx context.Context, t domain.RefreshToken) err
 		INSERT INTO refresh_tokens (user_id, token_hash, expires_at, device_id)
 		VALUES (:user_id, :token_hash, :expires_at, :device_id)
 	`
-	if _, err := r.db.NamedExecContext(ctx, query, t); err != nil {
+	dbModel := model.FromDomainRefreshToken(t)
+	if _, err := r.db.NamedExecContext(ctx, query, dbModel); err != nil {
 		return pkg.MapPostgresError(err)
 	}
 	return nil
@@ -35,11 +37,11 @@ func (r *tokenRepository) GetByHash(ctx context.Context, hash string) (domain.Re
 		FROM refresh_tokens
 		WHERE token_hash = $1
 	`
-	var token domain.RefreshToken
-	if err := r.db.GetContext(ctx, &token, query, hash); err != nil {
+	var dbModel model.RefreshToken
+	if err := r.db.GetContext(ctx, &dbModel, query, hash); err != nil {
 		return domain.RefreshToken{}, pkg.MapPostgresError(err)
 	}
-	return token, nil
+	return dbModel.ToDomain(), nil
 }
 
 func (r *tokenRepository) UpdateRevoked(ctx context.Context, id int64) error {

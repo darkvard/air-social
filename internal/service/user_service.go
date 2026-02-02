@@ -10,16 +10,16 @@ import (
 type UserService interface {
 	GetByID(ctx context.Context, id int64) (*domain.User, error)
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
-	GetProfile(ctx context.Context, id int64) (domain.UserResponse, error)
+	GetProfile(ctx context.Context, id int64) (*domain.User, error)
 
-	CreateUser(ctx context.Context, input domain.CreateUserParams) (domain.UserResponse, error)
-	UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (domain.UserResponse, error)
+	CreateUser(ctx context.Context, input domain.CreateUserParams) (*domain.User, error)
+	UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (*domain.User, error)
 	ChangePassword(ctx context.Context, input domain.ChangePasswordParams) error
 	UpdatePassword(ctx context.Context, email, passwordHashed string) error
 	VerifyEmail(ctx context.Context, email string) error
 
 	ConfirmImageUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
-	ResolveMediaURLs(res *domain.UserResponse)
+	GetPublicURL(key string) string
 }
 
 type UserServiceImpl struct {
@@ -50,28 +50,15 @@ func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain
 	return user, nil
 }
 
-func (s *UserServiceImpl) GetProfile(ctx context.Context, id int64) (domain.UserResponse, error) {
-	user, err := s.GetByID(ctx, id)
-	if err != nil {
-		return domain.UserResponse{}, err
-	}
-	return s.mapToResponse(user), nil
+func (s *UserServiceImpl) GetProfile(ctx context.Context, id int64) (*domain.User, error) {
+	return s.GetByID(ctx, id)
 }
 
-func (s *UserServiceImpl) ResolveMediaURLs(res *domain.UserResponse) {
-	if res == nil {
-		return
-	}
-	if res.Avatar != "" {
-		res.Avatar = s.mediaSvc.GetPublicURL(res.Avatar)
-	}
-	if res.CoverImage != "" {
-		res.CoverImage = s.mediaSvc.GetPublicURL(res.CoverImage)
-	}
+func (s *UserServiceImpl) GetPublicURL(key string) string {
+	return s.mediaSvc.GetPublicURL(key)
 }
 
-func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUserParams) (domain.UserResponse, error) {
-	var empty domain.UserResponse
+func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUserParams) (*domain.User, error) {
 
 	user := &domain.User{
 		Email:        input.Email,
@@ -80,14 +67,14 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUse
 	}
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
-		return empty, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
+		return nil, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
 	}
 
-	return s.mapToResponse(user), nil
+	return user, nil
 }
 
-func (s *UserServiceImpl) UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (domain.UserResponse, error) {
-	var empty domain.UserResponse
+func (s *UserServiceImpl) UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (*domain.User, error) {
+	var empty *domain.User
 
 	user, err := s.GetByID(ctx, input.UserID)
 	if err != nil {
@@ -95,16 +82,16 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, input domain.Update
 	}
 
 	if input.FullName != nil {
-		user.FullName = *input.FullName
+		user.Profile.FullName = *input.FullName
 	}
 	if input.Bio != nil {
-		user.Bio = *input.Bio
+		user.Profile.Bio = *input.Bio
 	}
 	if input.Location != nil {
-		user.Location = *input.Location
+		user.Profile.Location = *input.Location
 	}
 	if input.Website != nil {
-		user.Website = *input.Website
+		user.Profile.Website = *input.Website
 	}
 	if input.Username != nil {
 		user.Username = *input.Username
@@ -113,7 +100,7 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, input domain.Update
 	if err := s.updateUser(ctx, user); err != nil {
 		return empty, err
 	}
-	return s.mapToResponse(user), nil
+	return user, nil
 }
 
 func (s *UserServiceImpl) ChangePassword(ctx context.Context, input domain.ChangePasswordParams) error {
@@ -155,8 +142,8 @@ func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
 	}
 
 	now := pkg.TimeNowUTC()
-	user.Verified = true
-	user.VerifiedAt = &(now)
+	user.Status.Verified = true
+	user.Status.VerifiedAt = &(now)
 
 	return s.updateUser(ctx, user)
 }
@@ -179,12 +166,6 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.C
 }
 
 // Internal helpers
-
-func (s *UserServiceImpl) mapToResponse(user *domain.User) domain.UserResponse {
-	res := user.ToResponse()
-	s.ResolveMediaURLs(&res)
-	return res
-}
 
 func (s *UserServiceImpl) updateUser(ctx context.Context, user *domain.User) error {
 	if err := s.userRepo.Update(ctx, user); err != nil {

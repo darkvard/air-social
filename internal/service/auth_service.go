@@ -10,21 +10,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"air-social/internal/domain"
-	"air-social/internal/infrastructure/rabbitmq"
 	"air-social/pkg"
 )
 
 type AuthService interface {
-	Register(ctx context.Context, input domain.RegisterParams) (domain.UserResponse, error)
+	Register(ctx context.Context, input domain.RegisterParams) (*domain.User, error)
 	Logout(ctx context.Context, input domain.LogoutParams) error
-	Login(ctx context.Context, input domain.LoginParams) (domain.LoginResponse, error)
+	Login(ctx context.Context, input domain.LoginParams) (*domain.User, *domain.TokenInfo, error)
 
 	ForgotPassword(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, input domain.ResetPasswordParams) error
 	IsResetPasswordTokenValid(ctx context.Context, token string) bool
 
-	RefreshToken(ctx context.Context, refreshToken string) (domain.TokenInfo, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*domain.TokenInfo, error)
 	VerifyEmail(ctx context.Context, emailToken string) error
+	GetPublicURL(key string) string
 }
 
 type AuthServiceImpl struct {
@@ -45,8 +45,8 @@ func NewAuthService(userSvc UserService, tokenSvc TokenService, url domain.URLFa
 	}
 }
 
-func (s *AuthServiceImpl) Register(ctx context.Context, input domain.RegisterParams) (domain.UserResponse, error) {
-	var empty domain.UserResponse
+func (s *AuthServiceImpl) Register(ctx context.Context, input domain.RegisterParams) (*domain.User, error) {
+	var empty *domain.User
 
 	passwordHashed, err := hashPassword(input.Password)
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, input domain.RegisterPar
 		return empty, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
 	}
 
-	s.sendEmailVerification(ctx, user.Email, empty.Username)
+	s.sendEmailVerification(ctx, user.Email, user.Username)
 	return user, nil
 }
 
@@ -85,30 +85,28 @@ func (s *AuthServiceImpl) Logout(ctx context.Context, input domain.LogoutParams)
 	return pkg.OrInternalError(err)
 }
 
-func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (domain.LoginResponse, error) {
-	var empty domain.LoginResponse
+func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (*domain.User, *domain.TokenInfo, error) {
+	var emptyUser *domain.User
+	var emptyToken *domain.TokenInfo
 
 	user, err := s.userSvc.GetByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
-			return empty, pkg.ErrInvalidCredentials
+			return emptyUser, emptyToken, pkg.ErrInvalidCredentials
 		}
-		return empty, err
+		return emptyUser, emptyToken, err
 	}
 
 	if !verifyPassword(input.Password, user.PasswordHash) {
-		return empty, pkg.ErrInvalidCredentials
+		return emptyUser, emptyToken, pkg.ErrInvalidCredentials
 	}
 
 	tokens, err := s.tokenSvc.CreateSession(ctx, user.ID, input.DeviceID)
 	if err != nil {
-		return empty, pkg.OrInternalError(err)
+		return emptyUser, emptyToken, pkg.OrInternalError(err)
 	}
 
-	userResponse := user.ToResponse()
-	s.userSvc.ResolveMediaURLs(&userResponse)
-
-	return domain.LoginResponse{User: userResponse, Token: tokens}, nil
+	return user, &tokens, nil
 }
 
 func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, email string) error {
@@ -157,14 +155,18 @@ func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, emailToken string) er
 	return pkg.OrInternalError(err)
 }
 
-func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (domain.TokenInfo, error) {
-	var empty domain.TokenInfo
+func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (*domain.TokenInfo, error) {
+	var empty *domain.TokenInfo
 
 	tokens, err := s.tokenSvc.Refresh(ctx, refreshToken)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrUnauthorized)
 	}
-	return tokens, nil
+	return &tokens, nil
+}
+
+func (s *AuthServiceImpl) GetPublicURL(key string) string {
+	return s.userSvc.GetPublicURL(key)
 }
 
 // Internal helpers
@@ -190,27 +192,27 @@ func verifyPassword(plainPassword, hashPassword string) bool {
 // sendEmailVerification sends an email verification event to the event publisher.
 func (s *AuthServiceImpl) sendEmailVerification(ctx context.Context, email, username string) {
 	id := uuid.NewString()
-	ttl := domain.ThirtyMinutesTime
+	ttl := 30 * time.Minute
 
 	if err := s.storeEmailVerification(ctx, id, email, ttl); err != nil {
 		pkg.Log().Errorw("[CACHE ERROR]", "from", "email_verification", "error", err)
 		return
 	}
 
-	data := domain.EventEmailData{
+	data := domain.EmailEvent{
 		Email:  email,
 		Name:   username,
 		Link:   s.url.VerifyEmailLink(id),
 		Expiry: pkg.FormatTTLVerbose(ttl),
 	}
-	payload := domain.EventPayload{
+	payload := domain.Event{
 		EventID:   id,
 		EventType: domain.EmailVerify,
 		Timestamp: pkg.TimeNowUTC(),
 		Data:      data,
 	}
 
-	if err := s.event.Publish(ctx, rabbitmq.EmailVerifyQueueConfig.RoutingKey, payload); err != nil {
+	if err := s.event.Publish(ctx, string(domain.EmailVerify), payload); err != nil {
 		pkg.Log().Errorw("[EVENT QUEUE ERROR]", "from", "email_verification", "error", err)
 	}
 }
@@ -231,28 +233,28 @@ func (s *AuthServiceImpl) getEmailVerification(ctx context.Context, token string
 // sendEmailResetPassword sends an email reset password event to the event publisher.
 func (s *AuthServiceImpl) sendEmailResetPassword(ctx context.Context, email, username string) {
 	id := uuid.NewString()
-	ttl := domain.FifteenMinutesTime
+	ttl := 15 * time.Minute
 
 	if err := s.storeEmailResetPassword(ctx, email, id, ttl); err != nil {
 		pkg.Log().Errorw("[CACHE ERROR]", "from", "email_forgot_password", "error", err)
 		return
 	}
 
-	data := domain.EventEmailData{
+	data := domain.EmailEvent{
 		Email:  email,
 		Name:   username,
 		Link:   s.url.ResetPasswordLink(id),
 		Expiry: pkg.FormatTTLVerbose(ttl),
 	}
 
-	payload := domain.EventPayload{
+	payload := domain.Event{
 		EventID:   uuid.NewString(),
 		EventType: domain.EmailResetPassword,
 		Timestamp: pkg.TimeNowUTC(),
 		Data:      data,
 	}
 
-	if err := s.event.Publish(ctx, rabbitmq.EmailResetPasswordQueueConfig.RoutingKey, payload); err != nil {
+	if err := s.event.Publish(ctx, string(domain.EmailResetPassword), payload); err != nil {
 		pkg.Log().Errorw("[EVENT QUEUE ERROR]", "from", "email_forgot_password", "error", err)
 	}
 }

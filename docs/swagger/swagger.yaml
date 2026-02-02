@@ -1,6 +1,32 @@
 basePath: /air-social/api/v1
 definitions:
-  domain.ChangePasswordRequest:
+  domain.UploadDomain:
+    enum:
+    - users
+    - posts
+    - messages
+    type: string
+    x-enum-varnames:
+    - DomainUser
+    - DomainPost
+    - DomainMessage
+  domain.UploadFeature:
+    enum:
+    - avatar
+    - cover
+    - feed_image
+    - feed_video
+    - voice_chat
+    - attachment
+    type: string
+    x-enum-varnames:
+    - FeatureAvatar
+    - FeatureCover
+    - FeatureFeedImage
+    - FeatureFeedVideo
+    - FeatureVoiceChat
+    - FeatureAttachment
+  dto.ChangePasswordRequest:
     properties:
       current_password:
         type: string
@@ -12,7 +38,7 @@ definitions:
     - current_password
     - new_password
     type: object
-  domain.ConfirmProfileImageRequest:
+  dto.ConfirmProfileImageRequest:
     properties:
       domain:
         allOf:
@@ -32,14 +58,14 @@ definitions:
     - feature
     - object_key
     type: object
-  domain.ForgotPasswordRequest:
+  dto.ForgotPasswordRequest:
     properties:
       email:
         type: string
     required:
     - email
     type: object
-  domain.LoginRequest:
+  dto.LoginRequest:
     properties:
       device_id:
         type: string
@@ -55,19 +81,19 @@ definitions:
     - email
     - password
     type: object
-  domain.LoginResponse:
+  dto.LoginResponse:
     properties:
       token:
-        $ref: '#/definitions/domain.TokenInfo'
+        $ref: '#/definitions/dto.TokenResponse'
       user:
-        $ref: '#/definitions/domain.UserResponse'
+        $ref: '#/definitions/dto.UserResponse'
     type: object
-  domain.LogoutRequest:
+  dto.LogoutRequest:
     properties:
       is_all_devices:
         type: boolean
     type: object
-  domain.PresignedFileResponse:
+  dto.PresignedFileResponse:
     properties:
       expire_at:
         type: string
@@ -82,7 +108,7 @@ definitions:
       upload_url:
         type: string
     type: object
-  domain.PresignedFileUploadRequest:
+  dto.PresignedUploadRequest:
     properties:
       domain:
         allOf:
@@ -115,14 +141,29 @@ definitions:
     - file_size
     - file_type
     type: object
-  domain.RefreshRequest:
+  dto.ProfileResponse:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      cover_image:
+        type: string
+      full_name:
+        type: string
+      location:
+        type: string
+      website:
+        type: string
+    type: object
+  dto.RefreshTokenRequest:
     properties:
       refresh_token:
         type: string
     required:
     - refresh_token
     type: object
-  domain.RegisterRequest:
+  dto.RegisterRequest:
     properties:
       email:
         maxLength: 255
@@ -140,7 +181,7 @@ definitions:
     - password
     - username
     type: object
-  domain.ResetPasswordRequest:
+  dto.ResetPasswordRequest:
     properties:
       password:
         maxLength: 64
@@ -152,7 +193,14 @@ definitions:
     - password
     - token
     type: object
-  domain.TokenInfo:
+  dto.StatusResponse:
+    properties:
+      verified:
+        type: boolean
+      verified_at:
+        type: string
+    type: object
+  dto.TokenResponse:
     properties:
       access_expire_at:
         type: string
@@ -165,7 +213,7 @@ definitions:
       type:
         type: string
     type: object
-  domain.UpdateProfileRequest:
+  dto.UpdateProfileRequest:
     properties:
       bio:
         maxLength: 255
@@ -185,56 +233,24 @@ definitions:
         maxLength: 255
         type: string
     type: object
-  domain.UploadDomain:
-    enum:
-    - users
-    - posts
-    - messages
-    type: string
-    x-enum-varnames:
-    - DomainUser
-    - DomainPost
-    - DomainMessage
-  domain.UploadFeature:
-    enum:
-    - avatar
-    - cover
-    - feed_image
-    - feed_video
-    - voice_chat
-    - attachment
-    type: string
-    x-enum-varnames:
-    - FeatureAvatar
-    - FeatureCover
-    - FeatureFeedImage
-    - FeatureFeedVideo
-    - FeatureVoiceChat
-    - FeatureAttachment
-  domain.UserResponse:
+  dto.UserResponse:
     properties:
-      avatar:
-        type: string
-      bio:
-        type: string
-      cover_image:
-        type: string
       created_at:
         type: string
       email:
         type: string
-      full_name:
-        type: string
       id:
         type: integer
-      location:
+      profile:
+        $ref: '#/definitions/dto.ProfileResponse'
+      status:
+        $ref: '#/definitions/dto.StatusResponse'
+      updated_at:
         type: string
       username:
         type: string
-      verified:
-        type: boolean
-      website:
-        type: string
+      version:
+        type: integer
     type: object
   pkg.FieldError:
     properties:
@@ -285,7 +301,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.ForgotPasswordRequest'
+          $ref: '#/definitions/dto.ForgotPasswordRequest'
       produces:
       - application/json
       responses:
@@ -316,14 +332,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.LoginRequest'
+          $ref: '#/definitions/dto.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Returns user info and tokens
           schema:
-            $ref: '#/definitions/domain.LoginResponse'
+            $ref: '#/definitions/dto.LoginResponse'
         "400":
           description: Bad Request
           schema:
@@ -350,7 +366,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.LogoutRequest'
+          $ref: '#/definitions/dto.LogoutRequest'
       produces:
       - application/json
       responses:
@@ -383,14 +399,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.RefreshRequest'
+          $ref: '#/definitions/dto.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.TokenInfo'
+            $ref: '#/definitions/dto.TokenResponse'
         "400":
           description: Bad Request
           schema:
@@ -418,14 +434,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.RegisterRequest'
+          $ref: '#/definitions/dto.RegisterRequest'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            $ref: '#/definitions/domain.UserResponse'
+            $ref: '#/definitions/dto.UserResponse'
         "400":
           description: Bad Request
           schema:
@@ -476,7 +492,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.ResetPasswordRequest'
+          $ref: '#/definitions/dto.ResetPasswordRequest'
       produces:
       - application/json
       responses:
@@ -560,14 +576,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.PresignedFileUploadRequest'
+          $ref: '#/definitions/dto.PresignedUploadRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Upload Credentials
           schema:
-            $ref: '#/definitions/domain.PresignedFileResponse'
+            $ref: '#/definitions/dto.PresignedFileResponse'
         "400":
           description: Bad Request
           schema:
@@ -596,7 +612,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.UserResponse'
+            $ref: '#/definitions/dto.UserResponse'
         "401":
           description: Unauthorized
           schema:
@@ -620,14 +636,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.UpdateProfileRequest'
+          $ref: '#/definitions/dto.UpdateProfileRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.UserResponse'
+            $ref: '#/definitions/dto.UserResponse'
         "400":
           description: Bad Request
           schema:
@@ -660,7 +676,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.ChangePasswordRequest'
+          $ref: '#/definitions/dto.ChangePasswordRequest'
       produces:
       - application/json
       responses:
@@ -697,7 +713,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/domain.ConfirmProfileImageRequest'
+          $ref: '#/definitions/dto.ConfirmProfileImageRequest'
       produces:
       - application/json
       responses:

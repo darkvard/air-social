@@ -7,6 +7,7 @@ import (
 
 	"air-social/internal/domain"
 	"air-social/internal/service"
+	"air-social/internal/transport/http/dto"
 	"air-social/internal/transport/http/middleware"
 	"air-social/pkg"
 )
@@ -29,7 +30,7 @@ func NewUserHandler(userSvc service.UserService) *UserHandler {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Success		200	{object}	domain.UserResponse
+//	@Success		200	{object}	dto.UserResponse
 //	@Failure		401	{object}	pkg.Response
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/users/me [get]
@@ -50,7 +51,7 @@ func (h *UserHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, user)
+	pkg.Success(c, h.mapToResponse(user))
 }
 
 // UpdateProfile godoc
@@ -61,8 +62,8 @@ func (h *UserHandler) Profile(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		domain.UpdateProfileRequest	true	"Update Profile Request"
-//	@Success		200		{object}	domain.UserResponse
+//	@Param			request	body		dto.UpdateProfileRequest	true	"Update Profile Request"
+//	@Success		200		{object}	dto.UserResponse
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		409		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
@@ -75,7 +76,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	var req domain.UpdateProfileRequest
+	var req dto.UpdateProfileRequest
 	if err := pkg.StrictBindJSON(c, &req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -100,7 +101,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, user)
+	pkg.Success(c, h.mapToResponse(user))
 
 }
 
@@ -112,8 +113,8 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		domain.ChangePasswordRequest	true	"Change Password Request"
-//	@Success		200		{string}	string							"password changed successfully"
+//	@Param			request	body		dto.ChangePasswordRequest	true	"Change Password Request"
+//	@Success		200		{string}	string						"password changed successfully"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
@@ -126,7 +127,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	var req domain.ChangePasswordRequest
+	var req dto.ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -154,8 +155,8 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		domain.ConfirmProfileImageRequest	true	"Confirm Upload Request"
-//	@Success		200		{object}	map[string]string					"Returns upload success message and public URL"
+//	@Param			request	body		dto.ConfirmProfileImageRequest	true	"Confirm Upload Request"
+//	@Success		200		{object}	map[string]string				"Returns upload success message and public URL"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		403		{object}	pkg.Response
@@ -169,7 +170,7 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 		return
 	}
 
-	var req domain.ConfirmProfileImageRequest
+	var req dto.ConfirmProfileImageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -193,4 +194,27 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 		"url":     fileURL,
 	})
 
+}
+
+func (h *UserHandler) mapToResponse(user *domain.User) dto.UserResponse {
+	return dto.UserResponse{
+		ID:       user.ID,
+		Email:    user.Email,
+		Username: user.Username,
+		Profile: dto.ProfileResponse{
+			FullName:   user.Profile.FullName,
+			Bio:        user.Profile.Bio,
+			Avatar:     h.userSvc.GetPublicURL(user.Profile.Avatar),
+			CoverImage: h.userSvc.GetPublicURL(user.Profile.CoverImage),
+			Location:   user.Profile.Location,
+			Website:    user.Profile.Website,
+		},
+		Status: dto.StatusResponse{
+			Verified:   user.Status.Verified,
+			VerifiedAt: user.Status.VerifiedAt,
+		},
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Version:   user.Version,
+	}
 }

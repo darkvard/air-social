@@ -10,6 +10,8 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 
 	"air-social/internal/config"
+	rmqConfig "air-social/internal/infrastructure/rabbitmq/config"
+	"air-social/internal/infrastructure/rabbitmq/publisher"
 	"air-social/pkg"
 )
 
@@ -31,14 +33,14 @@ func NewConnection(cfg config.RabbitMQConfig) (*amqp.Connection, error) {
 	return conn, nil
 }
 
-func NewEventPublisher(conn *amqp.Connection) (*Publisher, error) {
+func NewEventPublisher(conn *amqp.Connection) (*publisher.Publisher, error) {
 	if conn == nil {
 		return nil, errors.New("rabbitmq connection cannot nil")
 	}
 
-	pub, err := NewPublisher(
+	pub, err := publisher.NewPublisher(
 		conn,
-		EventsExchange,
+		rmqConfig.EventsExchange,
 		10,
 	)
 	if err != nil {

@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.ForgotPasswordRequest"
+                            "$ref": "#/definitions/dto.ForgotPasswordRequest"
                         }
                     }
                 ],
@@ -90,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.LoginRequest"
+                            "$ref": "#/definitions/dto.LoginRequest"
                         }
                     }
                 ],
@@ -98,7 +98,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns user info and tokens",
                         "schema": {
-                            "$ref": "#/definitions/domain.LoginResponse"
+                            "$ref": "#/definitions/dto.LoginResponse"
                         }
                     },
                     "400": {
@@ -147,7 +147,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.LogoutRequest"
+                            "$ref": "#/definitions/dto.LogoutRequest"
                         }
                     }
                 ],
@@ -193,7 +193,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.RefreshRequest"
+                            "$ref": "#/definitions/dto.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -201,7 +201,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.TokenInfo"
+                            "$ref": "#/definitions/dto.TokenResponse"
                         }
                     },
                     "400": {
@@ -245,15 +245,15 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.RegisterRequest"
+                            "$ref": "#/definitions/dto.RegisterRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/domain.UserResponse"
+                            "$ref": "#/definitions/dto.UserResponse"
                         }
                     },
                     "400": {
@@ -330,7 +330,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.ResetPasswordRequest"
+                            "$ref": "#/definitions/dto.ResetPasswordRequest"
                         }
                     }
                 ],
@@ -456,7 +456,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.PresignedFileUploadRequest"
+                            "$ref": "#/definitions/dto.PresignedUploadRequest"
                         }
                     }
                 ],
@@ -464,7 +464,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Upload Credentials",
                         "schema": {
-                            "$ref": "#/definitions/domain.PresignedFileResponse"
+                            "$ref": "#/definitions/dto.PresignedFileResponse"
                         }
                     },
                     "400": {
@@ -510,7 +510,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.UserResponse"
+                            "$ref": "#/definitions/dto.UserResponse"
                         }
                     },
                     "401": {
@@ -551,7 +551,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.UpdateProfileRequest"
+                            "$ref": "#/definitions/dto.UpdateProfileRequest"
                         }
                     }
                 ],
@@ -559,7 +559,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.UserResponse"
+                            "$ref": "#/definitions/dto.UserResponse"
                         }
                     },
                     "400": {
@@ -614,7 +614,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.ChangePasswordRequest"
+                            "$ref": "#/definitions/dto.ChangePasswordRequest"
                         }
                     }
                 ],
@@ -671,7 +671,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.ConfirmProfileImageRequest"
+                            "$ref": "#/definitions/dto.ConfirmProfileImageRequest"
                         }
                     }
                 ],
@@ -720,7 +720,39 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "domain.ChangePasswordRequest": {
+        "domain.UploadDomain": {
+            "type": "string",
+            "enum": [
+                "users",
+                "posts",
+                "messages"
+            ],
+            "x-enum-varnames": [
+                "DomainUser",
+                "DomainPost",
+                "DomainMessage"
+            ]
+        },
+        "domain.UploadFeature": {
+            "type": "string",
+            "enum": [
+                "avatar",
+                "cover",
+                "feed_image",
+                "feed_video",
+                "voice_chat",
+                "attachment"
+            ],
+            "x-enum-varnames": [
+                "FeatureAvatar",
+                "FeatureCover",
+                "FeatureFeedImage",
+                "FeatureFeedVideo",
+                "FeatureVoiceChat",
+                "FeatureAttachment"
+            ]
+        },
+        "dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
                 "current_password",
@@ -737,7 +769,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.ConfirmProfileImageRequest": {
+        "dto.ConfirmProfileImageRequest": {
             "type": "object",
             "required": [
                 "domain",
@@ -771,7 +803,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.ForgotPasswordRequest": {
+        "dto.ForgotPasswordRequest": {
             "type": "object",
             "required": [
                 "email"
@@ -782,7 +814,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.LoginRequest": {
+        "dto.LoginRequest": {
             "type": "object",
             "required": [
                 "device_id",
@@ -804,18 +836,18 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.LoginResponse": {
+        "dto.LoginResponse": {
             "type": "object",
             "properties": {
                 "token": {
-                    "$ref": "#/definitions/domain.TokenInfo"
+                    "$ref": "#/definitions/dto.TokenResponse"
                 },
                 "user": {
-                    "$ref": "#/definitions/domain.UserResponse"
+                    "$ref": "#/definitions/dto.UserResponse"
                 }
             }
         },
-        "domain.LogoutRequest": {
+        "dto.LogoutRequest": {
             "type": "object",
             "properties": {
                 "is_all_devices": {
@@ -823,7 +855,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.PresignedFileResponse": {
+        "dto.PresignedFileResponse": {
             "type": "object",
             "properties": {
                 "expire_at": {
@@ -846,7 +878,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.PresignedFileUploadRequest": {
+        "dto.PresignedUploadRequest": {
             "type": "object",
             "required": [
                 "domain",
@@ -895,7 +927,30 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.RefreshRequest": {
+        "dto.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RefreshTokenRequest": {
             "type": "object",
             "required": [
                 "refresh_token"
@@ -906,7 +961,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.RegisterRequest": {
+        "dto.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -930,7 +985,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.ResetPasswordRequest": {
+        "dto.ResetPasswordRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -947,7 +1002,18 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.TokenInfo": {
+        "dto.StatusResponse": {
+            "type": "object",
+            "properties": {
+                "verified": {
+                    "type": "boolean"
+                },
+                "verified_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TokenResponse": {
             "type": "object",
             "properties": {
                 "access_expire_at": {
@@ -967,7 +1033,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.UpdateProfileRequest": {
+        "dto.UpdateProfileRequest": {
             "type": "object",
             "properties": {
                 "bio": {
@@ -994,73 +1060,32 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.UploadDomain": {
-            "type": "string",
-            "enum": [
-                "users",
-                "posts",
-                "messages"
-            ],
-            "x-enum-varnames": [
-                "DomainUser",
-                "DomainPost",
-                "DomainMessage"
-            ]
-        },
-        "domain.UploadFeature": {
-            "type": "string",
-            "enum": [
-                "avatar",
-                "cover",
-                "feed_image",
-                "feed_video",
-                "voice_chat",
-                "attachment"
-            ],
-            "x-enum-varnames": [
-                "FeatureAvatar",
-                "FeatureCover",
-                "FeatureFeedImage",
-                "FeatureFeedVideo",
-                "FeatureVoiceChat",
-                "FeatureAttachment"
-            ]
-        },
-        "domain.UserResponse": {
+        "dto.UserResponse": {
             "type": "object",
             "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "bio": {
-                    "type": "string"
-                },
-                "cover_image": {
-                    "type": "string"
-                },
                 "created_at": {
                     "type": "string"
                 },
                 "email": {
                     "type": "string"
                 },
-                "full_name": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "integer"
                 },
-                "location": {
+                "profile": {
+                    "$ref": "#/definitions/dto.ProfileResponse"
+                },
+                "status": {
+                    "$ref": "#/definitions/dto.StatusResponse"
+                },
+                "updated_at": {
                     "type": "string"
                 },
                 "username": {
                     "type": "string"
                 },
-                "verified": {
-                    "type": "boolean"
-                },
-                "website": {
-                    "type": "string"
+                "version": {
+                    "type": "integer"
                 }
             }
         },

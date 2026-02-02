@@ -5,6 +5,7 @@ import (
 
 	"air-social/internal/domain"
 	"air-social/internal/service"
+	"air-social/internal/transport/http/dto"
 	"air-social/internal/transport/http/middleware"
 	"air-social/pkg"
 )
@@ -28,14 +29,14 @@ func NewAuthHandler(authSvc service.AuthService, url domain.URLFactory) *AuthHan
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		domain.RegisterRequest	true	"Register Request"
-//	@Success		200		{object}	domain.UserResponse
+//	@Param			request	body		dto.RegisterRequest	true	"Register Request"
+//	@Success		201		{object}	dto.UserResponse
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		409		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
-	var req domain.RegisterRequest
+	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -53,7 +54,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, result)
+	pkg.Created(c, h.mapUserToResponse(result))
 }
 
 // Login godoc
@@ -63,14 +64,14 @@ func (h *AuthHandler) Register(c *gin.Context) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		domain.LoginRequest		true	"Login Request"
-//	@Success		200		{object}	domain.LoginResponse	"Returns user info and tokens"
+//	@Param			request	body		dto.LoginRequest	true	"Login Request"
+//	@Success		200		{object}	dto.LoginResponse	"Returns user info and tokens"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req domain.LoginRequest
+	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -82,13 +83,16 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		DeviceID: req.DeviceID,
 	}
 
-	res, err := h.authSvc.Login(c.Request.Context(), params)
+	user, token, err := h.authSvc.Login(c.Request.Context(), params)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, res)
+	pkg.Success(c, dto.LoginResponse{
+		User:  h.mapUserToResponse(user),
+		Token: h.mapTokenToResponse(token),
+	})
 }
 
 // Refresh godoc
@@ -98,14 +102,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		domain.RefreshRequest	true	"Refresh Request"
-//	@Success		200		{object}	domain.TokenInfo
+//	@Param			request	body		dto.RefreshTokenRequest	true	"Refresh Request"
+//	@Success		200		{object}	dto.TokenResponse
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/refresh [post]
 func (h *AuthHandler) Refresh(c *gin.Context) {
-	var req domain.RefreshRequest
+	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -117,7 +121,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, res)
+	pkg.Success(c, h.mapTokenToResponse(res))
 }
 
 // Logout godoc
@@ -128,13 +132,13 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		domain.LogoutRequest	true	"Logout Request"
-//	@Success		200		{string}	string					"logout success"
+//	@Param			request	body		dto.LogoutRequest	true	"Logout Request"
+//	@Success		200		{string}	string				"logout success"
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
-	var req domain.LogoutRequest
+	var req dto.LogoutRequest
 	_ = c.ShouldBindJSON(&req)
 
 	claims, err := middleware.GetAuthClaims(c)
@@ -195,13 +199,13 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		domain.ForgotPasswordRequest	true	"Forgot Password Request"
-//	@Success		200		{string}	string							"Instruction message"
+//	@Param			request	body		dto.ForgotPasswordRequest	true	"Forgot Password Request"
+//	@Success		200		{string}	string						"Instruction message"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/forgot-password [post]
 func (h *AuthHandler) ForgotPassword(c *gin.Context) {
-	var req domain.ForgotPasswordRequest
+	var req dto.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -247,14 +251,14 @@ func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 //	@Tags			Auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		domain.ResetPasswordRequest	true	"Reset Password Request"
+//	@Param			request	body		dto.ResetPasswordRequest	true	"Reset Password Request"
 //	@Success		200		{string}	string						"password update successfully"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		404		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/auth/reset-password [post]
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
-	var req domain.ResetPasswordRequest
+	var req dto.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -271,4 +275,37 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	}
 
 	pkg.Success(c, "password update successfully")
+}
+
+func (h *AuthHandler) mapUserToResponse(user *domain.User) dto.UserResponse {
+	return dto.UserResponse{
+		ID:       user.ID,
+		Email:    user.Email,
+		Username: user.Username,
+		Profile: dto.ProfileResponse{
+			FullName:   user.Profile.FullName,
+			Bio:        user.Profile.Bio,
+			Avatar:     h.authSvc.GetPublicURL(user.Profile.Avatar),
+			CoverImage: h.authSvc.GetPublicURL(user.Profile.CoverImage),
+			Location:   user.Profile.Location,
+			Website:    user.Profile.Website,
+		},
+		Status: dto.StatusResponse{
+			Verified:   user.Status.Verified,
+			VerifiedAt: user.Status.VerifiedAt,
+		},
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Version:   user.Version,
+	}
+}
+
+func (h *AuthHandler) mapTokenToResponse(t *domain.TokenInfo) dto.TokenResponse {
+	return dto.TokenResponse{
+		Type:            t.Type,
+		AccessToken:     t.AccessToken,
+		RefreshToken:    t.RefreshToken,
+		AccessExpireAt:  t.AccessExpireAt,
+		RefreshExpireAt: t.RefreshExpireAt,
+	}
 }

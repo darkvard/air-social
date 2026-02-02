@@ -26,7 +26,7 @@ func NewMailtrap(cfg config.MailConfig) *mailtrap {
 	}
 }
 
-func (m *mailtrap) Send(env *domain.EmailEnvelope) error {
+func (m *mailtrap) Send(env *domain.Email) error {
 	// path
 	layoutPath := env.LayoutFile
 	contentPath := env.TemplateFile

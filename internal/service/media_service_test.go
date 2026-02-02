@@ -55,7 +55,7 @@ func (s *mediaServiceSuite) TestGetPresignedURL() {
 		name      string
 		args      args
 		setupMock func(storage *mocks.FileStorage)
-		want      domain.PresignedFileResponse
+		want      domain.PresignedFile
 		wantErr   error
 	}{
 		{
@@ -103,7 +103,7 @@ func (s *mediaServiceSuite) TestGetPresignedURL() {
 					})).
 					Return(presignedResp, nil).Once()
 			},
-			want: domain.PresignedFileResponse{
+			want: domain.PresignedFile{
 				UploadURL: expectedUploadURL,
 				FormData:  presignedResp.FormData,
 				ExpireAt:  pkg.TimeNowUTC().Add(domain.PresignedUploadExpiry),

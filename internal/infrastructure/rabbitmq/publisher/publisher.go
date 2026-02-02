@@ -1,4 +1,4 @@
-package rabbitmq
+package publisher
 
 import (
 	"context"
@@ -10,6 +10,9 @@ import (
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 
+	"air-social/internal/domain"
+	"air-social/internal/infrastructure/rabbitmq/config"
+	"air-social/internal/infrastructure/rabbitmq/model"
 	"air-social/pkg"
 )
 
@@ -21,12 +24,12 @@ type pubChannel struct {
 
 type Publisher struct {
 	conn   *amqp.Connection
-	cfg    ExchangeConfig
+	cfg    config.ExchangeConfig
 	chPool chan *pubChannel
 	once   sync.Once
 }
 
-func NewPublisher(conn *amqp.Connection, eCfg ExchangeConfig, poolSize int) (*Publisher, error) {
+func NewPublisher(conn *amqp.Connection, eCfg config.ExchangeConfig, poolSize int) (*Publisher, error) {
 	if poolSize <= 0 {
 		poolSize = 1
 	}
@@ -87,7 +90,13 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any)
 
 	seqNo := pc.ch.GetNextPublishSeqNo()
 
-	body, err := json.Marshal(payload)
+	var body []byte
+	if evt, ok := payload.(domain.Event); ok {
+		modelEvt := model.FromDomainEvent(evt)
+		body, err = json.Marshal(modelEvt)
+	} else {
+		body, err = json.Marshal(payload)
+	}
 	if err != nil {
 		return err
 	}

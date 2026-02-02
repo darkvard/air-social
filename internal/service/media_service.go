@@ -14,7 +14,7 @@ import (
 )
 
 type MediaService interface {
-	GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFileResponse, error)
+	GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error)
 	ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
 	DeleteFile(ctx context.Context, objectKey string) error
 	GetPublicURL(objectKey string) string
@@ -32,8 +32,8 @@ func NewMediaService(storage domain.FileStorage, cfg domain.FileConfig) *MediaSe
 	}
 }
 
-func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFileResponse, error) {
-	var empty domain.PresignedFileResponse
+func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error) {
+	var empty domain.PresignedFile
 
 	rule, err := s.validateAndGetUploadRule(input)
 	if err != nil {
@@ -59,7 +59,7 @@ func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.Pre
 	baseURL := strings.TrimSuffix(s.cfg.DomainPublic, "/")
 	uploadURL := fmt.Sprintf("%s/%s", baseURL, s.cfg.BucketPublic)
 
-	return domain.PresignedFileResponse{
+	return domain.PresignedFile{
 		UploadURL: uploadURL,
 		FormData:  result.FormData,
 		ObjectKey: loc.Key,

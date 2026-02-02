@@ -13,7 +13,7 @@ type Adapters struct {
 	FileStorage domain.FileStorage
 	Cache       domain.CacheStorage
 	EventPub    domain.EventPublisher
-	MailSender  domain.EmailSender
+	Mailer      domain.Mailer
 }
 
 func initAdapters(cfg config.Config, infra *Infrastructures) (*Adapters, error) {
@@ -32,12 +32,12 @@ func initAdapters(cfg config.Config, infra *Infrastructures) (*Adapters, error) 
 		return nil, err
 	}
 
-	mailSender := mailer.NewMailtrap(cfg.Mailer)
+	mailer := mailer.NewMailtrap(cfg.Mailer)
 
 	return &Adapters{
 		FileStorage: fileStorage,
 		Cache:       cache,
 		EventPub:    eventPub,
-		MailSender:  mailSender,
+		Mailer:      mailer,
 	}, nil
 }

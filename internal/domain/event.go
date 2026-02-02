@@ -12,8 +12,8 @@ const (
 	EmailResetPassword EventType = "email.reset.password"
 )
 
-type EventHandler interface {
-	Handle(ctx context.Context, evt EventPayload) error
+type EventDispatcher interface {
+	Dispatch(ctx context.Context, evt Event) error
 }
 
 type EventPublisher interface {
@@ -21,16 +21,16 @@ type EventPublisher interface {
 	Close()
 }
 
-type EventPayload struct {
-	EventID   string    `json:"event_id"`
-	EventType EventType `json:"event_type"`
-	Timestamp time.Time `json:"timestamp"`
-	Data      any       `json:"data"`
+type Event struct {
+	EventID   string
+	EventType EventType
+	Timestamp time.Time
+	Data      any
 }
 
-type EventEmailData struct {
-	Email  string `json:"email"`
-	Name   string `json:"name"`
-	Link   string `json:"link"`
-	Expiry string `json:"expiry"`
+type EmailEvent struct {
+	Email  string
+	Name   string
+	Link   string
+	Expiry string
 }

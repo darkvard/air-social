@@ -11,19 +11,19 @@ import (
 )
 
 type EmailService interface {
-	Handle(ctx context.Context, evt domain.EventPayload) error
+	Dispatch(ctx context.Context, evt domain.Event) error
 }
 
-type emailHandler func(evt domain.EventPayload) error
+type emailHandler func(evt domain.Event) error
 
 type EmailServiceImpl struct {
-	sender   domain.EmailSender
+	mailer   domain.Mailer
 	handlers map[domain.EventType]emailHandler
 }
 
-func NewEmailService(sender domain.EmailSender) *EmailServiceImpl {
+func NewEmailService(mailer domain.Mailer) *EmailServiceImpl {
 	svc := &EmailServiceImpl{
-		sender:   sender,
+		mailer:   mailer,
 		handlers: make(map[domain.EventType]emailHandler),
 	}
 	svc.registerHandlers()
@@ -35,7 +35,7 @@ func (e *EmailServiceImpl) registerHandlers() {
 	e.handlers[domain.EmailResetPassword] = e.resetPassword
 }
 
-func (e *EmailServiceImpl) Handle(ctx context.Context, evt domain.EventPayload) error {
+func (e *EmailServiceImpl) Dispatch(ctx context.Context, evt domain.Event) error {
 	handler, ok := e.handlers[evt.EventType]
 	if !ok {
 		return nil
@@ -43,35 +43,35 @@ func (e *EmailServiceImpl) Handle(ctx context.Context, evt domain.EventPayload) 
 	return handler(evt)
 }
 
-func (e *EmailServiceImpl) verifyEmail(evt domain.EventPayload) error {
+func (e *EmailServiceImpl) verifyEmail(evt domain.Event) error {
 	return e.handleStandardEmail(evt, templates.VerifyEmailPath)
 }
 
-func (e *EmailServiceImpl) resetPassword(evt domain.EventPayload) error {
+func (e *EmailServiceImpl) resetPassword(evt domain.Event) error {
 	return e.handleStandardEmail(evt, templates.ResetPasswordPath)
 }
 
-func (e *EmailServiceImpl) handleStandardEmail(evt domain.EventPayload, templateFile string) error {
-	var payload domain.EventEmailData
+func (e *EmailServiceImpl) handleStandardEmail(evt domain.Event, templateFile string) error {
+	var payload domain.EmailEvent
 	if err := parsePayloadData(evt, &payload); err != nil {
 		return err
 	}
 
-	env := &domain.EmailEnvelope{
+	email := &domain.Email{
 		To:           payload.Email,
 		LayoutFile:   templates.LayoutPath,
 		TemplateFile: templateFile,
-		Data: domain.VerifyEmailData{
+		Data: domain.EmailVerifyData{
 			Name:   payload.Name,
 			Link:   payload.Link,
 			Expiry: payload.Expiry,
 		},
 	}
 
-	return e.sendEmail(env, payload.Email, evt.EventType)
+	return e.sendEmail(email, payload.Email, evt.EventType)
 }
 
-func parsePayloadData(evt domain.EventPayload, target any) error {
+func parsePayloadData(evt domain.Event, target any) error {
 	dataBytes, err := json.Marshal(evt.Data)
 	if err != nil {
 		return fmt.Errorf("failed to marshal event data: %w", err)
@@ -83,9 +83,9 @@ func parsePayloadData(evt domain.EventPayload, target any) error {
 	return nil
 }
 
-func (e *EmailServiceImpl) sendEmail(env *domain.EmailEnvelope, email string, eventType domain.EventType) error {
-	if err := e.sender.Send(env); err != nil {
-		pkg.Log().Errorw("failed to send email", "event_type", eventType, "error", err, "to", email)
+func (e *EmailServiceImpl) sendEmail(email *domain.Email, recipient string, eventType domain.EventType) error {
+	if err := e.mailer.Send(email); err != nil {
+		pkg.Log().Errorw("failed to send email", "event_type", eventType, "error", err, "to", recipient)
 		return err
 	}
 	return nil

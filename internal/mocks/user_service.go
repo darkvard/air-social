@@ -162,22 +162,24 @@ func (_c *UserService_ConfirmImageUpload_Call) RunAndReturn(run func(ctx context
 }
 
 // CreateUser provides a mock function for the type UserService
-func (_mock *UserService) CreateUser(ctx context.Context, input domain.CreateUserParams) (domain.UserResponse, error) {
+func (_mock *UserService) CreateUser(ctx context.Context, input domain.CreateUserParams) (*domain.User, error) {
 	ret := _mock.Called(ctx, input)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateUser")
 	}
 
-	var r0 domain.UserResponse
+	var r0 *domain.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.CreateUserParams) (domain.UserResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.CreateUserParams) (*domain.User, error)); ok {
 		return returnFunc(ctx, input)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.CreateUserParams) domain.UserResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.CreateUserParams) *domain.User); ok {
 		r0 = returnFunc(ctx, input)
 	} else {
-		r0 = ret.Get(0).(domain.UserResponse)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.User)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.CreateUserParams) error); ok {
 		r1 = returnFunc(ctx, input)
@@ -217,12 +219,12 @@ func (_c *UserService_CreateUser_Call) Run(run func(ctx context.Context, input d
 	return _c
 }
 
-func (_c *UserService_CreateUser_Call) Return(userResponse domain.UserResponse, err error) *UserService_CreateUser_Call {
-	_c.Call.Return(userResponse, err)
+func (_c *UserService_CreateUser_Call) Return(user *domain.User, err error) *UserService_CreateUser_Call {
+	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *UserService_CreateUser_Call) RunAndReturn(run func(ctx context.Context, input domain.CreateUserParams) (domain.UserResponse, error)) *UserService_CreateUser_Call {
+func (_c *UserService_CreateUser_Call) RunAndReturn(run func(ctx context.Context, input domain.CreateUserParams) (*domain.User, error)) *UserService_CreateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -364,22 +366,24 @@ func (_c *UserService_GetByID_Call) RunAndReturn(run func(ctx context.Context, i
 }
 
 // GetProfile provides a mock function for the type UserService
-func (_mock *UserService) GetProfile(ctx context.Context, id int64) (domain.UserResponse, error) {
+func (_mock *UserService) GetProfile(ctx context.Context, id int64) (*domain.User, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProfile")
 	}
 
-	var r0 domain.UserResponse
+	var r0 *domain.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (domain.UserResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (*domain.User, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) domain.UserResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) *domain.User); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
-		r0 = ret.Get(0).(domain.UserResponse)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.User)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
 		r1 = returnFunc(ctx, id)
@@ -419,38 +423,49 @@ func (_c *UserService_GetProfile_Call) Run(run func(ctx context.Context, id int6
 	return _c
 }
 
-func (_c *UserService_GetProfile_Call) Return(userResponse domain.UserResponse, err error) *UserService_GetProfile_Call {
-	_c.Call.Return(userResponse, err)
+func (_c *UserService_GetProfile_Call) Return(user *domain.User, err error) *UserService_GetProfile_Call {
+	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *UserService_GetProfile_Call) RunAndReturn(run func(ctx context.Context, id int64) (domain.UserResponse, error)) *UserService_GetProfile_Call {
+func (_c *UserService_GetProfile_Call) RunAndReturn(run func(ctx context.Context, id int64) (*domain.User, error)) *UserService_GetProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ResolveMediaURLs provides a mock function for the type UserService
-func (_mock *UserService) ResolveMediaURLs(res *domain.UserResponse) {
-	_mock.Called(res)
-	return
+// GetPublicURL provides a mock function for the type UserService
+func (_mock *UserService) GetPublicURL(key string) string {
+	ret := _mock.Called(key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPublicURL")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
+		r0 = returnFunc(key)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
 }
 
-// UserService_ResolveMediaURLs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResolveMediaURLs'
-type UserService_ResolveMediaURLs_Call struct {
+// UserService_GetPublicURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPublicURL'
+type UserService_GetPublicURL_Call struct {
 	*mock.Call
 }
 
-// ResolveMediaURLs is a helper method to define mock.On call
-//   - res *domain.UserResponse
-func (_e *UserService_Expecter) ResolveMediaURLs(res interface{}) *UserService_ResolveMediaURLs_Call {
-	return &UserService_ResolveMediaURLs_Call{Call: _e.mock.On("ResolveMediaURLs", res)}
+// GetPublicURL is a helper method to define mock.On call
+//   - key string
+func (_e *UserService_Expecter) GetPublicURL(key interface{}) *UserService_GetPublicURL_Call {
+	return &UserService_GetPublicURL_Call{Call: _e.mock.On("GetPublicURL", key)}
 }
 
-func (_c *UserService_ResolveMediaURLs_Call) Run(run func(res *domain.UserResponse)) *UserService_ResolveMediaURLs_Call {
+func (_c *UserService_GetPublicURL_Call) Run(run func(key string)) *UserService_GetPublicURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *domain.UserResponse
+		var arg0 string
 		if args[0] != nil {
-			arg0 = args[0].(*domain.UserResponse)
+			arg0 = args[0].(string)
 		}
 		run(
 			arg0,
@@ -459,13 +474,13 @@ func (_c *UserService_ResolveMediaURLs_Call) Run(run func(res *domain.UserRespon
 	return _c
 }
 
-func (_c *UserService_ResolveMediaURLs_Call) Return() *UserService_ResolveMediaURLs_Call {
-	_c.Call.Return()
+func (_c *UserService_GetPublicURL_Call) Return(s string) *UserService_GetPublicURL_Call {
+	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *UserService_ResolveMediaURLs_Call) RunAndReturn(run func(res *domain.UserResponse)) *UserService_ResolveMediaURLs_Call {
-	_c.Run(run)
+func (_c *UserService_GetPublicURL_Call) RunAndReturn(run func(key string) string) *UserService_GetPublicURL_Call {
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -533,22 +548,24 @@ func (_c *UserService_UpdatePassword_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // UpdateProfile provides a mock function for the type UserService
-func (_mock *UserService) UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (domain.UserResponse, error) {
+func (_mock *UserService) UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (*domain.User, error) {
 	ret := _mock.Called(ctx, input)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateProfile")
 	}
 
-	var r0 domain.UserResponse
+	var r0 *domain.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.UpdateProfileParams) (domain.UserResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.UpdateProfileParams) (*domain.User, error)); ok {
 		return returnFunc(ctx, input)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.UpdateProfileParams) domain.UserResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.UpdateProfileParams) *domain.User); ok {
 		r0 = returnFunc(ctx, input)
 	} else {
-		r0 = ret.Get(0).(domain.UserResponse)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.User)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.UpdateProfileParams) error); ok {
 		r1 = returnFunc(ctx, input)
@@ -588,12 +605,12 @@ func (_c *UserService_UpdateProfile_Call) Run(run func(ctx context.Context, inpu
 	return _c
 }
 
-func (_c *UserService_UpdateProfile_Call) Return(userResponse domain.UserResponse, err error) *UserService_UpdateProfile_Call {
-	_c.Call.Return(userResponse, err)
+func (_c *UserService_UpdateProfile_Call) Return(user *domain.User, err error) *UserService_UpdateProfile_Call {
+	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *UserService_UpdateProfile_Call) RunAndReturn(run func(ctx context.Context, input domain.UpdateProfileParams) (domain.UserResponse, error)) *UserService_UpdateProfile_Call {
+func (_c *UserService_UpdateProfile_Call) RunAndReturn(run func(ctx context.Context, input domain.UpdateProfileParams) (*domain.User, error)) *UserService_UpdateProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

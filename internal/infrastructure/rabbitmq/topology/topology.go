@@ -1,12 +1,12 @@
-package email
+package topology
 
 import (
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	"air-social/internal/infrastructure/rabbitmq"
+	"air-social/internal/infrastructure/rabbitmq/config"
 )
 
-func setupExchange(ch *amqp.Channel, cfg rabbitmq.ExchangeConfig) error {
+func SetupExchange(ch *amqp.Channel, cfg config.ExchangeConfig) error {
 	return ch.ExchangeDeclare(
 		cfg.Name,
 		cfg.Type,
@@ -18,7 +18,7 @@ func setupExchange(ch *amqp.Channel, cfg rabbitmq.ExchangeConfig) error {
 	)
 }
 
-func setupQueue(ch *amqp.Channel, cfg rabbitmq.QueueConfig) (string, error) {
+func SetupQueue(ch *amqp.Channel, cfg config.QueueConfig) (string, error) {
 	args := amqp.Table{}
 	if cfg.DeadLetterExchange != "" && cfg.DeadLetterRoutingKey != "" {
 		args["x-dead-letter-exchange"] = cfg.DeadLetterExchange
@@ -46,7 +46,7 @@ func setupQueue(ch *amqp.Channel, cfg rabbitmq.QueueConfig) (string, error) {
 	return q.Name, nil
 }
 
-func declareAndBindDLQ(ch *amqp.Channel, cfg rabbitmq.QueueConfig) error {
+func declareAndBindDLQ(ch *amqp.Channel, cfg config.QueueConfig) error {
 	if _, err := ch.QueueDeclare(
 		cfg.DeadLetterQueue,
 		true, // durable
@@ -67,11 +67,11 @@ func declareAndBindDLQ(ch *amqp.Channel, cfg rabbitmq.QueueConfig) error {
 	)
 }
 
-func bindQueue(
+func BindQueue(
 	ch *amqp.Channel,
 	queue string,
-	eCfg rabbitmq.ExchangeConfig,
-	qCfg rabbitmq.QueueConfig,
+	eCfg config.ExchangeConfig,
+	qCfg config.QueueConfig,
 ) error {
 	return ch.QueueBind(
 		queue,
@@ -82,11 +82,11 @@ func bindQueue(
 	)
 }
 
-func setupQos(ch *amqp.Channel) error {
+func SetupQos(ch *amqp.Channel) error {
 	return ch.Qos(1, 0, false)
 }
 
-func startConsume(
+func StartConsume(
 	ch *amqp.Channel,
 	queue string,
 ) (<-chan amqp.Delivery, error) {

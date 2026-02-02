@@ -1,4 +1,4 @@
-package postgres
+package repository
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"air-social/internal/domain"
+	"air-social/internal/infrastructure/postgres/model"
 	"air-social/pkg"
 )
 
@@ -24,40 +25,44 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
         VALUES (:email, :username, :password_hash)
         RETURNING id, created_at, updated_at, version
     `
-	rows, err := r.db.NamedQueryContext(ctx, query, user)
+
+	dbModel := model.FromDomainUser(user)
+	rows, err := r.db.NamedQueryContext(ctx, query, dbModel)
 	if err != nil {
 		return pkg.MapPostgresError(err)
 	}
 	defer rows.Close()
 
 	if rows.Next() {
-		return rows.StructScan(user)
+		if err := rows.StructScan(dbModel); err != nil {
+			return err
+		}
+		*user = *dbModel.ToDomain()
+		return nil
 	}
 
 	return err
 }
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	query := ` SELECT * FROM users WHERE email = $1 `
-	var user domain.User
-	if err := r.db.GetContext(ctx, &user, query, email); err != nil {
+	query := `SELECT * FROM users WHERE email = $1`
+	var dbUser model.User
+	if err := r.db.GetContext(ctx, &dbUser, query, email); err != nil {
 		return nil, pkg.MapPostgresError(err)
 	}
-	return &user, nil
+	return dbUser.ToDomain(), nil
 }
 
 func (r *userRepository) GetByID(ctx context.Context, id int64) (*domain.User, error) {
-	query := ` SELECT * FROM users WHERE id = $1 `
-	var user domain.User
-	if err := r.db.GetContext(ctx, &user, query, id); err != nil {
+	query := `SELECT * FROM users WHERE id = $1`
+	var dbUser model.User
+	if err := r.db.GetContext(ctx, &dbUser, query, id); err != nil {
 		return nil, pkg.MapPostgresError(err)
 	}
-	return &user, nil
+	return dbUser.ToDomain(), nil
 }
 
 func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
-	user.UpdatedAt = pkg.TimeNowUTC()
-
 	query := `
 		UPDATE users
 		SET username = :username, 
@@ -75,7 +80,11 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 		WHERE id = :id AND version = :version
 		RETURNING version
 	`
-	rows, err := r.db.NamedQueryContext(ctx, query, user)
+
+	dbModel := model.FromDomainUser(user)
+	dbModel.UpdatedAt = pkg.TimeNowUTC()
+
+	rows, err := r.db.NamedQueryContext(ctx, query, dbModel)
 	if err != nil {
 		return pkg.MapPostgresError(err)
 	}

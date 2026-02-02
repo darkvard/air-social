@@ -162,22 +162,22 @@ func (_c *MediaService_DeleteFile_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // GetPresignedURL provides a mock function for the type MediaService
-func (_mock *MediaService) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFileResponse, error) {
+func (_mock *MediaService) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error) {
 	ret := _mock.Called(ctx, input)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPresignedURL")
 	}
 
-	var r0 domain.PresignedFileResponse
+	var r0 domain.PresignedFile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.PresignedFileParams) (domain.PresignedFileResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.PresignedFileParams) (domain.PresignedFile, error)); ok {
 		return returnFunc(ctx, input)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.PresignedFileParams) domain.PresignedFileResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.PresignedFileParams) domain.PresignedFile); ok {
 		r0 = returnFunc(ctx, input)
 	} else {
-		r0 = ret.Get(0).(domain.PresignedFileResponse)
+		r0 = ret.Get(0).(domain.PresignedFile)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.PresignedFileParams) error); ok {
 		r1 = returnFunc(ctx, input)
@@ -217,12 +217,12 @@ func (_c *MediaService_GetPresignedURL_Call) Run(run func(ctx context.Context, i
 	return _c
 }
 
-func (_c *MediaService_GetPresignedURL_Call) Return(presignedFileResponse domain.PresignedFileResponse, err error) *MediaService_GetPresignedURL_Call {
-	_c.Call.Return(presignedFileResponse, err)
+func (_c *MediaService_GetPresignedURL_Call) Return(presignedFile domain.PresignedFile, err error) *MediaService_GetPresignedURL_Call {
+	_c.Call.Return(presignedFile, err)
 	return _c
 }
 
-func (_c *MediaService_GetPresignedURL_Call) RunAndReturn(run func(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFileResponse, error)) *MediaService_GetPresignedURL_Call {
+func (_c *MediaService_GetPresignedURL_Call) RunAndReturn(run func(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error)) *MediaService_GetPresignedURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

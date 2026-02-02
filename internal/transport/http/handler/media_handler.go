@@ -5,6 +5,7 @@ import (
 
 	"air-social/internal/domain"
 	"air-social/internal/service"
+	"air-social/internal/transport/http/dto"
 	"air-social/internal/transport/http/middleware"
 	"air-social/pkg"
 )
@@ -30,8 +31,8 @@ func NewMediaHandler(srv service.MediaService) *MediaHandler {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		domain.PresignedFileUploadRequest	true	"File Metadata"
-//	@Success		200		{object}	domain.PresignedFileResponse		"Upload Credentials"
+//	@Param			request	body		dto.PresignedUploadRequest	true	"File Metadata"
+//	@Success		200		{object}	dto.PresignedFileResponse	"Upload Credentials"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -43,7 +44,7 @@ func (h *MediaHandler) PresignedUpload(c *gin.Context) {
 		return
 	}
 
-	var req domain.PresignedFileUploadRequest
+	var req dto.PresignedUploadRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
@@ -66,5 +67,11 @@ func (h *MediaHandler) PresignedUpload(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, res)
+	pkg.Success(c, dto.PresignedFileResponse{
+		UploadURL: res.UploadURL,
+		FormData:  res.FormData,
+		ObjectKey: res.ObjectKey,
+		PublicURL: res.PublicURL,
+		ExpireAt:  res.ExpireAt,
+	})
 }

@@ -1,23 +1,23 @@
 package domain
 
-type EmailSender interface {
-	Send(data *EmailEnvelope) error
+type Mailer interface {
+	Send(email *Email) error
 }
 
-type EmailEnvelope struct {
+type Email struct {
 	To           string
 	LayoutFile   string
 	TemplateFile string
 	Data         any
 }
 
-type RegisterEmailData struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
+type EmailRegisterData struct {
+	Email string
+	Name  string
 }
 
-type VerifyEmailData struct {
-	Name   string `json:"name"`
-	Link   string `json:"link"`
-	Expiry string `json:"expiry"`
+type EmailVerifyData struct {
+	Name   string
+	Link   string
+	Expiry string
 }

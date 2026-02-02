@@ -8,41 +8,41 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 
 	"air-social/internal/domain"
-	"air-social/internal/infrastructure/rabbitmq"
+	"air-social/internal/infrastructure/rabbitmq/config"
+	"air-social/internal/infrastructure/rabbitmq/publisher"
 	"air-social/internal/transport/worker"
-	"air-social/internal/transport/worker/email"
 	"air-social/pkg"
 )
 
 const (
-	interaction = "INTERACTION"
-	publisher   = "PUBLISHER"
-	consumer    = "CONSUMER"
-	timeout     = "TIMEOUT"
+	logInteraction = "INTERACTION"
+	logPublisher   = "PUBLISHER"
+	logConsumer    = "CONSUMER"
+	logTimeout     = "TIMEOUT"
 )
 
 type rabbitMQ struct {
-	publisher *rabbitmq.Publisher
+	publisher *publisher.Publisher
 	workerMgr *worker.Manager
 }
 
 func newRabbitMQ(conn *amqp091.Connection, cache domain.CacheStorage) *rabbitMQ {
 	mgr := worker.NewManager(
-		email.NewEmailWorker(
+		worker.NewEmailWorker(
 			conn,
 			cache,
 			newEventHandler(),
-			rabbitmq.EventsExchange,
-			rabbitmq.QueueConfig{
+			config.EventsExchange,
+			config.QueueConfig{
 				Queue:      "email.interaction.q",
 				RoutingKey: "email.*",
 			},
 		),
 	)
 
-	pub, err := rabbitmq.NewPublisher(
+	pub, err := publisher.NewPublisher(
 		conn,
-		rabbitmq.EventsExchange,
+		config.EventsExchange,
 		10,
 	)
 	if err != nil {
@@ -72,9 +72,9 @@ func (r *rabbitMQ) testing() {
 }
 
 func (r *rabbitMQ) startWorker(ctx context.Context) {
-	logInfo(interaction, "STARTING WORKER", "...")
+	logInfo(logInteraction, "STARTING WORKER", "...")
 	if err := r.workerMgr.Start(ctx); err != nil {
-		logError(interaction, "WORKER STOPPED", "Error: %v", err)
+		logError(logInteraction, "WORKER STOPPED", "Error: %v", err)
 	}
 }
 
@@ -90,7 +90,7 @@ func (r *rabbitMQ) messageHandle(ctx context.Context) {
 			defer pubCancel()
 
 			if c.name == connErrState {
-				logInfo(timeout, "Simulating", "Closing publisher connection...")
+				logInfo(logTimeout, "Simulating", "Closing publisher connection...")
 				r.publisher.Close()
 				time.Sleep(100 * time.Millisecond)
 			}
@@ -101,9 +101,9 @@ func (r *rabbitMQ) messageHandle(ctx context.Context) {
 			}
 
 			if err := r.publisher.Publish(pubCtx, c.key, evt); err != nil {
-				logError(publisher, "Publish failed", "Error: %v", err)
+				logError(logPublisher, "Publish failed", "Error: %v", err)
 			} else {
-				logInfo(publisher, "Publish success", "Target: %s", c.key)
+				logInfo(logPublisher, "Publish success", "Target: %s", c.key)
 			}
 		}()
 
@@ -112,8 +112,8 @@ func (r *rabbitMQ) messageHandle(ctx context.Context) {
 
 }
 
-func initEvent(name, key string) domain.EventPayload {
-	return domain.EventPayload{
+func initEvent(name, key string) domain.Event {
+	return domain.Event{
 		EventID:   name,
 		EventType: domain.EventType(key),
 		Timestamp: pkg.TimeNowUTC(),

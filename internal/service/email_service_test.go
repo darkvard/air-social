@@ -21,8 +21,8 @@ func TestEmailServiceSuite(t *testing.T) {
 	suite.Run(t, new(emailServiceSuite))
 }
 
-func (s *emailServiceSuite) TestHandle() {
-	baseData := domain.EventEmailData{
+func (s *emailServiceSuite) TestDispatch() {
+	baseData := domain.EmailEvent{
 		Email:  "test@example.com",
 		Name:   "Test User",
 		Link:   "http://link.com",
@@ -30,29 +30,29 @@ func (s *emailServiceSuite) TestHandle() {
 	}
 
 	type args struct {
-		evt domain.EventPayload
+		evt domain.Event
 	}
 
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(sender *mocks.EmailSender, a args)
+		setupMock func(mailer *mocks.Mailer, a args)
 		wantErr   error
 	}{
 		{
 			name: "verify_email_success",
 			args: args{
-				evt: domain.EventPayload{
+				evt: domain.Event{
 					EventType: domain.EmailVerify,
 					Data:      baseData,
 				},
 			},
-			setupMock: func(sender *mocks.EmailSender, a args) {
-				sender.EXPECT().Send(mock.MatchedBy(func(env *domain.EmailEnvelope) bool {
-					data, ok := env.Data.(domain.VerifyEmailData)
+			setupMock: func(mailer *mocks.Mailer, a args) {
+				mailer.EXPECT().Send(mock.MatchedBy(func(email *domain.Email) bool {
+					data, ok := email.Data.(domain.EmailVerifyData)
 					return ok &&
-						env.To == baseData.Email &&
-						env.TemplateFile == templates.VerifyEmailPath &&
+						email.To == baseData.Email &&
+						email.TemplateFile == templates.VerifyEmailPath &&
 						data.Link == baseData.Link
 				})).Return(nil).Once()
 			},
@@ -61,28 +61,28 @@ func (s *emailServiceSuite) TestHandle() {
 		{
 			name: "verify_email_send_error",
 			args: args{
-				evt: domain.EventPayload{
+				evt: domain.Event{
 					EventType: domain.EmailVerify,
 					Data:      baseData,
 				},
 			},
-			setupMock: func(sender *mocks.EmailSender, a args) {
-				sender.EXPECT().Send(mock.Anything).Return(assert.AnError).Once()
+			setupMock: func(mailer *mocks.Mailer, a args) {
+				mailer.EXPECT().Send(mock.Anything).Return(assert.AnError).Once()
 			},
 			wantErr: assert.AnError,
 		},
 		{
 			name: "reset_password_success",
 			args: args{
-				evt: domain.EventPayload{
+				evt: domain.Event{
 					EventType: domain.EmailResetPassword,
 					Data:      baseData,
 				},
 			},
-			setupMock: func(sender *mocks.EmailSender, a args) {
-				sender.EXPECT().Send(mock.MatchedBy(func(env *domain.EmailEnvelope) bool {
-					return env.To == baseData.Email &&
-						env.TemplateFile == templates.ResetPasswordPath
+			setupMock: func(mailer *mocks.Mailer, a args) {
+				mailer.EXPECT().Send(mock.MatchedBy(func(email *domain.Email) bool {
+					return email.To == baseData.Email &&
+						email.TemplateFile == templates.ResetPasswordPath
 				})).Return(nil).Once()
 			},
 			wantErr: nil,
@@ -90,12 +90,12 @@ func (s *emailServiceSuite) TestHandle() {
 		{
 			name: "unknown_event",
 			args: args{
-				evt: domain.EventPayload{
+				evt: domain.Event{
 					EventType: domain.EventType("unknown_event"),
 					Data:      baseData,
 				},
 			},
-			setupMock: func(sender *mocks.EmailSender, a args) {
+			setupMock: func(mailer *mocks.Mailer, a args) {
 				// No calls expected
 			},
 			wantErr: nil,
@@ -103,12 +103,12 @@ func (s *emailServiceSuite) TestHandle() {
 		{
 			name: "parse_error",
 			args: args{
-				evt: domain.EventPayload{
+				evt: domain.Event{
 					EventType: domain.EmailVerify,
 					Data:      make(chan int), // Invalid for JSON marshal
 				},
 			},
-			setupMock: func(sender *mocks.EmailSender, a args) {
+			setupMock: func(mailer *mocks.Mailer, a args) {
 				// No calls expected
 			},
 			wantErr: assert.AnError,
@@ -117,14 +117,14 @@ func (s *emailServiceSuite) TestHandle() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockSender := mocks.NewEmailSender(s.T())
-			svc := NewEmailService(mockSender)
+			mockMailer := mocks.NewMailer(s.T())
+			svc := NewEmailService(mockMailer)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockSender, tc.args)
+				tc.setupMock(mockMailer, tc.args)
 			}
 
-			err := svc.Handle(context.Background(), tc.args.evt)
+			err := svc.Dispatch(context.Background(), tc.args.evt)
 
 			if tc.wantErr != nil {
 				s.Error(err)

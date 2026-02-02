@@ -17,19 +17,19 @@ type TokenRepository interface {
 const AuditRetentionPeriod = 30 * 24 * time.Hour
 
 type RefreshToken struct {
-	ID        int64      `db:"id"`
-	UserID    int64      `db:"user_id"`
-	DeviceID  string     `db:"device_id"`
-	TokenHash string     `db:"token_hash"`
-	ExpiresAt time.Time  `db:"expires_at"`
-	RevokedAt *time.Time `db:"revoked_at"`
-	CreatedAt time.Time  `db:"created_at"`
+	ID        int64
+	UserID    int64
+	DeviceID  string
+	TokenHash string
+	ExpiresAt time.Time
+	RevokedAt *time.Time
+	CreatedAt time.Time
 }
 
 type TokenInfo struct {
-	Type            string    `json:"type"`
-	AccessToken     string    `json:"access_token"`
-	RefreshToken    string    `json:"refresh_token"`
-	AccessExpireAt  time.Time `json:"access_expire_at"`
-	RefreshExpireAt time.Time `json:"refresh_expire_at"`
+	Type            string
+	AccessToken     string
+	RefreshToken    string
+	AccessExpireAt  time.Time
+	RefreshExpireAt time.Time
 }

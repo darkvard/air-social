@@ -33,7 +33,7 @@ func (s *userServiceSuite) TestCreateUser() {
 	}
 
 	type want struct {
-		response domain.UserResponse
+		response *domain.User
 		err      error
 	}
 
@@ -56,7 +56,7 @@ func (s *userServiceSuite) TestCreateUser() {
 			},
 			want: want{
 				err:      pkg.ErrInternal,
-				response: domain.UserResponse{},
+				response: nil,
 			},
 		},
 		{
@@ -79,9 +79,10 @@ func (s *userServiceSuite) TestCreateUser() {
 			},
 			want: want{
 				err: nil,
-				response: domain.UserResponse{
-					Email:    baseInput.Email,
-					Username: baseInput.Username,
+				response: &domain.User{
+					Email:        baseInput.Email,
+					Username:     baseInput.Username,
+					PasswordHash: baseInput.PasswordHashed,
 				},
 			},
 		},
@@ -112,9 +113,9 @@ func (s *userServiceSuite) TestCreateUser() {
 
 func (s *userServiceSuite) TestGetByID() {
 	expectedUser := &domain.User{
-		ID:       1,
-		Email:    "email@example.com",
-		Verified: false,
+		ID:     1,
+		Email:  "email@example.com",
+		Status: domain.UserStatus{Verified: false},
 	}
 
 	type args struct {
@@ -198,9 +199,9 @@ func (s *userServiceSuite) TestGetByID() {
 
 func (s *userServiceSuite) TestGetByEmail() {
 	expectedUser := &domain.User{
-		ID:       1,
-		Email:    "email@example.com",
-		Verified: false,
+		ID:     1,
+		Email:  "email@example.com",
+		Status: domain.UserStatus{Verified: false},
 	}
 
 	type args struct {
@@ -283,26 +284,21 @@ func (s *userServiceSuite) TestGetByEmail() {
 
 func (s *userServiceSuite) TestGetProfile() {
 	user := &domain.User{
-		ID:       1,
-		Email:    "email@example.com",
-		Verified: false,
+		ID:     1,
+		Email:  "email@example.com",
+		Status: domain.UserStatus{Verified: false},
 		Profile: domain.Profile{
 			Avatar:     "user/1/avatar/ab12dgh31.jpg",
 			CoverImage: "user/1/cover/oik98anc.png",
 		},
 	}
 
-	prefixDomainPublic := "http://localhost/air-social-public/"
-	userResponse := user.ToResponse()
-	userResponse.Avatar = prefixDomainPublic + userResponse.Avatar
-	userResponse.CoverImage = prefixDomainPublic + userResponse.CoverImage
-
 	type args struct {
 		id int64
 	}
 
 	type want struct {
-		user domain.UserResponse
+		user *domain.User
 		err  error
 	}
 
@@ -321,32 +317,20 @@ func (s *userServiceSuite) TestGetProfile() {
 				userRepo.EXPECT().GetByID(mock.Anything, a.id).Return(nil, assert.AnError).Once()
 			},
 			want: want{
-				user: domain.UserResponse{},
+				user: nil,
 				err:  assert.AnError,
 			},
 		},
 		{
 			name: "success",
 			args: args{
-				id: userResponse.ID,
+				id: user.ID,
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.id).Return(user, nil).Once()
-				mediaSvc.EXPECT().GetPublicURL(mock.Anything).
-					RunAndReturn(func(objectKey string) string {
-						switch objectKey {
-						case user.Avatar:
-							return userResponse.Avatar
-						case user.CoverImage:
-							return userResponse.CoverImage
-						default:
-							return ""
-						}
-					}).
-					Twice()
 			},
 			want: want{
-				user: userResponse,
+				user: user,
 				err:  nil,
 			},
 		},
@@ -368,73 +352,6 @@ func (s *userServiceSuite) TestGetProfile() {
 			} else {
 				s.NoError(err)
 				s.Equal(tc.want.user, got)
-			}
-		})
-	}
-}
-
-func (s *userServiceSuite) TestResolveMediaURLs() {
-	avatarKey := "avatar.jpg"
-	coverKey := "cover.jpg"
-	publicAvatar := "http://cdn/avatar.jpg"
-	publicCover := "http://cdn/cover.jpg"
-
-	type args struct {
-		res *domain.UserResponse
-	}
-
-	tests := []struct {
-		name      string
-		args      args
-		setupMock func(mediaSvc *mocks.MediaService, a args)
-		want      *domain.UserResponse
-	}{
-		{
-			name: "nil_response",
-			args: args{res: nil},
-			want: nil,
-		},
-		{
-			name: "empty_images",
-			args: args{res: &domain.UserResponse{}},
-			want: &domain.UserResponse{},
-		},
-		{
-			name: "resolve_images",
-			args: args{
-				res: &domain.UserResponse{
-					Profile: domain.Profile{
-						Avatar:     avatarKey,
-						CoverImage: coverKey,
-					},
-				},
-			},
-			setupMock: func(mediaSvc *mocks.MediaService, a args) {
-				mediaSvc.EXPECT().GetPublicURL(avatarKey).Return(publicAvatar).Once()
-				mediaSvc.EXPECT().GetPublicURL(coverKey).Return(publicCover).Once()
-			},
-			want: &domain.UserResponse{
-				Profile: domain.Profile{
-					Avatar:     publicAvatar,
-					CoverImage: publicCover,
-				},
-			},
-		},
-	}
-
-	for _, tc := range tests {
-		s.Run(tc.name, func() {
-			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(nil, mediaSvc)
-
-			if tc.setupMock != nil {
-				tc.setupMock(mediaSvc, tc.args)
-			}
-
-			userSvc.ResolveMediaURLs(tc.args.res)
-
-			if tc.want != nil {
-				s.Equal(tc.want, tc.args.res)
 			}
 		})
 	}
@@ -466,7 +383,7 @@ func (s *userServiceSuite) TestUpdateProfile() {
 	}
 
 	type want struct {
-		response domain.UserResponse
+		response *domain.User
 		err      error
 	}
 
@@ -493,7 +410,7 @@ func (s *userServiceSuite) TestUpdateProfile() {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(existingUser, nil).Once()
 
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
-					return u.FullName == *a.input.FullName && u.Bio == *a.input.Bio
+					return u.Profile.FullName == *a.input.FullName && u.Profile.Bio == *a.input.Bio
 				})).Return(assert.AnError).Once()
 			},
 			want: want{
@@ -507,11 +424,11 @@ func (s *userServiceSuite) TestUpdateProfile() {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(existingUser, nil).Once()
 
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
-					return u.FullName == *a.input.FullName && u.Bio == *a.input.Bio
+					return u.Profile.FullName == *a.input.FullName && u.Profile.Bio == *a.input.Bio
 				})).Return(nil).Once()
 			},
 			want: want{
-				response: domain.UserResponse{
+				response: &domain.User{
 					ID: userID,
 					Profile: domain.Profile{
 						FullName: fullName,
@@ -539,8 +456,8 @@ func (s *userServiceSuite) TestUpdateProfile() {
 				s.ErrorIs(err, tc.want.err)
 			} else {
 				s.NoError(err)
-				s.Equal(tc.want.response.FullName, got.FullName)
-				s.Equal(tc.want.response.Bio, got.Bio)
+				s.Equal(tc.want.response.Profile.FullName, got.Profile.FullName)
+				s.Equal(tc.want.response.Profile.Bio, got.Profile.Bio)
 			}
 		})
 	}
@@ -726,7 +643,7 @@ func (s *userServiceSuite) TestVerifyEmail() {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(&domain.User{Email: email}, nil).Once()
 
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
-					return u.Verified == true && u.VerifiedAt != nil
+					return u.Status.Verified == true && u.Status.VerifiedAt != nil
 				})).Return(nil).Once()
 			},
 			wantErr: nil,

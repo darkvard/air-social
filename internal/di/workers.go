@@ -1,9 +1,8 @@
 package di
 
 import (
-	"air-social/internal/infrastructure/rabbitmq"
+	"air-social/internal/infrastructure/rabbitmq/config"
 	"air-social/internal/transport/worker"
-	"air-social/internal/transport/worker/email"
 )
 
 func initWorkers(
@@ -11,22 +10,22 @@ func initWorkers(
 	adapters *Adapters,
 	services *Services,
 ) *worker.Manager {
-	exchangeCfg := rabbitmq.EventsExchange
+	exchangeCfg := config.EventsExchange
 
-	verifyWorker := email.NewEmailWorker(
+	verifyWorker := worker.NewEmailWorker(
 		infra.Rabbit,
 		adapters.Cache,
 		services.Email,
 		exchangeCfg,
-		rabbitmq.EmailVerifyQueueConfig,
+		config.EmailVerifyQueueConfig,
 	)
 
-	resetWorker := email.NewEmailWorker(
+	resetWorker := worker.NewEmailWorker(
 		infra.Rabbit,
 		adapters.Cache,
 		services.Email,
 		exchangeCfg,
-		rabbitmq.EmailResetPasswordQueueConfig,
+		config.EmailResetPasswordQueueConfig,
 	)
 
 	return worker.NewManager(verifyWorker, resetWorker)

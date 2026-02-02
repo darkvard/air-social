@@ -2,7 +2,7 @@ package di
 
 import (
 	"air-social/internal/domain"
-	"air-social/internal/infrastructure/postgres"
+	"air-social/internal/infrastructure/postgres/repository"
 )
 
 type Repositories struct {
@@ -12,7 +12,7 @@ type Repositories struct {
 
 func initRepositories(infra *Infrastructures) *Repositories {
 	return &Repositories{
-		User:  postgres.NewUserRepository(infra.DB),
-		Token: postgres.NewTokenRepository(infra.DB),
+		User:  repository.NewUserRepository(infra.DB),
+		Token: repository.NewTokenRepository(infra.DB),
 	}
 }

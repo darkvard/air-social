@@ -29,7 +29,7 @@ func (s *authServiceSuite) TestRegister() {
 		Password: "password123",
 	}
 
-	userResp := domain.UserResponse{
+	userResp := &domain.User{
 		ID:       1,
 		Email:    input.Email,
 		Username: input.Username,
@@ -43,16 +43,16 @@ func (s *authServiceSuite) TestRegister() {
 		name      string
 		args      args
 		setupMock func(u *mocks.UserService, t *mocks.TokenService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage)
-		want      domain.UserResponse
+		want      *domain.User
 		wantErr   error
 	}{
 		{
 			name: "create_user_error",
 			args: args{input: input},
 			setupMock: func(u *mocks.UserService, t *mocks.TokenService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage) {
-				u.EXPECT().CreateUser(mock.Anything, mock.Anything).Return(domain.UserResponse{}, pkg.ErrAlreadyExists).Once()
+				u.EXPECT().CreateUser(mock.Anything, mock.Anything).Return(nil, pkg.ErrAlreadyExists).Once()
 			},
-			want:    domain.UserResponse{},
+			want:    nil,
 			wantErr: pkg.ErrAlreadyExists,
 		},
 		{
@@ -64,9 +64,12 @@ func (s *authServiceSuite) TestRegister() {
 				})).Return(userResp, nil).Once()
 
 				// sendEmailVerification flow
-				c.EXPECT().Set(mock.Anything, mock.Anything, input.Email, domain.ThirtyMinutesTime).Return(nil).Once()
+				c.EXPECT().Set(mock.Anything, mock.Anything, input.Email, 30*time.Minute).Return(nil).Once()
 				url.EXPECT().VerifyEmailLink(mock.Anything).Return("http://verify.link").Once()
-				e.EXPECT().Publish(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				e.EXPECT().Publish(mock.Anything, mock.Anything, mock.MatchedBy(func(p domain.Event) bool {
+					data, ok := p.Data.(domain.EmailEvent)
+					return ok && data.Name == userResp.Username
+				})).Return(nil).Once()
 			},
 			want:    userResp,
 			wantErr: nil,
@@ -117,8 +120,6 @@ func (s *authServiceSuite) TestLogin() {
 		PasswordHash: hashedPwd,
 	}
 
-	userResp := user.ToResponse()
-
 	tokenInfo := domain.TokenInfo{
 		AccessToken:  "access",
 		RefreshToken: "refresh",
@@ -128,7 +129,8 @@ func (s *authServiceSuite) TestLogin() {
 		name      string
 		input     domain.LoginParams
 		setupMock func(u *mocks.UserService, t *mocks.TokenService)
-		want      domain.LoginResponse
+		wantUser  *domain.User
+		wantToken *domain.TokenInfo
 		wantErr   error
 	}{
 		{
@@ -163,13 +165,10 @@ func (s *authServiceSuite) TestLogin() {
 			setupMock: func(u *mocks.UserService, t *mocks.TokenService) {
 				u.EXPECT().GetByEmail(mock.Anything, input.Email).Return(user, nil).Once()
 				t.EXPECT().CreateSession(mock.Anything, user.ID, input.DeviceID).Return(tokenInfo, nil).Once()
-				u.EXPECT().ResolveMediaURLs(mock.Anything).Once()
 			},
-			want: domain.LoginResponse{
-				User:  userResp,
-				Token: tokenInfo,
-			},
-			wantErr: nil,
+			wantUser:  user,
+			wantToken: &tokenInfo,
+			wantErr:   nil,
 		},
 	}
 
@@ -183,13 +182,14 @@ func (s *authServiceSuite) TestLogin() {
 				tc.setupMock(mockUser, mockToken)
 			}
 
-			got, err := svc.Login(context.Background(), tc.input)
+			gotUser, gotToken, err := svc.Login(context.Background(), tc.input)
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
 			} else {
 				s.NoError(err)
-				s.Equal(tc.want, got)
+				s.Equal(tc.wantUser, gotUser)
+				s.Equal(tc.wantToken, gotToken)
 			}
 		})
 	}
@@ -310,7 +310,7 @@ func (s *authServiceSuite) TestForgotPassword() {
 			email: email,
 			setupMock: func(u *mocks.UserService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage) {
 				u.EXPECT().GetByEmail(mock.Anything, email).Return(user, nil).Once()
-				c.EXPECT().Set(mock.Anything, mock.Anything, email, domain.FifteenMinutesTime).Return(nil).Once()
+				c.EXPECT().Set(mock.Anything, mock.Anything, email, 15*time.Minute).Return(nil).Once()
 				url.EXPECT().ResetPasswordLink(mock.Anything).Return("http://reset.link").Once()
 				e.EXPECT().Publish(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			},
@@ -464,6 +464,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 		name      string
 		token     string
 		setupMock func(t *mocks.TokenService)
+		want      *domain.TokenInfo
 		wantErr   error
 	}{
 		{
@@ -472,6 +473,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 			setupMock: func(t *mocks.TokenService) {
 				t.EXPECT().Refresh(mock.Anything, token).Return(domain.TokenInfo{}, pkg.ErrUnauthorized).Once()
 			},
+			want:    nil,
 			wantErr: pkg.ErrUnauthorized,
 		},
 		{
@@ -480,6 +482,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 			setupMock: func(t *mocks.TokenService) {
 				t.EXPECT().Refresh(mock.Anything, token).Return(tokenInfo, nil).Once()
 			},
+			want:    &tokenInfo,
 			wantErr: nil,
 		},
 	}
@@ -500,7 +503,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 				s.Empty(got)
 			} else {
 				s.NoError(err)
-				s.Equal(tokenInfo, got)
+				s.Equal(tc.want, got)
 			}
 		})
 	}

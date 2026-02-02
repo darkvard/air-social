@@ -109,24 +109,10 @@ type ConfirmFileParams struct {
 	Feature   UploadFeature
 }
 
-type PresignedFileUploadRequest struct {
-	FileName string        `json:"file_name" binding:"required"`
-	FileType string        `json:"file_type" binding:"required"`
-	FileSize int64         `json:"file_size" binding:"required"`
-	Domain   UploadDomain  `json:"domain" binding:"required,oneof=users posts groups messages"`
-	Feature  UploadFeature `json:"feature" binding:"required,oneof=avatar cover feed_image feed_video voice_chat attachment"`
-}
-
-type ConfirmFileUploadRequest struct {
-	ObjectKey string        `json:"object_key" binding:"required"`
-	Domain    UploadDomain  `json:"domain" binding:"required,oneof=users posts groups messages"`
-	Feature   UploadFeature `json:"feature" binding:"required,oneof=avatar cover feed_image feed_video voice_chat attachment"`
-}
-
-type PresignedFileResponse struct {
-	UploadURL string            `json:"upload_url"`
-	FormData  map[string]string `json:"form_data"`
-	ObjectKey string            `json:"object_key"`
-	PublicURL string            `json:"public_url"`
-	ExpireAt  time.Time         `json:"expire_at"`
+type PresignedFile struct {
+	UploadURL string
+	FormData  map[string]string
+	ObjectKey string
+	PublicURL string
+	ExpireAt  time.Time
 }

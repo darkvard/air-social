@@ -19,19 +19,19 @@ func newEventHandler() *eventHandlerImpl {
 	}
 }
 
-func (e *eventHandlerImpl) Handle(ctx context.Context, evt domain.EventPayload) error {
+func (e *eventHandlerImpl) Dispatch(ctx context.Context, evt domain.Event) error {
 	key := string(evt.EventType)
 	e.callCount[key]++
 	attempt := e.callCount[key]
 
-	logInfo(consumer, "handle event", "Type = %s", evt.EventType)
+	logInfo(logConsumer, "handle event", "Type = %s", evt.EventType)
 
 	if attempt > e.maxAttempt {
 		return nil //ack
 	}
 
 	if evt.EventType == emailFailKey {
-		logError(consumer, "Simulate error", "Type = %s, Attempt = %d", evt.EventType, attempt)
+		logError(logConsumer, "Simulate error", "Type = %s, Attempt = %d", evt.EventType, attempt)
 		return errors.New("force retry")
 	}
 

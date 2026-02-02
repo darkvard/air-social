@@ -38,7 +38,7 @@ func initServices(
 	tokenSvc := service.NewTokenService(repository.Token, cfg.Token)
 	userSvc := service.NewUserService(repository.User, mediaSvc)
 	authSvc := service.NewAuthService(userSvc, tokenSvc, url, adapter.EventPub, adapter.Cache)
-	emailSvc := service.NewEmailService(adapter.MailSender)
+	emailSvc := service.NewEmailService(adapter.Mailer)
 
 	return &Services{
 		Media:  mediaSvc,
