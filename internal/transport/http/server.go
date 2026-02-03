@@ -35,9 +35,12 @@ const (
 )
 
 const (
-	UserGroup = "/users"
-	Me        = "/me"
-	Password  = "/password"
+	UserGroup  = "/users"
+	Me         = "/me"
+	Password   = "/password"
+	Followers  = "/:id/followers"
+	Followings = "/:id/followings"
+	FollowUser = "/:id/follow"
 )
 
 const (
@@ -54,6 +57,7 @@ func NewServer(
 	userH *handler.UserHandler,
 	mediaH *handler.MediaHandler,
 	healthH *handler.HealthHandler,
+	followH *handler.FollowHandler,
 ) *http.Server {
 	e := setupEngine()
 
@@ -63,6 +67,7 @@ func NewServer(
 		authRoutes(v, authH, mw)
 		userRoutes(v, userH, mw)
 		mediaRoutes(v, mediaH, mw)
+		followRoutes(v, followH, mw)
 	}
 
 	return &http.Server{
@@ -144,4 +149,18 @@ func userRoutes(g *gin.RouterGroup, h *handler.UserHandler, m *middleware.Manage
 func mediaRoutes(g *gin.RouterGroup, h *handler.MediaHandler, m *middleware.Manager) {
 	auth := g.Group(MediaGroup, m.Auth)
 	auth.POST(PresignedUpload, h.PresignedUpload)
+}
+
+func followRoutes(g *gin.RouterGroup, h *handler.FollowHandler, m *middleware.Manager) {
+	group := g.Group(UserGroup)
+	{
+		group.GET(Followers, h.GetFollowers)
+		group.GET(Followings, h.GetFollowings)
+	}
+
+	auth := group.Group("", m.Auth)
+	{
+		auth.POST(FollowUser, h.Follow)
+		auth.DELETE(FollowUser, h.Unfollow)
+	}
 }

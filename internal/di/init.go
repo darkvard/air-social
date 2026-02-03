@@ -41,7 +41,7 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 	handlers := initHandlers(services, url)
 	middlewares := middleware.NewManager(cfg.Server, services.Token)
 
-	server := transport.NewServer(cfg, url, middlewares, handlers.Auth, handlers.User, handlers.Media, handlers.Health)
+	server := transport.NewServer(cfg, url, middlewares, handlers.Auth, handlers.User, handlers.Media, handlers.Health, handlers.Follow)
 
 	return &Container{
 		Server: server,

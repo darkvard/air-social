@@ -15,6 +15,7 @@ type Services struct {
 	Auth   service.AuthService
 	Email  service.EmailService
 	Verify service.VerifyService
+	Follow service.FollowService
 }
 
 func initServices(
@@ -41,6 +42,7 @@ func initServices(
 	userSvc := service.NewUserService(repository.User, mediaSvc)
 	authSvc := service.NewAuthService(userSvc, tokenSvc, verifySvc, adapter.Cache)
 	emailSvc := service.NewEmailService(adapter.Mailer)
+	followSvc := service.NewFollowService(repository.Follow)
 
 	return &Services{
 		Media:  mediaSvc,
@@ -50,5 +52,6 @@ func initServices(
 		Auth:   authSvc,
 		Email:  emailSvc,
 		Verify: verifySvc,
+		Follow: followSvc,
 	}
 }

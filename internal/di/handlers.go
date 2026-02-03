@@ -10,6 +10,7 @@ type Handlers struct {
 	User   *handler.UserHandler
 	Media  *handler.MediaHandler
 	Health *handler.HealthHandler
+	Follow *handler.FollowHandler
 }
 
 func initHandlers(services *Services, url domain.URLFactory) *Handlers {
@@ -18,5 +19,6 @@ func initHandlers(services *Services, url domain.URLFactory) *Handlers {
 		User:   handler.NewUserHandler(services.User),
 		Media:  handler.NewMediaHandler(services.Media),
 		Health: handler.NewHealthHandler(services.Health),
+		Follow: handler.NewFollowHandler(services.Follow),
 	}
 }
