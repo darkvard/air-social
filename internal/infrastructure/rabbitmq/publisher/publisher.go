@@ -163,6 +163,10 @@ func (p *Publisher) release(pc *pubChannel) {
 		return
 	}
 
+	if pc.ch.IsClosed() {
+		return
+	}
+
 	select {
 	case p.chPool <- pc:
 	default:

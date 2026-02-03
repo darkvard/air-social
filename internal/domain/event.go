@@ -8,8 +8,13 @@ import (
 type EventType string
 
 const (
-	EmailVerify        EventType = "email.verify"
-	EmailResetPassword EventType = "email.reset.password"
+	// routing keys (service uses these to publish)
+	RoutingKeyEmailVerify        = "email.verify"
+	RoutingKeyEmailResetPassword = "email.reset_password"
+
+	// event types (worker uses these to dispatch)
+	EmailVerify        EventType = EventType(RoutingKeyEmailVerify)
+	EmailResetPassword EventType = EventType(RoutingKeyEmailResetPassword)
 )
 
 type EventDispatcher interface {

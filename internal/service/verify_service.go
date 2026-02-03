@@ -54,7 +54,7 @@ func (s *VerifyServiceImpl) SendEmailVerification(ctx context.Context, email, us
 		Data:      data,
 	}
 
-	return s.event.Publish(ctx, string(domain.EmailVerify), payload)
+	return s.event.Publish(ctx, domain.RoutingKeyEmailVerify, payload)
 }
 
 func (s *VerifyServiceImpl) VerifyEmailToken(ctx context.Context, token string) (string, error) {
@@ -87,13 +87,13 @@ func (s *VerifyServiceImpl) SendPasswordReset(ctx context.Context, email, userna
 	}
 
 	payload := domain.Event{
-		EventID:   uuid.NewString(),
+		EventID:   id,
 		EventType: domain.EmailResetPassword,
 		Timestamp: pkg.TimeNowUTC(),
 		Data:      data,
 	}
 
-	return s.event.Publish(ctx, string(domain.EmailResetPassword), payload)
+	return s.event.Publish(ctx, domain.RoutingKeyEmailResetPassword, payload)
 }
 
 func (s *VerifyServiceImpl) VerifyPasswordResetToken(ctx context.Context, token string) (string, error) {
