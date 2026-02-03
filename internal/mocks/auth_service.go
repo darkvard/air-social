@@ -204,7 +204,7 @@ func (_c *AuthService_IsResetPasswordTokenValid_Call) RunAndReturn(run func(ctx 
 }
 
 // Login provides a mock function for the type AuthService
-func (_mock *AuthService) Login(ctx context.Context, input domain.LoginParams) (*domain.User, *domain.TokenInfo, error) {
+func (_mock *AuthService) Login(ctx context.Context, input domain.LoginParams) (*domain.User, domain.TokenInfo, error) {
 	ret := _mock.Called(ctx, input)
 
 	if len(ret) == 0 {
@@ -212,9 +212,9 @@ func (_mock *AuthService) Login(ctx context.Context, input domain.LoginParams) (
 	}
 
 	var r0 *domain.User
-	var r1 *domain.TokenInfo
+	var r1 domain.TokenInfo
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.LoginParams) (*domain.User, *domain.TokenInfo, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.LoginParams) (*domain.User, domain.TokenInfo, error)); ok {
 		return returnFunc(ctx, input)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.LoginParams) *domain.User); ok {
@@ -224,12 +224,10 @@ func (_mock *AuthService) Login(ctx context.Context, input domain.LoginParams) (
 			r0 = ret.Get(0).(*domain.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.LoginParams) *domain.TokenInfo); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.LoginParams) domain.TokenInfo); ok {
 		r1 = returnFunc(ctx, input)
 	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*domain.TokenInfo)
-		}
+		r1 = ret.Get(1).(domain.TokenInfo)
 	}
 	if returnFunc, ok := ret.Get(2).(func(context.Context, domain.LoginParams) error); ok {
 		r2 = returnFunc(ctx, input)
@@ -269,12 +267,12 @@ func (_c *AuthService_Login_Call) Run(run func(ctx context.Context, input domain
 	return _c
 }
 
-func (_c *AuthService_Login_Call) Return(user *domain.User, tokenInfo *domain.TokenInfo, err error) *AuthService_Login_Call {
+func (_c *AuthService_Login_Call) Return(user *domain.User, tokenInfo domain.TokenInfo, err error) *AuthService_Login_Call {
 	_c.Call.Return(user, tokenInfo, err)
 	return _c
 }
 
-func (_c *AuthService_Login_Call) RunAndReturn(run func(ctx context.Context, input domain.LoginParams) (*domain.User, *domain.TokenInfo, error)) *AuthService_Login_Call {
+func (_c *AuthService_Login_Call) RunAndReturn(run func(ctx context.Context, input domain.LoginParams) (*domain.User, domain.TokenInfo, error)) *AuthService_Login_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -337,24 +335,22 @@ func (_c *AuthService_Logout_Call) RunAndReturn(run func(ctx context.Context, in
 }
 
 // RefreshToken provides a mock function for the type AuthService
-func (_mock *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*domain.TokenInfo, error) {
+func (_mock *AuthService) RefreshToken(ctx context.Context, refreshToken string) (domain.TokenInfo, error) {
 	ret := _mock.Called(ctx, refreshToken)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshToken")
 	}
 
-	var r0 *domain.TokenInfo
+	var r0 domain.TokenInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*domain.TokenInfo, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (domain.TokenInfo, error)); ok {
 		return returnFunc(ctx, refreshToken)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *domain.TokenInfo); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) domain.TokenInfo); ok {
 		r0 = returnFunc(ctx, refreshToken)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.TokenInfo)
-		}
+		r0 = ret.Get(0).(domain.TokenInfo)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = returnFunc(ctx, refreshToken)
@@ -394,12 +390,12 @@ func (_c *AuthService_RefreshToken_Call) Run(run func(ctx context.Context, refre
 	return _c
 }
 
-func (_c *AuthService_RefreshToken_Call) Return(tokenInfo *domain.TokenInfo, err error) *AuthService_RefreshToken_Call {
+func (_c *AuthService_RefreshToken_Call) Return(tokenInfo domain.TokenInfo, err error) *AuthService_RefreshToken_Call {
 	_c.Call.Return(tokenInfo, err)
 	return _c
 }
 
-func (_c *AuthService_RefreshToken_Call) RunAndReturn(run func(ctx context.Context, refreshToken string) (*domain.TokenInfo, error)) *AuthService_RefreshToken_Call {
+func (_c *AuthService_RefreshToken_Call) RunAndReturn(run func(ctx context.Context, refreshToken string) (domain.TokenInfo, error)) *AuthService_RefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

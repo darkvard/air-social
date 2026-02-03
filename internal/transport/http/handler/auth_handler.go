@@ -300,7 +300,7 @@ func (h *AuthHandler) mapUserToResponse(user *domain.User) dto.UserResponse {
 	}
 }
 
-func (h *AuthHandler) mapTokenToResponse(t *domain.TokenInfo) dto.TokenResponse {
+func (h *AuthHandler) mapTokenToResponse(t domain.TokenInfo) dto.TokenResponse {
 	return dto.TokenResponse{
 		Type:            t.Type,
 		AccessToken:     t.AccessToken,

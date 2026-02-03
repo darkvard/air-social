@@ -14,6 +14,7 @@ type Services struct {
 	User   service.UserService
 	Auth   service.AuthService
 	Email  service.EmailService
+	Verify service.VerifyService
 }
 
 func initServices(
@@ -36,8 +37,9 @@ func initServices(
 	}, infra.Minio, url)
 
 	tokenSvc := service.NewTokenService(repository.Token, cfg.Token)
+	verifySvc := service.NewVerifyService(adapter.Cache, adapter.EventPub, url)
 	userSvc := service.NewUserService(repository.User, mediaSvc)
-	authSvc := service.NewAuthService(userSvc, tokenSvc, url, adapter.EventPub, adapter.Cache)
+	authSvc := service.NewAuthService(userSvc, tokenSvc, verifySvc, adapter.Cache)
 	emailSvc := service.NewEmailService(adapter.Mailer)
 
 	return &Services{
@@ -47,5 +49,6 @@ func initServices(
 		User:   userSvc,
 		Auth:   authSvc,
 		Email:  emailSvc,
+		Verify: verifySvc,
 	}
 }

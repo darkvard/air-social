@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"air-social/internal/domain"
@@ -16,32 +15,28 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, input domain.RegisterParams) (*domain.User, error)
 	Logout(ctx context.Context, input domain.LogoutParams) error
-	Login(ctx context.Context, input domain.LoginParams) (*domain.User, *domain.TokenInfo, error)
-
+	Login(ctx context.Context, input domain.LoginParams) (*domain.User, domain.TokenInfo, error)
 	ForgotPassword(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, input domain.ResetPasswordParams) error
 	IsResetPasswordTokenValid(ctx context.Context, token string) bool
-
-	RefreshToken(ctx context.Context, refreshToken string) (*domain.TokenInfo, error)
+	RefreshToken(ctx context.Context, refreshToken string) (domain.TokenInfo, error)
 	VerifyEmail(ctx context.Context, emailToken string) error
 	GetPublicURL(key string) string
 }
 
 type AuthServiceImpl struct {
-	userSvc  UserService
-	tokenSvc TokenService
-	url      domain.URLFactory
-	cache    domain.CacheStorage
-	event    domain.EventPublisher
+	userSvc   UserService
+	tokenSvc  TokenService
+	verifySvc VerifyService
+	cache     domain.CacheStorage
 }
 
-func NewAuthService(userSvc UserService, tokenSvc TokenService, url domain.URLFactory, event domain.EventPublisher, cache domain.CacheStorage) *AuthServiceImpl {
+func NewAuthService(userSvc UserService, tokenSvc TokenService, verifySvc VerifyService, cache domain.CacheStorage) *AuthServiceImpl {
 	return &AuthServiceImpl{
-		userSvc:  userSvc,
-		tokenSvc: tokenSvc,
-		url:      url,
-		event:    event,
-		cache:    cache,
+		userSvc:   userSvc,
+		tokenSvc:  tokenSvc,
+		verifySvc: verifySvc,
+		cache:     cache,
 	}
 }
 
@@ -63,7 +58,9 @@ func (s *AuthServiceImpl) Register(ctx context.Context, input domain.RegisterPar
 		return empty, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
 	}
 
-	s.sendEmailVerification(ctx, user.Email, user.Username)
+	if err := s.verifySvc.SendEmailVerification(ctx, user.Email, user.Username); err != nil {
+		pkg.Log().Errorw("failed to send verification email", "error", err, "email", user.Email)
+	}
 	return user, nil
 }
 
@@ -85,9 +82,9 @@ func (s *AuthServiceImpl) Logout(ctx context.Context, input domain.LogoutParams)
 	return pkg.OrInternalError(err)
 }
 
-func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (*domain.User, *domain.TokenInfo, error) {
+func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (*domain.User, domain.TokenInfo, error) {
 	var emptyUser *domain.User
-	var emptyToken *domain.TokenInfo
+	var emptyToken domain.TokenInfo
 
 	user, err := s.userSvc.GetByEmail(ctx, input.Email)
 	if err != nil {
@@ -106,7 +103,7 @@ func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (
 		return emptyUser, emptyToken, pkg.OrInternalError(err)
 	}
 
-	return user, &tokens, nil
+	return user, tokens, nil
 }
 
 func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, email string) error {
@@ -115,12 +112,11 @@ func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, email string) erro
 		return err
 	}
 
-	s.sendEmailResetPassword(ctx, user.Email, user.Username)
-	return nil
+	return s.verifySvc.SendPasswordReset(ctx, user.Email, user.Username)
 }
 
 func (s *AuthServiceImpl) ResetPassword(ctx context.Context, input domain.ResetPasswordParams) error {
-	email, err := s.getEmailResetPassword(ctx, input.EmailToken)
+	email, err := s.verifySvc.VerifyPasswordResetToken(ctx, input.EmailToken)
 	if err != nil {
 		return pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -131,22 +127,24 @@ func (s *AuthServiceImpl) ResetPassword(ctx context.Context, input domain.ResetP
 	}
 
 	err = s.userSvc.UpdatePassword(ctx, email, passwordHashed)
-	return pkg.OrInternalError(err)
+	if err != nil {
+		return pkg.OrInternalError(err)
+	}
+
+	_ = s.verifySvc.InvalidatePasswordResetToken(ctx, input.EmailToken)
+	return nil
 }
 
 func (s *AuthServiceImpl) IsResetPasswordTokenValid(ctx context.Context, emailToken string) bool {
-	email, err := s.getEmailResetPassword(ctx, emailToken)
+	_, err := s.verifySvc.VerifyPasswordResetToken(ctx, emailToken)
 	if err != nil {
-		return false
-	}
-	if email == "" {
 		return false
 	}
 	return true
 }
 
 func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, emailToken string) error {
-	email, err := s.getEmailVerification(ctx, emailToken)
+	email, err := s.verifySvc.VerifyEmailToken(ctx, emailToken)
 	if err != nil {
 		return pkg.ErrBadRequest
 	}
@@ -155,14 +153,14 @@ func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, emailToken string) er
 	return pkg.OrInternalError(err)
 }
 
-func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (*domain.TokenInfo, error) {
-	var empty *domain.TokenInfo
+func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (domain.TokenInfo, error) {
+	var empty domain.TokenInfo
 
 	tokens, err := s.tokenSvc.Refresh(ctx, refreshToken)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrUnauthorized)
 	}
-	return &tokens, nil
+	return tokens, nil
 }
 
 func (s *AuthServiceImpl) GetPublicURL(key string) string {
@@ -187,90 +185,6 @@ func verifyPassword(plainPassword, hashPassword string) bool {
 	sha := sha256.Sum256([]byte(plainPassword))
 	err := bcrypt.CompareHashAndPassword([]byte(hashPassword), sha[:])
 	return err == nil
-}
-
-// sendEmailVerification sends an email verification event to the event publisher.
-func (s *AuthServiceImpl) sendEmailVerification(ctx context.Context, email, username string) {
-	id := uuid.NewString()
-	ttl := 30 * time.Minute
-
-	if err := s.storeEmailVerification(ctx, id, email, ttl); err != nil {
-		pkg.Log().Errorw("[CACHE ERROR]", "from", "email_verification", "error", err)
-		return
-	}
-
-	data := domain.EmailEvent{
-		Email:  email,
-		Name:   username,
-		Link:   s.url.VerifyEmailLink(id),
-		Expiry: pkg.FormatTTLVerbose(ttl),
-	}
-	payload := domain.Event{
-		EventID:   id,
-		EventType: domain.EmailVerify,
-		Timestamp: pkg.TimeNowUTC(),
-		Data:      data,
-	}
-
-	if err := s.event.Publish(ctx, string(domain.EmailVerify), payload); err != nil {
-		pkg.Log().Errorw("[EVENT QUEUE ERROR]", "from", "email_verification", "error", err)
-	}
-}
-
-func (s *AuthServiceImpl) storeEmailVerification(ctx context.Context, token, email string, ttl time.Duration) error {
-	return s.cache.Set(ctx, domain.GetEmailVerificationKey(token), email, ttl)
-}
-
-func (s *AuthServiceImpl) getEmailVerification(ctx context.Context, token string) (string, error) {
-	var email string
-	key := domain.GetEmailVerificationKey(token)
-	if err := s.cache.Get(ctx, key, &email); err != nil {
-		return "", err
-	}
-	return email, nil
-}
-
-// sendEmailResetPassword sends an email reset password event to the event publisher.
-func (s *AuthServiceImpl) sendEmailResetPassword(ctx context.Context, email, username string) {
-	id := uuid.NewString()
-	ttl := 15 * time.Minute
-
-	if err := s.storeEmailResetPassword(ctx, email, id, ttl); err != nil {
-		pkg.Log().Errorw("[CACHE ERROR]", "from", "email_forgot_password", "error", err)
-		return
-	}
-
-	data := domain.EmailEvent{
-		Email:  email,
-		Name:   username,
-		Link:   s.url.ResetPasswordLink(id),
-		Expiry: pkg.FormatTTLVerbose(ttl),
-	}
-
-	payload := domain.Event{
-		EventID:   uuid.NewString(),
-		EventType: domain.EmailResetPassword,
-		Timestamp: pkg.TimeNowUTC(),
-		Data:      data,
-	}
-
-	if err := s.event.Publish(ctx, string(domain.EmailResetPassword), payload); err != nil {
-		pkg.Log().Errorw("[EVENT QUEUE ERROR]", "from", "email_forgot_password", "error", err)
-	}
-}
-
-func (s *AuthServiceImpl) storeEmailResetPassword(ctx context.Context, email, token string, ttl time.Duration) error {
-	key := domain.GetEmailResetPasswordKey(token)
-	return s.cache.Set(ctx, key, email, ttl)
-}
-
-func (s *AuthServiceImpl) getEmailResetPassword(ctx context.Context, token string) (string, error) {
-	var email string
-	key := domain.GetEmailResetPasswordKey(token)
-	if err := s.cache.Get(ctx, key, &email); err != nil {
-		return "", err
-	}
-	return email, nil
 }
 
 func (s *AuthServiceImpl) isBlockedAccessToken(ctx context.Context, token string) bool {

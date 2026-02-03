@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+type UploadDomain string
+type UploadFeature string
+
 const (
 	DomainUser    UploadDomain = "users"
 	DomainPost    UploadDomain = "posts"
@@ -55,16 +58,11 @@ var ValidDomainFeatures = map[UploadDomain][]UploadFeature{
 }
 
 type FileStorage interface {
-	// Assuming HTTP for internal communication within Docker network. e.g. "minio:9000"
 	GetEndpoint() string
 	GetPresignedPostPolicy(ctx context.Context, loc StorageLocation, constraints UploadConstraints) (PresignedURLResult, error)
 	StatFile(ctx context.Context, loc StorageLocation) (bool, error)
 	DeleteFile(ctx context.Context, loc StorageLocation) error
 }
-
-type UploadDomain string
-
-type UploadFeature string
 
 type UploadRule struct {
 	MaxBytes     int64

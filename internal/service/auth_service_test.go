@@ -42,14 +42,14 @@ func (s *authServiceSuite) TestRegister() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(u *mocks.UserService, t *mocks.TokenService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage)
+		setupMock func(u *mocks.UserService, t *mocks.TokenService, v *mocks.VerifyService, c *mocks.CacheStorage)
 		want      *domain.User
 		wantErr   error
 	}{
 		{
 			name: "create_user_error",
 			args: args{input: input},
-			setupMock: func(u *mocks.UserService, t *mocks.TokenService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage) {
+			setupMock: func(u *mocks.UserService, t *mocks.TokenService, v *mocks.VerifyService, c *mocks.CacheStorage) {
 				u.EXPECT().CreateUser(mock.Anything, mock.Anything).Return(nil, pkg.ErrAlreadyExists).Once()
 			},
 			want:    nil,
@@ -58,18 +58,22 @@ func (s *authServiceSuite) TestRegister() {
 		{
 			name: "success",
 			args: args{input: input},
-			setupMock: func(u *mocks.UserService, t *mocks.TokenService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage) {
+			setupMock: func(u *mocks.UserService, t *mocks.TokenService, v *mocks.VerifyService, c *mocks.CacheStorage) {
 				u.EXPECT().CreateUser(mock.Anything, mock.MatchedBy(func(p domain.CreateUserParams) bool {
 					return p.Email == input.Email && p.Username == input.Username && p.PasswordHashed != ""
 				})).Return(userResp, nil).Once()
 
-				// sendEmailVerification flow
-				c.EXPECT().Set(mock.Anything, mock.Anything, input.Email, 30*time.Minute).Return(nil).Once()
-				url.EXPECT().VerifyEmailLink(mock.Anything).Return("http://verify.link").Once()
-				e.EXPECT().Publish(mock.Anything, mock.Anything, mock.MatchedBy(func(p domain.Event) bool {
-					data, ok := p.Data.(domain.EmailEvent)
-					return ok && data.Name == userResp.Username
-				})).Return(nil).Once()
+				v.EXPECT().SendEmailVerification(mock.Anything, input.Email, input.Username).Return(nil).Once()
+			},
+			want:    userResp,
+			wantErr: nil,
+		},
+		{
+			name: "send_email_error_ignored",
+			args: args{input: input},
+			setupMock: func(u *mocks.UserService, t *mocks.TokenService, v *mocks.VerifyService, c *mocks.CacheStorage) {
+				u.EXPECT().CreateUser(mock.Anything, mock.Anything).Return(userResp, nil).Once()
+				v.EXPECT().SendEmailVerification(mock.Anything, input.Email, input.Username).Return(assert.AnError).Once()
 			},
 			want:    userResp,
 			wantErr: nil,
@@ -80,14 +84,13 @@ func (s *authServiceSuite) TestRegister() {
 		s.Run(tc.name, func() {
 			mockUser := mocks.NewUserService(s.T())
 			mockToken := mocks.NewTokenService(s.T())
-			mockURL := mocks.NewURLFactory(s.T())
-			mockEvent := mocks.NewEventPublisher(s.T())
+			mockVerify := mocks.NewVerifyService(s.T())
 			mockCache := mocks.NewCacheStorage(s.T())
 
-			svc := NewAuthService(mockUser, mockToken, mockURL, mockEvent, mockCache)
+			svc := NewAuthService(mockUser, mockToken, mockVerify, mockCache)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockUser, mockToken, mockURL, mockEvent, mockCache)
+				tc.setupMock(mockUser, mockToken, mockVerify, mockCache)
 			}
 
 			got, err := svc.Register(context.Background(), tc.args.input)
@@ -130,7 +133,7 @@ func (s *authServiceSuite) TestLogin() {
 		input     domain.LoginParams
 		setupMock func(u *mocks.UserService, t *mocks.TokenService)
 		wantUser  *domain.User
-		wantToken *domain.TokenInfo
+		wantToken domain.TokenInfo
 		wantErr   error
 	}{
 		{
@@ -140,6 +143,14 @@ func (s *authServiceSuite) TestLogin() {
 				u.EXPECT().GetByEmail(mock.Anything, input.Email).Return(nil, pkg.ErrNotFound).Once()
 			},
 			wantErr: pkg.ErrInvalidCredentials,
+		},
+		{
+			name:  "user_repo_error",
+			input: input,
+			setupMock: func(u *mocks.UserService, t *mocks.TokenService) {
+				u.EXPECT().GetByEmail(mock.Anything, input.Email).Return(nil, assert.AnError).Once()
+			},
+			wantErr: assert.AnError,
 		},
 		{
 			name:  "invalid_password",
@@ -167,7 +178,7 @@ func (s *authServiceSuite) TestLogin() {
 				t.EXPECT().CreateSession(mock.Anything, user.ID, input.DeviceID).Return(tokenInfo, nil).Once()
 			},
 			wantUser:  user,
-			wantToken: &tokenInfo,
+			wantToken: tokenInfo,
 			wantErr:   nil,
 		},
 	}
@@ -176,7 +187,7 @@ func (s *authServiceSuite) TestLogin() {
 		s.Run(tc.name, func() {
 			mockUser := mocks.NewUserService(s.T())
 			mockToken := mocks.NewTokenService(s.T())
-			svc := NewAuthService(mockUser, mockToken, nil, nil, nil)
+			svc := NewAuthService(mockUser, mockToken, nil, nil)
 
 			if tc.setupMock != nil {
 				tc.setupMock(mockUser, mockToken)
@@ -270,7 +281,7 @@ func (s *authServiceSuite) TestLogout() {
 		s.Run(tc.name, func() {
 			mockToken := mocks.NewTokenService(s.T())
 			mockCache := mocks.NewCacheStorage(s.T())
-			svc := NewAuthService(nil, mockToken, nil, nil, mockCache)
+			svc := NewAuthService(nil, mockToken, nil, mockCache)
 
 			if tc.setupMock != nil {
 				tc.setupMock(mockToken, mockCache)
@@ -294,13 +305,13 @@ func (s *authServiceSuite) TestForgotPassword() {
 	tests := []struct {
 		name      string
 		email     string
-		setupMock func(u *mocks.UserService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage)
+		setupMock func(u *mocks.UserService, v *mocks.VerifyService)
 		wantErr   error
 	}{
 		{
 			name:  "user_not_found",
 			email: email,
-			setupMock: func(u *mocks.UserService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage) {
+			setupMock: func(u *mocks.UserService, v *mocks.VerifyService) {
 				u.EXPECT().GetByEmail(mock.Anything, email).Return(nil, pkg.ErrNotFound).Once()
 			},
 			wantErr: pkg.ErrNotFound,
@@ -308,11 +319,9 @@ func (s *authServiceSuite) TestForgotPassword() {
 		{
 			name:  "success",
 			email: email,
-			setupMock: func(u *mocks.UserService, url *mocks.URLFactory, e *mocks.EventPublisher, c *mocks.CacheStorage) {
+			setupMock: func(u *mocks.UserService, v *mocks.VerifyService) {
 				u.EXPECT().GetByEmail(mock.Anything, email).Return(user, nil).Once()
-				c.EXPECT().Set(mock.Anything, mock.Anything, email, 15*time.Minute).Return(nil).Once()
-				url.EXPECT().ResetPasswordLink(mock.Anything).Return("http://reset.link").Once()
-				e.EXPECT().Publish(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				v.EXPECT().SendPasswordReset(mock.Anything, email, user.Username).Return(nil).Once()
 			},
 			wantErr: nil,
 		},
@@ -321,14 +330,12 @@ func (s *authServiceSuite) TestForgotPassword() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockUser := mocks.NewUserService(s.T())
-			mockURL := mocks.NewURLFactory(s.T())
-			mockEvent := mocks.NewEventPublisher(s.T())
-			mockCache := mocks.NewCacheStorage(s.T())
+			mockVerify := mocks.NewVerifyService(s.T())
 
-			svc := NewAuthService(mockUser, nil, mockURL, mockEvent, mockCache)
+			svc := NewAuthService(mockUser, nil, mockVerify, nil)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockUser, mockURL, mockEvent, mockCache)
+				tc.setupMock(mockUser, mockVerify)
 			}
 
 			err := svc.ForgotPassword(context.Background(), tc.email)
@@ -353,41 +360,48 @@ func (s *authServiceSuite) TestResetPassword() {
 	tests := []struct {
 		name      string
 		input     domain.ResetPasswordParams
-		setupMock func(u *mocks.UserService, c *mocks.CacheStorage)
+		setupMock func(u *mocks.UserService, v *mocks.VerifyService)
 		wantErr   error
 	}{
 		{
 			name:  "token_invalid",
 			input: input,
-			setupMock: func(u *mocks.UserService, c *mocks.CacheStorage) {
-				c.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(pkg.ErrNotFound).Once()
+			setupMock: func(u *mocks.UserService, v *mocks.VerifyService) {
+				v.EXPECT().VerifyPasswordResetToken(mock.Anything, token).Return("", pkg.ErrNotFound).Once()
 			},
 			wantErr: pkg.ErrNotFound,
 		},
 		{
 			name:  "success",
 			input: input,
-			setupMock: func(u *mocks.UserService, c *mocks.CacheStorage) {
-				c.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).
-					Run(func(ctx context.Context, key string, dest any) {
-						*dest.(*string) = email
-					}).Return(nil).Once()
+			setupMock: func(u *mocks.UserService, v *mocks.VerifyService) {
+				v.EXPECT().VerifyPasswordResetToken(mock.Anything, token).Return(email, nil).Once()
 
 				u.EXPECT().UpdatePassword(mock.Anything, email, mock.Anything).Return(nil).Once()
+				v.EXPECT().InvalidatePasswordResetToken(mock.Anything, token).Return(nil).Once()
 			},
 			wantErr: nil,
+		},
+		{
+			name:  "update_password_error",
+			input: input,
+			setupMock: func(u *mocks.UserService, v *mocks.VerifyService) {
+				v.EXPECT().VerifyPasswordResetToken(mock.Anything, token).Return(email, nil).Once()
+				u.EXPECT().UpdatePassword(mock.Anything, email, mock.Anything).Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
 		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockUser := mocks.NewUserService(s.T())
-			mockCache := mocks.NewCacheStorage(s.T())
+			mockVerify := mocks.NewVerifyService(s.T())
 
-			svc := NewAuthService(mockUser, nil, nil, nil, mockCache)
+			svc := NewAuthService(mockUser, nil, mockVerify, nil)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockUser, mockCache)
+				tc.setupMock(mockUser, mockVerify)
 			}
 
 			err := svc.ResetPassword(context.Background(), tc.input)
@@ -408,41 +422,47 @@ func (s *authServiceSuite) TestVerifyEmail() {
 	tests := []struct {
 		name      string
 		token     string
-		setupMock func(u *mocks.UserService, c *mocks.CacheStorage)
+		setupMock func(u *mocks.UserService, v *mocks.VerifyService)
 		wantErr   error
 	}{
 		{
 			name:  "token_invalid",
 			token: token,
-			setupMock: func(u *mocks.UserService, c *mocks.CacheStorage) {
-				c.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(pkg.ErrNotFound).Once()
+			setupMock: func(u *mocks.UserService, v *mocks.VerifyService) {
+				v.EXPECT().VerifyEmailToken(mock.Anything, token).Return("", pkg.ErrNotFound).Once()
 			},
 			wantErr: pkg.ErrBadRequest,
 		},
 		{
 			name:  "success",
 			token: token,
-			setupMock: func(u *mocks.UserService, c *mocks.CacheStorage) {
-				c.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).
-					Run(func(ctx context.Context, key string, dest any) {
-						*dest.(*string) = email
-					}).Return(nil).Once()
+			setupMock: func(u *mocks.UserService, v *mocks.VerifyService) {
+				v.EXPECT().VerifyEmailToken(mock.Anything, token).Return(email, nil).Once()
 
 				u.EXPECT().VerifyEmail(mock.Anything, email).Return(nil).Once()
 			},
 			wantErr: nil,
+		},
+		{
+			name:  "user_verify_error",
+			token: token,
+			setupMock: func(u *mocks.UserService, v *mocks.VerifyService) {
+				v.EXPECT().VerifyEmailToken(mock.Anything, token).Return(email, nil).Once()
+				u.EXPECT().VerifyEmail(mock.Anything, email).Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
 		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockUser := mocks.NewUserService(s.T())
-			mockCache := mocks.NewCacheStorage(s.T())
+			mockVerify := mocks.NewVerifyService(s.T())
 
-			svc := NewAuthService(mockUser, nil, nil, nil, mockCache)
+			svc := NewAuthService(mockUser, nil, mockVerify, nil)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockUser, mockCache)
+				tc.setupMock(mockUser, mockVerify)
 			}
 
 			err := svc.VerifyEmail(context.Background(), tc.token)
@@ -464,7 +484,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 		name      string
 		token     string
 		setupMock func(t *mocks.TokenService)
-		want      *domain.TokenInfo
+		want      domain.TokenInfo
 		wantErr   error
 	}{
 		{
@@ -473,7 +493,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 			setupMock: func(t *mocks.TokenService) {
 				t.EXPECT().Refresh(mock.Anything, token).Return(domain.TokenInfo{}, pkg.ErrUnauthorized).Once()
 			},
-			want:    nil,
+			want:    domain.TokenInfo{},
 			wantErr: pkg.ErrUnauthorized,
 		},
 		{
@@ -482,7 +502,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 			setupMock: func(t *mocks.TokenService) {
 				t.EXPECT().Refresh(mock.Anything, token).Return(tokenInfo, nil).Once()
 			},
-			want:    &tokenInfo,
+			want:    tokenInfo,
 			wantErr: nil,
 		},
 	}
@@ -490,7 +510,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockToken := mocks.NewTokenService(s.T())
-			svc := NewAuthService(nil, mockToken, nil, nil, nil)
+			svc := NewAuthService(nil, mockToken, nil, nil)
 
 			if tc.setupMock != nil {
 				tc.setupMock(mockToken)
@@ -500,7 +520,7 @@ func (s *authServiceSuite) TestRefreshToken() {
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
-				s.Empty(got)
+				s.Empty(got.AccessToken)
 			} else {
 				s.NoError(err)
 				s.Equal(tc.want, got)
@@ -516,25 +536,22 @@ func (s *authServiceSuite) TestIsResetPasswordTokenValid() {
 	tests := []struct {
 		name      string
 		token     string
-		setupMock func(c *mocks.CacheStorage)
+		setupMock func(v *mocks.VerifyService)
 		want      bool
 	}{
 		{
 			name:  "invalid",
 			token: "invalid",
-			setupMock: func(c *mocks.CacheStorage) {
-				c.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(pkg.ErrNotFound).Once()
+			setupMock: func(v *mocks.VerifyService) {
+				v.EXPECT().VerifyPasswordResetToken(mock.Anything, "invalid").Return("", pkg.ErrNotFound).Once()
 			},
 			want: false,
 		},
 		{
 			name:  "valid",
 			token: token,
-			setupMock: func(c *mocks.CacheStorage) {
-				c.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).
-					Run(func(ctx context.Context, key string, dest any) {
-						*dest.(*string) = email
-					}).Return(nil).Once()
+			setupMock: func(v *mocks.VerifyService) {
+				v.EXPECT().VerifyPasswordResetToken(mock.Anything, token).Return(email, nil).Once()
 			},
 			want: true,
 		},
@@ -542,11 +559,11 @@ func (s *authServiceSuite) TestIsResetPasswordTokenValid() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := mocks.NewCacheStorage(s.T())
-			svc := NewAuthService(nil, nil, nil, nil, mockCache)
+			mockVerify := mocks.NewVerifyService(s.T())
+			svc := NewAuthService(nil, nil, mockVerify, nil)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockCache)
+				tc.setupMock(mockVerify)
 			}
 
 			got := svc.IsResetPasswordTokenValid(context.Background(), tc.token)
