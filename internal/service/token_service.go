@@ -107,25 +107,24 @@ func (s *TokenServiceImpl) Validate(accessToken string) (*jwt.Token, error) {
 }
 
 // Internal helpers
-func (s *TokenServiceImpl) verifyRefreshToken(ctx context.Context, rawRefreshToken string) (domain.RefreshToken, error) {
-	var empty domain.RefreshToken
+func (s *TokenServiceImpl) verifyRefreshToken(ctx context.Context, rawRefreshToken string) (*domain.RefreshToken, error) {
 	dbToken, err := s.tokenRepo.GetByHash(ctx, s.hashToken(rawRefreshToken))
 	if err != nil {
-		return empty, pkg.ErrUnauthorized
+		return nil, pkg.ErrUnauthorized
 	}
 
 	if dbToken.RevokedAt != nil {
 		_ = s.tokenRepo.UpdateRevokedByUser(ctx, dbToken.UserID)
-		return empty, pkg.ErrUnauthorized
+		return nil, pkg.ErrUnauthorized
 	}
 
 	if dbToken.ExpiresAt.Before(pkg.TimeNowUTC()) {
-		return empty, pkg.ErrUnauthorized
+		return nil, pkg.ErrUnauthorized
 	}
 	return dbToken, nil
 }
 
-func (s *TokenServiceImpl) rotateSession(ctx context.Context, oldToken domain.RefreshToken) (domain.TokenInfo, error) {
+func (s *TokenServiceImpl) rotateSession(ctx context.Context, oldToken *domain.RefreshToken) (domain.TokenInfo, error) {
 	var empty domain.TokenInfo
 	if err := s.tokenRepo.UpdateRevoked(ctx, oldToken.ID); err != nil {
 		return empty, pkg.OrInternalError(err)
@@ -172,13 +171,13 @@ func (s *TokenServiceImpl) generateAccessToken(userID int64, deviceID string, no
 	return token.SignedString([]byte(s.tokenCfg.Secret))
 }
 
-func (s *TokenServiceImpl) generateRefreshToken(userID int64, deviceID string) (string, domain.RefreshToken) {
+func (s *TokenServiceImpl) generateRefreshToken(userID int64, deviceID string) (string, *domain.RefreshToken) {
 	raw := uuid.NewString()
 	hashed := s.hashToken(raw)
 	now := pkg.TimeNowUTC()
 	expiresAt := now.Add(s.tokenCfg.RefreshTokenTTL)
 
-	return raw, domain.RefreshToken{
+	return raw, &domain.RefreshToken{
 		UserID:    userID,
 		DeviceID:  deviceID,
 		TokenHash: hashed,

@@ -16,8 +16,8 @@ type RefreshToken struct {
 	CreatedAt time.Time  `db:"created_at"`
 }
 
-func (m *RefreshToken) ToDomain() domain.RefreshToken {
-	return domain.RefreshToken{
+func (m *RefreshToken) ToDomain() *domain.RefreshToken {
+	return &domain.RefreshToken{
 		ID:        m.ID,
 		UserID:    m.UserID,
 		DeviceID:  m.DeviceID,
@@ -28,7 +28,7 @@ func (m *RefreshToken) ToDomain() domain.RefreshToken {
 	}
 }
 
-func FromDomainRefreshToken(t domain.RefreshToken) *RefreshToken {
+func FromDomainRefreshToken(t *domain.RefreshToken) *RefreshToken {
 	return &RefreshToken{
 		ID:        t.ID,
 		UserID:    t.UserID,

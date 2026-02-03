@@ -40,7 +40,7 @@ func (_m *TokenRepository) EXPECT() *TokenRepository_Expecter {
 }
 
 // Create provides a mock function for the type TokenRepository
-func (_mock *TokenRepository) Create(ctx context.Context, t domain.RefreshToken) error {
+func (_mock *TokenRepository) Create(ctx context.Context, t *domain.RefreshToken) error {
 	ret := _mock.Called(ctx, t)
 
 	if len(ret) == 0 {
@@ -48,7 +48,7 @@ func (_mock *TokenRepository) Create(ctx context.Context, t domain.RefreshToken)
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.RefreshToken) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.RefreshToken) error); ok {
 		r0 = returnFunc(ctx, t)
 	} else {
 		r0 = ret.Error(0)
@@ -63,20 +63,20 @@ type TokenRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - t domain.RefreshToken
+//   - t *domain.RefreshToken
 func (_e *TokenRepository_Expecter) Create(ctx interface{}, t interface{}) *TokenRepository_Create_Call {
 	return &TokenRepository_Create_Call{Call: _e.mock.On("Create", ctx, t)}
 }
 
-func (_c *TokenRepository_Create_Call) Run(run func(ctx context.Context, t domain.RefreshToken)) *TokenRepository_Create_Call {
+func (_c *TokenRepository_Create_Call) Run(run func(ctx context.Context, t *domain.RefreshToken)) *TokenRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 domain.RefreshToken
+		var arg1 *domain.RefreshToken
 		if args[1] != nil {
-			arg1 = args[1].(domain.RefreshToken)
+			arg1 = args[1].(*domain.RefreshToken)
 		}
 		run(
 			arg0,
@@ -91,7 +91,7 @@ func (_c *TokenRepository_Create_Call) Return(err error) *TokenRepository_Create
 	return _c
 }
 
-func (_c *TokenRepository_Create_Call) RunAndReturn(run func(ctx context.Context, t domain.RefreshToken) error) *TokenRepository_Create_Call {
+func (_c *TokenRepository_Create_Call) RunAndReturn(run func(ctx context.Context, t *domain.RefreshToken) error) *TokenRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -160,22 +160,24 @@ func (_c *TokenRepository_DeleteExpiredAndRevoked_Call) RunAndReturn(run func(ct
 }
 
 // GetByHash provides a mock function for the type TokenRepository
-func (_mock *TokenRepository) GetByHash(ctx context.Context, tokenHash string) (domain.RefreshToken, error) {
+func (_mock *TokenRepository) GetByHash(ctx context.Context, tokenHash string) (*domain.RefreshToken, error) {
 	ret := _mock.Called(ctx, tokenHash)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByHash")
 	}
 
-	var r0 domain.RefreshToken
+	var r0 *domain.RefreshToken
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (domain.RefreshToken, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*domain.RefreshToken, error)); ok {
 		return returnFunc(ctx, tokenHash)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) domain.RefreshToken); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *domain.RefreshToken); ok {
 		r0 = returnFunc(ctx, tokenHash)
 	} else {
-		r0 = ret.Get(0).(domain.RefreshToken)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.RefreshToken)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = returnFunc(ctx, tokenHash)
@@ -215,12 +217,12 @@ func (_c *TokenRepository_GetByHash_Call) Run(run func(ctx context.Context, toke
 	return _c
 }
 
-func (_c *TokenRepository_GetByHash_Call) Return(refreshToken domain.RefreshToken, err error) *TokenRepository_GetByHash_Call {
+func (_c *TokenRepository_GetByHash_Call) Return(refreshToken *domain.RefreshToken, err error) *TokenRepository_GetByHash_Call {
 	_c.Call.Return(refreshToken, err)
 	return _c
 }
 
-func (_c *TokenRepository_GetByHash_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) (domain.RefreshToken, error)) *TokenRepository_GetByHash_Call {
+func (_c *TokenRepository_GetByHash_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) (*domain.RefreshToken, error)) *TokenRepository_GetByHash_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -87,7 +87,7 @@ func (s *tokenServiceSuite) TestCreateSession() {
 			args: args{userID: userID, deviceID: deviceID},
 			setupMock: func(repo *mocks.TokenRepository) {
 				repo.EXPECT().UpdateRevokedByDevice(mock.Anything, userID, deviceID).Return(nil).Once()
-				repo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(t domain.RefreshToken) bool {
+				repo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(t *domain.RefreshToken) bool {
 					return t.UserID == userID && t.DeviceID == deviceID
 				})).Return(nil).Once()
 			},
@@ -131,7 +131,7 @@ func (s *tokenServiceSuite) TestRefresh() {
 	rawToken := "raw-refresh-token"
 	hashedToken := svc.hashToken(rawToken)
 
-	dbToken := domain.RefreshToken{
+	dbToken := &domain.RefreshToken{
 		ID:        1,
 		UserID:    1,
 		DeviceID:  "device-1",
@@ -153,7 +153,7 @@ func (s *tokenServiceSuite) TestRefresh() {
 			name: "token_not_found",
 			args: args{refreshToken: rawToken},
 			setupMock: func(repo *mocks.TokenRepository) {
-				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(domain.RefreshToken{}, pkg.ErrNotFound).Once()
+				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(nil, pkg.ErrNotFound).Once()
 			},
 			wantErr: pkg.ErrUnauthorized,
 		},
@@ -161,10 +161,10 @@ func (s *tokenServiceSuite) TestRefresh() {
 			name: "token_revoked",
 			args: args{refreshToken: rawToken},
 			setupMock: func(repo *mocks.TokenRepository) {
-				revokedToken := dbToken
+				revokedToken := *dbToken
 				now := pkg.TimeNowUTC()
 				revokedToken.RevokedAt = &now
-				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(revokedToken, nil).Once()
+				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(&revokedToken, nil).Once()
 				repo.EXPECT().UpdateRevokedByUser(mock.Anything, revokedToken.UserID).Return(nil).Once()
 			},
 			wantErr: pkg.ErrUnauthorized,
@@ -173,9 +173,9 @@ func (s *tokenServiceSuite) TestRefresh() {
 			name: "token_expired",
 			args: args{refreshToken: rawToken},
 			setupMock: func(repo *mocks.TokenRepository) {
-				expiredToken := dbToken
+				expiredToken := *dbToken
 				expiredToken.ExpiresAt = pkg.TimeNowUTC().Add(-1 * time.Hour)
-				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(expiredToken, nil).Once()
+				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(&expiredToken, nil).Once()
 			},
 			wantErr: pkg.ErrUnauthorized,
 		},
@@ -204,7 +204,7 @@ func (s *tokenServiceSuite) TestRefresh() {
 			setupMock: func(repo *mocks.TokenRepository) {
 				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(dbToken, nil).Once()
 				repo.EXPECT().UpdateRevoked(mock.Anything, dbToken.ID).Return(nil).Once()
-				repo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(t domain.RefreshToken) bool {
+				repo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(t *domain.RefreshToken) bool {
 					return t.UserID == dbToken.UserID && t.DeviceID == dbToken.DeviceID
 				})).Return(nil).Once()
 			},
@@ -239,7 +239,7 @@ func (s *tokenServiceSuite) TestRevokeSingle() {
 	svc := NewTokenService(nil, s.cfg)
 	rawToken := "raw-token"
 	hashedToken := svc.hashToken(rawToken)
-	dbToken := domain.RefreshToken{ID: 1}
+	dbToken := &domain.RefreshToken{ID: 1}
 
 	tests := []struct {
 		name      string
@@ -251,7 +251,7 @@ func (s *tokenServiceSuite) TestRevokeSingle() {
 			name:  "get_error",
 			token: rawToken,
 			setupMock: func(repo *mocks.TokenRepository) {
-				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(domain.RefreshToken{}, assert.AnError).Once()
+				repo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(nil, assert.AnError).Once()
 			},
 			wantErr: assert.AnError,
 		},
