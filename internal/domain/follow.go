@@ -18,7 +18,6 @@ type FollowRepository interface {
 	CountFollowers(ctx context.Context, userID int64) (int64, error)
 }
 
-
 type Follow struct {
 	FollowerID int64
 	FolloweeID int64

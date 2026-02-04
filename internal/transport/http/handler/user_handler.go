@@ -144,7 +144,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, "password changed successfully")
+	pkg.SuccessWithMsg(c, "password changed successfully", nil)
 }
 
 // ConfirmFileUpload godoc
@@ -197,24 +197,7 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 }
 
 func (h *UserHandler) mapToResponse(user *domain.User) dto.UserResponse {
-	return dto.UserResponse{
-		ID:       user.ID,
-		Email:    user.Email,
-		Username: user.Username,
-		Profile: dto.ProfileResponse{
-			FullName:   user.Profile.FullName,
-			Bio:        user.Profile.Bio,
-			Avatar:     h.userSvc.GetPublicURL(user.Profile.Avatar),
-			CoverImage: h.userSvc.GetPublicURL(user.Profile.CoverImage),
-			Location:   user.Profile.Location,
-			Website:    user.Profile.Website,
-		},
-		Status: dto.StatusResponse{
-			Verified:   user.Status.Verified,
-			VerifiedAt: user.Status.VerifiedAt,
-		},
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Version:   user.Version,
-	}
+	avatar := h.userSvc.GetPublicURL(user.Profile.Avatar)
+	cover := h.userSvc.GetPublicURL(user.Profile.CoverImage)
+	return dto.NewUserResponse(user, avatar, cover)
 }

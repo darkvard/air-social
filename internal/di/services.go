@@ -42,7 +42,7 @@ func initServices(
 	userSvc := service.NewUserService(repository.User, mediaSvc)
 	authSvc := service.NewAuthService(userSvc, tokenSvc, verifySvc, adapter.Cache)
 	emailSvc := service.NewEmailService(adapter.Mailer)
-	followSvc := service.NewFollowService(repository.Follow)
+	followSvc := service.NewFollowService(repository.Follow, repository.User)
 
 	return &Services{
 		Media:  mediaSvc,

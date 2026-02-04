@@ -34,6 +34,10 @@ func Success(c *gin.Context, data any) {
 	JSON(c, http.StatusOK, "success", data)
 }
 
+func SuccessWithMsg(c *gin.Context, msg string, data any) {
+	JSON(c, http.StatusOK, msg, data)
+}
+
 func Created(c *gin.Context, data any) {
 	JSON(c, http.StatusCreated, "created", data)
 }

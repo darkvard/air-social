@@ -91,7 +91,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	pkg.Success(c, dto.LoginResponse{
 		User:  h.mapUserToResponse(user),
-		Token: h.mapTokenToResponse(token),
+		Token: dto.NewTokenResponse(token),
 	})
 }
 
@@ -121,7 +121,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, h.mapTokenToResponse(res))
+	pkg.Success(c, dto.NewTokenResponse(res))
 }
 
 // Logout godoc
@@ -164,7 +164,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		pkg.HandleServiceError(c, err)
 		return
 	}
-	pkg.Success(c, "logout success")
+	pkg.SuccessWithMsg(c, "logout success", nil)
 }
 
 // VerifyEmail godoc
@@ -213,7 +213,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 
 	h.authSvc.ForgotPassword(c.Request.Context(), req.Email)
 
-	pkg.Success(c, "If the email exists, we have sent instructions on how to reset your password.")
+	pkg.SuccessWithMsg(c, "If the email exists, we have sent instructions on how to reset your password.", nil)
 }
 
 // ShowResetPasswordPage godoc
@@ -274,38 +274,11 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, "password update successfully")
+	pkg.SuccessWithMsg(c, "password update successfully", nil)
 }
 
 func (h *AuthHandler) mapUserToResponse(user *domain.User) dto.UserResponse {
-	return dto.UserResponse{
-		ID:       user.ID,
-		Email:    user.Email,
-		Username: user.Username,
-		Profile: dto.ProfileResponse{
-			FullName:   user.Profile.FullName,
-			Bio:        user.Profile.Bio,
-			Avatar:     h.authSvc.GetPublicURL(user.Profile.Avatar),
-			CoverImage: h.authSvc.GetPublicURL(user.Profile.CoverImage),
-			Location:   user.Profile.Location,
-			Website:    user.Profile.Website,
-		},
-		Status: dto.StatusResponse{
-			Verified:   user.Status.Verified,
-			VerifiedAt: user.Status.VerifiedAt,
-		},
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Version:   user.Version,
-	}
-}
-
-func (h *AuthHandler) mapTokenToResponse(t domain.TokenInfo) dto.TokenResponse {
-	return dto.TokenResponse{
-		Type:            t.Type,
-		AccessToken:     t.AccessToken,
-		RefreshToken:    t.RefreshToken,
-		AccessExpireAt:  t.AccessExpireAt,
-		RefreshExpireAt: t.RefreshExpireAt,
-	}
+	avatar := h.authSvc.GetPublicURL(user.Profile.Avatar)
+	cover := h.authSvc.GetPublicURL(user.Profile.CoverImage)
+	return dto.NewUserResponse(user, avatar, cover)
 }

@@ -49,3 +49,26 @@ type StatusResponse struct {
 	Verified   bool       `json:"verified"`
 	VerifiedAt *time.Time `json:"verified_at"`
 }
+
+func NewUserResponse(user *domain.User, avatar, cover string) UserResponse {
+	return UserResponse{
+		ID:       user.ID,
+		Email:    user.Email,
+		Username: user.Username,
+		Profile: ProfileResponse{
+			FullName:   user.Profile.FullName,
+			Bio:        user.Profile.Bio,
+			Avatar:     avatar,
+			CoverImage: cover,
+			Location:   user.Profile.Location,
+			Website:    user.Profile.Website,
+		},
+		Status: StatusResponse{
+			Verified:   user.Status.Verified,
+			VerifiedAt: user.Status.VerifiedAt,
+		},
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Version:   user.Version,
+	}
+}

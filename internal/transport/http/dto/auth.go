@@ -2,6 +2,8 @@ package dto
 
 import (
 	"time"
+
+	"air-social/internal/domain"
 )
 
 type RegisterRequest struct {
@@ -44,4 +46,14 @@ type TokenResponse struct {
 	RefreshToken    string    `json:"refresh_token"`
 	AccessExpireAt  time.Time `json:"access_expire_at"`
 	RefreshExpireAt time.Time `json:"refresh_expire_at"`
+}
+
+func NewTokenResponse(t domain.TokenInfo) TokenResponse {
+	return TokenResponse{
+		Type:            t.Type,
+		AccessToken:     t.AccessToken,
+		RefreshToken:    t.RefreshToken,
+		AccessExpireAt:  t.AccessExpireAt,
+		RefreshExpireAt: t.RefreshExpireAt,
+	}
 }

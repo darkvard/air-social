@@ -86,6 +86,10 @@ func GetAuthClaims(c *gin.Context) (*domain.AuthClaims, error) {
 		return nil, pkg.ErrUnauthorized
 	}
 
+	if payload.UserID <= 0 {
+		return nil, pkg.ErrUnauthorized
+	}
+
 	return payload, nil
 }
 
