@@ -113,7 +113,9 @@ func (s *followServiceSuite) TestFollow() {
 		s.Run(tc.name, func() {
 			mockUserRepo := mocks.NewUserRepository(s.T())
 			mockFollowRepo := mocks.NewFollowRepository(s.T())
-			followSvc := NewFollowService(mockFollowRepo, mockUserRepo)
+			mockCache := mocks.NewCacheStorage(s.T())
+
+			followSvc := NewFollowService(mockFollowRepo, mockUserRepo, mockCache)
 
 			if tc.setupMocks != nil {
 				tc.setupMocks(mockFollowRepo, mockUserRepo, tc.args)
@@ -188,8 +190,9 @@ func (s *followServiceSuite) TestUnfollow() {
 		s.Run(tc.name, func() {
 			mockFollowRepo := mocks.NewFollowRepository(s.T())
 			mockUserRepo := mocks.NewUserRepository(s.T())
+			mockCache := mocks.NewCacheStorage(s.T())
 
-			followSvc := NewFollowService(mockFollowRepo, mockUserRepo)
+			followSvc := NewFollowService(mockFollowRepo, mockUserRepo, mockCache)
 
 			if tc.setupMocks != nil {
 				tc.setupMocks(mockFollowRepo, tc.args)

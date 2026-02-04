@@ -102,27 +102,25 @@ func (_c *FollowService_Follow_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // GetFollowers provides a mock function for the type FollowService
-func (_mock *FollowService) GetFollowers(ctx context.Context, userID int64, page int, limit int) ([]domain.User, error) {
-	ret := _mock.Called(ctx, userID, page, limit)
+func (_mock *FollowService) GetFollowers(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error) {
+	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFollowers")
 	}
 
-	var r0 []domain.User
+	var r0 domain.FollowResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int, int) ([]domain.User, error)); ok {
-		return returnFunc(ctx, userID, page, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) (domain.FollowResult, error)); ok {
+		return returnFunc(ctx, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int, int) []domain.User); ok {
-		r0 = returnFunc(ctx, userID, page, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) domain.FollowResult); ok {
+		r0 = returnFunc(ctx, params)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.User)
-		}
+		r0 = ret.Get(0).(domain.FollowResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int, int) error); ok {
-		r1 = returnFunc(ctx, userID, page, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.FollowParams) error); ok {
+		r1 = returnFunc(ctx, params)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -136,73 +134,59 @@ type FollowService_GetFollowers_Call struct {
 
 // GetFollowers is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID int64
-//   - page int
-//   - limit int
-func (_e *FollowService_Expecter) GetFollowers(ctx interface{}, userID interface{}, page interface{}, limit interface{}) *FollowService_GetFollowers_Call {
-	return &FollowService_GetFollowers_Call{Call: _e.mock.On("GetFollowers", ctx, userID, page, limit)}
+//   - params domain.FollowParams
+func (_e *FollowService_Expecter) GetFollowers(ctx interface{}, params interface{}) *FollowService_GetFollowers_Call {
+	return &FollowService_GetFollowers_Call{Call: _e.mock.On("GetFollowers", ctx, params)}
 }
 
-func (_c *FollowService_GetFollowers_Call) Run(run func(ctx context.Context, userID int64, page int, limit int)) *FollowService_GetFollowers_Call {
+func (_c *FollowService_GetFollowers_Call) Run(run func(ctx context.Context, params domain.FollowParams)) *FollowService_GetFollowers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 domain.FollowParams
 		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 int
-		if args[2] != nil {
-			arg2 = args[2].(int)
-		}
-		var arg3 int
-		if args[3] != nil {
-			arg3 = args[3].(int)
+			arg1 = args[1].(domain.FollowParams)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *FollowService_GetFollowers_Call) Return(users []domain.User, err error) *FollowService_GetFollowers_Call {
-	_c.Call.Return(users, err)
+func (_c *FollowService_GetFollowers_Call) Return(followResult domain.FollowResult, err error) *FollowService_GetFollowers_Call {
+	_c.Call.Return(followResult, err)
 	return _c
 }
 
-func (_c *FollowService_GetFollowers_Call) RunAndReturn(run func(ctx context.Context, userID int64, page int, limit int) ([]domain.User, error)) *FollowService_GetFollowers_Call {
+func (_c *FollowService_GetFollowers_Call) RunAndReturn(run func(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error)) *FollowService_GetFollowers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetFollowings provides a mock function for the type FollowService
-func (_mock *FollowService) GetFollowings(ctx context.Context, userID int64, page int, limit int) ([]domain.User, error) {
-	ret := _mock.Called(ctx, userID, page, limit)
+func (_mock *FollowService) GetFollowings(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error) {
+	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFollowings")
 	}
 
-	var r0 []domain.User
+	var r0 domain.FollowResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int, int) ([]domain.User, error)); ok {
-		return returnFunc(ctx, userID, page, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) (domain.FollowResult, error)); ok {
+		return returnFunc(ctx, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int, int) []domain.User); ok {
-		r0 = returnFunc(ctx, userID, page, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) domain.FollowResult); ok {
+		r0 = returnFunc(ctx, params)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.User)
-		}
+		r0 = ret.Get(0).(domain.FollowResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int, int) error); ok {
-		r1 = returnFunc(ctx, userID, page, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.FollowParams) error); ok {
+		r1 = returnFunc(ctx, params)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -216,47 +200,35 @@ type FollowService_GetFollowings_Call struct {
 
 // GetFollowings is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID int64
-//   - page int
-//   - limit int
-func (_e *FollowService_Expecter) GetFollowings(ctx interface{}, userID interface{}, page interface{}, limit interface{}) *FollowService_GetFollowings_Call {
-	return &FollowService_GetFollowings_Call{Call: _e.mock.On("GetFollowings", ctx, userID, page, limit)}
+//   - params domain.FollowParams
+func (_e *FollowService_Expecter) GetFollowings(ctx interface{}, params interface{}) *FollowService_GetFollowings_Call {
+	return &FollowService_GetFollowings_Call{Call: _e.mock.On("GetFollowings", ctx, params)}
 }
 
-func (_c *FollowService_GetFollowings_Call) Run(run func(ctx context.Context, userID int64, page int, limit int)) *FollowService_GetFollowings_Call {
+func (_c *FollowService_GetFollowings_Call) Run(run func(ctx context.Context, params domain.FollowParams)) *FollowService_GetFollowings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 domain.FollowParams
 		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 int
-		if args[2] != nil {
-			arg2 = args[2].(int)
-		}
-		var arg3 int
-		if args[3] != nil {
-			arg3 = args[3].(int)
+			arg1 = args[1].(domain.FollowParams)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *FollowService_GetFollowings_Call) Return(users []domain.User, err error) *FollowService_GetFollowings_Call {
-	_c.Call.Return(users, err)
+func (_c *FollowService_GetFollowings_Call) Return(followResult domain.FollowResult, err error) *FollowService_GetFollowings_Call {
+	_c.Call.Return(followResult, err)
 	return _c
 }
 
-func (_c *FollowService_GetFollowings_Call) RunAndReturn(run func(ctx context.Context, userID int64, page int, limit int) ([]domain.User, error)) *FollowService_GetFollowings_Call {
+func (_c *FollowService_GetFollowings_Call) RunAndReturn(run func(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error)) *FollowService_GetFollowings_Call {
 	_c.Call.Return(run)
 	return _c
 }

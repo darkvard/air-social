@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"air-social/internal/domain"
+	"air-social/internal/infrastructure/postgres/model"
 )
 
 type followRepository struct {
@@ -46,22 +47,45 @@ func (r *followRepository) Delete(ctx context.Context, followerID int64, followe
 	return err
 }
 
+func (r *followRepository) GetFollowers(ctx context.Context, params domain.FollowParams) ([]domain.User, error) {
+	query := `
+		SELECT u.*
+		FROM users u
+		JOIN follows f ON u.id = f.follower_id
+		WHERE f.followee_id = $1
+		ORDER BY f.created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+	args := []any{params.UserID, params.GetLimit(), params.GetOffset()}
+
+	var users []model.User
+	err := r.db.SelectContext(ctx, users, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return model.MapToDomainUsers(users), nil
+}
+
+func (r *followRepository) CountFollowers(ctx context.Context, userID int64) (int64, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM follows
+		WHERE followee_id = $1
+		`
+
+	var total int64
+	err := r.db.GetContext(ctx, &total, query, userID)
+	return total, err
+}
+
 func (r *followRepository) IsFollowing(ctx context.Context, followerID int64, followeeID int64) (bool, error) {
 	return true, nil
 }
 
-func (r *followRepository) GetFollowings(ctx context.Context, userID int64, limit int, offset int) ([]domain.User, error) {
-	return []domain.User{}, nil
-}
-
-func (r *followRepository) GetFollowers(ctx context.Context, userID int64, limit int, offset int) ([]domain.User, error) {
+func (r *followRepository) GetFollowings(ctx context.Context, params domain.FollowParams) ([]domain.User, error) {
 	return []domain.User{}, nil
 }
 
 func (r *followRepository) CountFollowings(ctx context.Context, userID int64) (int64, error) {
-	return 1, nil
-}
-
-func (r *followRepository) CountFollowers(ctx context.Context, userID int64) (int64, error) {
 	return 1, nil
 }

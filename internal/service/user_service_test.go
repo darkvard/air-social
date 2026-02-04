@@ -727,7 +727,7 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
 				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return(objectKey, nil).Once()
 				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.EntityID, objectKey, a.input.Feature).Return(nil).Once()
-				mediaSvc.EXPECT().GetPublicURL(objectKey).Return(publicURL).Once()
+				mediaSvc.EXPECT().FormatPublicURL(objectKey).Return(publicURL).Once()
 			},
 			wantURL: publicURL,
 			wantErr: nil,

@@ -12,8 +12,11 @@ const (
 	WorkerEmailVerify    = "worker:email:verify:"
 	WorkerEmailReset     = "worker:email:reset:"
 	WorkerEmailRetry     = "worker:email:retry:"
-	UploadImageVerify    = "upload:verify:"
-	BlacklistToken       = "blacklist:token:"
+
+	UserUploadImageVerify = "user:upload:verify:"
+	UserBlacklistToken    = "user:blacklist:token:"
+	UserFollowerCount     = "user:followers:count:"
+	UserFollowingCount    = "user:followings:count:"
 )
 
 type CacheStorage interface {
@@ -40,9 +43,17 @@ func GetEmailRetryKey(token string) string {
 }
 
 func GetUploadImageKey(objectName string) string {
-	return fmt.Sprintf(UploadImageVerify+"%s", objectName)
+	return fmt.Sprintf(UserUploadImageVerify+"%s", objectName)
 }
 
 func GetBlacklistTokenKey(token string) string {
-	return fmt.Sprintf(BlacklistToken+"%s", token)
+	return fmt.Sprintf(UserBlacklistToken+"%s", token)
+}
+
+func GetFollowerCountKey(userID int64) string {
+	return fmt.Sprintf(UserFollowerCount+"%d", userID)
+}
+
+func GetFollowingCountKey(userID int64) string {
+	return fmt.Sprintf(UserFollowingCount+"%d", userID)
 }

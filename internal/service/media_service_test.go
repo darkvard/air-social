@@ -308,7 +308,7 @@ func (s *mediaServiceSuite) TestGetPublicURL() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			svc := NewMediaService(nil, s.cfg)
-			got := svc.GetPublicURL(tc.objectKey)
+			got := svc.FormatPublicURL(tc.objectKey)
 			s.Equal(tc.want, got)
 		})
 	}

@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
+	"air-social/internal/domain"
 	"air-social/internal/service"
 	"air-social/internal/transport/http/dto"
 	"air-social/internal/transport/http/middleware"
@@ -10,12 +11,14 @@ import (
 )
 
 type FollowHandler struct {
-	srv service.FollowService
+	followSvc service.FollowService
+	userSvc   service.UserService
 }
 
-func NewFollowHandler(srv service.FollowService) *FollowHandler {
+func NewFollowHandler(followSvc service.FollowService, userSvc service.UserService) *FollowHandler {
 	return &FollowHandler{
-		srv: srv,
+		followSvc: followSvc,
+		userSvc:   userSvc,
 	}
 }
 
@@ -35,19 +38,19 @@ func NewFollowHandler(srv service.FollowService) *FollowHandler {
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/users/{id}/follow [post]
 func (h *FollowHandler) Follow(c *gin.Context) {
-	var req dto.FollowRequest
-	if err := c.ShouldBindUri(&req); err != nil {
-		pkg.BadRequest(c, "invalid user id")
-		return
-	}
-
 	claims, err := middleware.GetAuthClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return
 	}
 
-	if err := h.srv.Follow(c.Request.Context(), claims.UserID, req.TargetUserID); err != nil {
+	var path dto.FollowPathParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid user id")
+		return
+	}
+
+	if err := h.followSvc.Follow(c.Request.Context(), claims.UserID, path.ID); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -71,19 +74,19 @@ func (h *FollowHandler) Follow(c *gin.Context) {
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/users/{id}/follow [delete]
 func (h *FollowHandler) Unfollow(c *gin.Context) {
-	var req dto.FollowRequest
-	if err := c.ShouldBindUri(&req); err != nil {
-		pkg.BadRequest(c, "invalid user id")
-		return
-	}
-
 	claims, err := middleware.GetAuthClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return
 	}
 
-	if err := h.srv.Unfollow(c.Request.Context(), claims.UserID, req.TargetUserID); err != nil {
+	var path dto.FollowPathParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid user id")
+		return
+	}
+
+	if err := h.followSvc.Unfollow(c.Request.Context(), claims.UserID, path.ID); err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -92,9 +95,54 @@ func (h *FollowHandler) Unfollow(c *gin.Context) {
 }
 
 func (h *FollowHandler) GetFollowers(c *gin.Context) {
+	var path dto.FollowPathParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid user id")
+		return
+	}
 
+	var query dto.PaginationQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		pkg.BadRequest(c, "invalid query")
+		return
+	}
+
+	result, err := h.followSvc.GetFollowers(c.Request.Context(), domain.FollowParams{
+		UserID: path.ID,
+		Page:   query.Page,
+		Limit:  query.Limit,
+	})
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, dto.PaginatedResult{
+		Data:  h.mapToUserResponses(result.Users),
+		Total: result.Total,
+		Page:  result.Page,
+		Limit: result.Limit,
+	})
+
+	// todo: unit test
+	// todo: FormatPublicURL (media, user, auth, here) ->  URLFactory.FormatPublicURL(::key) 
 }
 
 func (h *FollowHandler) GetFollowings(c *gin.Context) {
 
+}
+
+// Internal helper
+
+func (h *FollowHandler) mapToUserResponses(users []domain.User) []dto.UserResponse {
+	responses := make([]dto.UserResponse, len(users))
+
+	for i := range users {
+		u := &users[i]
+		avatarURL := h.userSvc.FormatPublicURL(u.Profile.Avatar)
+		coverURL := h.userSvc.FormatPublicURL(u.Profile.CoverImage)
+		responses[i] = dto.NewUserResponse(u, avatarURL, coverURL)
+	}
+
+	return responses
 }

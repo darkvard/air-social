@@ -19,6 +19,6 @@ func initHandlers(services *Services, url domain.URLFactory) *Handlers {
 		User:   handler.NewUserHandler(services.User),
 		Media:  handler.NewMediaHandler(services.Media),
 		Health: handler.NewHealthHandler(services.Health),
-		Follow: handler.NewFollowHandler(services.Follow),
+		Follow: handler.NewFollowHandler(services.Follow, services.User),
 	}
 }

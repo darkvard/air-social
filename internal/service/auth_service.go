@@ -164,7 +164,7 @@ func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string)
 }
 
 func (s *AuthServiceImpl) GetPublicURL(key string) string {
-	return s.userSvc.GetPublicURL(key)
+	return s.userSvc.FormatPublicURL(key)
 }
 
 // Internal helpers

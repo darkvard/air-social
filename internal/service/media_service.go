@@ -17,7 +17,7 @@ type MediaService interface {
 	GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error)
 	ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
 	DeleteFile(ctx context.Context, objectKey string) error
-	GetPublicURL(objectKey string) string
+	FormatPublicURL(objectKey string) string
 }
 
 type MediaServiceImpl struct {
@@ -63,7 +63,7 @@ func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.Pre
 		UploadURL: uploadURL,
 		FormData:  result.FormData,
 		ObjectKey: loc.Key,
-		PublicURL: s.GetPublicURL(loc.Key),
+		PublicURL: s.FormatPublicURL(loc.Key),
 		ExpireAt:  pkg.TimeNowUTC().Add(domain.PresignedUploadExpiry),
 	}, nil
 }
@@ -98,7 +98,7 @@ func (s *MediaServiceImpl) DeleteFile(ctx context.Context, objectKey string) err
 	return s.storage.DeleteFile(ctx, loc)
 }
 
-func (s *MediaServiceImpl) GetPublicURL(objectKey string) string {
+func (s *MediaServiceImpl) FormatPublicURL(objectKey string) string {
 	if objectKey == "" {
 		return ""
 	}

@@ -19,7 +19,7 @@ type UserService interface {
 	VerifyEmail(ctx context.Context, email string) error
 
 	ConfirmImageUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
-	GetPublicURL(key string) string
+	FormatPublicURL(key string) string
 }
 
 type UserServiceImpl struct {
@@ -54,8 +54,8 @@ func (s *UserServiceImpl) GetProfile(ctx context.Context, id int64) (*domain.Use
 	return s.GetByID(ctx, id)
 }
 
-func (s *UserServiceImpl) GetPublicURL(key string) string {
-	return s.mediaSvc.GetPublicURL(key)
+func (s *UserServiceImpl) FormatPublicURL(key string) string {
+	return s.mediaSvc.FormatPublicURL(key)
 }
 
 func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUserParams) (*domain.User, error) {
@@ -162,7 +162,7 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.C
 		return "", pkg.OrInternalError(err)
 	}
 
-	return s.mediaSvc.GetPublicURL(objectKey), nil
+	return s.mediaSvc.FormatPublicURL(objectKey), nil
 }
 
 // Internal helpers

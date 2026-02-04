@@ -161,6 +161,57 @@ func (_c *MediaService_DeleteFile_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// FormatPublicURL provides a mock function for the type MediaService
+func (_mock *MediaService) FormatPublicURL(objectKey string) string {
+	ret := _mock.Called(objectKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FormatPublicURL")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
+		r0 = returnFunc(objectKey)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// MediaService_FormatPublicURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FormatPublicURL'
+type MediaService_FormatPublicURL_Call struct {
+	*mock.Call
+}
+
+// FormatPublicURL is a helper method to define mock.On call
+//   - objectKey string
+func (_e *MediaService_Expecter) FormatPublicURL(objectKey interface{}) *MediaService_FormatPublicURL_Call {
+	return &MediaService_FormatPublicURL_Call{Call: _e.mock.On("FormatPublicURL", objectKey)}
+}
+
+func (_c *MediaService_FormatPublicURL_Call) Run(run func(objectKey string)) *MediaService_FormatPublicURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MediaService_FormatPublicURL_Call) Return(s string) *MediaService_FormatPublicURL_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *MediaService_FormatPublicURL_Call) RunAndReturn(run func(objectKey string) string) *MediaService_FormatPublicURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetPresignedURL provides a mock function for the type MediaService
 func (_mock *MediaService) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error) {
 	ret := _mock.Called(ctx, input)
@@ -223,57 +274,6 @@ func (_c *MediaService_GetPresignedURL_Call) Return(presignedFile domain.Presign
 }
 
 func (_c *MediaService_GetPresignedURL_Call) RunAndReturn(run func(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error)) *MediaService_GetPresignedURL_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetPublicURL provides a mock function for the type MediaService
-func (_mock *MediaService) GetPublicURL(objectKey string) string {
-	ret := _mock.Called(objectKey)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetPublicURL")
-	}
-
-	var r0 string
-	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
-		r0 = returnFunc(objectKey)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	return r0
-}
-
-// MediaService_GetPublicURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPublicURL'
-type MediaService_GetPublicURL_Call struct {
-	*mock.Call
-}
-
-// GetPublicURL is a helper method to define mock.On call
-//   - objectKey string
-func (_e *MediaService_Expecter) GetPublicURL(objectKey interface{}) *MediaService_GetPublicURL_Call {
-	return &MediaService_GetPublicURL_Call{Call: _e.mock.On("GetPublicURL", objectKey)}
-}
-
-func (_c *MediaService_GetPublicURL_Call) Run(run func(objectKey string)) *MediaService_GetPublicURL_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
-		if args[0] != nil {
-			arg0 = args[0].(string)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MediaService_GetPublicURL_Call) Return(s string) *MediaService_GetPublicURL_Call {
-	_c.Call.Return(s)
-	return _c
-}
-
-func (_c *MediaService_GetPublicURL_Call) RunAndReturn(run func(objectKey string) string) *MediaService_GetPublicURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

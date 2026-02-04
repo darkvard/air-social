@@ -291,8 +291,8 @@ func (_c *FollowRepository_Delete_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // GetFollowers provides a mock function for the type FollowRepository
-func (_mock *FollowRepository) GetFollowers(ctx context.Context, userID int64, limit int, offset int) ([]domain.User, error) {
-	ret := _mock.Called(ctx, userID, limit, offset)
+func (_mock *FollowRepository) GetFollowers(ctx context.Context, params domain.FollowParams) ([]domain.User, error) {
+	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFollowers")
@@ -300,18 +300,18 @@ func (_mock *FollowRepository) GetFollowers(ctx context.Context, userID int64, l
 
 	var r0 []domain.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int, int) ([]domain.User, error)); ok {
-		return returnFunc(ctx, userID, limit, offset)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) ([]domain.User, error)); ok {
+		return returnFunc(ctx, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int, int) []domain.User); ok {
-		r0 = returnFunc(ctx, userID, limit, offset)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) []domain.User); ok {
+		r0 = returnFunc(ctx, params)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int, int) error); ok {
-		r1 = returnFunc(ctx, userID, limit, offset)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.FollowParams) error); ok {
+		r1 = returnFunc(ctx, params)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -325,36 +325,24 @@ type FollowRepository_GetFollowers_Call struct {
 
 // GetFollowers is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID int64
-//   - limit int
-//   - offset int
-func (_e *FollowRepository_Expecter) GetFollowers(ctx interface{}, userID interface{}, limit interface{}, offset interface{}) *FollowRepository_GetFollowers_Call {
-	return &FollowRepository_GetFollowers_Call{Call: _e.mock.On("GetFollowers", ctx, userID, limit, offset)}
+//   - params domain.FollowParams
+func (_e *FollowRepository_Expecter) GetFollowers(ctx interface{}, params interface{}) *FollowRepository_GetFollowers_Call {
+	return &FollowRepository_GetFollowers_Call{Call: _e.mock.On("GetFollowers", ctx, params)}
 }
 
-func (_c *FollowRepository_GetFollowers_Call) Run(run func(ctx context.Context, userID int64, limit int, offset int)) *FollowRepository_GetFollowers_Call {
+func (_c *FollowRepository_GetFollowers_Call) Run(run func(ctx context.Context, params domain.FollowParams)) *FollowRepository_GetFollowers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 domain.FollowParams
 		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 int
-		if args[2] != nil {
-			arg2 = args[2].(int)
-		}
-		var arg3 int
-		if args[3] != nil {
-			arg3 = args[3].(int)
+			arg1 = args[1].(domain.FollowParams)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -365,14 +353,14 @@ func (_c *FollowRepository_GetFollowers_Call) Return(users []domain.User, err er
 	return _c
 }
 
-func (_c *FollowRepository_GetFollowers_Call) RunAndReturn(run func(ctx context.Context, userID int64, limit int, offset int) ([]domain.User, error)) *FollowRepository_GetFollowers_Call {
+func (_c *FollowRepository_GetFollowers_Call) RunAndReturn(run func(ctx context.Context, params domain.FollowParams) ([]domain.User, error)) *FollowRepository_GetFollowers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetFollowings provides a mock function for the type FollowRepository
-func (_mock *FollowRepository) GetFollowings(ctx context.Context, userID int64, limit int, offset int) ([]domain.User, error) {
-	ret := _mock.Called(ctx, userID, limit, offset)
+func (_mock *FollowRepository) GetFollowings(ctx context.Context, params domain.FollowParams) ([]domain.User, error) {
+	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFollowings")
@@ -380,18 +368,18 @@ func (_mock *FollowRepository) GetFollowings(ctx context.Context, userID int64, 
 
 	var r0 []domain.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int, int) ([]domain.User, error)); ok {
-		return returnFunc(ctx, userID, limit, offset)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) ([]domain.User, error)); ok {
+		return returnFunc(ctx, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int, int) []domain.User); ok {
-		r0 = returnFunc(ctx, userID, limit, offset)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) []domain.User); ok {
+		r0 = returnFunc(ctx, params)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.User)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int, int) error); ok {
-		r1 = returnFunc(ctx, userID, limit, offset)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.FollowParams) error); ok {
+		r1 = returnFunc(ctx, params)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -405,36 +393,24 @@ type FollowRepository_GetFollowings_Call struct {
 
 // GetFollowings is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID int64
-//   - limit int
-//   - offset int
-func (_e *FollowRepository_Expecter) GetFollowings(ctx interface{}, userID interface{}, limit interface{}, offset interface{}) *FollowRepository_GetFollowings_Call {
-	return &FollowRepository_GetFollowings_Call{Call: _e.mock.On("GetFollowings", ctx, userID, limit, offset)}
+//   - params domain.FollowParams
+func (_e *FollowRepository_Expecter) GetFollowings(ctx interface{}, params interface{}) *FollowRepository_GetFollowings_Call {
+	return &FollowRepository_GetFollowings_Call{Call: _e.mock.On("GetFollowings", ctx, params)}
 }
 
-func (_c *FollowRepository_GetFollowings_Call) Run(run func(ctx context.Context, userID int64, limit int, offset int)) *FollowRepository_GetFollowings_Call {
+func (_c *FollowRepository_GetFollowings_Call) Run(run func(ctx context.Context, params domain.FollowParams)) *FollowRepository_GetFollowings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 domain.FollowParams
 		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 int
-		if args[2] != nil {
-			arg2 = args[2].(int)
-		}
-		var arg3 int
-		if args[3] != nil {
-			arg3 = args[3].(int)
+			arg1 = args[1].(domain.FollowParams)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -445,7 +421,7 @@ func (_c *FollowRepository_GetFollowings_Call) Return(users []domain.User, err e
 	return _c
 }
 
-func (_c *FollowRepository_GetFollowings_Call) RunAndReturn(run func(ctx context.Context, userID int64, limit int, offset int) ([]domain.User, error)) *FollowRepository_GetFollowings_Call {
+func (_c *FollowRepository_GetFollowings_Call) RunAndReturn(run func(ctx context.Context, params domain.FollowParams) ([]domain.User, error)) *FollowRepository_GetFollowings_Call {
 	_c.Call.Return(run)
 	return _c
 }

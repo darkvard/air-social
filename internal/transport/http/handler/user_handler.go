@@ -197,7 +197,7 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 }
 
 func (h *UserHandler) mapToResponse(user *domain.User) dto.UserResponse {
-	avatar := h.userSvc.GetPublicURL(user.Profile.Avatar)
-	cover := h.userSvc.GetPublicURL(user.Profile.CoverImage)
+	avatar := h.userSvc.FormatPublicURL(user.Profile.Avatar)
+	cover := h.userSvc.FormatPublicURL(user.Profile.CoverImage)
 	return dto.NewUserResponse(user, avatar, cover)
 }
