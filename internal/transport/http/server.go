@@ -61,7 +61,7 @@ func NewServer(
 ) *http.Server {
 	e := setupEngine()
 
-	v := e.Group(urls.APIRouterPath())
+	v := e.Group(urls.ApiPath())
 	{
 		commonRoutes(v, healthH, mw)
 		authRoutes(v, authH, mw)

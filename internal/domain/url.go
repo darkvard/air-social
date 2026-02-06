@@ -1,15 +1,16 @@
 package domain
 
 type URLFactory interface {
-	SwaggerUI() string
-	MinioConsoleUI() string
-	RabbitMQDashboardUI() string
+	SwaggerURL() string
+	MinioConsoleURL() string
+	RabbitMQDashboardURL() string
 
-	APIRouterPath() string
-	FileStorageBaseURL() string
+	ApiPath() string
+	BaseURL() string
 
-	VerifyEmailLink(token string) string
-	ResetPasswordLink(token string) string
+	VerifyEmailURL(token string) string
+	ResetPasswordURL(token string) string
+	ResetPasswordApiURL() string
 
-	ResetPasswordEndpoint() string
+	PublicFileURL(key string) string
 }

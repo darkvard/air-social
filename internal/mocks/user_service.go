@@ -229,57 +229,6 @@ func (_c *UserService_CreateUser_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
-// FormatPublicURL provides a mock function for the type UserService
-func (_mock *UserService) FormatPublicURL(key string) string {
-	ret := _mock.Called(key)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FormatPublicURL")
-	}
-
-	var r0 string
-	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
-		r0 = returnFunc(key)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	return r0
-}
-
-// UserService_FormatPublicURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FormatPublicURL'
-type UserService_FormatPublicURL_Call struct {
-	*mock.Call
-}
-
-// FormatPublicURL is a helper method to define mock.On call
-//   - key string
-func (_e *UserService_Expecter) FormatPublicURL(key interface{}) *UserService_FormatPublicURL_Call {
-	return &UserService_FormatPublicURL_Call{Call: _e.mock.On("FormatPublicURL", key)}
-}
-
-func (_c *UserService_FormatPublicURL_Call) Run(run func(key string)) *UserService_FormatPublicURL_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
-		if args[0] != nil {
-			arg0 = args[0].(string)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *UserService_FormatPublicURL_Call) Return(s string) *UserService_FormatPublicURL_Call {
-	_c.Call.Return(s)
-	return _c
-}
-
-func (_c *UserService_FormatPublicURL_Call) RunAndReturn(run func(key string) string) *UserService_FormatPublicURL_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetByEmail provides a mock function for the type UserService
 func (_mock *UserService) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	ret := _mock.Called(ctx, email)

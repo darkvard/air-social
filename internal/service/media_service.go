@@ -17,18 +17,19 @@ type MediaService interface {
 	GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error)
 	ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
 	DeleteFile(ctx context.Context, objectKey string) error
-	FormatPublicURL(objectKey string) string
 }
 
 type MediaServiceImpl struct {
 	storage domain.FileStorage
 	cfg     domain.FileConfig
+	url     domain.URLFactory
 }
 
-func NewMediaService(storage domain.FileStorage, cfg domain.FileConfig) *MediaServiceImpl {
+func NewMediaService(storage domain.FileStorage, cfg domain.FileConfig, url domain.URLFactory) *MediaServiceImpl {
 	return &MediaServiceImpl{
 		storage: storage,
 		cfg:     cfg,
+		url:     url,
 	}
 }
 
@@ -56,14 +57,14 @@ func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.Pre
 	}
 
 	// build public URL using config. MinIO returns internal Docker endpoint not accessible to clients.
-	baseURL := strings.TrimSuffix(s.cfg.DomainPublic, "/")
+	baseURL := strings.TrimSuffix(s.url.BaseURL(), "/")
 	uploadURL := fmt.Sprintf("%s/%s", baseURL, s.cfg.BucketPublic)
 
 	return domain.PresignedFile{
 		UploadURL: uploadURL,
 		FormData:  result.FormData,
 		ObjectKey: loc.Key,
-		PublicURL: s.FormatPublicURL(loc.Key),
+		PublicURL: s.url.PublicFileURL(loc.Key),
 		ExpireAt:  pkg.TimeNowUTC().Add(domain.PresignedUploadExpiry),
 	}, nil
 }
@@ -96,14 +97,6 @@ func (s *MediaServiceImpl) DeleteFile(ctx context.Context, objectKey string) err
 	}
 
 	return s.storage.DeleteFile(ctx, loc)
-}
-
-func (s *MediaServiceImpl) FormatPublicURL(objectKey string) string {
-	if objectKey == "" {
-		return ""
-	}
-	baseURL := strings.TrimSuffix(s.cfg.DomainPublic, "/")
-	return fmt.Sprintf("%s/%s/%s", baseURL, s.cfg.BucketPublic, objectKey)
 }
 
 // Internal helpers

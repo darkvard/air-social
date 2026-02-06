@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +40,7 @@ func (s *followServiceSuite) TestFollow() {
 	tests := []struct {
 		name       string
 		args       args
-		setupMocks func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, a args)
+		setupMocks func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args)
 		wantErr    error
 	}{
 		{
@@ -50,7 +51,7 @@ func (s *followServiceSuite) TestFollow() {
 		{
 			name: "get user error",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, a args) {
+			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args) {
 				userRepo.
 					EXPECT().
 					GetByID(mock.Anything, a.followeeID).
@@ -62,7 +63,7 @@ func (s *followServiceSuite) TestFollow() {
 		{
 			name: "get user not found",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, a args) {
+			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args) {
 				userRepo.
 					EXPECT().
 					GetByID(mock.Anything, a.followeeID).
@@ -74,7 +75,7 @@ func (s *followServiceSuite) TestFollow() {
 		{
 			name: "create follow error",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, a args) {
+			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args) {
 				userRepo.
 					EXPECT().
 					GetByID(mock.Anything, a.followeeID).
@@ -92,7 +93,7 @@ func (s *followServiceSuite) TestFollow() {
 		{
 			name: "create follow success",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, a args) {
+			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args) {
 				userRepo.
 					EXPECT().
 					GetByID(mock.Anything, a.followeeID).
@@ -103,6 +104,11 @@ func (s *followServiceSuite) TestFollow() {
 					Create(mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
+				cache.
+					EXPECT().
+					Delete(mock.Anything, mock.Anything).
+					Return(nil).
+					Twice()
 
 			},
 			wantErr: nil,
@@ -118,7 +124,7 @@ func (s *followServiceSuite) TestFollow() {
 			followSvc := NewFollowService(mockFollowRepo, mockUserRepo, mockCache)
 
 			if tc.setupMocks != nil {
-				tc.setupMocks(mockFollowRepo, mockUserRepo, tc.args)
+				tc.setupMocks(mockFollowRepo, mockUserRepo, mockCache, tc.args)
 			}
 
 			err := followSvc.Follow(context.Background(), tc.args.followerID, tc.args.followeeID)
@@ -126,6 +132,8 @@ func (s *followServiceSuite) TestFollow() {
 				s.Error(err)
 			} else {
 				s.NoError(err)
+				// Wait for async cache invalidation goroutine
+				time.Sleep(50 * time.Millisecond)
 			}
 		})
 	}
@@ -151,7 +159,7 @@ func (s *followServiceSuite) TestUnfollow() {
 	tests := []struct {
 		name       string
 		args       args
-		setupMocks func(followRepo *mocks.FollowRepository, a args)
+		setupMocks func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, a args)
 		wantErr    error
 	}{
 		{
@@ -163,7 +171,7 @@ func (s *followServiceSuite) TestUnfollow() {
 		{
 			name: "delete error",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, a args) {
+			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, a args) {
 				followRepo.
 					EXPECT().
 					Delete(mock.Anything, a.followerID, a.followeeID).
@@ -175,12 +183,17 @@ func (s *followServiceSuite) TestUnfollow() {
 		{
 			name: "unfollow success",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, a args) {
+			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, a args) {
 				followRepo.
 					EXPECT().
 					Delete(mock.Anything, a.followerID, a.followeeID).
 					Return(nil).
 					Once()
+				cache.
+					EXPECT().
+					Delete(mock.Anything, mock.Anything).
+					Return(nil).
+					Twice()
 			},
 			wantErr: nil,
 		},
@@ -195,7 +208,7 @@ func (s *followServiceSuite) TestUnfollow() {
 			followSvc := NewFollowService(mockFollowRepo, mockUserRepo, mockCache)
 
 			if tc.setupMocks != nil {
-				tc.setupMocks(mockFollowRepo, tc.args)
+				tc.setupMocks(mockFollowRepo, mockCache, tc.args)
 			}
 
 			err := followSvc.Unfollow(context.Background(), tc.args.followerID, tc.args.followeeID)
@@ -204,6 +217,8 @@ func (s *followServiceSuite) TestUnfollow() {
 				s.Error(err)
 			} else {
 				s.NoError(err)
+				// Wait for async cache invalidation goroutine
+				time.Sleep(50 * time.Millisecond)
 			}
 		})
 	}

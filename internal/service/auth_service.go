@@ -21,7 +21,6 @@ type AuthService interface {
 	IsResetPasswordTokenValid(ctx context.Context, token string) bool
 	RefreshToken(ctx context.Context, refreshToken string) (domain.TokenInfo, error)
 	VerifyEmail(ctx context.Context, emailToken string) error
-	GetPublicURL(key string) string
 }
 
 type AuthServiceImpl struct {
@@ -161,10 +160,6 @@ func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string)
 		return empty, pkg.OrInternalError(err, pkg.ErrUnauthorized)
 	}
 	return tokens, nil
-}
-
-func (s *AuthServiceImpl) GetPublicURL(key string) string {
-	return s.userSvc.FormatPublicURL(key)
 }
 
 // Internal helpers

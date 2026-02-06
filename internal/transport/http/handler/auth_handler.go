@@ -240,7 +240,7 @@ func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 
 	c.HTML(200, "reset_password.gohtml", gin.H{
 		"Success": true,
-		"ApiUrl":  h.url.ResetPasswordEndpoint(),
+		"ApiUrl":  h.url.ResetPasswordApiURL(),
 	})
 }
 
@@ -278,7 +278,7 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 }
 
 func (h *AuthHandler) mapUserToResponse(user *domain.User) dto.UserResponse {
-	avatar := h.authSvc.GetPublicURL(user.Profile.Avatar)
-	cover := h.authSvc.GetPublicURL(user.Profile.CoverImage)
+	avatar := h.url.PublicFileURL(user.Profile.Avatar)
+	cover := h.url.PublicFileURL(user.Profile.CoverImage)
 	return dto.NewUserResponse(user, avatar, cover)
 }

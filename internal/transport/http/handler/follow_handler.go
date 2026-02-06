@@ -13,12 +13,14 @@ import (
 type FollowHandler struct {
 	followSvc service.FollowService
 	userSvc   service.UserService
+	url       domain.URLFactory
 }
 
-func NewFollowHandler(followSvc service.FollowService, userSvc service.UserService) *FollowHandler {
+func NewFollowHandler(followSvc service.FollowService, userSvc service.UserService, url domain.URLFactory) *FollowHandler {
 	return &FollowHandler{
 		followSvc: followSvc,
 		userSvc:   userSvc,
+		url:       url,
 	}
 }
 
@@ -125,7 +127,6 @@ func (h *FollowHandler) GetFollowers(c *gin.Context) {
 	})
 
 	// todo: unit test
-	// todo: FormatPublicURL (media, user, auth, here) ->  URLFactory.FormatPublicURL(::key) 
 }
 
 func (h *FollowHandler) GetFollowings(c *gin.Context) {
@@ -139,8 +140,8 @@ func (h *FollowHandler) mapToUserResponses(users []domain.User) []dto.UserRespon
 
 	for i := range users {
 		u := &users[i]
-		avatarURL := h.userSvc.FormatPublicURL(u.Profile.Avatar)
-		coverURL := h.userSvc.FormatPublicURL(u.Profile.CoverImage)
+		avatarURL := h.url.PublicFileURL(u.Profile.Avatar)
+		coverURL := h.url.PublicFileURL(u.Profile.CoverImage)
 		responses[i] = dto.NewUserResponse(u, avatarURL, coverURL)
 	}
 

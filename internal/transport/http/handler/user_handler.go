@@ -14,11 +14,13 @@ import (
 
 type UserHandler struct {
 	userSvc service.UserService
+	url     domain.URLFactory
 }
 
-func NewUserHandler(userSvc service.UserService) *UserHandler {
+func NewUserHandler(userSvc service.UserService, url domain.URLFactory) *UserHandler {
 	return &UserHandler{
 		userSvc: userSvc,
+		url:     url,
 	}
 }
 
@@ -197,7 +199,7 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 }
 
 func (h *UserHandler) mapToResponse(user *domain.User) dto.UserResponse {
-	avatar := h.userSvc.FormatPublicURL(user.Profile.Avatar)
-	cover := h.userSvc.FormatPublicURL(user.Profile.CoverImage)
+	avatar := h.url.PublicFileURL(user.Profile.Avatar)
+	cover := h.url.PublicFileURL(user.Profile.CoverImage)
 	return dto.NewUserResponse(user, avatar, cover)
 }

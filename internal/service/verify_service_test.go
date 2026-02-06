@@ -43,7 +43,7 @@ func (s *verifyServiceSuite) TestSendEmailVerification() {
 			name: "publish_error",
 			setupMock: func(c *mocks.CacheStorage, e *mocks.EventPublisher, u *mocks.URLFactory) {
 				c.EXPECT().Set(mock.Anything, mock.Anything, email, 30*time.Minute).Return(nil).Once()
-				u.EXPECT().VerifyEmailLink(mock.Anything).Return(verifyLink).Once()
+				u.EXPECT().VerifyEmailURL(mock.Anything).Return(verifyLink).Once()
 				e.EXPECT().Publish(mock.Anything, string(domain.EmailVerify), mock.Anything).Return(errors.New("pub error")).Once()
 			},
 			wantErr: errors.New("pub error"),
@@ -55,7 +55,7 @@ func (s *verifyServiceSuite) TestSendEmailVerification() {
 					return len(key) > 0 // check key format if needed
 				}), email, 30*time.Minute).Return(nil).Once()
 
-				u.EXPECT().VerifyEmailLink(mock.Anything).Return(verifyLink).Once()
+				u.EXPECT().VerifyEmailURL(mock.Anything).Return(verifyLink).Once()
 
 				e.EXPECT().Publish(mock.Anything, string(domain.EmailVerify), mock.MatchedBy(func(evt domain.Event) bool {
 					data, ok := evt.Data.(domain.EmailEvent)
@@ -156,7 +156,7 @@ func (s *verifyServiceSuite) TestSendPasswordReset() {
 			name: "success",
 			setupMock: func(c *mocks.CacheStorage, e *mocks.EventPublisher, u *mocks.URLFactory) {
 				c.EXPECT().Set(mock.Anything, mock.Anything, email, 15*time.Minute).Return(nil).Once()
-				u.EXPECT().ResetPasswordLink(mock.Anything).Return(resetLink).Once()
+				u.EXPECT().ResetPasswordURL(mock.Anything).Return(resetLink).Once()
 				e.EXPECT().Publish(mock.Anything, string(domain.EmailResetPassword), mock.MatchedBy(func(evt domain.Event) bool {
 					data, ok := evt.Data.(domain.EmailEvent)
 					return ok && data.Email == email && data.Link == resetLink && evt.EventType == domain.EmailResetPassword

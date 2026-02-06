@@ -16,9 +16,9 @@ type Handlers struct {
 func initHandlers(services *Services, url domain.URLFactory) *Handlers {
 	return &Handlers{
 		Auth:   handler.NewAuthHandler(services.Auth, url),
-		User:   handler.NewUserHandler(services.User),
+		User:   handler.NewUserHandler(services.User, url),
 		Media:  handler.NewMediaHandler(services.Media),
 		Health: handler.NewHealthHandler(services.Health),
-		Follow: handler.NewFollowHandler(services.Follow, services.User),
+		Follow: handler.NewFollowHandler(services.Follow, services.User, url),
 	}
 }

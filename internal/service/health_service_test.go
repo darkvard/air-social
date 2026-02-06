@@ -127,7 +127,7 @@ func (s *healthServiceSuite) TestGetAppInfo() {
 	svc := NewHealthService(nil, nil, nil, nil, mockURL)
 
 	expectedDocs := "http://localhost:8080/swagger/index.html"
-	mockURL.EXPECT().SwaggerUI().Return(expectedDocs).Once()
+	mockURL.EXPECT().SwaggerURL().Return(expectedDocs).Once()
 
 	info := svc.GetAppInfo()
 

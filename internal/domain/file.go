@@ -70,7 +70,6 @@ type UploadRule struct {
 }
 
 type FileConfig struct {
-	DomainPublic  string
 	BucketPublic  string
 	BucketPrivate string
 }

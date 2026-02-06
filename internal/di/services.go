@@ -27,10 +27,8 @@ func initServices(
 ) *Services {
 
 	mediaSvc := service.NewMediaService(adapter.FileStorage, domain.FileConfig{
-		DomainPublic:  url.FileStorageBaseURL(),
-		BucketPublic:  cfg.MinIO.BucketPublic,
-		BucketPrivate: cfg.MinIO.BucketPrivate,
-	})
+		BucketPublic:  cfg.MinIO.BucketPublic, 	BucketPrivate: cfg.MinIO.BucketPrivate,
+	}, url)
 
 	healthSvc := service.NewHealthService(infra.DB, infra.Redis, &rabbitmq.HealthChecker{
 		Conn: infra.Rabbit,
@@ -39,7 +37,7 @@ func initServices(
 
 	tokenSvc := service.NewTokenService(repository.Token, cfg.Token)
 	verifySvc := service.NewVerifyService(adapter.Cache, adapter.EventPub, url)
-	userSvc := service.NewUserService(repository.User, mediaSvc)
+	userSvc := service.NewUserService(repository.User, mediaSvc, url)
 	authSvc := service.NewAuthService(userSvc, tokenSvc, verifySvc, adapter.Cache)
 	emailSvc := service.NewEmailService(adapter.Mailer)
 	followSvc := service.NewFollowService(repository.Follow, repository.User, adapter.Cache)

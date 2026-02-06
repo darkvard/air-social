@@ -40,7 +40,7 @@ func (s *userServiceSuite) TestCreateUser() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		want      want
 	}{
 		{
@@ -48,7 +48,7 @@ func (s *userServiceSuite) TestCreateUser() {
 			args: args{
 				input: baseInput,
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().
 					Create(mock.Anything, mock.Anything).
 					Return(assert.AnError).
@@ -64,7 +64,7 @@ func (s *userServiceSuite) TestCreateUser() {
 			args: args{
 				input: baseInput,
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().
 					Create(
 						mock.Anything,
@@ -92,10 +92,11 @@ func (s *userServiceSuite) TestCreateUser() {
 		s.Run(tc.name, func() {
 			mockRepo := mocks.NewUserRepository(s.T())
 			mockMedia := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(mockRepo, mockMedia)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(mockRepo, mockMedia, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockRepo, mockMedia, tc.args)
+				tc.setupMock(mockRepo, mockMedia, mockURL, tc.args)
 			}
 
 			got, err := userSvc.CreateUser(context.Background(), tc.args.input)
@@ -131,7 +132,7 @@ func (s *userServiceSuite) TestGetByID() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		want      want
 	}{
 		{
@@ -139,7 +140,7 @@ func (s *userServiceSuite) TestGetByID() {
 			args: args{
 				id: 3,
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.id).Return(nil, pkg.ErrInternal).Once()
 			},
 			want: want{
@@ -152,7 +153,7 @@ func (s *userServiceSuite) TestGetByID() {
 			args: args{
 				id: 2,
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.id).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want: want{
@@ -165,7 +166,7 @@ func (s *userServiceSuite) TestGetByID() {
 			args: args{
 				id: expectedUser.ID,
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.id).Return(expectedUser, nil).Once()
 			},
 			want: want{
@@ -179,10 +180,11 @@ func (s *userServiceSuite) TestGetByID() {
 		s.Run(tc.name, func() {
 			userRepo := mocks.NewUserRepository(s.T())
 			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(userRepo, mediaSvc)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(userRepo, mediaSvc, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(userRepo, mediaSvc, tc.args)
+				tc.setupMock(userRepo, mediaSvc, mockURL, tc.args)
 			}
 			got, err := userSvc.GetByID(context.Background(), tc.args.id)
 
@@ -216,7 +218,7 @@ func (s *userServiceSuite) TestGetByEmail() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		want      want
 	}{
 		{
@@ -224,7 +226,7 @@ func (s *userServiceSuite) TestGetByEmail() {
 			args: args{
 				email: "error@example.com",
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(nil, pkg.ErrInternal).Once()
 			},
 			want: want{
@@ -237,7 +239,7 @@ func (s *userServiceSuite) TestGetByEmail() {
 			args: args{
 				email: "notfound@example.com",
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want: want{
@@ -250,7 +252,7 @@ func (s *userServiceSuite) TestGetByEmail() {
 			args: args{
 				email: expectedUser.Email,
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(expectedUser, nil).Once()
 			},
 			want: want{
@@ -264,10 +266,11 @@ func (s *userServiceSuite) TestGetByEmail() {
 		s.Run(tc.name, func() {
 			userRepo := mocks.NewUserRepository(s.T())
 			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(userRepo, mediaSvc)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(userRepo, mediaSvc, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(userRepo, mediaSvc, tc.args)
+				tc.setupMock(userRepo, mediaSvc, mockURL, tc.args)
 			}
 			got, err := userSvc.GetByEmail(context.Background(), tc.args.email)
 
@@ -305,7 +308,7 @@ func (s *userServiceSuite) TestGetProfile() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		want      want
 	}{
 		{
@@ -313,7 +316,7 @@ func (s *userServiceSuite) TestGetProfile() {
 			args: args{
 				id: 3,
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.id).Return(nil, assert.AnError).Once()
 			},
 			want: want{
@@ -326,7 +329,7 @@ func (s *userServiceSuite) TestGetProfile() {
 			args: args{
 				id: user.ID,
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.id).Return(user, nil).Once()
 			},
 			want: want{
@@ -340,10 +343,11 @@ func (s *userServiceSuite) TestGetProfile() {
 		s.Run(tc.name, func() {
 			userRepo := mocks.NewUserRepository(s.T())
 			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(userRepo, mediaSvc)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(userRepo, mediaSvc, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(userRepo, mediaSvc, tc.args)
+				tc.setupMock(userRepo, mediaSvc, mockURL, tc.args)
 			}
 			got, err := userSvc.GetProfile(context.Background(), tc.args.id)
 
@@ -390,13 +394,13 @@ func (s *userServiceSuite) TestUpdateProfile() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		want      want
 	}{
 		{
 			name: "get_user_error",
 			args: args{input: baseInput},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want: want{
@@ -406,7 +410,7 @@ func (s *userServiceSuite) TestUpdateProfile() {
 		{
 			name: "update_error",
 			args: args{input: baseInput},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(existingUser, nil).Once()
 
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
@@ -420,7 +424,7 @@ func (s *userServiceSuite) TestUpdateProfile() {
 		{
 			name: "success",
 			args: args{input: baseInput},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(existingUser, nil).Once()
 
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
@@ -444,10 +448,11 @@ func (s *userServiceSuite) TestUpdateProfile() {
 		s.Run(tc.name, func() {
 			userRepo := mocks.NewUserRepository(s.T())
 			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(userRepo, mediaSvc)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(userRepo, mediaSvc, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(userRepo, mediaSvc, tc.args)
+				tc.setupMock(userRepo, mediaSvc, mockURL, tc.args)
 			}
 
 			got, err := userSvc.UpdateProfile(context.Background(), tc.args.input)
@@ -475,7 +480,7 @@ func (s *userServiceSuite) TestChangePassword() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		wantErr   error
 	}{
 		{
@@ -483,7 +488,7 @@ func (s *userServiceSuite) TestChangePassword() {
 			args: args{
 				input: domain.ChangePasswordParams{UserID: userID},
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(nil, pkg.ErrNotFound).Once()
 			},
 			wantErr: pkg.ErrNotFound,
@@ -497,7 +502,7 @@ func (s *userServiceSuite) TestChangePassword() {
 					NewPassword:     password,
 				},
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(&domain.User{PasswordHash: hashedPassword}, nil).Once()
 			},
 			wantErr: pkg.ErrSamePassword,
@@ -511,7 +516,7 @@ func (s *userServiceSuite) TestChangePassword() {
 					NewPassword:     "newpassword",
 				},
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(&domain.User{PasswordHash: hashedPassword}, nil).Once()
 			},
 			wantErr: pkg.ErrInvalidCredentials,
@@ -525,7 +530,7 @@ func (s *userServiceSuite) TestChangePassword() {
 					NewPassword:     "newpassword",
 				},
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByID(mock.Anything, a.input.UserID).Return(&domain.User{PasswordHash: hashedPassword}, nil).Once()
 
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
@@ -540,10 +545,11 @@ func (s *userServiceSuite) TestChangePassword() {
 		s.Run(tc.name, func() {
 			userRepo := mocks.NewUserRepository(s.T())
 			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(userRepo, mediaSvc)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(userRepo, mediaSvc, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(userRepo, mediaSvc, tc.args)
+				tc.setupMock(userRepo, mediaSvc, mockURL, tc.args)
 			}
 
 			err := userSvc.ChangePassword(context.Background(), tc.args.input)
@@ -569,13 +575,13 @@ func (s *userServiceSuite) TestUpdatePassword() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		wantErr   error
 	}{
 		{
 			name: "user_not_found",
 			args: args{email: email, passwordHashed: newHash},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(nil, pkg.ErrNotFound).Once()
 			},
 			wantErr: pkg.ErrNotFound,
@@ -583,7 +589,7 @@ func (s *userServiceSuite) TestUpdatePassword() {
 		{
 			name: "success",
 			args: args{email: email, passwordHashed: newHash},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(&domain.User{Email: email}, nil).Once()
 
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
@@ -598,10 +604,11 @@ func (s *userServiceSuite) TestUpdatePassword() {
 		s.Run(tc.name, func() {
 			userRepo := mocks.NewUserRepository(s.T())
 			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(userRepo, mediaSvc)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(userRepo, mediaSvc, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(userRepo, mediaSvc, tc.args)
+				tc.setupMock(userRepo, mediaSvc, mockURL, tc.args)
 			}
 
 			err := userSvc.UpdatePassword(context.Background(), tc.args.email, tc.args.passwordHashed)
@@ -625,13 +632,13 @@ func (s *userServiceSuite) TestVerifyEmail() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		wantErr   error
 	}{
 		{
 			name: "user_not_found",
 			args: args{email: email},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(nil, pkg.ErrNotFound).Once()
 			},
 			wantErr: pkg.ErrNotFound,
@@ -639,7 +646,7 @@ func (s *userServiceSuite) TestVerifyEmail() {
 		{
 			name: "success",
 			args: args{email: email},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				userRepo.EXPECT().GetByEmail(mock.Anything, a.email).Return(&domain.User{Email: email}, nil).Once()
 
 				userRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
@@ -654,10 +661,11 @@ func (s *userServiceSuite) TestVerifyEmail() {
 		s.Run(tc.name, func() {
 			userRepo := mocks.NewUserRepository(s.T())
 			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(userRepo, mediaSvc)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(userRepo, mediaSvc, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(userRepo, mediaSvc, tc.args)
+				tc.setupMock(userRepo, mediaSvc, mockURL, tc.args)
 			}
 
 			err := userSvc.VerifyEmail(context.Background(), tc.args.email)
@@ -683,7 +691,7 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 	tests := []struct {
 		name      string
 		args      args
-		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args)
+		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
 		wantURL   string
 		wantErr   error
 	}{
@@ -701,7 +709,7 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 			args: args{
 				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return("", pkg.ErrNotFound).Once()
 			},
 			wantURL: "",
@@ -712,7 +720,7 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 			args: args{
 				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return(objectKey, nil).Once()
 				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.EntityID, objectKey, a.input.Feature).Return(assert.AnError).Once()
 			},
@@ -724,10 +732,10 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 			args: args{
 				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
 			},
-			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, a args) {
+			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
 				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return(objectKey, nil).Once()
 				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.EntityID, objectKey, a.input.Feature).Return(nil).Once()
-				mediaSvc.EXPECT().FormatPublicURL(objectKey).Return(publicURL).Once()
+				url.EXPECT().PublicFileURL(objectKey).Return(publicURL).Once()
 			},
 			wantURL: publicURL,
 			wantErr: nil,
@@ -738,10 +746,11 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 		s.Run(tc.name, func() {
 			userRepo := mocks.NewUserRepository(s.T())
 			mediaSvc := mocks.NewMediaService(s.T())
-			userSvc := NewUserService(userRepo, mediaSvc)
+			mockURL := mocks.NewURLFactory(s.T())
+			userSvc := NewUserService(userRepo, mediaSvc, mockURL)
 
 			if tc.setupMock != nil {
-				tc.setupMock(userRepo, mediaSvc, tc.args)
+				tc.setupMock(userRepo, mediaSvc, mockURL, tc.args)
 			}
 
 			got, err := userSvc.ConfirmImageUpload(context.Background(), tc.args.input)

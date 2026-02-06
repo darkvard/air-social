@@ -93,6 +93,6 @@ func (s *HealthServiceImpl) Check(ctx context.Context) (bool, map[string]string)
 func (s *HealthServiceImpl) GetAppInfo() map[string]any {
 	return map[string]any{
 		"Title":   "Air Social API",
-		"DocsURL": s.url.SwaggerUI(),
+		"DocsURL": s.url.SwaggerURL(),
 	}
 }

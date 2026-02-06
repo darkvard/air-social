@@ -95,57 +95,6 @@ func (_c *AuthService_ForgotPassword_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
-// GetPublicURL provides a mock function for the type AuthService
-func (_mock *AuthService) GetPublicURL(key string) string {
-	ret := _mock.Called(key)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetPublicURL")
-	}
-
-	var r0 string
-	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
-		r0 = returnFunc(key)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	return r0
-}
-
-// AuthService_GetPublicURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPublicURL'
-type AuthService_GetPublicURL_Call struct {
-	*mock.Call
-}
-
-// GetPublicURL is a helper method to define mock.On call
-//   - key string
-func (_e *AuthService_Expecter) GetPublicURL(key interface{}) *AuthService_GetPublicURL_Call {
-	return &AuthService_GetPublicURL_Call{Call: _e.mock.On("GetPublicURL", key)}
-}
-
-func (_c *AuthService_GetPublicURL_Call) Run(run func(key string)) *AuthService_GetPublicURL_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
-		if args[0] != nil {
-			arg0 = args[0].(string)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *AuthService_GetPublicURL_Call) Return(s string) *AuthService_GetPublicURL_Call {
-	_c.Call.Return(s)
-	return _c
-}
-
-func (_c *AuthService_GetPublicURL_Call) RunAndReturn(run func(key string) string) *AuthService_GetPublicURL_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // IsResetPasswordTokenValid provides a mock function for the type AuthService
 func (_mock *AuthService) IsResetPasswordTokenValid(ctx context.Context, token string) bool {
 	ret := _mock.Called(ctx, token)

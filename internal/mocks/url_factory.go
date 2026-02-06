@@ -35,12 +35,12 @@ func (_m *URLFactory) EXPECT() *URLFactory_Expecter {
 	return &URLFactory_Expecter{mock: &_m.Mock}
 }
 
-// APIRouterPath provides a mock function for the type URLFactory
-func (_mock *URLFactory) APIRouterPath() string {
+// ApiPath provides a mock function for the type URLFactory
+func (_mock *URLFactory) ApiPath() string {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for APIRouterPath")
+		panic("no return value specified for ApiPath")
 	}
 
 	var r0 string
@@ -52,39 +52,39 @@ func (_mock *URLFactory) APIRouterPath() string {
 	return r0
 }
 
-// URLFactory_APIRouterPath_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'APIRouterPath'
-type URLFactory_APIRouterPath_Call struct {
+// URLFactory_ApiPath_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApiPath'
+type URLFactory_ApiPath_Call struct {
 	*mock.Call
 }
 
-// APIRouterPath is a helper method to define mock.On call
-func (_e *URLFactory_Expecter) APIRouterPath() *URLFactory_APIRouterPath_Call {
-	return &URLFactory_APIRouterPath_Call{Call: _e.mock.On("APIRouterPath")}
+// ApiPath is a helper method to define mock.On call
+func (_e *URLFactory_Expecter) ApiPath() *URLFactory_ApiPath_Call {
+	return &URLFactory_ApiPath_Call{Call: _e.mock.On("ApiPath")}
 }
 
-func (_c *URLFactory_APIRouterPath_Call) Run(run func()) *URLFactory_APIRouterPath_Call {
+func (_c *URLFactory_ApiPath_Call) Run(run func()) *URLFactory_ApiPath_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *URLFactory_APIRouterPath_Call) Return(s string) *URLFactory_APIRouterPath_Call {
+func (_c *URLFactory_ApiPath_Call) Return(s string) *URLFactory_ApiPath_Call {
 	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *URLFactory_APIRouterPath_Call) RunAndReturn(run func() string) *URLFactory_APIRouterPath_Call {
+func (_c *URLFactory_ApiPath_Call) RunAndReturn(run func() string) *URLFactory_ApiPath_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// FileStorageBaseURL provides a mock function for the type URLFactory
-func (_mock *URLFactory) FileStorageBaseURL() string {
+// BaseURL provides a mock function for the type URLFactory
+func (_mock *URLFactory) BaseURL() string {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for FileStorageBaseURL")
+		panic("no return value specified for BaseURL")
 	}
 
 	var r0 string
@@ -96,39 +96,39 @@ func (_mock *URLFactory) FileStorageBaseURL() string {
 	return r0
 }
 
-// URLFactory_FileStorageBaseURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FileStorageBaseURL'
-type URLFactory_FileStorageBaseURL_Call struct {
+// URLFactory_BaseURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BaseURL'
+type URLFactory_BaseURL_Call struct {
 	*mock.Call
 }
 
-// FileStorageBaseURL is a helper method to define mock.On call
-func (_e *URLFactory_Expecter) FileStorageBaseURL() *URLFactory_FileStorageBaseURL_Call {
-	return &URLFactory_FileStorageBaseURL_Call{Call: _e.mock.On("FileStorageBaseURL")}
+// BaseURL is a helper method to define mock.On call
+func (_e *URLFactory_Expecter) BaseURL() *URLFactory_BaseURL_Call {
+	return &URLFactory_BaseURL_Call{Call: _e.mock.On("BaseURL")}
 }
 
-func (_c *URLFactory_FileStorageBaseURL_Call) Run(run func()) *URLFactory_FileStorageBaseURL_Call {
+func (_c *URLFactory_BaseURL_Call) Run(run func()) *URLFactory_BaseURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *URLFactory_FileStorageBaseURL_Call) Return(s string) *URLFactory_FileStorageBaseURL_Call {
+func (_c *URLFactory_BaseURL_Call) Return(s string) *URLFactory_BaseURL_Call {
 	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *URLFactory_FileStorageBaseURL_Call) RunAndReturn(run func() string) *URLFactory_FileStorageBaseURL_Call {
+func (_c *URLFactory_BaseURL_Call) RunAndReturn(run func() string) *URLFactory_BaseURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// MinioConsoleUI provides a mock function for the type URLFactory
-func (_mock *URLFactory) MinioConsoleUI() string {
+// MinioConsoleURL provides a mock function for the type URLFactory
+func (_mock *URLFactory) MinioConsoleURL() string {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for MinioConsoleUI")
+		panic("no return value specified for MinioConsoleURL")
 	}
 
 	var r0 string
@@ -140,150 +140,62 @@ func (_mock *URLFactory) MinioConsoleUI() string {
 	return r0
 }
 
-// URLFactory_MinioConsoleUI_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MinioConsoleUI'
-type URLFactory_MinioConsoleUI_Call struct {
+// URLFactory_MinioConsoleURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MinioConsoleURL'
+type URLFactory_MinioConsoleURL_Call struct {
 	*mock.Call
 }
 
-// MinioConsoleUI is a helper method to define mock.On call
-func (_e *URLFactory_Expecter) MinioConsoleUI() *URLFactory_MinioConsoleUI_Call {
-	return &URLFactory_MinioConsoleUI_Call{Call: _e.mock.On("MinioConsoleUI")}
+// MinioConsoleURL is a helper method to define mock.On call
+func (_e *URLFactory_Expecter) MinioConsoleURL() *URLFactory_MinioConsoleURL_Call {
+	return &URLFactory_MinioConsoleURL_Call{Call: _e.mock.On("MinioConsoleURL")}
 }
 
-func (_c *URLFactory_MinioConsoleUI_Call) Run(run func()) *URLFactory_MinioConsoleUI_Call {
+func (_c *URLFactory_MinioConsoleURL_Call) Run(run func()) *URLFactory_MinioConsoleURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *URLFactory_MinioConsoleUI_Call) Return(s string) *URLFactory_MinioConsoleUI_Call {
+func (_c *URLFactory_MinioConsoleURL_Call) Return(s string) *URLFactory_MinioConsoleURL_Call {
 	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *URLFactory_MinioConsoleUI_Call) RunAndReturn(run func() string) *URLFactory_MinioConsoleUI_Call {
+func (_c *URLFactory_MinioConsoleURL_Call) RunAndReturn(run func() string) *URLFactory_MinioConsoleURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// RabbitMQDashboardUI provides a mock function for the type URLFactory
-func (_mock *URLFactory) RabbitMQDashboardUI() string {
-	ret := _mock.Called()
+// PublicFileURL provides a mock function for the type URLFactory
+func (_mock *URLFactory) PublicFileURL(key string) string {
+	ret := _mock.Called(key)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RabbitMQDashboardUI")
-	}
-
-	var r0 string
-	if returnFunc, ok := ret.Get(0).(func() string); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	return r0
-}
-
-// URLFactory_RabbitMQDashboardUI_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RabbitMQDashboardUI'
-type URLFactory_RabbitMQDashboardUI_Call struct {
-	*mock.Call
-}
-
-// RabbitMQDashboardUI is a helper method to define mock.On call
-func (_e *URLFactory_Expecter) RabbitMQDashboardUI() *URLFactory_RabbitMQDashboardUI_Call {
-	return &URLFactory_RabbitMQDashboardUI_Call{Call: _e.mock.On("RabbitMQDashboardUI")}
-}
-
-func (_c *URLFactory_RabbitMQDashboardUI_Call) Run(run func()) *URLFactory_RabbitMQDashboardUI_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *URLFactory_RabbitMQDashboardUI_Call) Return(s string) *URLFactory_RabbitMQDashboardUI_Call {
-	_c.Call.Return(s)
-	return _c
-}
-
-func (_c *URLFactory_RabbitMQDashboardUI_Call) RunAndReturn(run func() string) *URLFactory_RabbitMQDashboardUI_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ResetPasswordEndpoint provides a mock function for the type URLFactory
-func (_mock *URLFactory) ResetPasswordEndpoint() string {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for ResetPasswordEndpoint")
-	}
-
-	var r0 string
-	if returnFunc, ok := ret.Get(0).(func() string); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	return r0
-}
-
-// URLFactory_ResetPasswordEndpoint_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResetPasswordEndpoint'
-type URLFactory_ResetPasswordEndpoint_Call struct {
-	*mock.Call
-}
-
-// ResetPasswordEndpoint is a helper method to define mock.On call
-func (_e *URLFactory_Expecter) ResetPasswordEndpoint() *URLFactory_ResetPasswordEndpoint_Call {
-	return &URLFactory_ResetPasswordEndpoint_Call{Call: _e.mock.On("ResetPasswordEndpoint")}
-}
-
-func (_c *URLFactory_ResetPasswordEndpoint_Call) Run(run func()) *URLFactory_ResetPasswordEndpoint_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *URLFactory_ResetPasswordEndpoint_Call) Return(s string) *URLFactory_ResetPasswordEndpoint_Call {
-	_c.Call.Return(s)
-	return _c
-}
-
-func (_c *URLFactory_ResetPasswordEndpoint_Call) RunAndReturn(run func() string) *URLFactory_ResetPasswordEndpoint_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ResetPasswordLink provides a mock function for the type URLFactory
-func (_mock *URLFactory) ResetPasswordLink(token string) string {
-	ret := _mock.Called(token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ResetPasswordLink")
+		panic("no return value specified for PublicFileURL")
 	}
 
 	var r0 string
 	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
-		r0 = returnFunc(token)
+		r0 = returnFunc(key)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 	return r0
 }
 
-// URLFactory_ResetPasswordLink_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResetPasswordLink'
-type URLFactory_ResetPasswordLink_Call struct {
+// URLFactory_PublicFileURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PublicFileURL'
+type URLFactory_PublicFileURL_Call struct {
 	*mock.Call
 }
 
-// ResetPasswordLink is a helper method to define mock.On call
-//   - token string
-func (_e *URLFactory_Expecter) ResetPasswordLink(token interface{}) *URLFactory_ResetPasswordLink_Call {
-	return &URLFactory_ResetPasswordLink_Call{Call: _e.mock.On("ResetPasswordLink", token)}
+// PublicFileURL is a helper method to define mock.On call
+//   - key string
+func (_e *URLFactory_Expecter) PublicFileURL(key interface{}) *URLFactory_PublicFileURL_Call {
+	return &URLFactory_PublicFileURL_Call{Call: _e.mock.On("PublicFileURL", key)}
 }
 
-func (_c *URLFactory_ResetPasswordLink_Call) Run(run func(token string)) *URLFactory_ResetPasswordLink_Call {
+func (_c *URLFactory_PublicFileURL_Call) Run(run func(key string)) *URLFactory_PublicFileURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 string
 		if args[0] != nil {
@@ -296,22 +208,22 @@ func (_c *URLFactory_ResetPasswordLink_Call) Run(run func(token string)) *URLFac
 	return _c
 }
 
-func (_c *URLFactory_ResetPasswordLink_Call) Return(s string) *URLFactory_ResetPasswordLink_Call {
+func (_c *URLFactory_PublicFileURL_Call) Return(s string) *URLFactory_PublicFileURL_Call {
 	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *URLFactory_ResetPasswordLink_Call) RunAndReturn(run func(token string) string) *URLFactory_ResetPasswordLink_Call {
+func (_c *URLFactory_PublicFileURL_Call) RunAndReturn(run func(key string) string) *URLFactory_PublicFileURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// SwaggerUI provides a mock function for the type URLFactory
-func (_mock *URLFactory) SwaggerUI() string {
+// RabbitMQDashboardURL provides a mock function for the type URLFactory
+func (_mock *URLFactory) RabbitMQDashboardURL() string {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for SwaggerUI")
+		panic("no return value specified for RabbitMQDashboardURL")
 	}
 
 	var r0 string
@@ -323,39 +235,83 @@ func (_mock *URLFactory) SwaggerUI() string {
 	return r0
 }
 
-// URLFactory_SwaggerUI_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SwaggerUI'
-type URLFactory_SwaggerUI_Call struct {
+// URLFactory_RabbitMQDashboardURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RabbitMQDashboardURL'
+type URLFactory_RabbitMQDashboardURL_Call struct {
 	*mock.Call
 }
 
-// SwaggerUI is a helper method to define mock.On call
-func (_e *URLFactory_Expecter) SwaggerUI() *URLFactory_SwaggerUI_Call {
-	return &URLFactory_SwaggerUI_Call{Call: _e.mock.On("SwaggerUI")}
+// RabbitMQDashboardURL is a helper method to define mock.On call
+func (_e *URLFactory_Expecter) RabbitMQDashboardURL() *URLFactory_RabbitMQDashboardURL_Call {
+	return &URLFactory_RabbitMQDashboardURL_Call{Call: _e.mock.On("RabbitMQDashboardURL")}
 }
 
-func (_c *URLFactory_SwaggerUI_Call) Run(run func()) *URLFactory_SwaggerUI_Call {
+func (_c *URLFactory_RabbitMQDashboardURL_Call) Run(run func()) *URLFactory_RabbitMQDashboardURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *URLFactory_SwaggerUI_Call) Return(s string) *URLFactory_SwaggerUI_Call {
+func (_c *URLFactory_RabbitMQDashboardURL_Call) Return(s string) *URLFactory_RabbitMQDashboardURL_Call {
 	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *URLFactory_SwaggerUI_Call) RunAndReturn(run func() string) *URLFactory_SwaggerUI_Call {
+func (_c *URLFactory_RabbitMQDashboardURL_Call) RunAndReturn(run func() string) *URLFactory_RabbitMQDashboardURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// VerifyEmailLink provides a mock function for the type URLFactory
-func (_mock *URLFactory) VerifyEmailLink(token string) string {
+// ResetPasswordApiURL provides a mock function for the type URLFactory
+func (_mock *URLFactory) ResetPasswordApiURL() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResetPasswordApiURL")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// URLFactory_ResetPasswordApiURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResetPasswordApiURL'
+type URLFactory_ResetPasswordApiURL_Call struct {
+	*mock.Call
+}
+
+// ResetPasswordApiURL is a helper method to define mock.On call
+func (_e *URLFactory_Expecter) ResetPasswordApiURL() *URLFactory_ResetPasswordApiURL_Call {
+	return &URLFactory_ResetPasswordApiURL_Call{Call: _e.mock.On("ResetPasswordApiURL")}
+}
+
+func (_c *URLFactory_ResetPasswordApiURL_Call) Run(run func()) *URLFactory_ResetPasswordApiURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *URLFactory_ResetPasswordApiURL_Call) Return(s string) *URLFactory_ResetPasswordApiURL_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *URLFactory_ResetPasswordApiURL_Call) RunAndReturn(run func() string) *URLFactory_ResetPasswordApiURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ResetPasswordURL provides a mock function for the type URLFactory
+func (_mock *URLFactory) ResetPasswordURL(token string) string {
 	ret := _mock.Called(token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for VerifyEmailLink")
+		panic("no return value specified for ResetPasswordURL")
 	}
 
 	var r0 string
@@ -367,18 +323,18 @@ func (_mock *URLFactory) VerifyEmailLink(token string) string {
 	return r0
 }
 
-// URLFactory_VerifyEmailLink_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VerifyEmailLink'
-type URLFactory_VerifyEmailLink_Call struct {
+// URLFactory_ResetPasswordURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResetPasswordURL'
+type URLFactory_ResetPasswordURL_Call struct {
 	*mock.Call
 }
 
-// VerifyEmailLink is a helper method to define mock.On call
+// ResetPasswordURL is a helper method to define mock.On call
 //   - token string
-func (_e *URLFactory_Expecter) VerifyEmailLink(token interface{}) *URLFactory_VerifyEmailLink_Call {
-	return &URLFactory_VerifyEmailLink_Call{Call: _e.mock.On("VerifyEmailLink", token)}
+func (_e *URLFactory_Expecter) ResetPasswordURL(token interface{}) *URLFactory_ResetPasswordURL_Call {
+	return &URLFactory_ResetPasswordURL_Call{Call: _e.mock.On("ResetPasswordURL", token)}
 }
 
-func (_c *URLFactory_VerifyEmailLink_Call) Run(run func(token string)) *URLFactory_VerifyEmailLink_Call {
+func (_c *URLFactory_ResetPasswordURL_Call) Run(run func(token string)) *URLFactory_ResetPasswordURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 string
 		if args[0] != nil {
@@ -391,12 +347,107 @@ func (_c *URLFactory_VerifyEmailLink_Call) Run(run func(token string)) *URLFacto
 	return _c
 }
 
-func (_c *URLFactory_VerifyEmailLink_Call) Return(s string) *URLFactory_VerifyEmailLink_Call {
+func (_c *URLFactory_ResetPasswordURL_Call) Return(s string) *URLFactory_ResetPasswordURL_Call {
 	_c.Call.Return(s)
 	return _c
 }
 
-func (_c *URLFactory_VerifyEmailLink_Call) RunAndReturn(run func(token string) string) *URLFactory_VerifyEmailLink_Call {
+func (_c *URLFactory_ResetPasswordURL_Call) RunAndReturn(run func(token string) string) *URLFactory_ResetPasswordURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SwaggerURL provides a mock function for the type URLFactory
+func (_mock *URLFactory) SwaggerURL() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SwaggerURL")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// URLFactory_SwaggerURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SwaggerURL'
+type URLFactory_SwaggerURL_Call struct {
+	*mock.Call
+}
+
+// SwaggerURL is a helper method to define mock.On call
+func (_e *URLFactory_Expecter) SwaggerURL() *URLFactory_SwaggerURL_Call {
+	return &URLFactory_SwaggerURL_Call{Call: _e.mock.On("SwaggerURL")}
+}
+
+func (_c *URLFactory_SwaggerURL_Call) Run(run func()) *URLFactory_SwaggerURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *URLFactory_SwaggerURL_Call) Return(s string) *URLFactory_SwaggerURL_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *URLFactory_SwaggerURL_Call) RunAndReturn(run func() string) *URLFactory_SwaggerURL_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// VerifyEmailURL provides a mock function for the type URLFactory
+func (_mock *URLFactory) VerifyEmailURL(token string) string {
+	ret := _mock.Called(token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifyEmailURL")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
+		r0 = returnFunc(token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// URLFactory_VerifyEmailURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VerifyEmailURL'
+type URLFactory_VerifyEmailURL_Call struct {
+	*mock.Call
+}
+
+// VerifyEmailURL is a helper method to define mock.On call
+//   - token string
+func (_e *URLFactory_Expecter) VerifyEmailURL(token interface{}) *URLFactory_VerifyEmailURL_Call {
+	return &URLFactory_VerifyEmailURL_Call{Call: _e.mock.On("VerifyEmailURL", token)}
+}
+
+func (_c *URLFactory_VerifyEmailURL_Call) Run(run func(token string)) *URLFactory_VerifyEmailURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *URLFactory_VerifyEmailURL_Call) Return(s string) *URLFactory_VerifyEmailURL_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *URLFactory_VerifyEmailURL_Call) RunAndReturn(run func(token string) string) *URLFactory_VerifyEmailURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
