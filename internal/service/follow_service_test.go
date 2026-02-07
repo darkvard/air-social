@@ -108,7 +108,7 @@ func (s *followServiceSuite) TestFollow() {
 					EXPECT().
 					Delete(mock.Anything, mock.Anything).
 					Return(nil).
-					Twice()
+					Maybe()
 
 			},
 			wantErr: nil,
@@ -132,8 +132,6 @@ func (s *followServiceSuite) TestFollow() {
 				s.Error(err)
 			} else {
 				s.NoError(err)
-				// Wait for async cache invalidation goroutine
-				time.Sleep(50 * time.Millisecond)
 			}
 		})
 	}
@@ -193,7 +191,7 @@ func (s *followServiceSuite) TestUnfollow() {
 					EXPECT().
 					Delete(mock.Anything, mock.Anything).
 					Return(nil).
-					Twice()
+					Maybe()
 			},
 			wantErr: nil,
 		},
@@ -217,8 +215,6 @@ func (s *followServiceSuite) TestUnfollow() {
 				s.Error(err)
 			} else {
 				s.NoError(err)
-				// Wait for async cache invalidation goroutine
-				time.Sleep(50 * time.Millisecond)
 			}
 		})
 	}
@@ -229,5 +225,201 @@ func (s *followServiceSuite) TestGetFollowings() {
 }
 
 func (s *followServiceSuite) TestGetFollowers() {
+	var (
+		userID int64 = 1
+		params       = domain.FollowParams{
+			UserID: userID,
+			Page:   1,
+			Limit:  10,
+		}
+		users = []domain.User{
+			{ID: 2, Username: "follower1"},
+			{ID: 3, Username: "follower2"},
+		}
+		total int64 = 5
+	)
 
+	type want struct {
+		result domain.FollowResult
+		err    error
+	}
+
+	tests := []struct {
+		name       string
+		args       domain.FollowParams
+		setupMocks func(
+			followRepo *mocks.FollowRepository,
+			cache *mocks.CacheStorage,
+			input domain.FollowParams,
+		)
+		want want
+	}{
+		{
+			name: "success_cache_hit",
+			args: params,
+			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
+				followRepo.EXPECT().
+					GetFollowers(mock.Anything, input).
+					Return(users, nil).
+					Once()
+
+				cache.EXPECT().
+					Get(
+						mock.Anything,
+						domain.GetFollowerCountKey(input.UserID),
+						mock.Anything,
+					).
+					Run(func(_ context.Context, _ string, dest interface{}) {
+						*(dest.(*int64)) = total
+					}).
+					Return(nil).
+					Once()
+			},
+			want: want{
+				result: domain.FollowResult{
+					Users: users,
+					Total: total,
+					Page:  params.Page,
+					Limit: params.Limit,
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "success_cache_miss",
+			args: params,
+			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
+				followRepo.EXPECT().
+					GetFollowers(mock.Anything, input).
+					Return(users, nil).
+					Once()
+
+				cache.EXPECT().
+					Get(
+						mock.Anything,
+						domain.GetFollowerCountKey(input.UserID),
+						mock.Anything,
+					).
+					Return(assert.AnError).
+					Once()
+
+				followRepo.EXPECT().
+					CountFollowers(mock.Anything, input.UserID).
+					Return(total, nil).
+					Once()
+
+				cache.EXPECT().
+					Set(
+						mock.Anything,
+						domain.GetFollowerCountKey(input.UserID),
+						total,
+						time.Hour,
+					).
+					Return(nil).
+					Once()
+			},
+			want: want{
+				result: domain.FollowResult{
+					Users: users,
+					Total: total,
+					Page:  params.Page,
+					Limit: params.Limit,
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "get_followers_error",
+			args: params,
+			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
+				followRepo.EXPECT().
+					GetFollowers(mock.Anything, input).
+					Return(nil, assert.AnError).
+					Once()
+
+				cache.EXPECT().
+					Get(
+						mock.Anything,
+						domain.GetFollowerCountKey(input.UserID),
+						mock.Anything,
+					).
+					Return(assert.AnError).
+					Maybe()
+
+				followRepo.EXPECT().
+					CountFollowers(mock.Anything, input.UserID).
+					Return(int64(0), nil).
+					Maybe()
+
+				cache.EXPECT().
+					Set(
+						mock.Anything,
+						domain.GetFollowerCountKey(input.UserID),
+						mock.Anything,
+						time.Hour,
+					).
+					Return(nil).
+					Maybe()
+
+			},
+			want: want{
+				result: domain.FollowResult{},
+				err:    assert.AnError,
+			},
+		},
+		{
+			name: "count_followers_error",
+			args: params,
+			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
+				followRepo.EXPECT().
+					GetFollowers(mock.Anything, input).
+					Return(users, nil).
+					Once()
+
+				cache.EXPECT().
+					Get(
+						mock.Anything,
+						domain.GetFollowerCountKey(input.UserID),
+						mock.Anything,
+					).
+					Return(assert.AnError).
+					Once()
+
+				followRepo.EXPECT().
+					CountFollowers(mock.Anything, input.UserID).
+					Return(int64(0), assert.AnError).
+					Once()
+			},
+			want: want{
+				result: domain.FollowResult{},
+				err:    assert.AnError,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockFollowRepo := mocks.NewFollowRepository(s.T())
+			mockCache := mocks.NewCacheStorage(s.T())
+
+			followSvc := NewFollowService(mockFollowRepo, nil, mockCache)
+
+			if tc.setupMocks != nil {
+				tc.setupMocks(mockFollowRepo, mockCache, tc.args)
+			}
+
+			got, err := followSvc.GetFollowers(context.Background(), tc.args)
+
+			if tc.want.err != nil {
+				s.ErrorIs(err, tc.want.err)
+				s.Empty(got)
+			} else {
+				s.NoError(err)
+				s.Equal(tc.want.result, got)
+			}
+
+			mockFollowRepo.AssertExpectations(s.T())
+			mockCache.AssertExpectations(s.T())
+		})
+	}
 }

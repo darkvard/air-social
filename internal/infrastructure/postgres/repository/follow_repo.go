@@ -47,7 +47,7 @@ func (r *followRepository) Delete(ctx context.Context, followerID int64, followe
 	return err
 }
 
-func (r *followRepository) GetFollowers(ctx context.Context, params domain.FollowParams) ([]domain.User, error) {
+func (r *followRepository) GetFollowers( ctx context.Context, params domain.FollowParams) ([]domain.User, error) {
 	query := `
 		SELECT u.*
 		FROM users u
@@ -56,13 +56,18 @@ func (r *followRepository) GetFollowers(ctx context.Context, params domain.Follo
 		ORDER BY f.created_at DESC
 		LIMIT $2 OFFSET $3
 	`
-	args := []any{params.UserID, params.GetLimit(), params.GetOffset()}
+
+	args := []any{
+		params.UserID,
+		params.GetLimit(),
+		params.GetOffset(),
+	}
 
 	var users []model.User
-	err := r.db.SelectContext(ctx, users, query, args...)
-	if err != nil {
+	if err := r.db.SelectContext(ctx, &users, query, args...); err != nil {
 		return nil, err
 	}
+
 	return model.MapToDomainUsers(users), nil
 }
 

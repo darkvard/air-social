@@ -51,7 +51,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followerID int64, follow
 		return pkg.OrInternalError(err)
 	}
 
-	go s.invalidateCacheAsync(context.Background(), followerID, followeeID)
+	go s.invalidateFollowerCache(context.Background(), followerID, followeeID)
 
 	return nil
 }
@@ -65,7 +65,7 @@ func (s *FollowServiceImpl) Unfollow(ctx context.Context, followerID int64, foll
 		return pkg.OrInternalError(err)
 	}
 
-	go s.invalidateCacheAsync(context.Background(), followerID, followeeID)
+	go s.invalidateFollowerCache(context.Background(), followerID, followeeID)
 
 	return nil
 }
@@ -82,17 +82,26 @@ func (s *FollowServiceImpl) GetFollowers(ctx context.Context, params domain.Foll
 		listErr, countErr error
 	)
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
 		users, listErr = s.followRepo.GetFollowers(ctx, params)
+		if listErr != nil {
+			cancel()
+		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		total, countErr = s.fetchTotalFollowerCount(ctx, params.UserID)
+		if countErr != nil {
+			cancel()
+		}
 	}()
 
 	wg.Wait()
@@ -115,7 +124,7 @@ func (s *FollowServiceImpl) GetFollowers(ctx context.Context, params domain.Foll
 // Internal helper
 
 func (s *FollowServiceImpl) fetchTotalFollowerCount(ctx context.Context, userID int64) (int64, error) {
-	if cached := s.getFollowerCountCache(ctx, userID); cached > 0 {
+	if cached, ok := s.getFollowerCountCache(ctx, userID); ok {
 		return cached, nil
 	}
 
@@ -124,23 +133,31 @@ func (s *FollowServiceImpl) fetchTotalFollowerCount(ctx context.Context, userID 
 		return 0, err
 	}
 
-	go s.cache.Set(context.Background(), domain.GetFollowerCountKey(userID), total, time.Hour)
+	go func(total int64) {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		_ = s.cache.Set(
+			ctx,
+			domain.GetFollowerCountKey(userID),
+			total,
+			time.Hour,
+		)
+	}(total)
 
 	return total, nil
 }
 
-func (s *FollowServiceImpl) invalidateCacheAsync(ctx context.Context, followerID int64, followeeID int64) {
-	s.cache.Delete(ctx, domain.GetFollowingCountKey(followerID))
-	s.cache.Delete(ctx, domain.GetFollowerCountKey(followeeID))
-}
-
-func (s *FollowServiceImpl) getFollowerCountCache(ctx context.Context, userID int64) int64 {
+func (s *FollowServiceImpl) getFollowerCountCache(ctx context.Context, userID int64) (int64, bool) {
 	var total int64
 	key := domain.GetFollowerCountKey(userID)
 	if err := s.cache.Get(ctx, key, &total); err != nil {
-		return 0
+		return 0, false
 	}
-	return total
+	return total, true
 }
 
- 
+func (s *FollowServiceImpl) invalidateFollowerCache(ctx context.Context, followerID, followeeID int64) {
+	s.cache.Delete(ctx, domain.GetFollowingCountKey(followerID))
+	s.cache.Delete(ctx, domain.GetFollowerCountKey(followeeID))
+}
