@@ -27,7 +27,7 @@ func initServices(
 ) *Services {
 
 	mediaSvc := service.NewMediaService(adapter.FileStorage, domain.FileConfig{
-		BucketPublic:  cfg.MinIO.BucketPublic, 	BucketPrivate: cfg.MinIO.BucketPrivate,
+		BucketPublic: cfg.MinIO.BucketPublic, BucketPrivate: cfg.MinIO.BucketPrivate,
 	}, url)
 
 	healthSvc := service.NewHealthService(infra.DB, infra.Redis, &rabbitmq.HealthChecker{

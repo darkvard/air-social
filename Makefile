@@ -217,3 +217,16 @@ mocks:
 	@rm -rf internal/mocks/*
 	@mockery
 	@echo "Mocks generated successfully!"	
+
+# Seed database
+.PHONY: seed
+seed:
+	@echo "1️⃣  Starting database..."
+	docker compose up -d db
+	@echo "⏳ Waiting 3s for database to be ready..."
+	@sleep 3
+	@echo "2️⃣  Seeding data..."
+	go run cmd/seed/main.go
+	@echo "3️⃣  Stopping database..."
+	docker compose stop db 
+	@echo "✅ Done"

@@ -96,6 +96,20 @@ func (h *FollowHandler) Unfollow(c *gin.Context) {
 	pkg.SuccessWithMsg(c, "unfollow success", nil)
 }
 
+// GetFollowers godoc
+//
+//	@Summary		Get followers
+//	@Description	Get a paginated list of users who follow the specified user
+//	@Tags			Follow
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int	true	"User ID"
+//	@Param			page	query		int	false	"Page number"
+//	@Param			limit	query		int	false	"Items per page"
+//	@Success		200		{object}	dto.PaginatedResult
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/{id}/followers [get]
 func (h *FollowHandler) GetFollowers(c *gin.Context) {
 	var path dto.FollowPathParam
 	if err := c.ShouldBindUri(&path); err != nil {
@@ -125,8 +139,6 @@ func (h *FollowHandler) GetFollowers(c *gin.Context) {
 		Page:  result.Page,
 		Limit: result.Limit,
 	})
-
-	// todo: unit test
 }
 
 func (h *FollowHandler) GetFollowings(c *gin.Context) {

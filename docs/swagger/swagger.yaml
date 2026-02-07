@@ -93,6 +93,16 @@ definitions:
       is_all_devices:
         type: boolean
     type: object
+  dto.PaginatedResult:
+    properties:
+      data: {}
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
   dto.PresignedFileResponse:
     properties:
       expire_at:
@@ -676,6 +686,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Follow a user
+      tags:
+      - Follow
+  /users/{id}/followers:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of users who follow the specified user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PaginatedResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      summary: Get followers
       tags:
       - Follow
   /users/me:

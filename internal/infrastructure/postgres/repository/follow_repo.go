@@ -47,7 +47,7 @@ func (r *followRepository) Delete(ctx context.Context, followerID int64, followe
 	return err
 }
 
-func (r *followRepository) GetFollowers( ctx context.Context, params domain.FollowParams) ([]domain.User, error) {
+func (r *followRepository) GetFollowers(ctx context.Context, params domain.FollowParams) ([]domain.User, error) {
 	query := `
 		SELECT u.*
 		FROM users u

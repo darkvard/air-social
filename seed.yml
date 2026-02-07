@@ -1,0 +1,14 @@
+users:
+  total: 30
+
+follows:
+  per_user: 20
+
+posts:
+  per_user: 10
+
+comments:
+  per_post: 5
+
+likes:
+  per_post: 15

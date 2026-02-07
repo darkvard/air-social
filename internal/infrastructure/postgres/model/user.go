@@ -74,15 +74,15 @@ func FromDomainUser(u *domain.User) *User {
 }
 
 func MapToDomainUsers(users []User) []domain.User {
-    if users == nil {
-        return nil 
-    }
-    
-    result := make([]domain.User, 0, len(users))
-    
-    for _, user := range users {
-        result = append(result, *user.ToDomain())
-    }
-    
-    return result
+	if users == nil {
+		return nil
+	}
+
+	result := make([]domain.User, 0, len(users))
+
+	for _, user := range users {
+		result = append(result, *user.ToDomain())
+	}
+
+	return result
 }
