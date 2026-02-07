@@ -59,13 +59,13 @@ RABBITMQ_UI_PORT=15672
 RABBITMQ_USER=admin
 RABBITMQ_PASS=password
 RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:${RABBITMQ_PORT}/
- 
+
 # MinIO
 MINIO_API_PORT=9000
 MINIO_CONSOLE_PORT=9001
 MINIO_ROOT_USER=admin
 MINIO_ROOT_PASSWORD=password
-MINIO_ENDPOINT=minio:9000 
+MINIO_ENDPOINT=minio:9000
 MINIO_BUCKET_PUBLIC=air-social-media-public
 MINIO_BUCKET_PRIVATE=air-social-media-private
 MINIO_USE_SSL=false
@@ -76,6 +76,7 @@ MINIO_USE_SSL=false
 Use Makefile commands to manage the application lifecycle.
 
 ### First Run (Build Images)
+
 For the first setup, you need to build the Go application image from the Dockerfile.
 
 ```bash
@@ -83,13 +84,25 @@ make rebuild
 ```
 
 ### Start Application
+
 Once images are built, use this command to start all containers (App, DB, Redis, Queue, Storage).
 
 ```bash
 make up
 ```
 
+### Seed Database
+
+Populate the database with dummy data (Users, Follows, etc.) for testing. Note: This command will truncate (wipe) all existing data in the database before seeding.
+
+You can configure the data volume in seed.yml.
+
+```bash
+make seed
+```
+
 ### Stop Application
+
 Stop and remove all containers and networks.
 
 ```bash
@@ -100,8 +113,9 @@ make down
 
 After the system is up, you can access the services via Nginx (Port 80):
 
-| Service | URL | Credentials |
-| :--- | :--- | :--- |
-| **API Swagger** | http://localhost/air-social/api/v1/swagger/index.html | N/A |
-| **RabbitMQ UI** | http://localhost/rabbitmq/ | `admin` / `password` |
-| **MinIO Console** | http://localhost/storage-admin/ | `admin` / `password` |
+| Service           | URL                                                   | Credentials          |
+| :---------------- | :---------------------------------------------------- | :------------------- |
+| **API Swagger**   | http://localhost/air-social/api/v1/swagger/index.html | N/A                  |
+| **Health Check**  | http://localhost/air-social/api/v1/health             | `admin` / `password` |
+| **RabbitMQ UI**   | http://localhost/rabbitmq/                            | `admin` / `password` |
+| **MinIO Console** | http://localhost/storage-admin/                       | `admin` / `password` |

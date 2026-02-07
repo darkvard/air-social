@@ -33,4 +33,3 @@ func Connect() *sqlx.DB {
 
 	return db
 }
-
