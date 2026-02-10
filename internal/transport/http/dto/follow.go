@@ -10,6 +10,6 @@ type UserFollowResponse struct {
 	FullName     string `json:"full_name"`
 	Avatar       string `json:"avatar"`
 	IsVerified   bool   `json:"is_verified"`
-	IsFollowing  bool   `json:"is_following"`
-	IsFollowedBy bool   `json:"is_followed_by"`
+	IsFollowing  bool   `json:"followed_by_me"`
+	IsFollowedBy bool   `json:"is_following_me"`
 }
