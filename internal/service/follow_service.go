@@ -13,8 +13,8 @@ import (
 type FollowService interface {
 	Follow(ctx context.Context, followerID, followeeID int64) error
 	Unfollow(ctx context.Context, followerID, followeeID int64) error
-	GetFollowings(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error)
-	GetFollowers(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error)
+	GetFollowings(ctx context.Context, params domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error)
+	GetFollowers(ctx context.Context, params domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error)
 }
 
 type FollowServiceImpl struct {
@@ -51,8 +51,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followerID int64, follow
 		return pkg.OrInternalError(err)
 	}
 
-	go s.invalidateFollowerCache(context.Background(), followerID, followeeID)
-
+	go s.invalidateFollowCache(context.Background(), followerID, followeeID)
 	return nil
 }
 
@@ -65,99 +64,176 @@ func (s *FollowServiceImpl) Unfollow(ctx context.Context, followerID int64, foll
 		return pkg.OrInternalError(err)
 	}
 
-	go s.invalidateFollowerCache(context.Background(), followerID, followeeID)
-
+	go s.invalidateFollowCache(context.Background(), followerID, followeeID)
 	return nil
 }
 
-func (s *FollowServiceImpl) GetFollowings(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error) {
-	return domain.FollowResult{}, nil
+func (s *FollowServiceImpl) GetFollowings(ctx context.Context, params domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error) {
+	params.EnsureDefaults()
+
+	users, total, err := s.runConcurrentFetch(ctx,
+		func(ctx context.Context) ([]domain.SocialUser, error) {
+			res, err := s.followRepo.GetFollowings(ctx, params)
+			if err != nil {
+				return nil, pkg.OrInternalError(err)
+			}
+			return s.enrichSocialUsers(ctx, params.CurrentUserID, res)
+		},
+		func(ctx context.Context) (int64, error) {
+			return s.fetchTotalCount(ctx, params.TargetUserID, domain.GetFollowingCountKey, s.followRepo.CountFollowings)
+		})
+
+	if err != nil {
+		return domain.PaginatedResult[domain.SocialUser]{}, fmt.Errorf("get following failed: %w", pkg.OrInternalError(err))
+	}
+
+	return domain.NewPaginatedResult(users, total, params.Page, params.Limit), nil
 }
 
-func (s *FollowServiceImpl) GetFollowers(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error) {
-	var (
-		empty             domain.FollowResult
-		users             []domain.User
-		total             int64
-		listErr, countErr error
+func (s *FollowServiceImpl) GetFollowers(ctx context.Context, params domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error) {
+	params.EnsureDefaults()
+
+	users, total, err := s.runConcurrentFetch(ctx,
+		func(c context.Context) ([]domain.SocialUser, error) {
+			res, err := s.followRepo.GetFollowers(c, params)
+			if err != nil {
+				return nil, pkg.OrInternalError(err)
+			}
+			return s.enrichSocialUsers(c, params.CurrentUserID, res)
+		},
+		func(c context.Context) (int64, error) {
+			return s.fetchTotalCount(c, params.TargetUserID, domain.GetFollowerCountKey, s.followRepo.CountFollowers)
+		},
 	)
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		users, listErr = s.followRepo.GetFollowers(ctx, params)
-		if listErr != nil {
-			cancel()
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		total, countErr = s.fetchTotalFollowerCount(ctx, params.UserID)
-		if countErr != nil {
-			cancel()
-		}
-	}()
-
-	wg.Wait()
-
-	if listErr != nil {
-		return empty, fmt.Errorf("failed to get users: %w", listErr)
-	}
-	if countErr != nil {
-		return empty, fmt.Errorf("failed to count users: %w", countErr)
+	if err != nil {
+		return domain.PaginatedResult[domain.SocialUser]{}, fmt.Errorf("get followers failed: %w", pkg.OrInternalError(err))
 	}
 
-	return domain.FollowResult{
-		Users: users,
-		Total: total,
-		Page:  params.GetPage(),
-		Limit: params.GetLimit(),
-	}, nil
+	return domain.NewPaginatedResult(users, total, params.Page, params.Limit), nil
 }
 
 // Internal helper
 
-func (s *FollowServiceImpl) fetchTotalFollowerCount(ctx context.Context, userID int64) (int64, error) {
-	if cached, ok := s.getFollowerCountCache(ctx, userID); ok {
-		return cached, nil
+func (s *FollowServiceImpl) runConcurrentFetch(
+	ctx context.Context,
+	fetchFn func(ctx context.Context) ([]domain.SocialUser, error),
+	countFn func(ctx context.Context) (int64, error),
+) ([]domain.SocialUser, int64, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var (
+		users    []domain.SocialUser
+		total    int64
+		errFinal error
+		wg       sync.WaitGroup
+		errOnce  sync.Once
+	)
+
+	fail := func(err error) {
+		if err == nil {
+			return
+		}
+		errOnce.Do(func() {
+			errFinal = err
+			cancel()
+		})
 	}
 
-	total, err := s.followRepo.CountFollowers(ctx, userID)
+	wg.Add(2)
+
+	// Task 1: List
+	go func() {
+		defer wg.Done()
+		res, err := fetchFn(ctx)
+		if err != nil {
+			fail(err)
+			return
+		}
+		users = res
+	}()
+
+	// Task 2: Count
+	go func() {
+		defer wg.Done()
+		res, err := countFn(ctx)
+		if err != nil {
+			fail(err)
+			return
+		}
+		total = res
+	}()
+
+	wg.Wait()
+
+	return users, total, errFinal
+}
+
+func (s *FollowServiceImpl) enrichSocialUsers(ctx context.Context, currentUserID int64, users []domain.User) ([]domain.SocialUser, error) {
+	size := len(users)
+	result := make([]domain.SocialUser, size)
+	targetIDs := make([]int64, size)
+
+	for i, u := range users {
+		result[i] = domain.SocialUser{User: u}
+		targetIDs[i] = u.ID
+	}
+
+	if currentUserID <= 0 || size == 0 {
+		return result, nil
+	}
+
+	followingMap, err := s.followRepo.IsFollowing(ctx, currentUserID, targetIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	followedByMap, err := s.followRepo.IsFollowedBy(ctx, currentUserID, targetIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, u := range users {
+		if followingMap[u.ID] {
+			result[i].Relation.IsFollowing = true
+		}
+		if followedByMap[u.ID] {
+			result[i].Relation.IsFollowedBy = true
+		}
+	}
+
+	return result, nil
+}
+
+func (s *FollowServiceImpl) fetchTotalCount(
+	ctx context.Context,
+	userID int64,
+	keyFunc func(int64) string,
+	dbCount func(context.Context, int64) (int64, error),
+) (int64, error) {
+	key := keyFunc(userID)
+	var total int64
+
+	if err := s.cache.Get(ctx, key, &total); err == nil {
+		return total, nil
+	}
+
+	total, err := dbCount(ctx, userID)
 	if err != nil {
 		return 0, err
 	}
 
-	go func(total int64) {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	go func(t int64) {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-
-		_ = s.cache.Set(
-			ctx,
-			domain.GetFollowerCountKey(userID),
-			total,
-			time.Hour,
-		)
+		_ = s.cache.Set(bgCtx, key, t, time.Hour)
 	}(total)
 
 	return total, nil
 }
 
-func (s *FollowServiceImpl) getFollowerCountCache(ctx context.Context, userID int64) (int64, bool) {
-	var total int64
-	key := domain.GetFollowerCountKey(userID)
-	if err := s.cache.Get(ctx, key, &total); err != nil {
-		return 0, false
-	}
-	return total, true
-}
-
-func (s *FollowServiceImpl) invalidateFollowerCache(ctx context.Context, followerID, followeeID int64) {
+func (s *FollowServiceImpl) invalidateFollowCache(ctx context.Context, followerID, followeeID int64) {
 	s.cache.Delete(ctx, domain.GetFollowingCountKey(followerID))
 	s.cache.Delete(ctx, domain.GetFollowerCountKey(followeeID))
 }

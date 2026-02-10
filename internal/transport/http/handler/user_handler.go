@@ -32,7 +32,7 @@ func NewUserHandler(userSvc service.UserService, url domain.URLFactory) *UserHan
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Success		200	{object}	dto.UserResponse
+//	@Success		200	{object}	dto.UserDetailResponse
 //	@Failure		401	{object}	pkg.Response
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/users/me [get]
@@ -65,7 +65,7 @@ func (h *UserHandler) Profile(c *gin.Context) {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			request	body		dto.UpdateProfileRequest	true	"Update Profile Request"
-//	@Success		200		{object}	dto.UserResponse
+//	@Success		200		{object}	dto.UserDetailResponse
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		409		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
@@ -198,8 +198,8 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 
 }
 
-func (h *UserHandler) mapToResponse(user *domain.User) dto.UserResponse {
+func (h *UserHandler) mapToResponse(user *domain.User) dto.UserDetailResponse {
 	avatar := h.url.PublicFileURL(user.Profile.Avatar)
 	cover := h.url.PublicFileURL(user.Profile.CoverImage)
-	return dto.NewUserResponse(user, avatar, cover)
+	return dto.NewUserDetailResponse(user, avatar, cover)
 }

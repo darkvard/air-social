@@ -102,22 +102,22 @@ func (_c *FollowService_Follow_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // GetFollowers provides a mock function for the type FollowService
-func (_mock *FollowService) GetFollowers(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error) {
+func (_mock *FollowService) GetFollowers(ctx context.Context, params domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error) {
 	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFollowers")
 	}
 
-	var r0 domain.FollowResult
+	var r0 domain.PaginatedResult[domain.SocialUser]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) (domain.FollowResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error)); ok {
 		return returnFunc(ctx, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) domain.FollowResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) domain.PaginatedResult[domain.SocialUser]); ok {
 		r0 = returnFunc(ctx, params)
 	} else {
-		r0 = ret.Get(0).(domain.FollowResult)
+		r0 = ret.Get(0).(domain.PaginatedResult[domain.SocialUser])
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.FollowParams) error); ok {
 		r1 = returnFunc(ctx, params)
@@ -157,33 +157,33 @@ func (_c *FollowService_GetFollowers_Call) Run(run func(ctx context.Context, par
 	return _c
 }
 
-func (_c *FollowService_GetFollowers_Call) Return(followResult domain.FollowResult, err error) *FollowService_GetFollowers_Call {
-	_c.Call.Return(followResult, err)
+func (_c *FollowService_GetFollowers_Call) Return(paginatedResult domain.PaginatedResult[domain.SocialUser], err error) *FollowService_GetFollowers_Call {
+	_c.Call.Return(paginatedResult, err)
 	return _c
 }
 
-func (_c *FollowService_GetFollowers_Call) RunAndReturn(run func(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error)) *FollowService_GetFollowers_Call {
+func (_c *FollowService_GetFollowers_Call) RunAndReturn(run func(ctx context.Context, params domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error)) *FollowService_GetFollowers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetFollowings provides a mock function for the type FollowService
-func (_mock *FollowService) GetFollowings(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error) {
+func (_mock *FollowService) GetFollowings(ctx context.Context, params domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error) {
 	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFollowings")
 	}
 
-	var r0 domain.FollowResult
+	var r0 domain.PaginatedResult[domain.SocialUser]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) (domain.FollowResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error)); ok {
 		return returnFunc(ctx, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) domain.FollowResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.FollowParams) domain.PaginatedResult[domain.SocialUser]); ok {
 		r0 = returnFunc(ctx, params)
 	} else {
-		r0 = ret.Get(0).(domain.FollowResult)
+		r0 = ret.Get(0).(domain.PaginatedResult[domain.SocialUser])
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.FollowParams) error); ok {
 		r1 = returnFunc(ctx, params)
@@ -223,12 +223,12 @@ func (_c *FollowService_GetFollowings_Call) Run(run func(ctx context.Context, pa
 	return _c
 }
 
-func (_c *FollowService_GetFollowings_Call) Return(followResult domain.FollowResult, err error) *FollowService_GetFollowings_Call {
-	_c.Call.Return(followResult, err)
+func (_c *FollowService_GetFollowings_Call) Return(paginatedResult domain.PaginatedResult[domain.SocialUser], err error) *FollowService_GetFollowings_Call {
+	_c.Call.Return(paginatedResult, err)
 	return _c
 }
 
-func (_c *FollowService_GetFollowings_Call) RunAndReturn(run func(ctx context.Context, params domain.FollowParams) (domain.FollowResult, error)) *FollowService_GetFollowings_Call {
+func (_c *FollowService_GetFollowings_Call) RunAndReturn(run func(ctx context.Context, params domain.FollowParams) (domain.PaginatedResult[domain.SocialUser], error)) *FollowService_GetFollowings_Call {
 	_c.Call.Return(run)
 	return _c
 }

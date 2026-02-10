@@ -152,15 +152,11 @@ func mediaRoutes(g *gin.RouterGroup, h *handler.MediaHandler, m *middleware.Mana
 }
 
 func followRoutes(g *gin.RouterGroup, h *handler.FollowHandler, m *middleware.Manager) {
-	group := g.Group(UserGroup)
+	group := g.Group(UserGroup).Group("", m.Auth)
 	{
+		group.POST(FollowUser, h.Follow)
+		group.DELETE(FollowUser, h.Unfollow)
 		group.GET(Followers, h.GetFollowers)
 		group.GET(Followings, h.GetFollowings)
-	}
-
-	auth := group.Group("", m.Auth)
-	{
-		auth.POST(FollowUser, h.Follow)
-		auth.DELETE(FollowUser, h.Unfollow)
 	}
 }

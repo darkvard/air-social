@@ -207,7 +207,7 @@ docs:
 	@echo "1. Formatting Swagger annotations..."
 	@swag fmt
 	@echo "2. Generating Swagger files..."
-	@swag init -g $(SWAGGER_MAIN_FILE) --output docs/swagger
+	@swag init -g $(SWAGGER_MAIN_FILE) --output docs/swagger --parseDependency --parseInternal
 	@echo "Done"
 
 # Generate mocks

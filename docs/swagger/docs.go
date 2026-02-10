@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ForgotPasswordRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.ForgotPasswordRequest"
                         }
                     }
                 ],
@@ -90,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.LoginRequest"
                         }
                     }
                 ],
@@ -98,7 +98,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns user info and tokens",
                         "schema": {
-                            "$ref": "#/definitions/dto.LoginResponse"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.LoginResponse"
                         }
                     },
                     "400": {
@@ -147,7 +147,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.LogoutRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.LogoutRequest"
                         }
                     }
                 ],
@@ -193,7 +193,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RefreshTokenRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -201,7 +201,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.TokenResponse"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.TokenResponse"
                         }
                     },
                     "400": {
@@ -245,7 +245,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.RegisterRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.RegisterRequest"
                         }
                     }
                 ],
@@ -253,7 +253,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.UserResponse"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UserDetailResponse"
                         }
                     },
                     "400": {
@@ -330,7 +330,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ResetPasswordRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.ResetPasswordRequest"
                         }
                     }
                 ],
@@ -456,7 +456,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.PresignedUploadRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PresignedUploadRequest"
                         }
                     }
                 ],
@@ -464,7 +464,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Upload Credentials",
                         "schema": {
-                            "$ref": "#/definitions/dto.PresignedFileResponse"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PresignedFileResponse"
                         }
                     },
                     "400": {
@@ -510,7 +510,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.UserResponse"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UserDetailResponse"
                         }
                     },
                     "401": {
@@ -551,7 +551,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.UpdateProfileRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UpdateProfileRequest"
                         }
                     }
                 ],
@@ -559,7 +559,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.UserResponse"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UserDetailResponse"
                         }
                     },
                     "400": {
@@ -614,7 +614,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ChangePasswordRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.ChangePasswordRequest"
                         }
                     }
                 ],
@@ -671,7 +671,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.ConfirmProfileImageRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.ConfirmProfileImageRequest"
                         }
                     }
                 ],
@@ -840,6 +840,11 @@ const docTemplate = `{
         },
         "/users/{id}/followers": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get a paginated list of users who follow the specified user",
                 "consumes": [
                     "application/json"
@@ -876,11 +881,84 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.PaginatedResult"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/followings": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a paginated list of users that the specified user is following",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Follow"
+                ],
+                "summary": "Get followings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/pkg.Response"
                         }
@@ -896,7 +974,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "domain.UploadDomain": {
+        "air-social_internal_domain.UploadDomain": {
             "type": "string",
             "enum": [
                 "users",
@@ -909,7 +987,7 @@ const docTemplate = `{
                 "DomainMessage"
             ]
         },
-        "domain.UploadFeature": {
+        "air-social_internal_domain.UploadFeature": {
             "type": "string",
             "enum": [
                 "avatar",
@@ -928,7 +1006,7 @@ const docTemplate = `{
                 "FeatureAttachment"
             ]
         },
-        "dto.ChangePasswordRequest": {
+        "air-social_internal_transport_http_dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
                 "current_password",
@@ -945,7 +1023,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ConfirmProfileImageRequest": {
+        "air-social_internal_transport_http_dto.ConfirmProfileImageRequest": {
             "type": "object",
             "required": [
                 "domain",
@@ -959,7 +1037,7 @@ const docTemplate = `{
                     ],
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.UploadDomain"
+                            "$ref": "#/definitions/air-social_internal_domain.UploadDomain"
                         }
                     ]
                 },
@@ -970,7 +1048,7 @@ const docTemplate = `{
                     ],
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.UploadFeature"
+                            "$ref": "#/definitions/air-social_internal_domain.UploadFeature"
                         }
                     ]
                 },
@@ -979,7 +1057,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ForgotPasswordRequest": {
+        "air-social_internal_transport_http_dto.ForgotPasswordRequest": {
             "type": "object",
             "required": [
                 "email"
@@ -990,7 +1068,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.LoginRequest": {
+        "air-social_internal_transport_http_dto.LoginRequest": {
             "type": "object",
             "required": [
                 "device_id",
@@ -1012,18 +1090,18 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.LoginResponse": {
+        "air-social_internal_transport_http_dto.LoginResponse": {
             "type": "object",
             "properties": {
                 "token": {
-                    "$ref": "#/definitions/dto.TokenResponse"
+                    "$ref": "#/definitions/air-social_internal_transport_http_dto.TokenResponse"
                 },
                 "user": {
-                    "$ref": "#/definitions/dto.UserResponse"
+                    "$ref": "#/definitions/air-social_internal_transport_http_dto.UserDetailResponse"
                 }
             }
         },
-        "dto.LogoutRequest": {
+        "air-social_internal_transport_http_dto.LogoutRequest": {
             "type": "object",
             "properties": {
                 "is_all_devices": {
@@ -1031,10 +1109,9 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.PaginatedResult": {
+        "air-social_internal_transport_http_dto.MetaPaging": {
             "type": "object",
             "properties": {
-                "data": {},
                 "limit": {
                     "type": "integer"
                 },
@@ -1043,10 +1120,27 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
                 }
             }
         },
-        "dto.PresignedFileResponse": {
+        "air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_dto.UserFollowResponse"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/air-social_internal_transport_http_dto.MetaPaging"
+                }
+            }
+        },
+        "air-social_internal_transport_http_dto.PresignedFileResponse": {
             "type": "object",
             "properties": {
                 "expire_at": {
@@ -1069,7 +1163,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.PresignedUploadRequest": {
+        "air-social_internal_transport_http_dto.PresignedUploadRequest": {
             "type": "object",
             "required": [
                 "domain",
@@ -1088,7 +1182,7 @@ const docTemplate = `{
                     ],
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.UploadDomain"
+                            "$ref": "#/definitions/air-social_internal_domain.UploadDomain"
                         }
                     ]
                 },
@@ -1103,7 +1197,7 @@ const docTemplate = `{
                     ],
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.UploadFeature"
+                            "$ref": "#/definitions/air-social_internal_domain.UploadFeature"
                         }
                     ]
                 },
@@ -1118,7 +1212,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ProfileResponse": {
+        "air-social_internal_transport_http_dto.ProfileResponse": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -1141,7 +1235,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.RefreshTokenRequest": {
+        "air-social_internal_transport_http_dto.RefreshTokenRequest": {
             "type": "object",
             "required": [
                 "refresh_token"
@@ -1152,7 +1246,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.RegisterRequest": {
+        "air-social_internal_transport_http_dto.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -1176,7 +1270,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ResetPasswordRequest": {
+        "air-social_internal_transport_http_dto.ResetPasswordRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -1193,7 +1287,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.StatusResponse": {
+        "air-social_internal_transport_http_dto.StatusResponse": {
             "type": "object",
             "properties": {
                 "verified": {
@@ -1204,7 +1298,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.TokenResponse": {
+        "air-social_internal_transport_http_dto.TokenResponse": {
             "type": "object",
             "properties": {
                 "access_expire_at": {
@@ -1224,7 +1318,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UpdateProfileRequest": {
+        "air-social_internal_transport_http_dto.UpdateProfileRequest": {
             "type": "object",
             "properties": {
                 "bio": {
@@ -1251,7 +1345,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UserResponse": {
+        "air-social_internal_transport_http_dto.UserDetailResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -1264,10 +1358,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "profile": {
-                    "$ref": "#/definitions/dto.ProfileResponse"
+                    "$ref": "#/definitions/air-social_internal_transport_http_dto.ProfileResponse"
                 },
                 "status": {
-                    "$ref": "#/definitions/dto.StatusResponse"
+                    "$ref": "#/definitions/air-social_internal_transport_http_dto.StatusResponse"
                 },
                 "updated_at": {
                     "type": "string"
@@ -1277,6 +1371,32 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "integer"
+                }
+            }
+        },
+        "air-social_internal_transport_http_dto.UserFollowResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_followed_by": {
+                    "type": "boolean"
+                },
+                "is_following": {
+                    "type": "boolean"
+                },
+                "is_verified": {
+                    "type": "boolean"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

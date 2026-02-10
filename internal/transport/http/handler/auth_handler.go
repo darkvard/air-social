@@ -30,7 +30,7 @@ func NewAuthHandler(authSvc service.AuthService, url domain.URLFactory) *AuthHan
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		dto.RegisterRequest	true	"Register Request"
-//	@Success		201		{object}	dto.UserResponse
+//	@Success		201		{object}	dto.UserDetailResponse
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		409		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -277,8 +277,8 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	pkg.SuccessWithMsg(c, "password update successfully", nil)
 }
 
-func (h *AuthHandler) mapUserToResponse(user *domain.User) dto.UserResponse {
+func (h *AuthHandler) mapUserToResponse(user *domain.User) dto.UserDetailResponse {
 	avatar := h.url.PublicFileURL(user.Profile.Avatar)
 	cover := h.url.PublicFileURL(user.Profile.CoverImage)
-	return dto.NewUserResponse(user, avatar, cover)
+	return dto.NewUserDetailResponse(user, avatar, cover)
 }

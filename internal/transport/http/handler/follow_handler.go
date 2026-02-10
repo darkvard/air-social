@@ -103,14 +103,22 @@ func (h *FollowHandler) Unfollow(c *gin.Context) {
 //	@Tags			Follow
 //	@Accept			json
 //	@Produce		json
+//	@Security		BearerAuth
 //	@Param			id		path		int	true	"User ID"
 //	@Param			page	query		int	false	"Page number"
 //	@Param			limit	query		int	false	"Items per page"
-//	@Success		200		{object}	dto.PaginatedResult
+//	@Success		200		{object}	dto.PaginatedResponse[dto.UserFollowResponse]
 //	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/{id}/followers [get]
 func (h *FollowHandler) GetFollowers(c *gin.Context) {
+	claims, err := middleware.GetAuthClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
 	var path dto.FollowPathParam
 	if err := c.ShouldBindUri(&path); err != nil {
 		pkg.BadRequest(c, "invalid user id")
@@ -123,39 +131,101 @@ func (h *FollowHandler) GetFollowers(c *gin.Context) {
 		return
 	}
 
-	result, err := h.followSvc.GetFollowers(c.Request.Context(), domain.FollowParams{
-		UserID: path.ID,
-		Page:   query.Page,
-		Limit:  query.Limit,
-	})
+	params := domain.FollowParams{
+		QueryParams:   query.ToDomain(),
+		TargetUserID:  path.ID,
+		CurrentUserID: claims.UserID,
+	}
+
+	result, err := h.followSvc.GetFollowers(c.Request.Context(), params)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, dto.PaginatedResult{
-		Data:  h.mapToUserResponses(result.Users),
-		Total: result.Total,
-		Page:  result.Page,
-		Limit: result.Limit,
+	response := dto.NewPaginatedResponse(domain.PaginatedResult[dto.UserFollowResponse]{
+		Data:       h.mapToFollowResponses(result.Data),
+		Total:      result.Total,
+		Page:       result.Page,
+		Limit:      result.Limit,
+		TotalPages: result.TotalPages,
 	})
+
+	pkg.Success(c, response)
 }
 
+// GetFollowings godoc
+//
+//	@Summary		Get followings
+//	@Description	Get a paginated list of users that the specified user is following
+//	@Tags			Follow
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int	true	"User ID"
+//	@Param			page	query		int	false	"Page number"
+//	@Param			limit	query		int	false	"Items per page"
+//	@Success		200		{object}	dto.PaginatedResponse[dto.UserFollowResponse]
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/{id}/followings [get]
 func (h *FollowHandler) GetFollowings(c *gin.Context) {
+	claims, err := middleware.GetAuthClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
 
+	var path dto.FollowPathParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid user id")
+		return
+	}
+
+	var query dto.PaginationQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		pkg.BadRequest(c, "invalid query")
+		return
+	}
+
+	params := domain.FollowParams{
+		QueryParams:   query.ToDomain(),
+		TargetUserID:  path.ID,
+		CurrentUserID: claims.UserID,
+	}
+
+	result, err := h.followSvc.GetFollowings(c.Request.Context(), params)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	response := dto.NewPaginatedResponse(domain.PaginatedResult[dto.UserFollowResponse]{
+		Data:       h.mapToFollowResponses(result.Data),
+		Total:      result.Total,
+		Page:       result.Page,
+		Limit:      result.Limit,
+		TotalPages: result.TotalPages,
+	})
+
+	pkg.Success(c, response)
 }
 
 // Internal helper
 
-func (h *FollowHandler) mapToUserResponses(users []domain.User) []dto.UserResponse {
-	responses := make([]dto.UserResponse, len(users))
-
-	for i := range users {
-		u := &users[i]
-		avatarURL := h.url.PublicFileURL(u.Profile.Avatar)
-		coverURL := h.url.PublicFileURL(u.Profile.CoverImage)
-		responses[i] = dto.NewUserResponse(u, avatarURL, coverURL)
+func (h *FollowHandler) mapToFollowResponses(users []domain.SocialUser) []dto.UserFollowResponse {
+	res := make([]dto.UserFollowResponse, len(users))
+	for i, u := range users {
+		res[i] = dto.UserFollowResponse{
+			ID:           u.User.ID,
+			Username:     u.User.Username,
+			FullName:     u.User.Profile.FullName,
+			Avatar:       h.url.PublicFileURL(u.User.Profile.Avatar),
+			IsVerified:   u.User.Status.Verified,
+			IsFollowing:  u.Relation.IsFollowing,
+			IsFollowedBy: u.Relation.IsFollowedBy,
+		}
 	}
-
-	return responses
+	return res
 }

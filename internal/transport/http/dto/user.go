@@ -25,7 +25,7 @@ type ConfirmProfileImageRequest struct {
 	Feature   domain.UploadFeature `json:"feature" binding:"required,oneof=avatar cover"`
 }
 
-type UserResponse struct {
+type UserDetailResponse struct {
 	ID        int64           `json:"id"`
 	Email     string          `json:"email"`
 	Username  string          `json:"username"`
@@ -50,8 +50,8 @@ type StatusResponse struct {
 	VerifiedAt *time.Time `json:"verified_at"`
 }
 
-func NewUserResponse(user *domain.User, avatar, cover string) UserResponse {
-	return UserResponse{
+func NewUserDetailResponse(user *domain.User, avatar, cover string) UserDetailResponse {
+	return UserDetailResponse{
 		ID:       user.ID,
 		Email:    user.Email,
 		Username: user.Username,

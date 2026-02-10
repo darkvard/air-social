@@ -1,6 +1,6 @@
 basePath: /air-social/api/v1
 definitions:
-  domain.UploadDomain:
+  air-social_internal_domain.UploadDomain:
     enum:
     - users
     - posts
@@ -10,7 +10,7 @@ definitions:
     - DomainUser
     - DomainPost
     - DomainMessage
-  domain.UploadFeature:
+  air-social_internal_domain.UploadFeature:
     enum:
     - avatar
     - cover
@@ -26,7 +26,7 @@ definitions:
     - FeatureFeedVideo
     - FeatureVoiceChat
     - FeatureAttachment
-  dto.ChangePasswordRequest:
+  air-social_internal_transport_http_dto.ChangePasswordRequest:
     properties:
       current_password:
         type: string
@@ -38,16 +38,16 @@ definitions:
     - current_password
     - new_password
     type: object
-  dto.ConfirmProfileImageRequest:
+  air-social_internal_transport_http_dto.ConfirmProfileImageRequest:
     properties:
       domain:
         allOf:
-        - $ref: '#/definitions/domain.UploadDomain'
+        - $ref: '#/definitions/air-social_internal_domain.UploadDomain'
         enum:
         - users
       feature:
         allOf:
-        - $ref: '#/definitions/domain.UploadFeature'
+        - $ref: '#/definitions/air-social_internal_domain.UploadFeature'
         enum:
         - avatar
         - cover
@@ -58,14 +58,14 @@ definitions:
     - feature
     - object_key
     type: object
-  dto.ForgotPasswordRequest:
+  air-social_internal_transport_http_dto.ForgotPasswordRequest:
     properties:
       email:
         type: string
     required:
     - email
     type: object
-  dto.LoginRequest:
+  air-social_internal_transport_http_dto.LoginRequest:
     properties:
       device_id:
         type: string
@@ -81,29 +81,39 @@ definitions:
     - email
     - password
     type: object
-  dto.LoginResponse:
+  air-social_internal_transport_http_dto.LoginResponse:
     properties:
       token:
-        $ref: '#/definitions/dto.TokenResponse'
+        $ref: '#/definitions/air-social_internal_transport_http_dto.TokenResponse'
       user:
-        $ref: '#/definitions/dto.UserResponse'
+        $ref: '#/definitions/air-social_internal_transport_http_dto.UserDetailResponse'
     type: object
-  dto.LogoutRequest:
+  air-social_internal_transport_http_dto.LogoutRequest:
     properties:
       is_all_devices:
         type: boolean
     type: object
-  dto.PaginatedResult:
+  air-social_internal_transport_http_dto.MetaPaging:
     properties:
-      data: {}
       limit:
         type: integer
       page:
         type: integer
       total:
         type: integer
+      total_pages:
+        type: integer
     type: object
-  dto.PresignedFileResponse:
+  air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/air-social_internal_transport_http_dto.UserFollowResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/air-social_internal_transport_http_dto.MetaPaging'
+    type: object
+  air-social_internal_transport_http_dto.PresignedFileResponse:
     properties:
       expire_at:
         type: string
@@ -118,11 +128,11 @@ definitions:
       upload_url:
         type: string
     type: object
-  dto.PresignedUploadRequest:
+  air-social_internal_transport_http_dto.PresignedUploadRequest:
     properties:
       domain:
         allOf:
-        - $ref: '#/definitions/domain.UploadDomain'
+        - $ref: '#/definitions/air-social_internal_domain.UploadDomain'
         enum:
         - users
         - posts
@@ -130,7 +140,7 @@ definitions:
         - messages
       feature:
         allOf:
-        - $ref: '#/definitions/domain.UploadFeature'
+        - $ref: '#/definitions/air-social_internal_domain.UploadFeature'
         enum:
         - avatar
         - cover
@@ -151,7 +161,7 @@ definitions:
     - file_size
     - file_type
     type: object
-  dto.ProfileResponse:
+  air-social_internal_transport_http_dto.ProfileResponse:
     properties:
       avatar:
         type: string
@@ -166,14 +176,14 @@ definitions:
       website:
         type: string
     type: object
-  dto.RefreshTokenRequest:
+  air-social_internal_transport_http_dto.RefreshTokenRequest:
     properties:
       refresh_token:
         type: string
     required:
     - refresh_token
     type: object
-  dto.RegisterRequest:
+  air-social_internal_transport_http_dto.RegisterRequest:
     properties:
       email:
         maxLength: 255
@@ -191,7 +201,7 @@ definitions:
     - password
     - username
     type: object
-  dto.ResetPasswordRequest:
+  air-social_internal_transport_http_dto.ResetPasswordRequest:
     properties:
       password:
         maxLength: 64
@@ -203,14 +213,14 @@ definitions:
     - password
     - token
     type: object
-  dto.StatusResponse:
+  air-social_internal_transport_http_dto.StatusResponse:
     properties:
       verified:
         type: boolean
       verified_at:
         type: string
     type: object
-  dto.TokenResponse:
+  air-social_internal_transport_http_dto.TokenResponse:
     properties:
       access_expire_at:
         type: string
@@ -223,7 +233,7 @@ definitions:
       type:
         type: string
     type: object
-  dto.UpdateProfileRequest:
+  air-social_internal_transport_http_dto.UpdateProfileRequest:
     properties:
       bio:
         maxLength: 255
@@ -243,7 +253,7 @@ definitions:
         maxLength: 255
         type: string
     type: object
-  dto.UserResponse:
+  air-social_internal_transport_http_dto.UserDetailResponse:
     properties:
       created_at:
         type: string
@@ -252,15 +262,32 @@ definitions:
       id:
         type: integer
       profile:
-        $ref: '#/definitions/dto.ProfileResponse'
+        $ref: '#/definitions/air-social_internal_transport_http_dto.ProfileResponse'
       status:
-        $ref: '#/definitions/dto.StatusResponse'
+        $ref: '#/definitions/air-social_internal_transport_http_dto.StatusResponse'
       updated_at:
         type: string
       username:
         type: string
       version:
         type: integer
+    type: object
+  air-social_internal_transport_http_dto.UserFollowResponse:
+    properties:
+      avatar:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      is_followed_by:
+        type: boolean
+      is_following:
+        type: boolean
+      is_verified:
+        type: boolean
+      username:
+        type: string
     type: object
   pkg.FieldError:
     properties:
@@ -311,7 +338,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.ForgotPasswordRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.ForgotPasswordRequest'
       produces:
       - application/json
       responses:
@@ -342,14 +369,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.LoginRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Returns user info and tokens
           schema:
-            $ref: '#/definitions/dto.LoginResponse'
+            $ref: '#/definitions/air-social_internal_transport_http_dto.LoginResponse'
         "400":
           description: Bad Request
           schema:
@@ -376,7 +403,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.LogoutRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.LogoutRequest'
       produces:
       - application/json
       responses:
@@ -409,14 +436,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.RefreshTokenRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.TokenResponse'
+            $ref: '#/definitions/air-social_internal_transport_http_dto.TokenResponse'
         "400":
           description: Bad Request
           schema:
@@ -444,14 +471,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.RegisterRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/dto.UserResponse'
+            $ref: '#/definitions/air-social_internal_transport_http_dto.UserDetailResponse'
         "400":
           description: Bad Request
           schema:
@@ -502,7 +529,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.ResetPasswordRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.ResetPasswordRequest'
       produces:
       - application/json
       responses:
@@ -586,14 +613,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.PresignedUploadRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.PresignedUploadRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Upload Credentials
           schema:
-            $ref: '#/definitions/dto.PresignedFileResponse'
+            $ref: '#/definitions/air-social_internal_transport_http_dto.PresignedFileResponse'
         "400":
           description: Bad Request
           schema:
@@ -713,16 +740,65 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.PaginatedResult'
+            $ref: '#/definitions/air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/pkg.Response'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
       summary: Get followers
+      tags:
+      - Follow
+  /users/{id}/followings:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of users that the specified user is following
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get followings
       tags:
       - Follow
   /users/me:
@@ -736,7 +812,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.UserResponse'
+            $ref: '#/definitions/air-social_internal_transport_http_dto.UserDetailResponse'
         "401":
           description: Unauthorized
           schema:
@@ -760,14 +836,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.UpdateProfileRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.UpdateProfileRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.UserResponse'
+            $ref: '#/definitions/air-social_internal_transport_http_dto.UserDetailResponse'
         "400":
           description: Bad Request
           schema:
@@ -800,7 +876,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.ChangePasswordRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.ChangePasswordRequest'
       produces:
       - application/json
       responses:
@@ -837,7 +913,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.ConfirmProfileImageRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.ConfirmProfileImageRequest'
       produces:
       - application/json
       responses:

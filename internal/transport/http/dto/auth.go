@@ -36,8 +36,8 @@ type ResetPasswordRequest struct {
 }
 
 type LoginResponse struct {
-	User  UserResponse  `json:"user"`
-	Token TokenResponse `json:"token"`
+	User  UserDetailResponse `json:"user"`
+	Token TokenResponse      `json:"token"`
 }
 
 type TokenResponse struct {

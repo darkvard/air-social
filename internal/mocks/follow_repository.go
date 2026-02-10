@@ -426,26 +426,102 @@ func (_c *FollowRepository_GetFollowings_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// IsFollowedBy provides a mock function for the type FollowRepository
+func (_mock *FollowRepository) IsFollowedBy(ctx context.Context, userID int64, targetIDs []int64) (map[int64]bool, error) {
+	ret := _mock.Called(ctx, userID, targetIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsFollowedBy")
+	}
+
+	var r0 map[int64]bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, []int64) (map[int64]bool, error)); ok {
+		return returnFunc(ctx, userID, targetIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, []int64) map[int64]bool); ok {
+		r0 = returnFunc(ctx, userID, targetIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int64]bool)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, []int64) error); ok {
+		r1 = returnFunc(ctx, userID, targetIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// FollowRepository_IsFollowedBy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsFollowedBy'
+type FollowRepository_IsFollowedBy_Call struct {
+	*mock.Call
+}
+
+// IsFollowedBy is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID int64
+//   - targetIDs []int64
+func (_e *FollowRepository_Expecter) IsFollowedBy(ctx interface{}, userID interface{}, targetIDs interface{}) *FollowRepository_IsFollowedBy_Call {
+	return &FollowRepository_IsFollowedBy_Call{Call: _e.mock.On("IsFollowedBy", ctx, userID, targetIDs)}
+}
+
+func (_c *FollowRepository_IsFollowedBy_Call) Run(run func(ctx context.Context, userID int64, targetIDs []int64)) *FollowRepository_IsFollowedBy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 []int64
+		if args[2] != nil {
+			arg2 = args[2].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *FollowRepository_IsFollowedBy_Call) Return(int64ToBool map[int64]bool, err error) *FollowRepository_IsFollowedBy_Call {
+	_c.Call.Return(int64ToBool, err)
+	return _c
+}
+
+func (_c *FollowRepository_IsFollowedBy_Call) RunAndReturn(run func(ctx context.Context, userID int64, targetIDs []int64) (map[int64]bool, error)) *FollowRepository_IsFollowedBy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // IsFollowing provides a mock function for the type FollowRepository
-func (_mock *FollowRepository) IsFollowing(ctx context.Context, followerID int64, followeeID int64) (bool, error) {
-	ret := _mock.Called(ctx, followerID, followeeID)
+func (_mock *FollowRepository) IsFollowing(ctx context.Context, userID int64, targetIDs []int64) (map[int64]bool, error) {
+	ret := _mock.Called(ctx, userID, targetIDs)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IsFollowing")
 	}
 
-	var r0 bool
+	var r0 map[int64]bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (bool, error)); ok {
-		return returnFunc(ctx, followerID, followeeID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, []int64) (map[int64]bool, error)); ok {
+		return returnFunc(ctx, userID, targetIDs)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) bool); ok {
-		r0 = returnFunc(ctx, followerID, followeeID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, []int64) map[int64]bool); ok {
+		r0 = returnFunc(ctx, userID, targetIDs)
 	} else {
-		r0 = ret.Get(0).(bool)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int64]bool)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
-		r1 = returnFunc(ctx, followerID, followeeID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, []int64) error); ok {
+		r1 = returnFunc(ctx, userID, targetIDs)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -459,13 +535,13 @@ type FollowRepository_IsFollowing_Call struct {
 
 // IsFollowing is a helper method to define mock.On call
 //   - ctx context.Context
-//   - followerID int64
-//   - followeeID int64
-func (_e *FollowRepository_Expecter) IsFollowing(ctx interface{}, followerID interface{}, followeeID interface{}) *FollowRepository_IsFollowing_Call {
-	return &FollowRepository_IsFollowing_Call{Call: _e.mock.On("IsFollowing", ctx, followerID, followeeID)}
+//   - userID int64
+//   - targetIDs []int64
+func (_e *FollowRepository_Expecter) IsFollowing(ctx interface{}, userID interface{}, targetIDs interface{}) *FollowRepository_IsFollowing_Call {
+	return &FollowRepository_IsFollowing_Call{Call: _e.mock.On("IsFollowing", ctx, userID, targetIDs)}
 }
 
-func (_c *FollowRepository_IsFollowing_Call) Run(run func(ctx context.Context, followerID int64, followeeID int64)) *FollowRepository_IsFollowing_Call {
+func (_c *FollowRepository_IsFollowing_Call) Run(run func(ctx context.Context, userID int64, targetIDs []int64)) *FollowRepository_IsFollowing_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -475,9 +551,9 @@ func (_c *FollowRepository_IsFollowing_Call) Run(run func(ctx context.Context, f
 		if args[1] != nil {
 			arg1 = args[1].(int64)
 		}
-		var arg2 int64
+		var arg2 []int64
 		if args[2] != nil {
-			arg2 = args[2].(int64)
+			arg2 = args[2].([]int64)
 		}
 		run(
 			arg0,
@@ -488,12 +564,12 @@ func (_c *FollowRepository_IsFollowing_Call) Run(run func(ctx context.Context, f
 	return _c
 }
 
-func (_c *FollowRepository_IsFollowing_Call) Return(b bool, err error) *FollowRepository_IsFollowing_Call {
-	_c.Call.Return(b, err)
+func (_c *FollowRepository_IsFollowing_Call) Return(int64ToBool map[int64]bool, err error) *FollowRepository_IsFollowing_Call {
+	_c.Call.Return(int64ToBool, err)
 	return _c
 }
 
-func (_c *FollowRepository_IsFollowing_Call) RunAndReturn(run func(ctx context.Context, followerID int64, followeeID int64) (bool, error)) *FollowRepository_IsFollowing_Call {
+func (_c *FollowRepository_IsFollowing_Call) RunAndReturn(run func(ctx context.Context, userID int64, targetIDs []int64) (map[int64]bool, error)) *FollowRepository_IsFollowing_Call {
 	_c.Call.Return(run)
 	return _c
 }

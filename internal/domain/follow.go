@@ -5,6 +5,13 @@ import (
 	"time"
 )
 
+const (
+	SortLatest   = "latest"
+	SortOldest   = "oldest"
+	SortNameASC  = "name_asc"
+	SortNameDESC = "name_desc"
+)
+
 type FollowRepository interface {
 	Create(ctx context.Context, follow *Follow) error
 	Delete(ctx context.Context, followerID, followeeID int64) error
@@ -12,9 +19,11 @@ type FollowRepository interface {
 	CountFollowings(ctx context.Context, userID int64) (int64, error)
 	CountFollowers(ctx context.Context, userID int64) (int64, error)
 
-	IsFollowing(ctx context.Context, followerID, followeeID int64) (bool, error)
-	GetFollowings(ctx context.Context, params FollowParams) ([]User, error)
 	GetFollowers(ctx context.Context, params FollowParams) ([]User, error)
+	GetFollowings(ctx context.Context, params FollowParams) ([]User, error)
+
+	IsFollowing(ctx context.Context, userID int64, targetIDs []int64) (map[int64]bool, error)
+	IsFollowedBy(ctx context.Context, userID int64, targetIDs []int64) (map[int64]bool, error)
 }
 
 type Follow struct {
@@ -22,37 +31,18 @@ type Follow struct {
 	FolloweeID int64
 	CreatedAt  time.Time
 }
-
-type FollowResult struct {
-	Users []User
-	Total int64
-	Page  int
-	Limit int
-}
-
 type FollowParams struct {
-	UserID int64
-	Page   int
-	Limit  int
+	QueryParams
+	TargetUserID  int64
+	CurrentUserID int64
 }
 
-func (f FollowParams) GetPage() int {
-	if f.Page <= 0 {
-		return 1
-	}
-	return f.Page
+type SocialUser struct {
+	User     User
+	Relation Relationship
 }
 
-func (f FollowParams) GetLimit() int {
-	if f.Limit <= 0 {
-		return 10
-	}
-	if f.Limit > 100 {
-		return 100
-	}
-	return f.Limit
-}
-
-func (f FollowParams) GetOffset() int {
-	return (f.GetPage() - 1) * f.GetLimit()
+type Relationship struct {
+	IsFollowing  bool // Me -> Them
+	IsFollowedBy bool // Them -> Me
 }
