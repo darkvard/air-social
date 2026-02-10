@@ -104,9 +104,10 @@ func (h *FollowHandler) Unfollow(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		int	true	"User ID"
-//	@Param			page	query		int	false	"Page number"
-//	@Param			limit	query		int	false	"Items per page"
+//	@Param			id		path		int		true	"User ID"
+//	@Param			page	query		int		false	"Page number"
+//	@Param			limit	query		int		false	"Items per page"
+//	@Param			sort	query		string	false	"Sort order"	Enums(latest, oldest, name_asc, name_desc)
 //	@Success		200		{object}	dto.PaginatedResponse[dto.UserFollowResponse]
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
@@ -162,9 +163,10 @@ func (h *FollowHandler) GetFollowers(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		int	true	"User ID"
-//	@Param			page	query		int	false	"Page number"
-//	@Param			limit	query		int	false	"Items per page"
+//	@Param			id		path		int		true	"User ID"
+//	@Param			page	query		int		false	"Page number"
+//	@Param			limit	query		int		false	"Items per page"
+//	@Param			sort	query		string	false	"Sort order"	Enums(latest, oldest, name_asc, name_desc)
 //	@Success		200		{object}	dto.PaginatedResponse[dto.UserFollowResponse]
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response

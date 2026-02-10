@@ -875,6 +875,18 @@ const docTemplate = `{
                         "description": "Items per page",
                         "name": "limit",
                         "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest",
+                            "name_asc",
+                            "name_desc"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -941,6 +953,18 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Items per page",
                         "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest",
+                            "name_asc",
+                            "name_desc"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
                         "in": "query"
                     }
                 ],
@@ -1380,16 +1404,16 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
+                "followed_by_me": {
+                    "type": "boolean"
+                },
                 "full_name": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "is_followed_by": {
-                    "type": "boolean"
-                },
-                "is_following": {
+                "is_following_me": {
                     "type": "boolean"
                 },
                 "is_verified": {

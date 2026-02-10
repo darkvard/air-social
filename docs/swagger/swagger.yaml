@@ -276,13 +276,13 @@ definitions:
     properties:
       avatar:
         type: string
+      followed_by_me:
+        type: boolean
       full_name:
         type: string
       id:
         type: integer
-      is_followed_by:
-        type: boolean
-      is_following:
+      is_following_me:
         type: boolean
       is_verified:
         type: boolean
@@ -734,6 +734,15 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        - name_asc
+        - name_desc
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
@@ -777,6 +786,15 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        - name_asc
+        - name_desc
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
