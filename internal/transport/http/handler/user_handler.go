@@ -157,8 +157,8 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		dto.ConfirmProfileImageRequest	true	"Confirm Upload Request"
-//	@Success		200		{object}	map[string]string				"Returns upload success message and public URL"
+//	@Param			request	body		dto.BulkConfirmProfileImageRequest	true	"Confirm Upload Request List"
+//	@Success		200		{array}		dto.ConfirmFileResponse				"Returns list of confirmed files"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		403		{object}	pkg.Response
@@ -172,30 +172,19 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 		return
 	}
 
-	var req dto.ConfirmProfileImageRequest
+	var req dto.BulkConfirmProfileImageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
 	}
 
-	params := domain.ConfirmFileParams{
-		EntityID:  claims.UserID,
-		ObjectKey: req.ObjectKey,
-		Domain:    req.Domain,
-		Feature:   req.Feature,
-	}
-
-	fileURL, err := h.userSvc.ConfirmImageUpload(c.Request.Context(), params)
+	results, err := h.userSvc.ConfirmImageUpload(c.Request.Context(), req.ToDomain(claims.UserID))
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, gin.H{
-		"message": "Profile image updated successfully",
-		"url":     fileURL,
-	})
-
+	pkg.Success(c, dto.NewConfirmFileResponseList(results))
 }
 
 func (h *UserHandler) mapToResponse(user *domain.User) dto.UserDetailResponse {

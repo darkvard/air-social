@@ -96,24 +96,26 @@ func (_c *UserService_ChangePassword_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // ConfirmImageUpload provides a mock function for the type UserService
-func (_mock *UserService) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error) {
+func (_mock *UserService) ConfirmImageUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]domain.ConfirmFileResult, error) {
 	ret := _mock.Called(ctx, input)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ConfirmImageUpload")
 	}
 
-	var r0 string
+	var r0 []domain.ConfirmFileResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.ConfirmFileParams) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []domain.ConfirmFileParams) ([]domain.ConfirmFileResult, error)); ok {
 		return returnFunc(ctx, input)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.ConfirmFileParams) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []domain.ConfirmFileParams) []domain.ConfirmFileResult); ok {
 		r0 = returnFunc(ctx, input)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.ConfirmFileResult)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.ConfirmFileParams) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []domain.ConfirmFileParams) error); ok {
 		r1 = returnFunc(ctx, input)
 	} else {
 		r1 = ret.Error(1)
@@ -128,20 +130,20 @@ type UserService_ConfirmImageUpload_Call struct {
 
 // ConfirmImageUpload is a helper method to define mock.On call
 //   - ctx context.Context
-//   - input domain.ConfirmFileParams
+//   - input []domain.ConfirmFileParams
 func (_e *UserService_Expecter) ConfirmImageUpload(ctx interface{}, input interface{}) *UserService_ConfirmImageUpload_Call {
 	return &UserService_ConfirmImageUpload_Call{Call: _e.mock.On("ConfirmImageUpload", ctx, input)}
 }
 
-func (_c *UserService_ConfirmImageUpload_Call) Run(run func(ctx context.Context, input domain.ConfirmFileParams)) *UserService_ConfirmImageUpload_Call {
+func (_c *UserService_ConfirmImageUpload_Call) Run(run func(ctx context.Context, input []domain.ConfirmFileParams)) *UserService_ConfirmImageUpload_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 domain.ConfirmFileParams
+		var arg1 []domain.ConfirmFileParams
 		if args[1] != nil {
-			arg1 = args[1].(domain.ConfirmFileParams)
+			arg1 = args[1].([]domain.ConfirmFileParams)
 		}
 		run(
 			arg0,
@@ -151,12 +153,12 @@ func (_c *UserService_ConfirmImageUpload_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *UserService_ConfirmImageUpload_Call) Return(s string, err error) *UserService_ConfirmImageUpload_Call {
-	_c.Call.Return(s, err)
+func (_c *UserService_ConfirmImageUpload_Call) Return(confirmFileResults []domain.ConfirmFileResult, err error) *UserService_ConfirmImageUpload_Call {
+	_c.Call.Return(confirmFileResults, err)
 	return _c
 }
 
-func (_c *UserService_ConfirmImageUpload_Call) RunAndReturn(run func(ctx context.Context, input domain.ConfirmFileParams) (string, error)) *UserService_ConfirmImageUpload_Call {
+func (_c *UserService_ConfirmImageUpload_Call) RunAndReturn(run func(ctx context.Context, input []domain.ConfirmFileParams) ([]domain.ConfirmFileResult, error)) *UserService_ConfirmImageUpload_Call {
 	_c.Call.Return(run)
 	return _c
 }

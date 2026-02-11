@@ -47,43 +47,43 @@ func (s *mediaServiceSuite) TestGetPresignedURL() {
 	)
 
 	type args struct {
-		input domain.PresignedFileParams
+		input []domain.PresignedFileParams
 	}
 
 	tests := []struct {
 		name      string
 		args      args
 		setupMock func(storage *mocks.FileStorage, url *mocks.URLFactory)
-		want      domain.PresignedFile
+		want      []domain.PresignedFile
 		wantErr   error
 	}{
 		{
 			name: "unsupported_feature",
-			args: args{input: domain.PresignedFileParams{
+			args: args{input: []domain.PresignedFileParams{{
 				Domain: domain.DomainUser, Feature: "invalid",
-			}},
+			}}},
 			setupMock: func(storage *mocks.FileStorage, url *mocks.URLFactory) {},
 			wantErr:   pkg.ErrBadRequest,
 		},
 		{
 			name: "file_too_large",
-			args: args{input: domain.PresignedFileParams{
+			args: args{input: []domain.PresignedFileParams{{
 				Domain: domain.DomainUser, Feature: domain.FeatureAvatar, FileSize: domain.Limit5MB + 1,
-			}},
+			}}},
 			setupMock: func(storage *mocks.FileStorage, url *mocks.URLFactory) {},
 			wantErr:   pkg.ErrFileTooLarge,
 		},
 		{
 			name: "invalid_file_type",
-			args: args{input: domain.PresignedFileParams{
+			args: args{input: []domain.PresignedFileParams{{
 				Domain: domain.DomainUser, Feature: domain.FeatureAvatar, FileType: "application/pdf",
-			}},
+			}}},
 			setupMock: func(storage *mocks.FileStorage, url *mocks.URLFactory) {},
 			wantErr:   pkg.ErrBadRequest,
 		},
 		{
 			name: "storage_error",
-			args: args{input: input},
+			args: args{input: []domain.PresignedFileParams{input}},
 			setupMock: func(storage *mocks.FileStorage, url *mocks.URLFactory) {
 				storage.EXPECT().GetPresignedPostPolicy(mock.Anything, mock.Anything, mock.Anything).Return(domain.PresignedURLResult{}, assert.AnError).Once()
 			},
@@ -91,7 +91,7 @@ func (s *mediaServiceSuite) TestGetPresignedURL() {
 		},
 		{
 			name: "success",
-			args: args{input: input},
+			args: args{input: []domain.PresignedFileParams{input}},
 			setupMock: func(storage *mocks.FileStorage, url *mocks.URLFactory) {
 				storage.EXPECT().GetPresignedPostPolicy(mock.Anything,
 					mock.MatchedBy(func(loc domain.StorageLocation) bool {
@@ -104,11 +104,12 @@ func (s *mediaServiceSuite) TestGetPresignedURL() {
 				url.EXPECT().BaseURL().Return("http://cdn.test").Once()
 				url.EXPECT().PublicFileURL(mock.Anything).Return(expectedUploadURL + "/somekey").Once()
 			},
-			want: domain.PresignedFile{
+			want: []domain.PresignedFile{{
+				FileName:  input.FileName,
 				UploadURL: expectedUploadURL,
 				FormData:  presignedResp.FormData,
 				ExpireAt:  pkg.TimeNowUTC().Add(domain.PresignedUploadExpiry),
-			},
+			}},
 			wantErr: nil,
 		},
 	}
@@ -132,10 +133,11 @@ func (s *mediaServiceSuite) TestGetPresignedURL() {
 				}
 			} else {
 				s.NoError(err)
-				s.Equal(tc.want.UploadURL, got.UploadURL)
-				s.Equal(tc.want.FormData, got.FormData)
-				s.NotEmpty(got.ObjectKey)
-				s.NotEmpty(got.PublicURL)
+				s.Equal(tc.want[0].UploadURL, got[0].UploadURL)
+				s.Equal(tc.want[0].FileName, got[0].FileName)
+				s.Equal(tc.want[0].FormData, got[0].FormData)
+				s.NotEmpty(got[0].ObjectKey)
+				s.NotEmpty(got[0].PublicURL)
 				// s.Contains(got.PublicURL, s.cfg.DomainPublic) // Mock returns specific string
 			}
 		})
@@ -155,19 +157,19 @@ func (s *mediaServiceSuite) TestConfirmUpload() {
 	)
 
 	type args struct {
-		input domain.ConfirmFileParams
+		input []domain.ConfirmFileParams
 	}
 
 	tests := []struct {
 		name      string
 		args      args
 		setupMock func(storage *mocks.FileStorage)
-		want      string
+		want      []string
 		wantErr   error
 	}{
 		{
 			name: "success",
-			args: args{input: input},
+			args: args{input: []domain.ConfirmFileParams{input}},
 			setupMock: func(storage *mocks.FileStorage) {
 
 				storage.EXPECT().StatFile(mock.Anything, domain.StorageLocation{
@@ -176,41 +178,41 @@ func (s *mediaServiceSuite) TestConfirmUpload() {
 				}).Return(true, nil).Once()
 
 			},
-			want:    objectKey,
+			want:    []string{objectKey},
 			wantErr: nil,
 		},
 
 		{
 			name: "user_mismatch",
-			args: args{input: domain.ConfirmFileParams{
+			args: args{input: []domain.ConfirmFileParams{{
 				EntityID:  userID + 1,
 				ObjectKey: objectKey,
 				Domain:    domain.DomainUser,
 				Feature:   domain.FeatureAvatar,
-			}},
+			}}},
 			setupMock: func(storage *mocks.FileStorage) {
 
 			},
-			want:    "",
+			want:    nil,
 			wantErr: pkg.ErrForbidden,
 		},
 		{
 			name: "storage_stat_error",
-			args: args{input: input},
+			args: args{input: []domain.ConfirmFileParams{input}},
 			setupMock: func(storage *mocks.FileStorage) {
 
 				storage.EXPECT().StatFile(mock.Anything, mock.Anything).Return(false, assert.AnError).Once()
 			},
-			want:    "",
+			want:    nil,
 			wantErr: assert.AnError,
 		},
 		{
 			name: "file_not_found",
-			args: args{input: input},
+			args: args{input: []domain.ConfirmFileParams{input}},
 			setupMock: func(storage *mocks.FileStorage) {
 				storage.EXPECT().StatFile(mock.Anything, mock.Anything).Return(false, nil).Once()
 			},
-			want:    "",
+			want:    nil,
 			wantErr: pkg.ErrNotFound,
 		},
 	}
@@ -241,28 +243,28 @@ func (s *mediaServiceSuite) TestConfirmUpload() {
 }
 
 func (s *mediaServiceSuite) TestDeleteFile() {
-	objectKey := "file.jpg"
+	objectKeys := []string{"file.jpg"}
 
 	tests := []struct {
-		name      string
-		objectKey string
-		setupMock func(storage *mocks.FileStorage)
-		wantErr   error
+		name       string
+		objectKeys []string
+		setupMock  func(storage *mocks.FileStorage)
+		wantErr    error
 	}{
 		{
-			name:      "success",
-			objectKey: objectKey,
+			name:       "success",
+			objectKeys: objectKeys,
 			setupMock: func(storage *mocks.FileStorage) {
 				storage.EXPECT().DeleteFile(mock.Anything, domain.StorageLocation{
 					Bucket: s.cfg.BucketPublic,
-					Key:    objectKey,
+					Key:    objectKeys[0],
 				}).Return(nil).Once()
 			},
 			wantErr: nil,
 		},
 		{
-			name:      "error",
-			objectKey: objectKey,
+			name:       "error",
+			objectKeys: objectKeys,
 			setupMock: func(storage *mocks.FileStorage) {
 				storage.EXPECT().DeleteFile(mock.Anything, mock.Anything).Return(assert.AnError).Once()
 			},
@@ -280,7 +282,7 @@ func (s *mediaServiceSuite) TestDeleteFile() {
 				tc.setupMock(mockStorage)
 			}
 
-			err := svc.DeleteFile(context.Background(), tc.objectKey)
+			err := svc.DeleteFile(context.Background(), tc.objectKeys)
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)

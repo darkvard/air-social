@@ -685,59 +685,63 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 	publicURL := "http://localhost/air-social-public/" + objectKey
 
 	type args struct {
-		input domain.ConfirmFileParams
+		input []domain.ConfirmFileParams
 	}
 
 	tests := []struct {
 		name      string
 		args      args
 		setupMock func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args)
-		wantURL   string
+		want      []domain.ConfirmFileResult
 		wantErr   error
 	}{
 		{
 			name: "invalid_feature",
 			args: args{
-				input: domain.ConfirmFileParams{Feature: domain.FeatureFeedImage},
+				input: []domain.ConfirmFileParams{{Feature: domain.FeatureFeedImage}},
 			},
 			setupMock: nil,
-			wantURL:   "",
+			want:      nil,
 			wantErr:   pkg.ErrInvalidData,
 		},
 		{
 			name: "confirm_upload_error",
 			args: args{
-				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
+				input: []domain.ConfirmFileParams{{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser}},
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
-				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return("", pkg.ErrNotFound).Once()
+				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return(nil, pkg.ErrNotFound).Once()
 			},
-			wantURL: "",
+			want:    nil,
 			wantErr: pkg.ErrNotFound,
 		},
 		{
 			name: "update_repo_error",
 			args: args{
-				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
+				input: []domain.ConfirmFileParams{{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser}},
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
-				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return(objectKey, nil).Once()
-				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.EntityID, objectKey, a.input.Feature).Return(assert.AnError).Once()
+				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return([]string{objectKey}, nil).Once()
+				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input[0].EntityID, objectKey, a.input[0].Feature).Return(assert.AnError).Once()
 			},
-			wantURL: "",
+			want:    nil,
 			wantErr: pkg.ErrInternal,
 		},
 		{
 			name: "success",
 			args: args{
-				input: domain.ConfirmFileParams{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser},
+				input: []domain.ConfirmFileParams{{Feature: domain.FeatureAvatar, EntityID: userID, Domain: domain.DomainUser}},
 			},
 			setupMock: func(userRepo *mocks.UserRepository, mediaSvc *mocks.MediaService, url *mocks.URLFactory, a args) {
-				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return(objectKey, nil).Once()
-				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input.EntityID, objectKey, a.input.Feature).Return(nil).Once()
+				mediaSvc.EXPECT().ConfirmUpload(mock.Anything, a.input).Return([]string{objectKey}, nil).Once()
+				userRepo.EXPECT().UpdateProfileImages(mock.Anything, a.input[0].EntityID, objectKey, a.input[0].Feature).Return(nil).Once()
 				url.EXPECT().PublicFileURL(objectKey).Return(publicURL).Once()
 			},
-			wantURL: publicURL,
+			want: []domain.ConfirmFileResult{{
+				Domain:  domain.DomainUser,
+				Feature: domain.FeatureAvatar,
+				URL:     publicURL,
+			}},
 			wantErr: nil,
 		},
 	}
@@ -760,7 +764,7 @@ func (s *userServiceSuite) TestConfirmImageUpload() {
 				s.Empty(got)
 			} else {
 				s.NoError(err)
-				s.Equal(tc.wantURL, got)
+				s.Equal(tc.want, got)
 			}
 		})
 	}

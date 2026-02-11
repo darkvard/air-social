@@ -107,9 +107,16 @@ type ConfirmFileParams struct {
 }
 
 type PresignedFile struct {
+	FileName  string
 	UploadURL string
 	FormData  map[string]string
 	ObjectKey string
 	PublicURL string
 	ExpireAt  time.Time
+}
+
+type ConfirmFileResult struct {
+	Domain  UploadDomain
+	Feature UploadFeature
+	URL     string
 }

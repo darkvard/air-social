@@ -45,7 +45,7 @@ const (
 
 const (
 	MediaGroup      = "/media"
-	PresignedUpload = "/presigned"
+	PresignedUpload = "/presigned-urls"
 	Images          = "/images"
 )
 

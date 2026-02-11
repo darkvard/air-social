@@ -14,9 +14,9 @@ import (
 )
 
 type MediaService interface {
-	GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error)
-	ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
-	DeleteFile(ctx context.Context, objectKey string) error
+	GetPresignedURL(ctx context.Context, input []domain.PresignedFileParams) ([]domain.PresignedFile, error)
+	ConfirmUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]string, error)
+	DeleteFile(ctx context.Context, objectKeys []string) error
 }
 
 type MediaServiceImpl struct {
@@ -33,70 +33,84 @@ func NewMediaService(storage domain.FileStorage, cfg domain.FileConfig, url doma
 	}
 }
 
-func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error) {
-	var empty domain.PresignedFile
+func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input []domain.PresignedFileParams) ([]domain.PresignedFile, error) {
+	results := make([]domain.PresignedFile, 0, len(input))
 
-	rule, err := s.validateAndGetUploadRule(input)
-	if err != nil {
-		return empty, err
+	for _, item := range input {
+		rule, err := s.validateAndGetUploadRule(item)
+		if err != nil {
+			return nil, err
+		}
+
+		loc := domain.StorageLocation{
+			Bucket: s.cfg.BucketPublic,
+			Key:    s.generateObjectKey(item),
+		}
+		constraints := domain.UploadConstraints{
+			Expiry:      domain.PresignedUploadExpiry,
+			ContentType: item.FileType,
+			MaxSize:     rule.MaxBytes,
+		}
+
+		result, err := s.storage.GetPresignedPostPolicy(ctx, loc, constraints)
+		if err != nil {
+			return nil, err
+		}
+
+		// build public URL using config. MinIO returns internal Docker endpoint not accessible to clients.
+		baseURL := strings.TrimSuffix(s.url.BaseURL(), "/")
+		uploadURL := fmt.Sprintf("%s/%s", baseURL, s.cfg.BucketPublic)
+
+		results = append(results, domain.PresignedFile{
+			FileName:  item.FileName,
+			UploadURL: uploadURL,
+			FormData:  result.FormData,
+			ObjectKey: loc.Key,
+			PublicURL: s.url.PublicFileURL(loc.Key),
+			ExpireAt:  pkg.TimeNowUTC().Add(domain.PresignedUploadExpiry),
+		})
 	}
 
-	loc := domain.StorageLocation{
-		Bucket: s.cfg.BucketPublic,
-		Key:    s.generateObjectKey(input),
-	}
-	constraints := domain.UploadConstraints{
-		Expiry:      domain.PresignedUploadExpiry,
-		ContentType: input.FileType,
-		MaxSize:     rule.MaxBytes,
-	}
-
-	result, err := s.storage.GetPresignedPostPolicy(ctx, loc, constraints)
-	if err != nil {
-		return empty, err
-	}
-
-	// build public URL using config. MinIO returns internal Docker endpoint not accessible to clients.
-	baseURL := strings.TrimSuffix(s.url.BaseURL(), "/")
-	uploadURL := fmt.Sprintf("%s/%s", baseURL, s.cfg.BucketPublic)
-
-	return domain.PresignedFile{
-		UploadURL: uploadURL,
-		FormData:  result.FormData,
-		ObjectKey: loc.Key,
-		PublicURL: s.url.PublicFileURL(loc.Key),
-		ExpireAt:  pkg.TimeNowUTC().Add(domain.PresignedUploadExpiry),
-	}, nil
+	return results, nil
 }
 
-func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error) {
-	loc := domain.StorageLocation{
-		Bucket: s.cfg.BucketPublic,
-		Key:    input.ObjectKey,
+func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]string, error) {
+	results := make([]string, 0, len(input))
+
+	for _, item := range input {
+		if err := s.validateUploadPath(item); err != nil {
+			return nil, err
+		}
+
+		loc := domain.StorageLocation{
+			Bucket: s.cfg.BucketPublic,
+			Key:    item.ObjectKey,
+		}
+
+		exists, err := s.storage.StatFile(ctx, loc)
+		if err != nil {
+			return nil, pkg.OrInternalError(err)
+		}
+		if !exists {
+			return nil, pkg.ErrNotFound
+		}
+		results = append(results, loc.Key)
 	}
 
-	if err := s.validateUploadPath(input); err != nil {
-		return "", err
-	}
-
-	exists, err := s.storage.StatFile(ctx, loc)
-	if err != nil {
-		return "", pkg.OrInternalError(err)
-	}
-	if !exists {
-		return "", pkg.ErrNotFound
-	}
-
-	return loc.Key, nil
+	return results, nil
 }
 
-func (s *MediaServiceImpl) DeleteFile(ctx context.Context, objectKey string) error {
-	loc := domain.StorageLocation{
-		Bucket: s.cfg.BucketPublic,
-		Key:    objectKey,
+func (s *MediaServiceImpl) DeleteFile(ctx context.Context, objectKeys []string) error {
+	for _, key := range objectKeys {
+		loc := domain.StorageLocation{
+			Bucket: s.cfg.BucketPublic,
+			Key:    key,
+		}
+		if err := s.storage.DeleteFile(ctx, loc); err != nil {
+			return err
+		}
 	}
-
-	return s.storage.DeleteFile(ctx, loc)
+	return nil
 }
 
 // Internal helpers

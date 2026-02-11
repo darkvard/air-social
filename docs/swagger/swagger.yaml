@@ -26,6 +26,28 @@ definitions:
     - FeatureFeedVideo
     - FeatureVoiceChat
     - FeatureAttachment
+  air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/air-social_internal_transport_http_dto.ConfirmProfileImageRequest'
+        maxItems: 10
+        minItems: 1
+        type: array
+    required:
+    - files
+    type: object
+  air-social_internal_transport_http_dto.BulkPresignedUploadRequest:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/air-social_internal_transport_http_dto.PresignedUploadRequest'
+        maxItems: 10
+        minItems: 1
+        type: array
+    required:
+    - files
+    type: object
   air-social_internal_transport_http_dto.ChangePasswordRequest:
     properties:
       current_password:
@@ -37,6 +59,15 @@ definitions:
     required:
     - current_password
     - new_password
+    type: object
+  air-social_internal_transport_http_dto.ConfirmFileResponse:
+    properties:
+      domain:
+        $ref: '#/definitions/air-social_internal_domain.UploadDomain'
+      feature:
+        $ref: '#/definitions/air-social_internal_domain.UploadFeature'
+      url:
+        type: string
     type: object
   air-social_internal_transport_http_dto.ConfirmProfileImageRequest:
     properties:
@@ -116,6 +147,8 @@ definitions:
   air-social_internal_transport_http_dto.PresignedFileResponse:
     properties:
       expire_at:
+        type: string
+      file_name:
         type: string
       form_data:
         additionalProperties:
@@ -596,31 +629,33 @@ paths:
       summary: Health check
       tags:
       - Health
-  /media/presigned:
+  /media/presigned-urls:
     post:
       consumes:
       - application/json
       description: |-
-        Generates a presigned URL and policy signature for direct file upload to MinIO/S3.
+        Generates a list of presigned URLs and policy signatures for direct file upload to MinIO/S3.
 
         **Client Integration:**
         * **Target:** Send a `POST` request to the returned `upload_url`.
         * **Payload:** Use `multipart/form-data`. Append all fields from `form_data` (must be FIRST) followed by the file binary (must be LAST).
         * **Success:** Upon successful upload (HTTP 204), confirm the `object_key` with the Backend database.
       parameters:
-      - description: File Metadata
+      - description: File Metadata List
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.PresignedUploadRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.BulkPresignedUploadRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Upload Credentials
+          description: Upload Credentials List
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.PresignedFileResponse'
+            items:
+              $ref: '#/definitions/air-social_internal_transport_http_dto.PresignedFileResponse'
+            type: array
         "400":
           description: Bad Request
           schema:
@@ -926,21 +961,21 @@ paths:
       description: Confirm that the file has been uploaded successfully and update
         the user profile with the new image URL.
       parameters:
-      - description: Confirm Upload Request
+      - description: Confirm Upload Request List
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.ConfirmProfileImageRequest'
+          $ref: '#/definitions/air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Returns upload success message and public URL
+          description: Returns list of confirmed files
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            items:
+              $ref: '#/definitions/air-social_internal_transport_http_dto.ConfirmFileResponse'
+            type: array
         "400":
           description: Bad Request
           schema:

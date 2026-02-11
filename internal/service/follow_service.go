@@ -186,7 +186,6 @@ func (s *FollowServiceImpl) enrichSocialUsers(ctx context.Context, currentUserID
 
 	// Run sequentially to prevent nested concurrency and DB connection pool exhaustion.
 	// Parent already runs concurrently; adding goroutines here wastes CPU on fast queries.
-	
 	followingMap, err := s.followRepo.IsFollowing(ctx, currentUserID, targetIDs)
 	if err != nil {
 		return nil, err

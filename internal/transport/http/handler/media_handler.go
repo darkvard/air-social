@@ -3,7 +3,6 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
-	"air-social/internal/domain"
 	"air-social/internal/service"
 	"air-social/internal/transport/http/dto"
 	"air-social/internal/transport/http/middleware"
@@ -21,7 +20,7 @@ func NewMediaHandler(srv service.MediaService) *MediaHandler {
 // PresignedUpload godoc
 //
 //	@Summary		Get presigned upload URL
-//	@Description	Generates a presigned URL and policy signature for direct file upload to MinIO/S3.
+//	@Description	Generates a list of presigned URLs and policy signatures for direct file upload to MinIO/S3.
 //	@Description
 //	@Description	**Client Integration:**
 //	@Description	* **Target:** Send a `POST` request to the returned `upload_url`.
@@ -31,47 +30,30 @@ func NewMediaHandler(srv service.MediaService) *MediaHandler {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			request	body		dto.PresignedUploadRequest	true	"File Metadata"
-//	@Success		200		{object}	dto.PresignedFileResponse	"Upload Credentials"
+//	@Param			request	body		dto.BulkPresignedUploadRequest	true	"File Metadata List"
+//	@Success		200		{array}		dto.PresignedFileResponse		"Upload Credentials List"
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
-//	@Router			/media/presigned [post]
+//	@Router			/media/presigned-urls [post]
 func (h *MediaHandler) PresignedUpload(c *gin.Context) {
-	payload, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetAuthClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
 	}
 
-	var req dto.PresignedUploadRequest
+	var req dto.BulkPresignedUploadRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		pkg.HandleValidateError(c, err)
 		return
 	}
 
-	res, err := h.srv.GetPresignedURL(
-		c.Request.Context(),
-		domain.PresignedFileParams{
-			EntityID: payload.UserID,
-			FileName: req.FileName,
-			FileType: req.FileType,
-			FileSize: req.FileSize,
-			Domain:   req.Domain,
-			Feature:  req.Feature,
-		},
-	)
-
+	res, err := h.srv.GetPresignedURL(c.Request.Context(), req.ToDomain(claims.UserID))
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, dto.PresignedFileResponse{
-		UploadURL: res.UploadURL,
-		FormData:  res.FormData,
-		ObjectKey: res.ObjectKey,
-		PublicURL: res.PublicURL,
-		ExpireAt:  res.ExpireAt,
-	})
+	pkg.Success(c, dto.NewPresignedFileResponseList(res))
 }

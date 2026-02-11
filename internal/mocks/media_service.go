@@ -39,24 +39,26 @@ func (_m *MediaService) EXPECT() *MediaService_Expecter {
 }
 
 // ConfirmUpload provides a mock function for the type MediaService
-func (_mock *MediaService) ConfirmUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error) {
+func (_mock *MediaService) ConfirmUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]string, error) {
 	ret := _mock.Called(ctx, input)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ConfirmUpload")
 	}
 
-	var r0 string
+	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.ConfirmFileParams) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []domain.ConfirmFileParams) ([]string, error)); ok {
 		return returnFunc(ctx, input)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.ConfirmFileParams) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []domain.ConfirmFileParams) []string); ok {
 		r0 = returnFunc(ctx, input)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.ConfirmFileParams) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []domain.ConfirmFileParams) error); ok {
 		r1 = returnFunc(ctx, input)
 	} else {
 		r1 = ret.Error(1)
@@ -71,20 +73,20 @@ type MediaService_ConfirmUpload_Call struct {
 
 // ConfirmUpload is a helper method to define mock.On call
 //   - ctx context.Context
-//   - input domain.ConfirmFileParams
+//   - input []domain.ConfirmFileParams
 func (_e *MediaService_Expecter) ConfirmUpload(ctx interface{}, input interface{}) *MediaService_ConfirmUpload_Call {
 	return &MediaService_ConfirmUpload_Call{Call: _e.mock.On("ConfirmUpload", ctx, input)}
 }
 
-func (_c *MediaService_ConfirmUpload_Call) Run(run func(ctx context.Context, input domain.ConfirmFileParams)) *MediaService_ConfirmUpload_Call {
+func (_c *MediaService_ConfirmUpload_Call) Run(run func(ctx context.Context, input []domain.ConfirmFileParams)) *MediaService_ConfirmUpload_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 domain.ConfirmFileParams
+		var arg1 []domain.ConfirmFileParams
 		if args[1] != nil {
-			arg1 = args[1].(domain.ConfirmFileParams)
+			arg1 = args[1].([]domain.ConfirmFileParams)
 		}
 		run(
 			arg0,
@@ -94,27 +96,27 @@ func (_c *MediaService_ConfirmUpload_Call) Run(run func(ctx context.Context, inp
 	return _c
 }
 
-func (_c *MediaService_ConfirmUpload_Call) Return(s string, err error) *MediaService_ConfirmUpload_Call {
-	_c.Call.Return(s, err)
+func (_c *MediaService_ConfirmUpload_Call) Return(strings []string, err error) *MediaService_ConfirmUpload_Call {
+	_c.Call.Return(strings, err)
 	return _c
 }
 
-func (_c *MediaService_ConfirmUpload_Call) RunAndReturn(run func(ctx context.Context, input domain.ConfirmFileParams) (string, error)) *MediaService_ConfirmUpload_Call {
+func (_c *MediaService_ConfirmUpload_Call) RunAndReturn(run func(ctx context.Context, input []domain.ConfirmFileParams) ([]string, error)) *MediaService_ConfirmUpload_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteFile provides a mock function for the type MediaService
-func (_mock *MediaService) DeleteFile(ctx context.Context, objectKey string) error {
-	ret := _mock.Called(ctx, objectKey)
+func (_mock *MediaService) DeleteFile(ctx context.Context, objectKeys []string) error {
+	ret := _mock.Called(ctx, objectKeys)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteFile")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, objectKey)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) error); ok {
+		r0 = returnFunc(ctx, objectKeys)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -128,20 +130,20 @@ type MediaService_DeleteFile_Call struct {
 
 // DeleteFile is a helper method to define mock.On call
 //   - ctx context.Context
-//   - objectKey string
-func (_e *MediaService_Expecter) DeleteFile(ctx interface{}, objectKey interface{}) *MediaService_DeleteFile_Call {
-	return &MediaService_DeleteFile_Call{Call: _e.mock.On("DeleteFile", ctx, objectKey)}
+//   - objectKeys []string
+func (_e *MediaService_Expecter) DeleteFile(ctx interface{}, objectKeys interface{}) *MediaService_DeleteFile_Call {
+	return &MediaService_DeleteFile_Call{Call: _e.mock.On("DeleteFile", ctx, objectKeys)}
 }
 
-func (_c *MediaService_DeleteFile_Call) Run(run func(ctx context.Context, objectKey string)) *MediaService_DeleteFile_Call {
+func (_c *MediaService_DeleteFile_Call) Run(run func(ctx context.Context, objectKeys []string)) *MediaService_DeleteFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 []string
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].([]string)
 		}
 		run(
 			arg0,
@@ -156,30 +158,32 @@ func (_c *MediaService_DeleteFile_Call) Return(err error) *MediaService_DeleteFi
 	return _c
 }
 
-func (_c *MediaService_DeleteFile_Call) RunAndReturn(run func(ctx context.Context, objectKey string) error) *MediaService_DeleteFile_Call {
+func (_c *MediaService_DeleteFile_Call) RunAndReturn(run func(ctx context.Context, objectKeys []string) error) *MediaService_DeleteFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPresignedURL provides a mock function for the type MediaService
-func (_mock *MediaService) GetPresignedURL(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error) {
+func (_mock *MediaService) GetPresignedURL(ctx context.Context, input []domain.PresignedFileParams) ([]domain.PresignedFile, error) {
 	ret := _mock.Called(ctx, input)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPresignedURL")
 	}
 
-	var r0 domain.PresignedFile
+	var r0 []domain.PresignedFile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.PresignedFileParams) (domain.PresignedFile, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []domain.PresignedFileParams) ([]domain.PresignedFile, error)); ok {
 		return returnFunc(ctx, input)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.PresignedFileParams) domain.PresignedFile); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []domain.PresignedFileParams) []domain.PresignedFile); ok {
 		r0 = returnFunc(ctx, input)
 	} else {
-		r0 = ret.Get(0).(domain.PresignedFile)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.PresignedFile)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.PresignedFileParams) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []domain.PresignedFileParams) error); ok {
 		r1 = returnFunc(ctx, input)
 	} else {
 		r1 = ret.Error(1)
@@ -194,20 +198,20 @@ type MediaService_GetPresignedURL_Call struct {
 
 // GetPresignedURL is a helper method to define mock.On call
 //   - ctx context.Context
-//   - input domain.PresignedFileParams
+//   - input []domain.PresignedFileParams
 func (_e *MediaService_Expecter) GetPresignedURL(ctx interface{}, input interface{}) *MediaService_GetPresignedURL_Call {
 	return &MediaService_GetPresignedURL_Call{Call: _e.mock.On("GetPresignedURL", ctx, input)}
 }
 
-func (_c *MediaService_GetPresignedURL_Call) Run(run func(ctx context.Context, input domain.PresignedFileParams)) *MediaService_GetPresignedURL_Call {
+func (_c *MediaService_GetPresignedURL_Call) Run(run func(ctx context.Context, input []domain.PresignedFileParams)) *MediaService_GetPresignedURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 domain.PresignedFileParams
+		var arg1 []domain.PresignedFileParams
 		if args[1] != nil {
-			arg1 = args[1].(domain.PresignedFileParams)
+			arg1 = args[1].([]domain.PresignedFileParams)
 		}
 		run(
 			arg0,
@@ -217,12 +221,12 @@ func (_c *MediaService_GetPresignedURL_Call) Run(run func(ctx context.Context, i
 	return _c
 }
 
-func (_c *MediaService_GetPresignedURL_Call) Return(presignedFile domain.PresignedFile, err error) *MediaService_GetPresignedURL_Call {
-	_c.Call.Return(presignedFile, err)
+func (_c *MediaService_GetPresignedURL_Call) Return(presignedFiles []domain.PresignedFile, err error) *MediaService_GetPresignedURL_Call {
+	_c.Call.Return(presignedFiles, err)
 	return _c
 }
 
-func (_c *MediaService_GetPresignedURL_Call) RunAndReturn(run func(ctx context.Context, input domain.PresignedFileParams) (domain.PresignedFile, error)) *MediaService_GetPresignedURL_Call {
+func (_c *MediaService_GetPresignedURL_Call) RunAndReturn(run func(ctx context.Context, input []domain.PresignedFileParams) ([]domain.PresignedFile, error)) *MediaService_GetPresignedURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

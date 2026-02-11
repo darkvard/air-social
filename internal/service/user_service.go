@@ -12,13 +12,13 @@ type UserService interface {
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetProfile(ctx context.Context, id int64) (*domain.User, error)
 
-	CreateUser(ctx context.Context, input domain.CreateUserParams) (*domain.User, error)
-	UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (*domain.User, error)
-	ChangePassword(ctx context.Context, input domain.ChangePasswordParams) error
+	CreateUser(ctx context.Context, params domain.CreateUserParams) (*domain.User, error)
+	UpdateProfile(ctx context.Context, params domain.UpdateProfileParams) (*domain.User, error)
+	ChangePassword(ctx context.Context, params domain.ChangePasswordParams) error
 	UpdatePassword(ctx context.Context, email, passwordHashed string) error
 	VerifyEmail(ctx context.Context, email string) error
 
-	ConfirmImageUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error)
+	ConfirmImageUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]domain.ConfirmFileResult, error)
 }
 
 type UserServiceImpl struct {
@@ -55,12 +55,12 @@ func (s *UserServiceImpl) GetProfile(ctx context.Context, id int64) (*domain.Use
 	return s.GetByID(ctx, id)
 }
 
-func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUserParams) (*domain.User, error) {
+func (s *UserServiceImpl) CreateUser(ctx context.Context, params domain.CreateUserParams) (*domain.User, error) {
 
 	user := &domain.User{
-		Email:        input.Email,
-		Username:     input.Username,
-		PasswordHash: input.PasswordHashed,
+		Email:        params.Email,
+		Username:     params.Username,
+		PasswordHash: params.PasswordHashed,
 	}
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
@@ -70,28 +70,28 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, input domain.CreateUse
 	return user, nil
 }
 
-func (s *UserServiceImpl) UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (*domain.User, error) {
+func (s *UserServiceImpl) UpdateProfile(ctx context.Context, params domain.UpdateProfileParams) (*domain.User, error) {
 	var empty *domain.User
 
-	user, err := s.GetByID(ctx, input.UserID)
+	user, err := s.GetByID(ctx, params.UserID)
 	if err != nil {
 		return empty, err
 	}
 
-	if input.FullName != nil {
-		user.Profile.FullName = *input.FullName
+	if params.FullName != nil {
+		user.Profile.FullName = *params.FullName
 	}
-	if input.Bio != nil {
-		user.Profile.Bio = *input.Bio
+	if params.Bio != nil {
+		user.Profile.Bio = *params.Bio
 	}
-	if input.Location != nil {
-		user.Profile.Location = *input.Location
+	if params.Location != nil {
+		user.Profile.Location = *params.Location
 	}
-	if input.Website != nil {
-		user.Profile.Website = *input.Website
+	if params.Website != nil {
+		user.Profile.Website = *params.Website
 	}
-	if input.Username != nil {
-		user.Username = *input.Username
+	if params.Username != nil {
+		user.Username = *params.Username
 	}
 
 	if err := s.updateUser(ctx, user); err != nil {
@@ -100,20 +100,20 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, input domain.Update
 	return user, nil
 }
 
-func (s *UserServiceImpl) ChangePassword(ctx context.Context, input domain.ChangePasswordParams) error {
-	user, err := s.GetByID(ctx, input.UserID)
+func (s *UserServiceImpl) ChangePassword(ctx context.Context, params domain.ChangePasswordParams) error {
+	user, err := s.GetByID(ctx, params.UserID)
 	if err != nil {
 		return err
 	}
 
-	if input.NewPassword == input.CurrentPassword {
+	if params.NewPassword == params.CurrentPassword {
 		return pkg.ErrSamePassword
 	}
-	if !verifyPassword(input.CurrentPassword, user.PasswordHash) {
+	if !verifyPassword(params.CurrentPassword, user.PasswordHash) {
 		return pkg.ErrInvalidCredentials
 	}
 
-	hashedPwd, err := hashPassword(input.NewPassword)
+	hashedPwd, err := hashPassword(params.NewPassword)
 	if err != nil {
 		return pkg.OrInternalError(err)
 	}
@@ -145,21 +145,32 @@ func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
 	return s.updateUser(ctx, user)
 }
 
-func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, input domain.ConfirmFileParams) (string, error) {
-	if input.Feature != domain.FeatureAvatar && input.Feature != domain.FeatureCover {
-		return "", pkg.ErrInvalidData
+func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, params []domain.ConfirmFileParams) ([]domain.ConfirmFileResult, error) {
+	for _, input := range params {
+		if input.Feature != domain.FeatureAvatar && input.Feature != domain.FeatureCover {
+			return nil, pkg.ErrInvalidData
+		}
 	}
 
-	objectKey, err := s.mediaSvc.ConfirmUpload(ctx, input)
+	keys, err := s.mediaSvc.ConfirmUpload(ctx, params)
 	if err != nil {
-		return "", pkg.OrInternalError(err, pkg.ErrBadRequest, pkg.ErrForbidden, pkg.ErrNotFound)
+		return nil, pkg.OrInternalError(err, pkg.ErrBadRequest, pkg.ErrForbidden, pkg.ErrNotFound)
 	}
 
-	if err = s.userRepo.UpdateProfileImages(ctx, input.EntityID, objectKey, input.Feature); err != nil {
-		return "", pkg.OrInternalError(err)
+	responses := make([]domain.ConfirmFileResult, len(params))
+	for i, input := range params {
+		if err = s.userRepo.UpdateProfileImages(ctx, input.EntityID, keys[i], input.Feature); err != nil {
+			return nil, pkg.OrInternalError(err)
+		}
+
+		responses[i] = domain.ConfirmFileResult{
+			Domain:  input.Domain,
+			Feature: input.Feature,
+			URL:     s.url.PublicFileURL(keys[i]),
+		}
 	}
 
-	return s.url.PublicFileURL(objectKey), nil
+	return responses, nil
 }
 
 // Internal helpers

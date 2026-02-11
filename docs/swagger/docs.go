@@ -431,14 +431,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/media/presigned": {
+        "/media/presigned-urls": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Generates a presigned URL and policy signature for direct file upload to MinIO/S3.\n\n**Client Integration:**\n* **Target:** Send a ` + "`" + `POST` + "`" + ` request to the returned ` + "`" + `upload_url` + "`" + `.\n* **Payload:** Use ` + "`" + `multipart/form-data` + "`" + `. Append all fields from ` + "`" + `form_data` + "`" + ` (must be FIRST) followed by the file binary (must be LAST).\n* **Success:** Upon successful upload (HTTP 204), confirm the ` + "`" + `object_key` + "`" + ` with the Backend database.",
+                "description": "Generates a list of presigned URLs and policy signatures for direct file upload to MinIO/S3.\n\n**Client Integration:**\n* **Target:** Send a ` + "`" + `POST` + "`" + ` request to the returned ` + "`" + `upload_url` + "`" + `.\n* **Payload:** Use ` + "`" + `multipart/form-data` + "`" + `. Append all fields from ` + "`" + `form_data` + "`" + ` (must be FIRST) followed by the file binary (must be LAST).\n* **Success:** Upon successful upload (HTTP 204), confirm the ` + "`" + `object_key` + "`" + ` with the Backend database.",
                 "consumes": [
                     "application/json"
                 ],
@@ -451,20 +451,23 @@ const docTemplate = `{
                 "summary": "Get presigned upload URL",
                 "parameters": [
                     {
-                        "description": "File Metadata",
+                        "description": "File Metadata List",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PresignedUploadRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.BulkPresignedUploadRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Upload Credentials",
+                        "description": "Upload Credentials List",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PresignedFileResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/air-social_internal_transport_http_dto.PresignedFileResponse"
+                            }
                         }
                     },
                     "400": {
@@ -666,22 +669,22 @@ const docTemplate = `{
                 "summary": "Confirm file upload",
                 "parameters": [
                     {
-                        "description": "Confirm Upload Request",
+                        "description": "Confirm Upload Request List",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.ConfirmProfileImageRequest"
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Returns upload success message and public URL",
+                        "description": "Returns list of confirmed files",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/air-social_internal_transport_http_dto.ConfirmFileResponse"
                             }
                         }
                     },
@@ -1030,6 +1033,38 @@ const docTemplate = `{
                 "FeatureAttachment"
             ]
         },
+        "air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest": {
+            "type": "object",
+            "required": [
+                "files"
+            ],
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_dto.ConfirmProfileImageRequest"
+                    }
+                }
+            }
+        },
+        "air-social_internal_transport_http_dto.BulkPresignedUploadRequest": {
+            "type": "object",
+            "required": [
+                "files"
+            ],
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_dto.PresignedUploadRequest"
+                    }
+                }
+            }
+        },
         "air-social_internal_transport_http_dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
@@ -1044,6 +1079,20 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 64,
                     "minLength": 8
+                }
+            }
+        },
+        "air-social_internal_transport_http_dto.ConfirmFileResponse": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "$ref": "#/definitions/air-social_internal_domain.UploadDomain"
+                },
+                "feature": {
+                    "$ref": "#/definitions/air-social_internal_domain.UploadFeature"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },
@@ -1168,6 +1217,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "expire_at": {
+                    "type": "string"
+                },
+                "file_name": {
                     "type": "string"
                 },
                 "form_data": {
