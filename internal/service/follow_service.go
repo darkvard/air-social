@@ -33,7 +33,7 @@ func NewFollowService(followRepo domain.FollowRepository, userRepo domain.UserRe
 
 func (s *FollowServiceImpl) Follow(ctx context.Context, followerID int64, followeeID int64) error {
 	if followerID == followeeID {
-		return fmt.Errorf("%w: cannot follow yourself", pkg.ErrBadRequest)
+		return fmt.Errorf("cannot follow yourself: %w", pkg.ErrBadRequest)
 	}
 
 	user, err := s.userRepo.GetByID(ctx, followeeID)
@@ -41,7 +41,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followerID int64, follow
 		return err
 	}
 	if user == nil {
-		return fmt.Errorf("%w: user not found", pkg.ErrBadRequest)
+		return fmt.Errorf("user not found: %w", pkg.ErrBadRequest)
 	}
 
 	if err := s.followRepo.Create(ctx, &domain.Follow{
@@ -57,7 +57,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followerID int64, follow
 
 func (s *FollowServiceImpl) Unfollow(ctx context.Context, followerID int64, followeeID int64) error {
 	if followerID == followeeID {
-		return fmt.Errorf("%w: cannot unfollow yourself", pkg.ErrBadRequest)
+		return fmt.Errorf("cannot unfollow yourself: %w", pkg.ErrBadRequest)
 	}
 
 	if err := s.followRepo.Delete(ctx, followerID, followeeID); err != nil {
@@ -184,6 +184,9 @@ func (s *FollowServiceImpl) enrichSocialUsers(ctx context.Context, currentUserID
 		return result, nil
 	}
 
+	// Run sequentially to prevent nested concurrency and DB connection pool exhaustion.
+	// Parent already runs concurrently; adding goroutines here wastes CPU on fast queries.
+	
 	followingMap, err := s.followRepo.IsFollowing(ctx, currentUserID, targetIDs)
 	if err != nil {
 		return nil, err

@@ -253,24 +253,32 @@ func (s *followServiceSuite) TestGetFollowings() {
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
 				followRepo.
 					EXPECT().
-					GetFollowings(mock.Anything, input).Return(users, nil).Once()
+					GetFollowings(mock.Anything, input).
+					Return(users, nil).
+					Once()
 
 				cache.
 					EXPECT().
 					Get(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), mock.Anything).
-					Run(func(_ context.Context, _ string, dest interface{}) {
+					Run(func(_ context.Context, _ string, dest any) {
 						*(dest.(*int64)) = total
-					}).Return(nil).Once()
+					}).
+					Return(nil).
+					Once()
 
 				targetIDs := []int64{2, 3}
+
 				followRepo.
 					EXPECT().
 					IsFollowing(mock.Anything, input.CurrentUserID, targetIDs).
-					Return(map[int64]bool{2: true}, nil).Once()
+					Return(map[int64]bool{2: true}, nil).
+					Once()
+
 				followRepo.
 					EXPECT().
 					IsFollowedBy(mock.Anything, input.CurrentUserID, targetIDs).
-					Return(map[int64]bool{3: true}, nil).Once()
+					Return(map[int64]bool{3: true}, nil).
+					Once()
 			},
 			want: want{
 				result: domain.NewPaginatedResult([]domain.SocialUser{
@@ -281,19 +289,36 @@ func (s *followServiceSuite) TestGetFollowings() {
 			},
 		},
 		{
-			name: "success_guest_mode_no_enrichment",
+			name: "success_guest_mode_cache_miss",
 			args: domain.FollowParams{
 				TargetUserID:  targetID,
 				CurrentUserID: 0,
 				QueryParams:   domain.QueryParams{Page: 1, Limit: 10},
 			},
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
-				followRepo.EXPECT().GetFollowings(mock.Anything, input).Return(users, nil).Once()
-				cache.EXPECT().Get(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), mock.Anything).
-					Run(func(_ context.Context, _ string, dest interface{}) {
-						*(dest.(*int64)) = total
-					}).Return(nil).Once()
-				// No enrichment calls expected
+				followRepo.
+					EXPECT().
+					GetFollowings(mock.Anything, input).
+					Return(users, nil).
+					Once()
+
+				cache.
+					EXPECT().
+					Get(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), mock.Anything).
+					Return(assert.AnError).
+					Once()
+
+				followRepo.
+					EXPECT().
+					CountFollowings(mock.Anything, input.TargetUserID).
+					Return(total, nil).
+					Once()
+
+				cache.
+					EXPECT().
+					Set(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), total, time.Hour).
+					Return(nil).
+					Maybe()
 			},
 			want: want{
 				result: domain.NewPaginatedResult([]domain.SocialUser{
@@ -303,18 +328,20 @@ func (s *followServiceSuite) TestGetFollowings() {
 			},
 		},
 		{
-			name: "repo_error",
+			name: "fetch_list_error",
 			args: params,
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
 				followRepo.
 					EXPECT().
 					GetFollowings(mock.Anything, input).
-					Return(nil, assert.AnError).Once()
+					Return(nil, assert.AnError).
+					Once()
 
 				cache.
 					EXPECT().
 					Get(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), mock.Anything).
-					Return(assert.AnError).Maybe()
+					Return(assert.AnError).
+					Maybe()
 
 				followRepo.
 					EXPECT().
@@ -323,8 +350,48 @@ func (s *followServiceSuite) TestGetFollowings() {
 
 				cache.
 					EXPECT().
-					Set(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(nil).Maybe()
+					Set(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), int64(0), time.Hour).
+					Return(nil).
+					Maybe()
+			},
+			want: want{
+				result: domain.PaginatedResult[domain.SocialUser]{},
+				err:    assert.AnError,
+			},
+		},
+		{
+			name: "fetch_count_error",
+			args: params,
+			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
+				followRepo.
+					EXPECT().
+					GetFollowings(mock.Anything, input).
+					Return(users, nil).
+					Once()
+
+				cache.
+					EXPECT().
+					Get(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), mock.Anything).
+					Return(assert.AnError).
+					Once()
+
+				followRepo.
+					EXPECT().
+					CountFollowings(mock.Anything, input.TargetUserID).
+					Return(int64(0), assert.AnError).
+					Once()
+
+				followRepo.
+					EXPECT().
+					IsFollowing(mock.Anything, input.CurrentUserID, mock.Anything).
+					Return(nil, nil).
+					Maybe()
+
+				followRepo.
+					EXPECT().
+					IsFollowedBy(mock.Anything, input.CurrentUserID, mock.Anything).
+					Return(nil, nil).
+					Maybe()
 			},
 			want: want{
 				result: domain.PaginatedResult[domain.SocialUser]{},
@@ -335,15 +402,27 @@ func (s *followServiceSuite) TestGetFollowings() {
 			name: "enrichment_error",
 			args: params,
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
-				followRepo.EXPECT().GetFollowings(mock.Anything, input).Return(users, nil).Once()
-				cache.EXPECT().Get(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), mock.Anything).
+				followRepo.
+					EXPECT().
+					GetFollowings(mock.Anything, input).
+					Return(users, nil).
+					Once()
+
+				cache.
+					EXPECT().
+					Get(mock.Anything, domain.GetFollowingCountKey(input.TargetUserID), mock.Anything).
 					Run(func(_ context.Context, _ string, dest interface{}) {
 						*(dest.(*int64)) = total
-					}).Return(nil).Maybe()
+					}).
+					Return(nil).
+					Maybe()
 
 				targetIDs := []int64{2, 3}
-				followRepo.EXPECT().IsFollowing(mock.Anything, input.CurrentUserID, targetIDs).
-					Return(nil, assert.AnError).Once()
+				followRepo.
+					EXPECT().
+					IsFollowing(mock.Anything, input.CurrentUserID, targetIDs).
+					Return(nil, assert.AnError).
+					Once()
 			},
 			want: want{
 				result: domain.PaginatedResult[domain.SocialUser]{},
@@ -399,28 +478,22 @@ func (s *followServiceSuite) TestGetFollowers() {
 	tests := []struct {
 		name       string
 		args       domain.FollowParams
-		setupMocks func(
-			followRepo *mocks.FollowRepository,
-			cache *mocks.CacheStorage,
-			input domain.FollowParams,
-		)
-		want want
+		setupMocks func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams)
+		want       want
 	}{
 		{
 			name: "success_with_enrichment",
-			args: params, // currentUserID = 99
+			args: params,
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
-				followRepo.EXPECT().
+				followRepo.
+					EXPECT().
 					GetFollowers(mock.Anything, input).
 					Return(users, nil).
 					Once()
 
-				cache.EXPECT().
-					Get(
-						mock.Anything,
-						domain.GetFollowerCountKey(targetID),
-						mock.Anything,
-					).
+				cache.
+					EXPECT().
+					Get(mock.Anything, domain.GetFollowerCountKey(targetID), mock.Anything).
 					Run(func(_ context.Context, _ string, dest interface{}) {
 						*(dest.(*int64)) = total
 					}).
@@ -428,10 +501,18 @@ func (s *followServiceSuite) TestGetFollowers() {
 					Once()
 
 				targetIDs := []int64{2, 3}
-				followRepo.EXPECT().IsFollowing(mock.Anything, input.CurrentUserID, targetIDs).
-					Return(map[int64]bool{2: true}, nil).Once()
-				followRepo.EXPECT().IsFollowedBy(mock.Anything, input.CurrentUserID, targetIDs).
-					Return(map[int64]bool{3: true}, nil).Once()
+
+				followRepo.
+					EXPECT().
+					IsFollowing(mock.Anything, input.CurrentUserID, targetIDs).
+					Return(map[int64]bool{2: true}, nil).
+					Once()
+
+				followRepo.
+					EXPECT().
+					IsFollowedBy(mock.Anything, input.CurrentUserID, targetIDs).
+					Return(map[int64]bool{3: true}, nil).
+					Once()
 			},
 			want: want{
 				result: domain.NewPaginatedResult([]domain.SocialUser{
@@ -442,39 +523,34 @@ func (s *followServiceSuite) TestGetFollowers() {
 			},
 		},
 		{
-			name: "success_guest_cache_miss",
+			name: "success_guest_mode_cache_miss",
 			args: domain.FollowParams{
 				TargetUserID:  targetID,
 				CurrentUserID: 0,
 				QueryParams:   domain.QueryParams{Page: 1, Limit: 10},
 			},
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
-				followRepo.EXPECT().
+				followRepo.
+					EXPECT().
 					GetFollowers(mock.Anything, input).
 					Return(users, nil).
 					Once()
 
-				cache.EXPECT().
-					Get(
-						mock.Anything,
-						domain.GetFollowerCountKey(targetID),
-						mock.Anything,
-					).
+				cache.
+					EXPECT().
+					Get(mock.Anything, domain.GetFollowerCountKey(targetID), mock.Anything).
 					Return(assert.AnError).
 					Once()
 
-				followRepo.EXPECT().
+				followRepo.
+					EXPECT().
 					CountFollowers(mock.Anything, targetID).
 					Return(total, nil).
 					Once()
 
-				cache.EXPECT().
-					Set(
-						mock.Anything,
-						domain.GetFollowerCountKey(targetID),
-						total,
-						time.Hour,
-					).
+				cache.
+					EXPECT().
+					Set(mock.Anything, domain.GetFollowerCountKey(targetID), total, time.Hour).
 					Return(nil).
 					Maybe()
 			},
@@ -486,38 +562,32 @@ func (s *followServiceSuite) TestGetFollowers() {
 			},
 		},
 		{
-			name: "get_followers_error",
+			name: "fetch_list_error",
 			args: params,
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
-				followRepo.EXPECT().
+				followRepo.
+					EXPECT().
 					GetFollowers(mock.Anything, input).
 					Return(nil, assert.AnError).
 					Once()
 
-				cache.EXPECT().
-					Get(
-						mock.Anything,
-						domain.GetFollowerCountKey(targetID),
-						mock.Anything,
-					).
+				cache.
+					EXPECT().
+					Get(mock.Anything, domain.GetFollowerCountKey(targetID), mock.Anything).
 					Return(assert.AnError).
 					Maybe()
 
-				followRepo.EXPECT().
+				followRepo.
+					EXPECT().
 					CountFollowers(mock.Anything, targetID).
 					Return(int64(0), nil).
 					Maybe()
 
-				cache.EXPECT().
-					Set(
-						mock.Anything,
-						domain.GetFollowerCountKey(targetID),
-						mock.Anything,
-						time.Hour,
-					).
+				cache.
+					EXPECT().
+					Set(mock.Anything, domain.GetFollowerCountKey(targetID), int64(0), time.Hour).
 					Return(nil).
 					Maybe()
-
 			},
 			want: want{
 				result: domain.PaginatedResult[domain.SocialUser]{},
@@ -525,33 +595,38 @@ func (s *followServiceSuite) TestGetFollowers() {
 			},
 		},
 		{
-			name: "count_followers_error",
+			name: "fetch_count_error",
 			args: params,
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
-				followRepo.EXPECT().
+				followRepo.
+					EXPECT().
 					GetFollowers(mock.Anything, input).
 					Return(users, nil).
 					Once()
 
-				cache.EXPECT().
-					Get(
-						mock.Anything,
-						domain.GetFollowerCountKey(targetID),
-						mock.Anything,
-					).
+				cache.
+					EXPECT().
+					Get(mock.Anything, domain.GetFollowerCountKey(targetID), mock.Anything).
 					Return(assert.AnError).
 					Once()
 
-				followRepo.EXPECT().
+				followRepo.
+					EXPECT().
 					CountFollowers(mock.Anything, targetID).
 					Return(int64(0), assert.AnError).
 					Once()
 
-				// Enrichment might be called if list returns fast, but fails due to context cancel or error propagation
-				// We expect error overall
-				targetIDs := []int64{2, 3}
-				followRepo.EXPECT().IsFollowing(mock.Anything, input.CurrentUserID, targetIDs).Return(nil, nil).Maybe()
-				followRepo.EXPECT().IsFollowedBy(mock.Anything, input.CurrentUserID, targetIDs).Return(nil, nil).Maybe()
+				followRepo.
+					EXPECT().
+					IsFollowing(mock.Anything, input.CurrentUserID, mock.Anything).
+					Return(nil, nil).
+					Maybe()
+
+				followRepo.
+					EXPECT().
+					IsFollowedBy(mock.Anything, input.CurrentUserID, mock.Anything).
+					Return(nil, nil).
+					Maybe()
 			},
 			want: want{
 				result: domain.PaginatedResult[domain.SocialUser]{},
@@ -562,15 +637,27 @@ func (s *followServiceSuite) TestGetFollowers() {
 			name: "enrichment_error",
 			args: params,
 			setupMocks: func(followRepo *mocks.FollowRepository, cache *mocks.CacheStorage, input domain.FollowParams) {
-				followRepo.EXPECT().GetFollowers(mock.Anything, input).Return(users, nil).Once()
-				cache.EXPECT().Get(mock.Anything, domain.GetFollowerCountKey(targetID), mock.Anything).
+				followRepo.
+					EXPECT().
+					GetFollowers(mock.Anything, input).
+					Return(users, nil).
+					Once()
+
+				cache.
+					EXPECT().
+					Get(mock.Anything, domain.GetFollowerCountKey(targetID), mock.Anything).
 					Run(func(_ context.Context, _ string, dest interface{}) {
 						*(dest.(*int64)) = total
-					}).Return(nil).Maybe()
+					}).Return(nil).
+					Maybe()
 
 				targetIDs := []int64{2, 3}
-				followRepo.EXPECT().IsFollowing(mock.Anything, input.CurrentUserID, targetIDs).
-					Return(nil, assert.AnError).Once()
+
+				followRepo.
+					EXPECT().
+					IsFollowing(mock.Anything, input.CurrentUserID, targetIDs).
+					Return(nil, assert.AnError).
+					Once()
 			},
 			want: want{
 				result: domain.PaginatedResult[domain.SocialUser]{},
