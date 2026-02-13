@@ -1,6 +1,5 @@
 package dto
 
- 
 type CreatePostRequest struct {
 	Content    string           `json:"content" binding:"required_without=Media"`
 	Visibility string           `json:"visibility" binding:"omitempty,oneof=public followers private"`
@@ -20,7 +19,7 @@ type MediaItemInput struct {
 type UpdatePostRequest struct {
 	Content    *string `json:"content" binding:"omitempty"`
 	Visibility *string `json:"visibility" binding:"omitempty,oneof=public followers private"`
-	Version    int     `json:"version" binding:"required"`  
+	Version    int     `json:"version" binding:"required"`
 }
 
 type PostResponse struct {
@@ -36,7 +35,7 @@ type PostResponse struct {
 
 type MediaItemResponse struct {
 	ID        int64  `json:"id"`
-	URL       string `json:"url"`  
+	URL       string `json:"url"`
 	MediaType string `json:"media_type"`
 	Width     int    `json:"width,omitempty"`
 	Height    int    `json:"height,omitempty"`

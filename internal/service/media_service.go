@@ -17,6 +17,7 @@ type MediaService interface {
 	GetPresignedURL(ctx context.Context, input []domain.PresignedFileParams) ([]domain.PresignedFile, error)
 	ConfirmUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]string, error)
 	DeleteFile(ctx context.Context, objectKeys []string) error
+	VerifyMedia(ctx context.Context, objectKeys []string) error
 }
 
 type MediaServiceImpl struct {
@@ -108,6 +109,24 @@ func (s *MediaServiceImpl) DeleteFile(ctx context.Context, objectKeys []string) 
 		}
 		if err := s.storage.DeleteFile(ctx, loc); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func (s *MediaServiceImpl) VerifyMedia(ctx context.Context, objectKeys []string) error {
+	for _, key := range objectKeys {
+		loc := domain.StorageLocation{
+			Bucket: s.cfg.BucketPublic,
+			Key:    key,
+		}
+
+		exists, err := s.storage.StatFile(ctx, loc)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return pkg.ErrNotFound
 		}
 	}
 	return nil

@@ -89,6 +89,22 @@ definitions:
     - feature
     - object_key
     type: object
+  air-social_internal_transport_http_dto.CreatePostRequest:
+    properties:
+      content:
+        type: string
+      media:
+        items:
+          $ref: '#/definitions/air-social_internal_transport_http_dto.MediaItemInput'
+        maxItems: 10
+        type: array
+      visibility:
+        enum:
+        - public
+        - followers
+        - private
+        type: string
+    type: object
   air-social_internal_transport_http_dto.ForgotPasswordRequest:
     properties:
       email:
@@ -124,6 +140,48 @@ definitions:
       is_all_devices:
         type: boolean
     type: object
+  air-social_internal_transport_http_dto.MediaItemInput:
+    properties:
+      duration:
+        type: integer
+      file_name:
+        type: string
+      height:
+        type: integer
+      media_key:
+        type: string
+      media_type:
+        enum:
+        - image
+        - video
+        - audio
+        - document
+        type: string
+      size:
+        type: integer
+      width:
+        type: integer
+    required:
+    - media_key
+    - media_type
+    type: object
+  air-social_internal_transport_http_dto.MediaItemResponse:
+    properties:
+      duration:
+        type: integer
+      file_name:
+        type: string
+      height:
+        type: integer
+      id:
+        type: integer
+      media_type:
+        type: string
+      url:
+        type: string
+      width:
+        type: integer
+    type: object
   air-social_internal_transport_http_dto.MetaPaging:
     properties:
       limit:
@@ -143,6 +201,27 @@ definitions:
         type: array
       meta:
         $ref: '#/definitions/air-social_internal_transport_http_dto.MetaPaging'
+    type: object
+  air-social_internal_transport_http_dto.PostResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      media:
+        items:
+          $ref: '#/definitions/air-social_internal_transport_http_dto.MediaItemResponse'
+        type: array
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/air-social_internal_transport_http_dto.UserCompactResponse'
+      version:
+        type: integer
+      visibility:
+        type: string
     type: object
   air-social_internal_transport_http_dto.PresignedFileResponse:
     properties:
@@ -284,6 +363,15 @@ definitions:
         type: string
       website:
         maxLength: 255
+        type: string
+    type: object
+  air-social_internal_transport_http_dto.UserCompactResponse:
+    properties:
+      avatar:
+        type: string
+      id:
+        type: integer
+      username:
         type: string
     type: object
   air-social_internal_transport_http_dto.UserDetailResponse:
@@ -673,6 +761,42 @@ paths:
       summary: Get presigned upload URL
       tags:
       - Media
+  /posts:
+    post:
+      consumes:
+      - application/json
+      description: Create a new post with content and optional media attachments.
+      parameters:
+      - description: Create Post Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/air-social_internal_transport_http_dto.CreatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/air-social_internal_transport_http_dto.PostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Create a new post
+      tags:
+      - Post
   /users/{id}/follow:
     delete:
       consumes:

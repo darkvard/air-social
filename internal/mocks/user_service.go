@@ -39,8 +39,8 @@ func (_m *UserService) EXPECT() *UserService_Expecter {
 }
 
 // ChangePassword provides a mock function for the type UserService
-func (_mock *UserService) ChangePassword(ctx context.Context, input domain.ChangePasswordParams) error {
-	ret := _mock.Called(ctx, input)
+func (_mock *UserService) ChangePassword(ctx context.Context, params domain.ChangePasswordParams) error {
+	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ChangePassword")
@@ -48,7 +48,7 @@ func (_mock *UserService) ChangePassword(ctx context.Context, input domain.Chang
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.ChangePasswordParams) error); ok {
-		r0 = returnFunc(ctx, input)
+		r0 = returnFunc(ctx, params)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -62,12 +62,12 @@ type UserService_ChangePassword_Call struct {
 
 // ChangePassword is a helper method to define mock.On call
 //   - ctx context.Context
-//   - input domain.ChangePasswordParams
-func (_e *UserService_Expecter) ChangePassword(ctx interface{}, input interface{}) *UserService_ChangePassword_Call {
-	return &UserService_ChangePassword_Call{Call: _e.mock.On("ChangePassword", ctx, input)}
+//   - params domain.ChangePasswordParams
+func (_e *UserService_Expecter) ChangePassword(ctx interface{}, params interface{}) *UserService_ChangePassword_Call {
+	return &UserService_ChangePassword_Call{Call: _e.mock.On("ChangePassword", ctx, params)}
 }
 
-func (_c *UserService_ChangePassword_Call) Run(run func(ctx context.Context, input domain.ChangePasswordParams)) *UserService_ChangePassword_Call {
+func (_c *UserService_ChangePassword_Call) Run(run func(ctx context.Context, params domain.ChangePasswordParams)) *UserService_ChangePassword_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -90,7 +90,7 @@ func (_c *UserService_ChangePassword_Call) Return(err error) *UserService_Change
 	return _c
 }
 
-func (_c *UserService_ChangePassword_Call) RunAndReturn(run func(ctx context.Context, input domain.ChangePasswordParams) error) *UserService_ChangePassword_Call {
+func (_c *UserService_ChangePassword_Call) RunAndReturn(run func(ctx context.Context, params domain.ChangePasswordParams) error) *UserService_ChangePassword_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -164,8 +164,8 @@ func (_c *UserService_ConfirmImageUpload_Call) RunAndReturn(run func(ctx context
 }
 
 // CreateUser provides a mock function for the type UserService
-func (_mock *UserService) CreateUser(ctx context.Context, input domain.CreateUserParams) (*domain.User, error) {
-	ret := _mock.Called(ctx, input)
+func (_mock *UserService) CreateUser(ctx context.Context, params domain.CreateUserParams) (*domain.User, error) {
+	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateUser")
@@ -174,17 +174,17 @@ func (_mock *UserService) CreateUser(ctx context.Context, input domain.CreateUse
 	var r0 *domain.User
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.CreateUserParams) (*domain.User, error)); ok {
-		return returnFunc(ctx, input)
+		return returnFunc(ctx, params)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.CreateUserParams) *domain.User); ok {
-		r0 = returnFunc(ctx, input)
+		r0 = returnFunc(ctx, params)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.User)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.CreateUserParams) error); ok {
-		r1 = returnFunc(ctx, input)
+		r1 = returnFunc(ctx, params)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -198,12 +198,12 @@ type UserService_CreateUser_Call struct {
 
 // CreateUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - input domain.CreateUserParams
-func (_e *UserService_Expecter) CreateUser(ctx interface{}, input interface{}) *UserService_CreateUser_Call {
-	return &UserService_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, input)}
+//   - params domain.CreateUserParams
+func (_e *UserService_Expecter) CreateUser(ctx interface{}, params interface{}) *UserService_CreateUser_Call {
+	return &UserService_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, params)}
 }
 
-func (_c *UserService_CreateUser_Call) Run(run func(ctx context.Context, input domain.CreateUserParams)) *UserService_CreateUser_Call {
+func (_c *UserService_CreateUser_Call) Run(run func(ctx context.Context, params domain.CreateUserParams)) *UserService_CreateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -226,7 +226,7 @@ func (_c *UserService_CreateUser_Call) Return(user *domain.User, err error) *Use
 	return _c
 }
 
-func (_c *UserService_CreateUser_Call) RunAndReturn(run func(ctx context.Context, input domain.CreateUserParams) (*domain.User, error)) *UserService_CreateUser_Call {
+func (_c *UserService_CreateUser_Call) RunAndReturn(run func(ctx context.Context, params domain.CreateUserParams) (*domain.User, error)) *UserService_CreateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -499,8 +499,8 @@ func (_c *UserService_UpdatePassword_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // UpdateProfile provides a mock function for the type UserService
-func (_mock *UserService) UpdateProfile(ctx context.Context, input domain.UpdateProfileParams) (*domain.User, error) {
-	ret := _mock.Called(ctx, input)
+func (_mock *UserService) UpdateProfile(ctx context.Context, params domain.UpdateProfileParams) (*domain.User, error) {
+	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateProfile")
@@ -509,17 +509,17 @@ func (_mock *UserService) UpdateProfile(ctx context.Context, input domain.Update
 	var r0 *domain.User
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.UpdateProfileParams) (*domain.User, error)); ok {
-		return returnFunc(ctx, input)
+		return returnFunc(ctx, params)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.UpdateProfileParams) *domain.User); ok {
-		r0 = returnFunc(ctx, input)
+		r0 = returnFunc(ctx, params)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.User)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.UpdateProfileParams) error); ok {
-		r1 = returnFunc(ctx, input)
+		r1 = returnFunc(ctx, params)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -533,12 +533,12 @@ type UserService_UpdateProfile_Call struct {
 
 // UpdateProfile is a helper method to define mock.On call
 //   - ctx context.Context
-//   - input domain.UpdateProfileParams
-func (_e *UserService_Expecter) UpdateProfile(ctx interface{}, input interface{}) *UserService_UpdateProfile_Call {
-	return &UserService_UpdateProfile_Call{Call: _e.mock.On("UpdateProfile", ctx, input)}
+//   - params domain.UpdateProfileParams
+func (_e *UserService_Expecter) UpdateProfile(ctx interface{}, params interface{}) *UserService_UpdateProfile_Call {
+	return &UserService_UpdateProfile_Call{Call: _e.mock.On("UpdateProfile", ctx, params)}
 }
 
-func (_c *UserService_UpdateProfile_Call) Run(run func(ctx context.Context, input domain.UpdateProfileParams)) *UserService_UpdateProfile_Call {
+func (_c *UserService_UpdateProfile_Call) Run(run func(ctx context.Context, params domain.UpdateProfileParams)) *UserService_UpdateProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -561,7 +561,7 @@ func (_c *UserService_UpdateProfile_Call) Return(user *domain.User, err error) *
 	return _c
 }
 
-func (_c *UserService_UpdateProfile_Call) RunAndReturn(run func(ctx context.Context, input domain.UpdateProfileParams) (*domain.User, error)) *UserService_UpdateProfile_Call {
+func (_c *UserService_UpdateProfile_Call) RunAndReturn(run func(ctx context.Context, params domain.UpdateProfileParams) (*domain.User, error)) *UserService_UpdateProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

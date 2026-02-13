@@ -485,6 +485,63 @@
                 }
             }
         },
+        "/posts": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new post with content and optional media attachments.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Create a new post",
+                "parameters": [
+                    {
+                        "description": "Create Post Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.CreatePostRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PostResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "security": [
@@ -1124,6 +1181,29 @@
                 }
             }
         },
+        "air-social_internal_transport_http_dto.CreatePostRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "media": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_dto.MediaItemInput"
+                    }
+                },
+                "visibility": {
+                    "type": "string",
+                    "enum": [
+                        "public",
+                        "followers",
+                        "private"
+                    ]
+                }
+            }
+        },
         "air-social_internal_transport_http_dto.ForgotPasswordRequest": {
             "type": "object",
             "required": [
@@ -1176,6 +1256,68 @@
                 }
             }
         },
+        "air-social_internal_transport_http_dto.MediaItemInput": {
+            "type": "object",
+            "required": [
+                "media_key",
+                "media_type"
+            ],
+            "properties": {
+                "duration": {
+                    "type": "integer"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "media_key": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string",
+                    "enum": [
+                        "image",
+                        "video",
+                        "audio",
+                        "document"
+                    ]
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
+        "air-social_internal_transport_http_dto.MediaItemResponse": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "integer"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
         "air-social_internal_transport_http_dto.MetaPaging": {
             "type": "object",
             "properties": {
@@ -1204,6 +1346,38 @@
                 },
                 "meta": {
                     "$ref": "#/definitions/air-social_internal_transport_http_dto.MetaPaging"
+                }
+            }
+        },
+        "air-social_internal_transport_http_dto.PostResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_dto.MediaItemResponse"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/air-social_internal_transport_http_dto.UserCompactResponse"
+                },
+                "version": {
+                    "type": "integer"
+                },
+                "visibility": {
+                    "type": "string"
                 }
             }
         },
@@ -1412,6 +1586,20 @@
                 "website": {
                     "type": "string",
                     "maxLength": 255
+                }
+            }
+        },
+        "air-social_internal_transport_http_dto.UserCompactResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

@@ -57,10 +57,10 @@ type CreatePostParams struct {
 	UserID     int64
 	Content    string
 	Visibility PostVisibility
-	Media      []CreateMediaParams
+	Media      []PostMediaParams
 }
 
-type CreateMediaParams struct {
+type PostMediaParams struct {
 	MediaKey  string
 	MediaType string
 	Width     int

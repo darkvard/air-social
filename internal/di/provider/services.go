@@ -42,8 +42,7 @@ func NewServices(
 	authSvc := service.NewAuthService(userSvc, tokenSvc, verifySvc, adapter.Cache)
 	emailSvc := service.NewEmailService(adapter.Mailer)
 	followSvc := service.NewFollowService(repository.Follow, repository.User, adapter.Cache)
-	postSvc := service.NewPostService(repository.Post)
-
+	postSvc := service.NewPostService(repository.Post, mediaSvc, userSvc)
 
 	return &Services{
 		Media:  mediaSvc,
@@ -54,6 +53,6 @@ func NewServices(
 		Email:  emailSvc,
 		Verify: verifySvc,
 		Follow: followSvc,
-		Post: postSvc,
+		Post:   postSvc,
 	}
 }

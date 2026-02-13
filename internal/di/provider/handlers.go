@@ -1,6 +1,5 @@
 package provider
 
-
 import (
 	"air-social/internal/domain"
 	"air-social/internal/transport/http/handler"
@@ -22,6 +21,6 @@ func NewHandlers(services *Services, urlFactory domain.URLFactory) *Handlers {
 		Media:  handler.NewMediaHandler(services.Media),
 		Health: handler.NewHealthHandler(services.Health),
 		Follow: handler.NewFollowHandler(services.Follow, services.User, urlFactory),
-		Post: handler.NewPostHandler(services.Post, urlFactory),
+		Post:   handler.NewPostHandler(services.Post, urlFactory),
 	}
 }

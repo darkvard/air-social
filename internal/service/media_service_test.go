@@ -292,3 +292,66 @@ func (s *mediaServiceSuite) TestDeleteFile() {
 		})
 	}
 }
+
+func (s *mediaServiceSuite) TestVerifyMedia() {
+	objectKeys := []string{"key1", "key2"}
+
+	tests := []struct {
+		name       string
+		objectKeys []string
+		setupMock  func(storage *mocks.FileStorage)
+		wantErr    error
+	}{
+		{
+			name:       "success",
+			objectKeys: objectKeys,
+			setupMock: func(storage *mocks.FileStorage) {
+				storage.EXPECT().StatFile(mock.Anything, domain.StorageLocation{
+					Bucket: s.cfg.BucketPublic,
+					Key:    objectKeys[0],
+				}).Return(true, nil).Once()
+				storage.EXPECT().StatFile(mock.Anything, domain.StorageLocation{
+					Bucket: s.cfg.BucketPublic,
+					Key:    objectKeys[1],
+				}).Return(true, nil).Once()
+			},
+			wantErr: nil,
+		},
+		{
+			name:       "storage_error",
+			objectKeys: objectKeys,
+			setupMock: func(storage *mocks.FileStorage) {
+				storage.EXPECT().StatFile(mock.Anything, mock.Anything).Return(false, assert.AnError).Once()
+			},
+			wantErr: assert.AnError,
+		},
+		{
+			name:       "not_found",
+			objectKeys: objectKeys,
+			setupMock: func(storage *mocks.FileStorage) {
+				storage.EXPECT().StatFile(mock.Anything, mock.Anything).Return(false, nil).Once()
+			},
+			wantErr: pkg.ErrNotFound,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockStorage := mocks.NewFileStorage(s.T())
+			mockURL := mocks.NewURLFactory(s.T())
+			svc := NewMediaService(mockStorage, s.cfg, mockURL)
+
+			if tc.setupMock != nil {
+				tc.setupMock(mockStorage)
+			}
+
+			err := svc.VerifyMedia(context.Background(), tc.objectKeys)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}

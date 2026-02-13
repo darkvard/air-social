@@ -1,6 +1,5 @@
 package route
 
-
 const (
 	Health     = "/health"
 	SwaggerAny = "/swagger/*any"
