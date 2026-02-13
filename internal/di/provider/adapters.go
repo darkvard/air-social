@@ -1,12 +1,12 @@
-package di
+package provider
 
 import (
 	"air-social/internal/config"
 	"air-social/internal/domain"
 	"air-social/internal/infrastructure/mailer"
-	minioInfra "air-social/internal/infrastructure/minio"
+	"air-social/internal/infrastructure/minio"
 	"air-social/internal/infrastructure/rabbitmq"
-	redisInfra "air-social/internal/infrastructure/redis"
+	"air-social/internal/infrastructure/redis"
 )
 
 type Adapters struct {
@@ -16,13 +16,13 @@ type Adapters struct {
 	Mailer      domain.Mailer
 }
 
-func initAdapters(cfg config.Config, infra *Infrastructures) (*Adapters, error) {
-	fileStorage, err := minioInfra.NewMinioStorage(infra.Minio)
+func NewAdapters(cfg config.Config, infra *Infrastructures) (*Adapters, error) {
+	fileStorage, err := minio.NewMinioStorage(infra.Minio)
 	if err != nil {
 		return nil, err
 	}
 
-	cache, err := redisInfra.NewRedisCache(infra.Redis)
+	cache, err := redis.NewRedisCache(infra.Redis)
 	if err != nil {
 		return nil, err
 	}

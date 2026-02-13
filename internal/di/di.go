@@ -4,8 +4,10 @@ import (
 	"net/http"
 
 	"air-social/internal/config"
-	transport "air-social/internal/transport/http"
+	"air-social/internal/di/provider"
 	"air-social/internal/transport/http/middleware"
+	"air-social/internal/transport/http/route"
+	"air-social/internal/transport/http/server"
 	"air-social/internal/transport/worker"
 	"air-social/internal/transport/ws"
 )
@@ -14,14 +16,14 @@ type Container struct {
 	Server *http.Server
 	Worker *worker.Manager
 	Hub    *ws.Hub
-	Infra  *Infrastructures
+	Infra  *provider.Infrastructures
 }
 
 func Initialize(cfg config.Config) (*Container, func(), error) {
-	url := transport.NewURLFactory(cfg)
+	url := route.NewURLFactory(cfg)
 	url.PrintInfraConsole()
 
-	infrastructures, cleanup, err := initInfrastructures(cfg)
+	infrastructures, cleanup, err := provider.NewInfrastructures(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -31,21 +33,21 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 		return nil, nil, err
 	}
 
-	adapters, err := initAdapters(cfg, infrastructures)
+	adapters, err := provider.NewAdapters(cfg, infrastructures)
 	if err != nil {
 		return handleError(err)
 	}
 
-	repositories := initRepositories(infrastructures)
-	services := initServices(cfg, url, infrastructures, repositories, adapters)
-	handlers := initHandlers(services, url)
+	repositories := provider.NewRepositories(infrastructures)
+	services := provider.NewServices(cfg, url, infrastructures, repositories, adapters)
+	handlers := provider.NewHandlers(services, url)
 	middlewares := middleware.NewManager(cfg.Server, services.Token)
-
-	server := transport.NewServer(cfg, url, middlewares, handlers.Auth, handlers.User, handlers.Media, handlers.Health, handlers.Follow)
+	workers := provider.NewWorkers(infrastructures, adapters, services)
+	server := server.NewServer(cfg, url, middlewares, handlers)
 
 	return &Container{
 		Server: server,
-		Worker: initWorkers(infrastructures, adapters, services),
+		Worker: workers,
 		Hub:    ws.NewHub(),
 		Infra:  infrastructures,
 	}, cleanup, nil

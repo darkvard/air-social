@@ -1,4 +1,5 @@
-package di
+package provider
+
 
 import (
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -24,7 +25,7 @@ type Infrastructures struct {
 	Logger *zap.SugaredLogger
 }
 
-func initInfrastructures(cfg config.Config) (*Infrastructures, func(), error) {
+func NewInfrastructures(cfg config.Config) (*Infrastructures, func(), error) {
 	var (
 		db          *sqlx.DB
 		queue       *amqp.Connection

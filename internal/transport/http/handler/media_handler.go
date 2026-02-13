@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
+	"air-social/internal/domain"
 	"air-social/internal/service"
 	"air-social/internal/transport/http/dto"
 	"air-social/internal/transport/http/middleware"
@@ -49,11 +50,45 @@ func (h *MediaHandler) PresignedUpload(c *gin.Context) {
 		return
 	}
 
-	res, err := h.srv.GetPresignedURL(c.Request.Context(), req.ToDomain(claims.UserID))
+	params := h.toPresignedParams(claims.UserID, req.Files)
+
+	res, err := h.srv.GetPresignedURL(c.Request.Context(), params)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, dto.NewPresignedFileResponseList(res))
+	pkg.Success(c, h.toPresignedResponse(res))
+}
+
+// Internal helper
+
+func (h *MediaHandler) toPresignedParams(userID int64, files []dto.PresignedUploadRequest) []domain.PresignedFileParams {
+	params := make([]domain.PresignedFileParams, len(files))
+	for i, f := range files {
+		params[i] = domain.PresignedFileParams{
+			EntityID: userID,
+			FileName: f.FileName,
+			FileType: f.FileType,
+			FileSize: f.FileSize,
+			Domain:   f.Domain,
+			Feature:  f.Feature,
+		}
+	}
+	return params
+}
+
+func (h *MediaHandler) toPresignedResponse(files []domain.PresignedFile) []dto.PresignedFileResponse {
+	resp := make([]dto.PresignedFileResponse, len(files))
+	for i, r := range files {
+		resp[i] = dto.PresignedFileResponse{
+			FileName:  r.FileName,
+			UploadURL: r.UploadURL,
+			FormData:  r.FormData,
+			ObjectKey: r.ObjectKey,
+			PublicURL: r.PublicURL,
+			ExpireAt:  r.ExpireAt,
+		}
+	}
+	return resp
 }

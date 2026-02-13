@@ -29,19 +29,6 @@ type BulkConfirmProfileImageRequest struct {
 	Files []ConfirmProfileImageRequest `json:"files" binding:"required,min=1,max=10,dive"`
 }
 
-func (r *BulkConfirmProfileImageRequest) ToDomain(userID int64) []domain.ConfirmFileParams {
-	params := make([]domain.ConfirmFileParams, len(r.Files))
-	for i, req := range r.Files {
-		params[i] = domain.ConfirmFileParams{
-			EntityID:  userID,
-			ObjectKey: req.ObjectKey,
-			Domain:    req.Domain,
-			Feature:   req.Feature,
-		}
-	}
-	return params
-}
-
 type UserDetailResponse struct {
 	ID        int64           `json:"id"`
 	Email     string          `json:"email"`

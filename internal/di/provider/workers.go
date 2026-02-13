@@ -1,11 +1,11 @@
-package di
+package provider
 
 import (
 	"air-social/internal/infrastructure/rabbitmq/config"
 	"air-social/internal/transport/worker"
 )
 
-func initWorkers(
+func NewWorkers(
 	infra *Infrastructures,
 	adapters *Adapters,
 	services *Services,

@@ -13,14 +13,14 @@ import (
 )
 
 type UserHandler struct {
-	userSvc service.UserService
-	url     domain.URLFactory
+	userSvc    service.UserService
+	urlFactory domain.URLFactory
 }
 
-func NewUserHandler(userSvc service.UserService, url domain.URLFactory) *UserHandler {
+func NewUserHandler(userSvc service.UserService, urlFactory domain.URLFactory) *UserHandler {
 	return &UserHandler{
-		userSvc: userSvc,
-		url:     url,
+		userSvc:    userSvc,
+		urlFactory: urlFactory,
 	}
 }
 
@@ -53,7 +53,7 @@ func (h *UserHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, h.mapToResponse(user))
+	pkg.Success(c, h.toUserResponse(user))
 }
 
 // UpdateProfile godoc
@@ -103,7 +103,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, h.mapToResponse(user))
+	pkg.Success(c, h.toUserResponse(user))
 
 }
 
@@ -178,17 +178,48 @@ func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
 		return
 	}
 
-	results, err := h.userSvc.ConfirmImageUpload(c.Request.Context(), req.ToDomain(claims.UserID))
+	params := h.toConfirmParams(claims.UserID, req.Files)
+
+	results, err := h.userSvc.ConfirmImageUpload(c.Request.Context(), params)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, dto.NewConfirmFileResponseList(results))
+	pkg.Success(c, h.toConfirmResponse(results))
 }
 
-func (h *UserHandler) mapToResponse(user *domain.User) dto.UserDetailResponse {
-	avatar := h.url.PublicFileURL(user.Profile.Avatar)
-	cover := h.url.PublicFileURL(user.Profile.CoverImage)
-	return dto.NewUserDetailResponse(user, avatar, cover)
+// Internal helper
+
+func (h *UserHandler) toUserResponse(user *domain.User) dto.UserDetailResponse {
+	return dto.NewUserDetailResponse(
+		user,
+		h.urlFactory.PublicFileURL(user.Profile.Avatar),
+		h.urlFactory.PublicFileURL(user.Profile.CoverImage),
+	)
+}
+
+func (h *UserHandler) toConfirmParams(userID int64, files []dto.ConfirmProfileImageRequest) []domain.ConfirmFileParams {
+	params := make([]domain.ConfirmFileParams, len(files))
+	for i, req := range files {
+		params[i] = domain.ConfirmFileParams{
+			EntityID:  userID,
+			ObjectKey: req.ObjectKey,
+			Domain:    req.Domain,
+			Feature:   req.Feature,
+		}
+	}
+	return params
+}
+
+func (h *UserHandler) toConfirmResponse(results []domain.ConfirmFileResult) []dto.ConfirmFileResponse {
+	resp := make([]dto.ConfirmFileResponse, len(results))
+	for i, res := range results {
+		resp[i] = dto.ConfirmFileResponse{
+			Domain:  res.Domain,
+			Feature: res.Feature,
+			URL:     res.URL,
+		}
+	}
+	return resp
 }

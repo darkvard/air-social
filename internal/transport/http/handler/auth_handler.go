@@ -11,14 +11,14 @@ import (
 )
 
 type AuthHandler struct {
-	authSvc service.AuthService
-	url     domain.URLFactory
+	authSvc    service.AuthService
+	urlFactory domain.URLFactory
 }
 
-func NewAuthHandler(authSvc service.AuthService, url domain.URLFactory) *AuthHandler {
+func NewAuthHandler(authSvc service.AuthService, urlFactory domain.URLFactory) *AuthHandler {
 	return &AuthHandler{
-		authSvc: authSvc,
-		url:     url,
+		authSvc:    authSvc,
+		urlFactory: urlFactory,
 	}
 }
 
@@ -54,7 +54,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	pkg.Created(c, h.mapUserToResponse(result))
+	pkg.Created(c, h.toUserResponse(result))
 }
 
 // Login godoc
@@ -90,7 +90,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	pkg.Success(c, dto.LoginResponse{
-		User:  h.mapUserToResponse(user),
+		User:  h.toUserResponse(user),
 		Token: dto.NewTokenResponse(token),
 	})
 }
@@ -240,7 +240,7 @@ func (h *AuthHandler) ShowResetPasswordPage(c *gin.Context) {
 
 	c.HTML(200, "reset_password.gohtml", gin.H{
 		"Success": true,
-		"ApiUrl":  h.url.ResetPasswordApiURL(),
+		"ApiUrl":  h.urlFactory.ResetPasswordApiURL(),
 	})
 }
 
@@ -277,8 +277,10 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	pkg.SuccessWithMsg(c, "password update successfully", nil)
 }
 
-func (h *AuthHandler) mapUserToResponse(user *domain.User) dto.UserDetailResponse {
-	avatar := h.url.PublicFileURL(user.Profile.Avatar)
-	cover := h.url.PublicFileURL(user.Profile.CoverImage)
-	return dto.NewUserDetailResponse(user, avatar, cover)
+func (h *AuthHandler) toUserResponse(user *domain.User) dto.UserDetailResponse {
+	return dto.NewUserDetailResponse(
+		user,
+		h.urlFactory.PublicFileURL(user.Profile.Avatar),
+		h.urlFactory.PublicFileURL(user.Profile.CoverImage),
+	)
 }

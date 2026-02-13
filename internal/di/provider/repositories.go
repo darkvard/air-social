@@ -1,4 +1,4 @@
-package di
+package provider
 
 import (
 	"air-social/internal/domain"
@@ -9,12 +9,14 @@ type Repositories struct {
 	User   domain.UserRepository
 	Token  domain.TokenRepository
 	Follow domain.FollowRepository
+	Post   domain.PostRepository
 }
 
-func initRepositories(infra *Infrastructures) *Repositories {
+func NewRepositories(infra *Infrastructures) *Repositories {
 	return &Repositories{
 		User:   repository.NewUserRepository(infra.DB),
 		Token:  repository.NewTokenRepository(infra.DB),
 		Follow: repository.NewFollowRepository(infra.DB),
+		Post:   repository.NewPostRepository(infra.DB),
 	}
 }

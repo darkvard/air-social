@@ -1,4 +1,4 @@
-package di
+package provider
 
 import (
 	"air-social/internal/config"
@@ -16,9 +16,10 @@ type Services struct {
 	Email  service.EmailService
 	Verify service.VerifyService
 	Follow service.FollowService
+	Post   service.PostService
 }
 
-func initServices(
+func NewServices(
 	cfg config.Config,
 	url domain.URLFactory,
 	infra *Infrastructures,
@@ -41,6 +42,8 @@ func initServices(
 	authSvc := service.NewAuthService(userSvc, tokenSvc, verifySvc, adapter.Cache)
 	emailSvc := service.NewEmailService(adapter.Mailer)
 	followSvc := service.NewFollowService(repository.Follow, repository.User, adapter.Cache)
+	postSvc := service.NewPostService(repository.Post)
+
 
 	return &Services{
 		Media:  mediaSvc,
@@ -51,5 +54,6 @@ func initServices(
 		Email:  emailSvc,
 		Verify: verifySvc,
 		Follow: followSvc,
+		Post: postSvc,
 	}
 }

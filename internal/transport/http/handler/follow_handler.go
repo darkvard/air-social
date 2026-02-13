@@ -11,16 +11,16 @@ import (
 )
 
 type FollowHandler struct {
-	followSvc service.FollowService
-	userSvc   service.UserService
-	url       domain.URLFactory
+	followSvc  service.FollowService
+	userSvc    service.UserService
+	urlFactory domain.URLFactory
 }
 
-func NewFollowHandler(followSvc service.FollowService, userSvc service.UserService, url domain.URLFactory) *FollowHandler {
+func NewFollowHandler(followSvc service.FollowService, userSvc service.UserService, urlFactory domain.URLFactory) *FollowHandler {
 	return &FollowHandler{
-		followSvc: followSvc,
-		userSvc:   userSvc,
-		url:       url,
+		followSvc:  followSvc,
+		userSvc:    userSvc,
+		urlFactory: urlFactory,
 	}
 }
 
@@ -223,7 +223,7 @@ func (h *FollowHandler) mapToFollowResponses(users []domain.SocialUser) []dto.Us
 			ID:           u.User.ID,
 			Username:     u.User.Username,
 			FullName:     u.User.Profile.FullName,
-			Avatar:       h.url.PublicFileURL(u.User.Profile.Avatar),
+			Avatar:       h.urlFactory.PublicFileURL(u.User.Profile.Avatar),
 			IsVerified:   u.User.Status.Verified,
 			IsFollowing:  u.Relation.IsFollowing,
 			IsFollowedBy: u.Relation.IsFollowedBy,

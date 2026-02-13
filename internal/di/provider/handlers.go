@@ -1,4 +1,5 @@
-package di
+package provider
+
 
 import (
 	"air-social/internal/domain"
@@ -11,14 +12,16 @@ type Handlers struct {
 	Media  *handler.MediaHandler
 	Health *handler.HealthHandler
 	Follow *handler.FollowHandler
+	Post   *handler.PostHandler
 }
 
-func initHandlers(services *Services, url domain.URLFactory) *Handlers {
+func NewHandlers(services *Services, urlFactory domain.URLFactory) *Handlers {
 	return &Handlers{
-		Auth:   handler.NewAuthHandler(services.Auth, url),
-		User:   handler.NewUserHandler(services.User, url),
+		Auth:   handler.NewAuthHandler(services.Auth, urlFactory),
+		User:   handler.NewUserHandler(services.User, urlFactory),
 		Media:  handler.NewMediaHandler(services.Media),
 		Health: handler.NewHealthHandler(services.Health),
-		Follow: handler.NewFollowHandler(services.Follow, services.User, url),
+		Follow: handler.NewFollowHandler(services.Follow, services.User, urlFactory),
+		Post: handler.NewPostHandler(services.Post, urlFactory),
 	}
 }
