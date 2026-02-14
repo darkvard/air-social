@@ -111,8 +111,41 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 
 }
 
+// DeletePost godoc
+//
+//	@Summary		Delete a post
+//	@Description	Delete a post by ID. Only the owner can delete their post.
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		int		true	"Post ID"
+//	@Success		200	{string}	string	"Deleted"
+//	@Failure		400	{object}	pkg.Response
+//	@Failure		401	{object}	pkg.Response
+//	@Failure		403	{object}	pkg.Response
+//	@Failure		404	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
+//	@Router			/posts/{id} [delete]
 func (h *PostHandler) DeletePost(c *gin.Context) {
+	claims, err := middleware.GetAuthClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
 
+	var path dto.IDPathParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid post id")
+		return
+	}
+
+	if err := h.srv.DeletePost(c.Request.Context(), path.ID, claims.UserID); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.SuccessWithMsg(c, "Deleted", nil)
 }
 
 // Internal helper

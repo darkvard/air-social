@@ -87,7 +87,18 @@ func (s *PostServiceImpl) UpdatePost(ctx context.Context, params domain.UpdatePo
 }
 
 func (s *PostServiceImpl) DeletePost(ctx context.Context, postID int64, userID int64) error {
-	return nil
+	isOwner, err := s.postRepo.IsOwner(ctx, postID, userID)
+	if err != nil {
+		return pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	if !isOwner {
+		return pkg.ErrForbidden
+	}
+
+	err = s.postRepo.Delete(ctx, postID)
+
+	return pkg.OrInternalError(err)
 }
 
 func (s *PostServiceImpl) validateMedia(ctx context.Context, params []domain.PostMediaParams) ([]domain.PostMedia, error) {

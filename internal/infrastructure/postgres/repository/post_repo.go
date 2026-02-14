@@ -49,11 +49,22 @@ func (r *postRepository) Update(ctx context.Context, post *domain.Post) error {
 }
 
 func (r *postRepository) Delete(ctx context.Context, id int64) error {
+	query := `UPDATE posts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	if _, err := r.db.ExecContext(ctx, query, id); err != nil {
+		return pkg.MapPostgresError(err)
+	}
 	return nil
 }
 
 func (r *postRepository) IsOwner(ctx context.Context, postID int64, userID int64) (bool, error) {
-	return false, nil
+	var ownerID int64
+	query := `SELECT user_id FROM posts WHERE id = $1 AND deleted_at IS NULL`
+
+	if err := r.db.GetContext(ctx, &ownerID, query, postID); err != nil {
+		return false, pkg.MapPostgresError(err)
+	}
+
+	return ownerID == userID, nil
 }
 
 func (r *postRepository) Create(ctx context.Context, post *domain.Post) error {

@@ -225,3 +225,88 @@ func (s *postServiceSuite) TestGetPostDetail() {
 		})
 	}
 }
+
+func (s *postServiceSuite) TestDeletePost() {
+	var (
+		postID int64 = 1
+		userID int64 = 10
+	)
+
+	tests := []struct {
+		name      string
+		postID    int64
+		userID    int64
+		setupMock func(postRepo *mocks.PostRepository)
+		wantErr   error
+	}{
+		{
+			name:   "check_owner_error",
+			postID: postID,
+			userID: userID,
+			setupMock: func(postRepo *mocks.PostRepository) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(false, assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:   "post_not_found",
+			postID: postID,
+			userID: userID,
+			setupMock: func(postRepo *mocks.PostRepository) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(false, pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name:   "not_owner",
+			postID: postID,
+			userID: userID,
+			setupMock: func(postRepo *mocks.PostRepository) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(false, nil).Once()
+			},
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name:   "delete_error",
+			postID: postID,
+			userID: userID,
+			setupMock: func(postRepo *mocks.PostRepository) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(true, nil).Once()
+				postRepo.EXPECT().Delete(mock.Anything, postID).Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:   "success",
+			postID: postID,
+			userID: userID,
+			setupMock: func(postRepo *mocks.PostRepository) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(true, nil).Once()
+				postRepo.EXPECT().Delete(mock.Anything, postID).Return(nil).Once()
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockPostRepo := mocks.NewPostRepository(s.T())
+			mockMediaSvc := mocks.NewMediaService(s.T())
+			mockUserSvc := mocks.NewUserService(s.T())
+
+			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+
+			if tc.setupMock != nil {
+				tc.setupMock(mockPostRepo)
+			}
+
+			err := svc.DeletePost(context.Background(), tc.postID, tc.userID)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}
