@@ -170,8 +170,8 @@ func (_c *PostService_DeletePost_Call) RunAndReturn(run func(ctx context.Context
 }
 
 // GetPostDetail provides a mock function for the type PostService
-func (_mock *PostService) GetPostDetail(ctx context.Context, postID int64) (*domain.Post, error) {
-	ret := _mock.Called(ctx, postID)
+func (_mock *PostService) GetPostDetail(ctx context.Context, id int64) (*domain.Post, error) {
+	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPostDetail")
@@ -180,17 +180,17 @@ func (_mock *PostService) GetPostDetail(ctx context.Context, postID int64) (*dom
 	var r0 *domain.Post
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (*domain.Post, error)); ok {
-		return returnFunc(ctx, postID)
+		return returnFunc(ctx, id)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) *domain.Post); ok {
-		r0 = returnFunc(ctx, postID)
+		r0 = returnFunc(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Post)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = returnFunc(ctx, postID)
+		r1 = returnFunc(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -204,12 +204,12 @@ type PostService_GetPostDetail_Call struct {
 
 // GetPostDetail is a helper method to define mock.On call
 //   - ctx context.Context
-//   - postID int64
-func (_e *PostService_Expecter) GetPostDetail(ctx interface{}, postID interface{}) *PostService_GetPostDetail_Call {
-	return &PostService_GetPostDetail_Call{Call: _e.mock.On("GetPostDetail", ctx, postID)}
+//   - id int64
+func (_e *PostService_Expecter) GetPostDetail(ctx interface{}, id interface{}) *PostService_GetPostDetail_Call {
+	return &PostService_GetPostDetail_Call{Call: _e.mock.On("GetPostDetail", ctx, id)}
 }
 
-func (_c *PostService_GetPostDetail_Call) Run(run func(ctx context.Context, postID int64)) *PostService_GetPostDetail_Call {
+func (_c *PostService_GetPostDetail_Call) Run(run func(ctx context.Context, id int64)) *PostService_GetPostDetail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -232,7 +232,7 @@ func (_c *PostService_GetPostDetail_Call) Return(post *domain.Post, err error) *
 	return _c
 }
 
-func (_c *PostService_GetPostDetail_Call) RunAndReturn(run func(ctx context.Context, postID int64) (*domain.Post, error)) *PostService_GetPostDetail_Call {
+func (_c *PostService_GetPostDetail_Call) RunAndReturn(run func(ctx context.Context, id int64) (*domain.Post, error)) *PostService_GetPostDetail_Call {
 	_c.Call.Return(run)
 	return _c
 }

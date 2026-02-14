@@ -46,7 +46,7 @@ func (h *FollowHandler) Follow(c *gin.Context) {
 		return
 	}
 
-	var path dto.FollowPathParam
+	var path dto.IDPathParam
 	if err := c.ShouldBindUri(&path); err != nil {
 		pkg.BadRequest(c, "invalid user id")
 		return
@@ -82,7 +82,7 @@ func (h *FollowHandler) Unfollow(c *gin.Context) {
 		return
 	}
 
-	var path dto.FollowPathParam
+	var path dto.IDPathParam
 	if err := c.ShouldBindUri(&path); err != nil {
 		pkg.BadRequest(c, "invalid user id")
 		return
@@ -120,7 +120,7 @@ func (h *FollowHandler) GetFollowers(c *gin.Context) {
 		return
 	}
 
-	var path dto.FollowPathParam
+	var path dto.IDPathParam
 	if err := c.ShouldBindUri(&path); err != nil {
 		pkg.BadRequest(c, "invalid user id")
 		return
@@ -179,7 +179,7 @@ func (h *FollowHandler) GetFollowings(c *gin.Context) {
 		return
 	}
 
-	var path dto.FollowPathParam
+	var path dto.IDPathParam
 	if err := c.ShouldBindUri(&path); err != nil {
 		pkg.BadRequest(c, "invalid user id")
 		return

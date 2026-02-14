@@ -19,7 +19,25 @@ func NewPostRepository(db *sqlx.DB) *postRepository {
 }
 
 func (r *postRepository) GetByID(ctx context.Context, id int64) (*domain.Post, error) {
-	return nil, nil
+	post, err := r.getPost(ctx, id)
+	if err != nil {
+		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	media, err := r.getPostMedia(ctx, id)
+	if err != nil {
+		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	result := post.ToDomain()
+	if len(media) > 0 {
+		result.Media = make([]domain.PostMedia, len(media))
+		for i, v := range media {
+			result.Media[i] = *v.ToDomain()
+		}
+	}
+
+	return result, nil
 }
 
 func (r *postRepository) GetByUserID(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error) {
@@ -91,4 +109,24 @@ func (r *postRepository) insertPostMedia(ctx context.Context, tx *sqlx.Tx, postI
 
 	_, err := tx.NamedExecContext(ctx, query, mediaModels)
 	return err
+}
+
+func (r *postRepository) getPost(ctx context.Context, id int64) (*model.Post, error) {
+	var post model.Post
+	query := `SELECT * FROM posts WHERE id = $1 AND deleted_at IS NULL`
+	if err := r.db.GetContext(ctx, &post, query, id); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+	return &post, nil
+}
+
+func (r *postRepository) getPostMedia(ctx context.Context, postID int64) ([]model.PostMedia, error) {
+	var media []model.PostMedia
+	query := `SELECT * FROM post_media WHERE post_id = $1 ORDER BY id ASC`
+
+	if err := r.db.SelectContext(ctx, &media, query, postID); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+
+	return media, nil
 }

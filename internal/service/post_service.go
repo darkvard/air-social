@@ -10,7 +10,7 @@ import (
 
 type PostService interface {
 	CreatePost(ctx context.Context, params domain.CreatePostParams) (*domain.Post, error)
-	GetPostDetail(ctx context.Context, postID int64) (*domain.Post, error)
+	GetPostDetail(ctx context.Context, id int64) (*domain.Post, error)
 	GetUserPosts(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error)
 	UpdatePost(ctx context.Context, params domain.UpdatePostParams) (*domain.Post, error)
 	DeletePost(ctx context.Context, postID int64, userID int64) error
@@ -62,8 +62,20 @@ func (s *PostServiceImpl) CreatePost(ctx context.Context, params domain.CreatePo
 	return post, nil
 }
 
-func (s *PostServiceImpl) GetPostDetail(ctx context.Context, postID int64) (*domain.Post, error) {
-	return nil, nil
+func (s *PostServiceImpl) GetPostDetail(ctx context.Context, id int64) (*domain.Post, error) {
+	post, err := s.postRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	user, err := s.userSvc.GetSummary(ctx, post.UserID)
+	if err != nil {
+		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	post.User = user
+
+	return post, nil
 }
 
 func (s *PostServiceImpl) GetUserPosts(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error) {

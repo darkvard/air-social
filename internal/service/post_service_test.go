@@ -155,3 +155,73 @@ func (s *postServiceSuite) TestCreatePost() {
 		})
 	}
 }
+
+func (s *postServiceSuite) TestGetPostDetail() {
+	var (
+		postID      int64 = 1
+		userID      int64 = 10
+		post              = &domain.Post{ID: postID, UserID: userID}
+		userSummary       = &domain.UserSummary{ID: userID}
+	)
+
+	tests := []struct {
+		name      string
+		postID    int64
+		setupMock func(postRepo *mocks.PostRepository, userSvc *mocks.UserService)
+		want      *domain.Post
+		wantErr   error
+	}{
+		{
+			name:   "post_not_found",
+			postID: postID,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(nil, pkg.ErrNotFound).Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name:   "user_service_error",
+			postID: postID,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(post, nil).Once()
+				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(nil, assert.AnError).Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:   "success",
+			postID: postID,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(post, nil).Once()
+				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+			},
+			want: &domain.Post{ID: postID, UserID: userID, User: userSummary},
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockPostRepo := mocks.NewPostRepository(s.T())
+			mockMediaSvc := mocks.NewMediaService(s.T())
+			mockUserSvc := mocks.NewUserService(s.T())
+
+			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+
+			if tc.setupMock != nil {
+				tc.setupMock(mockPostRepo, mockUserSvc)
+			}
+
+			got, err := svc.GetPostDetail(context.Background(), tc.postID)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Nil(got)
+			} else {
+				s.NoError(err)
+				s.Equal(tc.want, got)
+			}
+		})
+	}
+}

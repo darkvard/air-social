@@ -73,7 +73,7 @@ func FromDomainUser(u *domain.User) *User {
 	}
 }
 
-func MapToDomainUsers(users []User) []domain.User {
+func ToDomainUsers(users []User) []domain.User {
 	if users == nil {
 		return nil
 	}

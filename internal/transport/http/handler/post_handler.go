@@ -73,8 +73,34 @@ func (h *PostHandler) CreatePost(c *gin.Context) {
 	pkg.Created(c, h.toPostResponse(post))
 }
 
+// GetPost godoc
+//
+//	@Summary		Get post detail
+//	@Description	Get post details by ID
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		int	true	"Post ID"
+//	@Success		200	{object}	dto.PostResponse
+//	@Failure		400	{object}	pkg.Response
+//	@Failure		404	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
+//	@Router			/posts/{id} [get]
 func (h *PostHandler) GetPost(c *gin.Context) {
+	var path dto.IDPathParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid post id")
+		return
+	}
 
+	post, err := h.srv.GetPostDetail(c.Request.Context(), path.ID)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, h.toPostResponse(post))
 }
 
 func (h *PostHandler) GetUserPosts(c *gin.Context) {

@@ -56,8 +56,8 @@ type PostMedia struct {
 	CreatedAt time.Time         `db:"created_at"`
 }
 
-func (m *PostMedia) ToDomain() domain.PostMedia {
-	return domain.PostMedia{
+func (m *PostMedia) ToDomain() *domain.PostMedia {
+	return &domain.PostMedia{
 		ID:        m.ID,
 		PostID:    m.PostID,
 		MediaKey:  m.MediaKey,

@@ -797,6 +797,41 @@ paths:
       summary: Create a new post
       tags:
       - Post
+  /posts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get post details by ID
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/air-social_internal_transport_http_dto.PostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get post detail
+      tags:
+      - Post
   /users/{id}/follow:
     delete:
       consumes:

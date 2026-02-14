@@ -93,7 +93,7 @@ func (r *followRepository) fetchUsers(ctx context.Context, params domain.FollowP
 		return nil, err
 	}
 
-	return model.MapToDomainUsers(dbUsers), nil
+	return model.ToDomainUsers(dbUsers), nil
 }
 
 func (r *followRepository) buildSortClause(sort string, tableAlias string) string {
