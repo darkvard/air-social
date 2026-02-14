@@ -103,8 +103,43 @@ func (h *PostHandler) GetPost(c *gin.Context) {
 	pkg.Success(c, h.toPostResponse(post))
 }
 
+// GetUserPosts godoc
+//
+//	@Summary		Get user posts
+//	@Description	Get a list of posts for a specific user using cursor-based pagination.
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int	true	"User ID"
+//	@Param			cursor	query		int	false	"Cursor for pagination (last post ID)"
+//	@Param			limit	query		int	false	"Number of items to return"
+//	@Success		200		{object}	dto.CursorPaginatedResponse[dto.PostResponse]
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/{id}/posts [get]
 func (h *PostHandler) GetUserPosts(c *gin.Context) {
+	var path dto.IDPathParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid user id")
+		return
+	}
 
+	var req dto.CursorPaginationQuery
+	if err := c.ShouldBindQuery(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	result, err := h.srv.GetUserPosts(c.Request.Context(), path.ID, req.ToDomain())
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, dto.NewCursorPaginatedResponse(result))
 }
 
 // UpdatePost godoc

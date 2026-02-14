@@ -10,10 +10,10 @@ import (
 
 type PostService interface {
 	CreatePost(ctx context.Context, params domain.CreatePostParams) (*domain.Post, error)
-	GetPostDetail(ctx context.Context, id int64) (*domain.Post, error)
-	GetUserPosts(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error)
 	UpdatePost(ctx context.Context, params domain.UpdatePostParams) (*domain.Post, error)
 	DeletePost(ctx context.Context, postID int64, userID int64) error
+	GetPostDetail(ctx context.Context, id int64) (*domain.Post, error)
+	GetUserPosts(ctx context.Context, userID int64, param domain.CursorQueryParams) (domain.CursorPaginatedResult[domain.Post], error)
 }
 
 type PostServiceImpl struct {
@@ -78,10 +78,6 @@ func (s *PostServiceImpl) GetPostDetail(ctx context.Context, id int64) (*domain.
 	return post, nil
 }
 
-func (s *PostServiceImpl) GetUserPosts(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error) {
-	return nil, nil
-}
-
 func (s *PostServiceImpl) UpdatePost(ctx context.Context, params domain.UpdatePostParams) (*domain.Post, error) {
 	isOwner, err := s.postRepo.IsOwner(ctx, params.PostID, params.UserID)
 	if err != nil {
@@ -126,6 +122,51 @@ func (s *PostServiceImpl) DeletePost(ctx context.Context, postID int64, userID i
 	err = s.postRepo.Delete(ctx, postID)
 
 	return pkg.OrInternalError(err)
+}
+
+func (s *PostServiceImpl) GetUserPosts(ctx context.Context, userID int64, param domain.CursorQueryParams) (domain.CursorPaginatedResult[domain.Post], error) {
+	var empty domain.CursorPaginatedResult[domain.Post]
+	param.EnsureDefaults()
+
+	summary, err := s.userSvc.GetSummary(ctx, userID)
+	if err != nil {
+		return empty, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	posts, err := s.postRepo.GetUserPosts(ctx, userID, param)
+	if err != nil {
+		return empty, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	return s.assemblePaginatedResult(posts, summary, param.Limit), nil
+}
+
+// Internal helpers
+
+func (s *PostServiceImpl) assemblePaginatedResult(posts []domain.Post, user *domain.UserSummary, limit int) domain.CursorPaginatedResult[domain.Post] {
+	if len(posts) == 0 {
+		return domain.NewCursorPaginatedResult(posts, 0, false)
+	}
+
+	// Handle "Limit + 1" logic to determine Next Page
+	hasNextPage := false
+	if len(posts) > limit {
+		hasNextPage = true
+		posts = posts[:limit]
+	}
+
+	// Calculate Next Cursor
+	var nextCursor int64 = 0
+	if hasNextPage {
+		nextCursor = posts[len(posts)-1].ID
+	}
+
+	// Attach User Profile to each Post
+	for i := range posts {
+		posts[i].User = user
+	}
+
+	return domain.NewCursorPaginatedResult(posts, nextCursor, hasNextPage)
 }
 
 func (s *PostServiceImpl) validateMedia(ctx context.Context, params []domain.PostMediaParams) ([]domain.PostMedia, error) {

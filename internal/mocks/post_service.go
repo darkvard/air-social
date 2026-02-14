@@ -238,27 +238,25 @@ func (_c *PostService_GetPostDetail_Call) RunAndReturn(run func(ctx context.Cont
 }
 
 // GetUserPosts provides a mock function for the type PostService
-func (_mock *PostService) GetUserPosts(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error) {
-	ret := _mock.Called(ctx, userID, cursor, limit)
+func (_mock *PostService) GetUserPosts(ctx context.Context, userID int64, param domain.CursorQueryParams) (domain.CursorPaginatedResult[domain.Post], error) {
+	ret := _mock.Called(ctx, userID, param)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserPosts")
 	}
 
-	var r0 []domain.Post
+	var r0 domain.CursorPaginatedResult[domain.Post]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) ([]domain.Post, error)); ok {
-		return returnFunc(ctx, userID, cursor, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, domain.CursorQueryParams) (domain.CursorPaginatedResult[domain.Post], error)); ok {
+		return returnFunc(ctx, userID, param)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) []domain.Post); ok {
-		r0 = returnFunc(ctx, userID, cursor, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, domain.CursorQueryParams) domain.CursorPaginatedResult[domain.Post]); ok {
+		r0 = returnFunc(ctx, userID, param)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.Post)
-		}
+		r0 = ret.Get(0).(domain.CursorPaginatedResult[domain.Post])
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64, int) error); ok {
-		r1 = returnFunc(ctx, userID, cursor, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, domain.CursorQueryParams) error); ok {
+		r1 = returnFunc(ctx, userID, param)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -273,13 +271,12 @@ type PostService_GetUserPosts_Call struct {
 // GetUserPosts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID int64
-//   - cursor int64
-//   - limit int
-func (_e *PostService_Expecter) GetUserPosts(ctx interface{}, userID interface{}, cursor interface{}, limit interface{}) *PostService_GetUserPosts_Call {
-	return &PostService_GetUserPosts_Call{Call: _e.mock.On("GetUserPosts", ctx, userID, cursor, limit)}
+//   - param domain.CursorQueryParams
+func (_e *PostService_Expecter) GetUserPosts(ctx interface{}, userID interface{}, param interface{}) *PostService_GetUserPosts_Call {
+	return &PostService_GetUserPosts_Call{Call: _e.mock.On("GetUserPosts", ctx, userID, param)}
 }
 
-func (_c *PostService_GetUserPosts_Call) Run(run func(ctx context.Context, userID int64, cursor int64, limit int)) *PostService_GetUserPosts_Call {
+func (_c *PostService_GetUserPosts_Call) Run(run func(ctx context.Context, userID int64, param domain.CursorQueryParams)) *PostService_GetUserPosts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -289,30 +286,25 @@ func (_c *PostService_GetUserPosts_Call) Run(run func(ctx context.Context, userI
 		if args[1] != nil {
 			arg1 = args[1].(int64)
 		}
-		var arg2 int64
+		var arg2 domain.CursorQueryParams
 		if args[2] != nil {
-			arg2 = args[2].(int64)
-		}
-		var arg3 int
-		if args[3] != nil {
-			arg3 = args[3].(int)
+			arg2 = args[2].(domain.CursorQueryParams)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *PostService_GetUserPosts_Call) Return(posts []domain.Post, err error) *PostService_GetUserPosts_Call {
-	_c.Call.Return(posts, err)
+func (_c *PostService_GetUserPosts_Call) Return(cursorPaginatedResult domain.CursorPaginatedResult[domain.Post], err error) *PostService_GetUserPosts_Call {
+	_c.Call.Return(cursorPaginatedResult, err)
 	return _c
 }
 
-func (_c *PostService_GetUserPosts_Call) RunAndReturn(run func(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error)) *PostService_GetUserPosts_Call {
+func (_c *PostService_GetUserPosts_Call) RunAndReturn(run func(ctx context.Context, userID int64, param domain.CursorQueryParams) (domain.CursorPaginatedResult[domain.Post], error)) *PostService_GetUserPosts_Call {
 	_c.Call.Return(run)
 	return _c
 }

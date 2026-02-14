@@ -13,7 +13,7 @@ const (
 
 type PostRepository interface {
 	GetByID(ctx context.Context, id int64) (*Post, error)
-	GetByUserID(ctx context.Context, userID int64, cursor int64, limit int) ([]Post, error)
+	GetUserPosts(ctx context.Context, userID int64, params CursorQueryParams) ([]Post, error)
 	Create(ctx context.Context, post *Post) error
 	Update(ctx context.Context, post *Post) error
 	Delete(ctx context.Context, id int64) error

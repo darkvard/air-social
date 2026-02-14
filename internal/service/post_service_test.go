@@ -313,11 +313,11 @@ func (s *postServiceSuite) TestDeletePost() {
 
 func (s *postServiceSuite) TestUpdatePost() {
 	var (
-		postID      int64 = 1
-		userID      int64 = 10
-		content           = "Updated content"
-		visibility        = domain.VisibilityPrivate
-		params            = domain.UpdatePostParams{
+		postID     int64 = 1
+		userID     int64 = 10
+		content          = "Updated content"
+		visibility       = domain.VisibilityPrivate
+		params           = domain.UpdatePostParams{
 			PostID:     postID,
 			UserID:     userID,
 			Content:    &content,
@@ -413,6 +413,114 @@ func (s *postServiceSuite) TestUpdatePost() {
 				s.Equal(tc.want.Content, got.Content)
 				s.Equal(tc.want.Visibility, got.Visibility)
 				s.Equal(tc.want.User, got.User)
+			}
+		})
+	}
+}
+
+func (s *postServiceSuite) TestGetUserPosts() {
+	var (
+		userID      int64 = 1
+		limit       int   = 10
+		cursor      int64 = 100
+		params            = domain.CursorQueryParams{Limit: limit, Cursor: cursor}
+		userSummary       = &domain.UserSummary{ID: userID}
+	)
+
+	tests := []struct {
+		name      string
+		params    domain.CursorQueryParams
+		setupMock func(postRepo *mocks.PostRepository, userSvc *mocks.UserService)
+		want      domain.CursorPaginatedResult[domain.Post]
+		wantErr   error
+	}{
+		{
+			name:   "user_not_found",
+			params: params,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(nil, pkg.ErrNotFound).Once()
+			},
+			want:    domain.CursorPaginatedResult[domain.Post]{},
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name:   "repo_error",
+			params: params,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+				postRepo.EXPECT().GetUserPosts(mock.Anything, userID, params).Return(nil, assert.AnError).Once()
+			},
+			want:    domain.CursorPaginatedResult[domain.Post]{},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:   "success_has_next",
+			params: params,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+				// Return limit + 1 items to simulate hasNextPage
+				posts := make([]domain.Post, limit+1)
+				for i := 0; i < limit+1; i++ {
+					posts[i] = domain.Post{ID: int64(200 - i), UserID: userID}
+				}
+				postRepo.EXPECT().GetUserPosts(mock.Anything, userID, params).Return(posts, nil).Once()
+			},
+			want: domain.CursorPaginatedResult[domain.Post]{
+				NextCursor:  int64(200 - (limit - 1)), // ID of the last item in the sliced list
+				HasNextPage: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name:   "success_no_next",
+			params: params,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+				// Return exactly limit items
+				posts := make([]domain.Post, limit)
+				for i := 0; i < limit; i++ {
+					posts[i] = domain.Post{ID: int64(200 - i), UserID: userID}
+				}
+				postRepo.EXPECT().GetUserPosts(mock.Anything, userID, params).Return(posts, nil).Once()
+			},
+			want: domain.CursorPaginatedResult[domain.Post]{
+				NextCursor:  0,
+				HasNextPage: false,
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockPostRepo := mocks.NewPostRepository(s.T())
+			mockMediaSvc := mocks.NewMediaService(s.T())
+			mockUserSvc := mocks.NewUserService(s.T())
+
+			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+
+			if tc.setupMock != nil {
+				tc.setupMock(mockPostRepo, mockUserSvc)
+			}
+
+			got, err := svc.GetUserPosts(context.Background(), userID, tc.params)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Empty(got.Data)
+			} else {
+				s.NoError(err)
+				s.Equal(tc.want.HasNextPage, got.HasNextPage)
+				s.Equal(tc.want.NextCursor, got.NextCursor)
+				if tc.want.HasNextPage {
+					s.Len(got.Data, limit)
+				} else {
+					s.Len(got.Data, limit) // In success_no_next case we mocked exactly limit items
+				}
+				// Verify user enrichment
+				for _, p := range got.Data {
+					s.Equal(userSummary, p.User)
+				}
 			}
 		})
 	}

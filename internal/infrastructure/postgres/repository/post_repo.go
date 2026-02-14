@@ -40,10 +40,6 @@ func (r *postRepository) GetByID(ctx context.Context, id int64) (*domain.Post, e
 	return result, nil
 }
 
-func (r *postRepository) GetByUserID(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error) {
-	return nil, nil
-}
-
 func (r *postRepository) Update(ctx context.Context, post *domain.Post) error {
 	query := `
 		UPDATE posts 
@@ -100,7 +96,81 @@ func (r *postRepository) Create(ctx context.Context, post *domain.Post) error {
 	return tx.Commit()
 }
 
+func (r *postRepository) GetUserPosts(ctx context.Context, userID int64, params domain.CursorQueryParams) ([]domain.Post, error) {
+	var posts []model.Post
+	fetchLimit := params.Limit + 1 // +1 for HasNextPage
+
+	var query string
+	var args []any
+	if params.Cursor > 0 {
+		query = `
+			SELECT * FROM posts 
+			WHERE user_id = $1 AND id < $2 AND deleted_at IS NULL 
+			ORDER BY id DESC 
+			LIMIT $3`
+		args = []any{userID, params.Cursor, fetchLimit}
+	} else {
+		query = `
+			SELECT * FROM posts 
+			WHERE user_id = $1 AND deleted_at IS NULL
+			ORDER BY id DESC 
+			LIMIT $2`
+		args = []any{userID, fetchLimit}
+	}
+
+	if err := r.db.SelectContext(ctx, &posts, query, args...); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+	if len(posts) == 0 {
+		return []domain.Post{}, nil
+	}
+
+	mediaMap, err := r.getPostMediaMap(ctx, posts)
+	if err != nil {
+		return nil, err
+	}
+	return r.toDomainList(posts, mediaMap), nil
+}
+
 // Internal helper
+
+func (r *postRepository) getPostMediaMap(ctx context.Context, posts []model.Post) (map[int64][]domain.PostMedia, error) {
+	// ids
+	ids := make([]int64, len(posts))
+	for i := range posts {
+		ids[i] = posts[i].ID
+	}
+
+	// query
+	query, args, err := sqlx.In(`SELECT * FROM post_media WHERE post_id IN (?)`, ids)
+	if err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+	query = r.db.Rebind(query) // (?) -> ($index)
+
+	var medias []model.PostMedia
+	if err := r.db.SelectContext(ctx, &medias, query, args...); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+
+	// map
+	mediaMap := make(map[int64][]domain.PostMedia, len(posts))
+	for i := range medias {
+		m := medias[i]
+		mediaMap[m.PostID] = append(mediaMap[m.PostID], *m.ToDomain())
+	}
+	return mediaMap, nil
+}
+
+func (r *postRepository) toDomainList(posts []model.Post, mediaMap map[int64][]domain.PostMedia) []domain.Post {
+	result := make([]domain.Post, len(posts))
+	for i := range posts {
+		domainPost := posts[i].ToDomain()
+		domainPost.Media = mediaMap[posts[i].ID]
+		result[i] = *domainPost
+	}
+	return result
+}
 
 func (r *postRepository) insertPost(ctx context.Context, tx *sqlx.Tx, post *domain.Post) error {
 	query := `

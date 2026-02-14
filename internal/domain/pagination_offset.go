@@ -18,7 +18,7 @@ func (q *QueryParams) EnsureDefaults() {
 	if q.Page < pageMin {
 		q.Page = pageMin
 	}
-	if q.Limit < 1 {
+	if q.Limit < limitMin {
 		q.Limit = limitMin
 	}
 	if q.Limit > limitMax {
@@ -27,7 +27,7 @@ func (q *QueryParams) EnsureDefaults() {
 }
 
 func (q QueryParams) GetOffset() int {
-	if q.Page < 1 {
+	if q.Page < pageMin {
 		return 0
 	}
 	return (q.Page - 1) * q.Limit

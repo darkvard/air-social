@@ -1249,6 +1249,79 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/{id}/posts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of posts for a specific user using cursor-based pagination.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Get user posts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cursor for pagination (last post ID)",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to return",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/air-social_internal_transport_http_dto.CursorPaginatedResponse-air-social_internal_transport_http_dto_PostResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1404,6 +1477,20 @@ const docTemplate = `{
                 }
             }
         },
+        "air-social_internal_transport_http_dto.CursorPaginatedResponse-air-social_internal_transport_http_dto_PostResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_dto.PostResponse"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/air-social_internal_transport_http_dto.MetaCursor"
+                }
+            }
+        },
         "air-social_internal_transport_http_dto.ForgotPasswordRequest": {
             "type": "object",
             "required": [
@@ -1514,6 +1601,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "width": {
+                    "type": "integer"
+                }
+            }
+        },
+        "air-social_internal_transport_http_dto.MetaCursor": {
+            "type": "object",
+            "properties": {
+                "has_next_page": {
+                    "type": "boolean"
+                },
+                "next_cursor": {
                     "type": "integer"
                 }
             }

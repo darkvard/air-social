@@ -220,49 +220,48 @@ func (_c *PostRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
-// GetByUserID provides a mock function for the type PostRepository
-func (_mock *PostRepository) GetByUserID(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error) {
-	ret := _mock.Called(ctx, userID, cursor, limit)
+// GetUserPosts provides a mock function for the type PostRepository
+func (_mock *PostRepository) GetUserPosts(ctx context.Context, userID int64, params domain.CursorQueryParams) ([]domain.Post, error) {
+	ret := _mock.Called(ctx, userID, params)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByUserID")
+		panic("no return value specified for GetUserPosts")
 	}
 
 	var r0 []domain.Post
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) ([]domain.Post, error)); ok {
-		return returnFunc(ctx, userID, cursor, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, domain.CursorQueryParams) ([]domain.Post, error)); ok {
+		return returnFunc(ctx, userID, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) []domain.Post); ok {
-		r0 = returnFunc(ctx, userID, cursor, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, domain.CursorQueryParams) []domain.Post); ok {
+		r0 = returnFunc(ctx, userID, params)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.Post)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64, int) error); ok {
-		r1 = returnFunc(ctx, userID, cursor, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, domain.CursorQueryParams) error); ok {
+		r1 = returnFunc(ctx, userID, params)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// PostRepository_GetByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByUserID'
-type PostRepository_GetByUserID_Call struct {
+// PostRepository_GetUserPosts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserPosts'
+type PostRepository_GetUserPosts_Call struct {
 	*mock.Call
 }
 
-// GetByUserID is a helper method to define mock.On call
+// GetUserPosts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID int64
-//   - cursor int64
-//   - limit int
-func (_e *PostRepository_Expecter) GetByUserID(ctx interface{}, userID interface{}, cursor interface{}, limit interface{}) *PostRepository_GetByUserID_Call {
-	return &PostRepository_GetByUserID_Call{Call: _e.mock.On("GetByUserID", ctx, userID, cursor, limit)}
+//   - params domain.CursorQueryParams
+func (_e *PostRepository_Expecter) GetUserPosts(ctx interface{}, userID interface{}, params interface{}) *PostRepository_GetUserPosts_Call {
+	return &PostRepository_GetUserPosts_Call{Call: _e.mock.On("GetUserPosts", ctx, userID, params)}
 }
 
-func (_c *PostRepository_GetByUserID_Call) Run(run func(ctx context.Context, userID int64, cursor int64, limit int)) *PostRepository_GetByUserID_Call {
+func (_c *PostRepository_GetUserPosts_Call) Run(run func(ctx context.Context, userID int64, params domain.CursorQueryParams)) *PostRepository_GetUserPosts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -272,30 +271,25 @@ func (_c *PostRepository_GetByUserID_Call) Run(run func(ctx context.Context, use
 		if args[1] != nil {
 			arg1 = args[1].(int64)
 		}
-		var arg2 int64
+		var arg2 domain.CursorQueryParams
 		if args[2] != nil {
-			arg2 = args[2].(int64)
-		}
-		var arg3 int
-		if args[3] != nil {
-			arg3 = args[3].(int)
+			arg2 = args[2].(domain.CursorQueryParams)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *PostRepository_GetByUserID_Call) Return(posts []domain.Post, err error) *PostRepository_GetByUserID_Call {
+func (_c *PostRepository_GetUserPosts_Call) Return(posts []domain.Post, err error) *PostRepository_GetUserPosts_Call {
 	_c.Call.Return(posts, err)
 	return _c
 }
 
-func (_c *PostRepository_GetByUserID_Call) RunAndReturn(run func(ctx context.Context, userID int64, cursor int64, limit int) ([]domain.Post, error)) *PostRepository_GetByUserID_Call {
+func (_c *PostRepository_GetUserPosts_Call) RunAndReturn(run func(ctx context.Context, userID int64, params domain.CursorQueryParams) ([]domain.Post, error)) *PostRepository_GetUserPosts_Call {
 	_c.Call.Return(run)
 	return _c
 }
