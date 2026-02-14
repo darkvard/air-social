@@ -14,4 +14,5 @@ func main() {
 	modules.TruncateUser(conn)
 	users := modules.SeedUsers(conn, cfg.Users.Total)
 	modules.SeedFollows(conn, users, cfg.Follows.PerUser)
+	modules.SeedPosts(conn, users, cfg.Posts.PerUser)
 }

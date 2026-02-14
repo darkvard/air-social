@@ -2,13 +2,13 @@ users:
   total: 30
 
 follows:
-  per_user: 20
+  per_user: 50
 
 posts:
-  per_user: 10
+  per_user: 50
 
 comments:
-  per_post: 5
+  per_post: 25
 
 likes:
   per_post: 15

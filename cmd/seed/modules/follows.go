@@ -42,4 +42,6 @@ func SeedFollows(db *sqlx.DB, users []int64, perUser int) {
 	if err := tx.Commit(); err != nil {
 		log.Panicf("seed follows commit failed: %v", err)
 	}
+
+	log.Printf("Seeded: %d Follows (%d per user)", n*perUser, perUser)
 }
