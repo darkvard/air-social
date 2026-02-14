@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	"air-social/internal/config"
 	"air-social/internal/domain"
 	"air-social/internal/mocks"
 	"air-social/pkg"
@@ -15,7 +16,7 @@ import (
 
 type mediaServiceSuite struct {
 	suite.Suite
-	cfg domain.FileConfig
+	cfg config.MinioStorageConfig
 }
 
 func TestMediaServiceSuite(t *testing.T) {
@@ -23,7 +24,7 @@ func TestMediaServiceSuite(t *testing.T) {
 }
 
 func (s *mediaServiceSuite) SetupSuite() {
-	s.cfg = domain.FileConfig{
+	s.cfg = config.MinioStorageConfig{
 		BucketPublic: "test-bucket",
 	}
 }

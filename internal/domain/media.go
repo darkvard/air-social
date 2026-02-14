@@ -69,9 +69,9 @@ type UploadRule struct {
 	AllowedTypes []string // Mime Types
 }
 
-type FileConfig struct {
-	BucketPublic  string
-	BucketPrivate string
+type FileBucket struct {
+	Public  string
+	Private string
 }
 
 type StorageLocation struct {

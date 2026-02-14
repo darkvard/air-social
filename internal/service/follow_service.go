@@ -19,15 +19,15 @@ type FollowService interface {
 
 type FollowServiceImpl struct {
 	followRepo domain.FollowRepository
-	userRepo   domain.UserRepository
 	cache      domain.CacheStorage
+	userSvc    UserService
 }
 
-func NewFollowService(followRepo domain.FollowRepository, userRepo domain.UserRepository, cache domain.CacheStorage) *FollowServiceImpl {
+func NewFollowService(followRepo domain.FollowRepository, cache domain.CacheStorage, userSvc UserService) *FollowServiceImpl {
 	return &FollowServiceImpl{
 		followRepo: followRepo,
-		userRepo:   userRepo,
 		cache:      cache,
+		userSvc:    userSvc,
 	}
 }
 
@@ -36,7 +36,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followerID int64, follow
 		return fmt.Errorf("cannot follow yourself: %w", pkg.ErrBadRequest)
 	}
 
-	user, err := s.userRepo.GetByID(ctx, followeeID)
+	user, err := s.userSvc.GetSummary(ctx, followeeID)
 	if err != nil {
 		return err
 	}

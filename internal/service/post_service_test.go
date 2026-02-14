@@ -23,9 +23,9 @@ func TestPostServiceSuite(t *testing.T) {
 
 func (s *postServiceSuite) TestCreatePost() {
 	var (
-		userID int64 = 1
-		user         = &domain.User{ID: userID}
-		input        = domain.CreatePostParams{
+		userID      int64 = 1
+		userSummary       = &domain.UserSummary{ID: userID}
+		input             = domain.CreatePostParams{
 			UserID:     userID,
 			Content:    "Hello World",
 			Visibility: domain.VisibilityPublic,
@@ -51,7 +51,7 @@ func (s *postServiceSuite) TestCreatePost() {
 			name:  "user_not_found",
 			input: input,
 			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetByID(mock.Anything, input.UserID).Return(nil, pkg.ErrNotFound).Once()
+				userSvc.EXPECT().GetSummary(mock.Anything, input.UserID).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrNotFound,
@@ -62,7 +62,7 @@ func (s *postServiceSuite) TestCreatePost() {
 				UserID: userID,
 			},
 			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetByID(mock.Anything, userID).Return(user, nil).Once()
+				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrInvalidData,
@@ -71,7 +71,7 @@ func (s *postServiceSuite) TestCreatePost() {
 			name:  "media_verify_error",
 			input: mediaInput,
 			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetByID(mock.Anything, mediaInput.UserID).Return(user, nil).Once()
+				userSvc.EXPECT().GetSummary(mock.Anything, mediaInput.UserID).Return(userSummary, nil).Once()
 				mediaSvc.EXPECT().VerifyMedia(mock.Anything, []string{"key1"}).Return(pkg.ErrNotFound).Once()
 			},
 			want:    nil,
@@ -81,7 +81,7 @@ func (s *postServiceSuite) TestCreatePost() {
 			name:  "repo_create_error",
 			input: input,
 			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetByID(mock.Anything, input.UserID).Return(user, nil).Once()
+				userSvc.EXPECT().GetSummary(mock.Anything, input.UserID).Return(userSummary, nil).Once()
 				postRepo.EXPECT().Create(mock.Anything, mock.Anything).Return(assert.AnError).Once()
 			},
 			want:    nil,
@@ -91,7 +91,7 @@ func (s *postServiceSuite) TestCreatePost() {
 			name:  "success_text_only",
 			input: input,
 			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetByID(mock.Anything, input.UserID).Return(user, nil).Once()
+				userSvc.EXPECT().GetSummary(mock.Anything, input.UserID).Return(userSummary, nil).Once()
 				postRepo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(p *domain.Post) bool {
 					return p.UserID == input.UserID && p.Content == input.Content
 				})).Return(nil).Once()
@@ -100,7 +100,7 @@ func (s *postServiceSuite) TestCreatePost() {
 				UserID:     input.UserID,
 				Content:    input.Content,
 				Visibility: input.Visibility,
-				User:       user,
+				User:       userSummary,
 			},
 			wantErr: nil,
 		},
@@ -108,7 +108,7 @@ func (s *postServiceSuite) TestCreatePost() {
 			name:  "success_with_media",
 			input: mediaInput,
 			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetByID(mock.Anything, mediaInput.UserID).Return(user, nil).Once()
+				userSvc.EXPECT().GetSummary(mock.Anything, mediaInput.UserID).Return(userSummary, nil).Once()
 				mediaSvc.EXPECT().VerifyMedia(mock.Anything, []string{"key1"}).Return(nil).Once()
 				postRepo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(p *domain.Post) bool {
 					return len(p.Media) == 1 && p.Media[0].MediaKey == "key1"
@@ -118,7 +118,7 @@ func (s *postServiceSuite) TestCreatePost() {
 				UserID:     mediaInput.UserID,
 				Content:    mediaInput.Content,
 				Visibility: mediaInput.Visibility,
-				User:       user,
+				User:       userSummary,
 				Media: []domain.PostMedia{
 					{MediaKey: "key1", MediaType: "image/jpeg"},
 				},

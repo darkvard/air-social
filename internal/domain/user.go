@@ -40,6 +40,15 @@ type Profile struct {
 	Website    string
 }
 
+type UserSummary struct {
+	ID         int64
+	FullName   string
+	Bio        string
+	Avatar     string
+	CoverImage string
+	Verified   bool
+}
+
 type CreateUserParams struct {
 	Email          string
 	Username       string

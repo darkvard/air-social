@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"air-social/internal/domain"
 	"air-social/pkg"
@@ -10,28 +11,28 @@ import (
 type UserService interface {
 	GetByID(ctx context.Context, id int64) (*domain.User, error)
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
-	GetProfile(ctx context.Context, id int64) (*domain.User, error)
-
+	GetSummary(ctx context.Context, id int64) (*domain.UserSummary, error)
 	CreateUser(ctx context.Context, params domain.CreateUserParams) (*domain.User, error)
 	UpdateProfile(ctx context.Context, params domain.UpdateProfileParams) (*domain.User, error)
 	ChangePassword(ctx context.Context, params domain.ChangePasswordParams) error
 	UpdatePassword(ctx context.Context, email, passwordHashed string) error
 	VerifyEmail(ctx context.Context, email string) error
-
 	ConfirmImageUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]domain.ConfirmFileResult, error)
 }
 
 type UserServiceImpl struct {
-	userRepo domain.UserRepository
-	mediaSvc MediaService
-	url      domain.URLFactory
+	userRepo   domain.UserRepository
+	cache      domain.CacheStorage
+	urlFactory domain.URLFactory
+	mediaSvc   MediaService
 }
 
-func NewUserService(userRepo domain.UserRepository, mediaSvc MediaService, url domain.URLFactory) *UserServiceImpl {
+func NewUserService(userRepo domain.UserRepository, mediaSvc MediaService, cache domain.CacheStorage, urlFactory domain.URLFactory) *UserServiceImpl {
 	return &UserServiceImpl{
-		userRepo: userRepo,
-		mediaSvc: mediaSvc,
-		url:      url,
+		userRepo:   userRepo,
+		cache:      cache,
+		urlFactory: urlFactory,
+		mediaSvc:   mediaSvc,
 	}
 }
 
@@ -51,12 +52,26 @@ func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain
 	return user, nil
 }
 
-func (s *UserServiceImpl) GetProfile(ctx context.Context, id int64) (*domain.User, error) {
-	return s.GetByID(ctx, id)
+func (s *UserServiceImpl) GetSummary(ctx context.Context, id int64) (*domain.UserSummary, error) {
+	key := domain.GetUserSummaryKey(id)
+
+	var cached domain.UserSummary
+	if err := s.cache.Get(ctx, key, &cached); err == nil {
+		return &cached, nil
+	}
+
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	info := s.toUserSummary(user)
+	_ = s.cache.Set(ctx, key, info, 12*time.Hour)
+
+	return info, nil
 }
 
 func (s *UserServiceImpl) CreateUser(ctx context.Context, params domain.CreateUserParams) (*domain.User, error) {
-
 	user := &domain.User{
 		Email:        params.Email,
 		Username:     params.Username,
@@ -97,6 +112,8 @@ func (s *UserServiceImpl) UpdateProfile(ctx context.Context, params domain.Updat
 	if err := s.updateUser(ctx, user); err != nil {
 		return empty, err
 	}
+
+	_ = s.cache.Delete(ctx, domain.GetUserSummaryKey(user.ID))
 	return user, nil
 }
 
@@ -142,6 +159,7 @@ func (s *UserServiceImpl) VerifyEmail(ctx context.Context, email string) error {
 	user.Status.Verified = true
 	user.Status.VerifiedAt = &(now)
 
+	_ = s.cache.Delete(ctx, domain.GetUserSummaryKey(user.ID))
 	return s.updateUser(ctx, user)
 }
 
@@ -166,10 +184,13 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, params []domai
 		responses[i] = domain.ConfirmFileResult{
 			Domain:  input.Domain,
 			Feature: input.Feature,
-			URL:     s.url.PublicFileURL(keys[i]),
+			URL:     s.urlFactory.PublicFileURL(keys[i]),
 		}
 	}
 
+	if len(params) > 0 {
+		_ = s.cache.Delete(ctx, domain.GetUserSummaryKey(params[0].EntityID))
+	}
 	return responses, nil
 }
 
@@ -180,4 +201,14 @@ func (s *UserServiceImpl) updateUser(ctx context.Context, user *domain.User) err
 		return pkg.OrInternalError(err)
 	}
 	return nil
+}
+
+func (s *UserServiceImpl) toUserSummary(user *domain.User) *domain.UserSummary {
+	return &domain.UserSummary{
+		ID:         user.ID,
+		FullName:   user.Profile.FullName,
+		Avatar:     s.urlFactory.PublicFileURL(user.Profile.Avatar),
+		CoverImage: s.urlFactory.PublicFileURL(user.Profile.CoverImage),
+		Verified:   user.Status.Verified,
+	}
 }

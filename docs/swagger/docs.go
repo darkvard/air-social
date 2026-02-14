@@ -1601,11 +1601,11 @@ const docTemplate = `{
                 "avatar": {
                     "type": "string"
                 },
+                "full_name": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
-                },
-                "username": {
-                    "type": "string"
                 }
             }
         },

@@ -3,56 +3,48 @@ package provider
 import (
 	"air-social/internal/config"
 	"air-social/internal/domain"
-	"air-social/internal/infrastructure/rabbitmq"
 	"air-social/internal/service"
 )
 
 type Services struct {
-	Media  service.MediaService
 	Health service.HealthService
-	Token  service.TokenService
-	User   service.UserService
 	Auth   service.AuthService
+	User   service.UserService
+	Token  service.TokenService
 	Email  service.EmailService
 	Verify service.VerifyService
+	Media  service.MediaService
 	Follow service.FollowService
 	Post   service.PostService
 }
 
 func NewServices(
 	cfg config.Config,
-	url domain.URLFactory,
+	urlFactory domain.URLFactory,
 	infra *Infrastructures,
-	repository *Repositories,
+	repo *Repositories,
 	adapter *Adapters,
 ) *Services {
 
-	mediaSvc := service.NewMediaService(adapter.FileStorage, domain.FileConfig{
-		BucketPublic: cfg.MinIO.BucketPublic, BucketPrivate: cfg.MinIO.BucketPrivate,
-	}, url)
-
-	healthSvc := service.NewHealthService(infra.DB, infra.Redis, &rabbitmq.HealthChecker{
-		Conn: infra.Rabbit,
-		URL:  cfg.RabbitMQ.URL,
-	}, infra.Minio, url)
-
-	tokenSvc := service.NewTokenService(repository.Token, cfg.Token)
-	verifySvc := service.NewVerifyService(adapter.Cache, adapter.EventPub, url)
-	userSvc := service.NewUserService(repository.User, mediaSvc, url)
-	authSvc := service.NewAuthService(userSvc, tokenSvc, verifySvc, adapter.Cache)
-	emailSvc := service.NewEmailService(adapter.Mailer)
-	followSvc := service.NewFollowService(repository.Follow, repository.User, adapter.Cache)
-	postSvc := service.NewPostService(repository.Post, mediaSvc, userSvc)
+	media := service.NewMediaService(adapter.FileStorage, cfg.MinIO, urlFactory)
+	health := service.NewHealthService(infra.DB, infra.Redis, infra.GetRabbit(cfg.RabbitMQ), infra.Minio, urlFactory)
+	token := service.NewTokenService(repo.Token, cfg.Token)
+	verify := service.NewVerifyService(adapter.Cache, adapter.EventPub, urlFactory)
+	user := service.NewUserService(repo.User, media, adapter.Cache, urlFactory)
+	auth := service.NewAuthService(user, token, verify, adapter.Cache)
+	email := service.NewEmailService(adapter.Mailer)
+	follow := service.NewFollowService(repo.Follow, adapter.Cache, user)
+	post := service.NewPostService(repo.Post, media, user)
 
 	return &Services{
-		Media:  mediaSvc,
-		Health: healthSvc,
-		Token:  tokenSvc,
-		User:   userSvc,
-		Auth:   authSvc,
-		Email:  emailSvc,
-		Verify: verifySvc,
-		Follow: followSvc,
-		Post:   postSvc,
+		Health: health,
+		Auth:   auth,
+		User:   user,
+		Token:  token,
+		Email:  email,
+		Verify: verify,
+		Media:  media,
+		Follow: follow,
+		Post:   post,
 	}
 }

@@ -33,7 +33,7 @@ type Post struct {
 	DeletedAt  *time.Time
 
 	Media []PostMedia
-	User  *User
+	User  *UserSummary
 }
 
 type PostMedia struct {

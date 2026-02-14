@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"air-social/internal/config"
 	"air-social/internal/domain"
 	"air-social/pkg"
 )
@@ -21,16 +22,19 @@ type MediaService interface {
 }
 
 type MediaServiceImpl struct {
-	storage domain.FileStorage
-	cfg     domain.FileConfig
-	url     domain.URLFactory
+	storage    domain.FileStorage
+	bucket     domain.FileBucket
+	urlFactory domain.URLFactory
 }
 
-func NewMediaService(storage domain.FileStorage, cfg domain.FileConfig, url domain.URLFactory) *MediaServiceImpl {
+func NewMediaService(storage domain.FileStorage, cfg config.MinioStorageConfig, urlFactory domain.URLFactory) *MediaServiceImpl {
 	return &MediaServiceImpl{
 		storage: storage,
-		cfg:     cfg,
-		url:     url,
+		bucket: domain.FileBucket{
+			Public:  cfg.BucketPublic,
+			Private: cfg.BucketPrivate,
+		},
+		urlFactory: urlFactory,
 	}
 }
 
@@ -44,7 +48,7 @@ func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input []domain.P
 		}
 
 		loc := domain.StorageLocation{
-			Bucket: s.cfg.BucketPublic,
+			Bucket: s.bucket.Public,
 			Key:    s.generateObjectKey(item),
 		}
 		constraints := domain.UploadConstraints{
@@ -59,15 +63,15 @@ func (s *MediaServiceImpl) GetPresignedURL(ctx context.Context, input []domain.P
 		}
 
 		// build public URL using config. MinIO returns internal Docker endpoint not accessible to clients.
-		baseURL := strings.TrimSuffix(s.url.BaseURL(), "/")
-		uploadURL := fmt.Sprintf("%s/%s", baseURL, s.cfg.BucketPublic)
+		baseURL := strings.TrimSuffix(s.urlFactory.BaseURL(), "/")
+		uploadURL := fmt.Sprintf("%s/%s", baseURL, s.bucket.Public)
 
 		results = append(results, domain.PresignedFile{
 			FileName:  item.FileName,
 			UploadURL: uploadURL,
 			FormData:  result.FormData,
 			ObjectKey: loc.Key,
-			PublicURL: s.url.PublicFileURL(loc.Key),
+			PublicURL: s.urlFactory.PublicFileURL(loc.Key),
 			ExpireAt:  pkg.TimeNowUTC().Add(domain.PresignedUploadExpiry),
 		})
 	}
@@ -84,7 +88,7 @@ func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, input []domain.Con
 		}
 
 		loc := domain.StorageLocation{
-			Bucket: s.cfg.BucketPublic,
+			Bucket: s.bucket.Public,
 			Key:    item.ObjectKey,
 		}
 
@@ -104,7 +108,7 @@ func (s *MediaServiceImpl) ConfirmUpload(ctx context.Context, input []domain.Con
 func (s *MediaServiceImpl) DeleteFile(ctx context.Context, objectKeys []string) error {
 	for _, key := range objectKeys {
 		loc := domain.StorageLocation{
-			Bucket: s.cfg.BucketPublic,
+			Bucket: s.bucket.Public,
 			Key:    key,
 		}
 		if err := s.storage.DeleteFile(ctx, loc); err != nil {
@@ -117,7 +121,7 @@ func (s *MediaServiceImpl) DeleteFile(ctx context.Context, objectKeys []string) 
 func (s *MediaServiceImpl) VerifyMedia(ctx context.Context, objectKeys []string) error {
 	for _, key := range objectKeys {
 		loc := domain.StorageLocation{
-			Bucket: s.cfg.BucketPublic,
+			Bucket: s.bucket.Public,
 			Key:    key,
 		}
 

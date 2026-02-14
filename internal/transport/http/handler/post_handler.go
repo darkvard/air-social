@@ -126,8 +126,8 @@ func (h *PostHandler) toPostResponse(post *domain.Post) dto.PostResponse {
 		UpdatedAt:  post.UpdatedAt.Format(time.RFC3339),
 		User: dto.UserCompactResponse{
 			ID:       post.User.ID,
-			Username: post.User.Username,
-			Avatar:   h.urlFactory.PublicFileURL(post.User.Profile.Avatar),
+			Fullname: post.User.FullName,
+			Avatar:   h.urlFactory.PublicFileURL(post.User.Avatar),
 		},
 		Media: mediaResp,
 	}

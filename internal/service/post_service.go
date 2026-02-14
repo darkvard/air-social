@@ -31,7 +31,7 @@ func NewPostService(postRepo domain.PostRepository, mediaSvc MediaService, userS
 }
 
 func (s *PostServiceImpl) CreatePost(ctx context.Context, params domain.CreatePostParams) (*domain.Post, error) {
-	user, err := s.userSvc.GetByID(ctx, params.UserID)
+	user, err := s.userSvc.GetSummary(ctx, params.UserID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}

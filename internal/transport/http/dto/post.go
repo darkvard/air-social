@@ -45,6 +45,6 @@ type MediaItemResponse struct {
 
 type UserCompactResponse struct {
 	ID       int64  `json:"id"`
-	Username string `json:"username"`
+	Fullname string `json:"full_name"`
 	Avatar   string `json:"avatar"`
 }

@@ -8,15 +8,16 @@ import (
 
 // <system>:<feature>:<state>:<id>
 const (
-	WorkerEmailProcessed = "worker:email:processed:"
-	WorkerEmailVerify    = "worker:email:verify:"
-	WorkerEmailReset     = "worker:email:reset:"
-	WorkerEmailRetry     = "worker:email:retry:"
+	WorkerEmailProcessedKey = "worker:email:processed:"
+	WorkerEmailVerifyKey    = "worker:email:verify:"
+	WorkerEmailResetKey     = "worker:email:reset:"
+	WorkerEmailRetryKey     = "worker:email:retry:"
 
-	UserUploadImageVerify = "user:upload:verify:"
-	UserBlacklistToken    = "user:blacklist:token:"
-	UserFollowerCount     = "user:followers:count:"
-	UserFollowingCount    = "user:followings:count:"
+	UserUploadImageVerifyKey = "user:upload:verify:"
+	UserBlacklistTokenKey    = "user:blacklist:token:"
+	UserFollowerCountKey     = "user:followers:count:"
+	UserFollowingCountKey    = "user:followings:count:"
+	UserSummaryKey           = "user:public_info:"
 )
 
 type CacheStorage interface {
@@ -27,33 +28,37 @@ type CacheStorage interface {
 }
 
 func GetEmailVerificationKey(token string) string {
-	return fmt.Sprintf(WorkerEmailVerify+"%s", token)
+	return fmt.Sprintf(WorkerEmailVerifyKey+"%s", token)
 }
 
 func GetEmailProcessedKey(token string) string {
-	return fmt.Sprintf(WorkerEmailProcessed+"%s", token)
+	return fmt.Sprintf(WorkerEmailProcessedKey+"%s", token)
 }
 
 func GetEmailResetPasswordKey(token string) string {
-	return fmt.Sprintf(WorkerEmailReset+"%s", token)
+	return fmt.Sprintf(WorkerEmailResetKey+"%s", token)
 }
 
 func GetEmailRetryKey(token string) string {
-	return fmt.Sprintf(WorkerEmailRetry+"%s", token)
+	return fmt.Sprintf(WorkerEmailRetryKey+"%s", token)
 }
 
 func GetUploadImageKey(objectName string) string {
-	return fmt.Sprintf(UserUploadImageVerify+"%s", objectName)
+	return fmt.Sprintf(UserUploadImageVerifyKey+"%s", objectName)
 }
 
 func GetBlacklistTokenKey(token string) string {
-	return fmt.Sprintf(UserBlacklistToken+"%s", token)
+	return fmt.Sprintf(UserBlacklistTokenKey+"%s", token)
 }
 
 func GetFollowerCountKey(userID int64) string {
-	return fmt.Sprintf(UserFollowerCount+"%d", userID)
+	return fmt.Sprintf(UserFollowerCountKey+"%d", userID)
 }
 
 func GetFollowingCountKey(userID int64) string {
-	return fmt.Sprintf(UserFollowingCount+"%d", userID)
+	return fmt.Sprintf(UserFollowingCountKey+"%d", userID)
+}
+
+func GetUserSummaryKey(userID int64) string {
+	return fmt.Sprintf(UserSummaryKey+"%d", userID)
 }

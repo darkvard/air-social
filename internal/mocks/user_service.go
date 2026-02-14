@@ -367,24 +367,24 @@ func (_c *UserService_GetByID_Call) RunAndReturn(run func(ctx context.Context, i
 	return _c
 }
 
-// GetProfile provides a mock function for the type UserService
-func (_mock *UserService) GetProfile(ctx context.Context, id int64) (*domain.User, error) {
+// GetSummary provides a mock function for the type UserService
+func (_mock *UserService) GetSummary(ctx context.Context, id int64) (*domain.UserSummary, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetProfile")
+		panic("no return value specified for GetSummary")
 	}
 
-	var r0 *domain.User
+	var r0 *domain.UserSummary
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (*domain.User, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (*domain.UserSummary, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) *domain.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) *domain.UserSummary); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.User)
+			r0 = ret.Get(0).(*domain.UserSummary)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
@@ -395,19 +395,19 @@ func (_mock *UserService) GetProfile(ctx context.Context, id int64) (*domain.Use
 	return r0, r1
 }
 
-// UserService_GetProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProfile'
-type UserService_GetProfile_Call struct {
+// UserService_GetSummary_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSummary'
+type UserService_GetSummary_Call struct {
 	*mock.Call
 }
 
-// GetProfile is a helper method to define mock.On call
+// GetSummary is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id int64
-func (_e *UserService_Expecter) GetProfile(ctx interface{}, id interface{}) *UserService_GetProfile_Call {
-	return &UserService_GetProfile_Call{Call: _e.mock.On("GetProfile", ctx, id)}
+func (_e *UserService_Expecter) GetSummary(ctx interface{}, id interface{}) *UserService_GetSummary_Call {
+	return &UserService_GetSummary_Call{Call: _e.mock.On("GetSummary", ctx, id)}
 }
 
-func (_c *UserService_GetProfile_Call) Run(run func(ctx context.Context, id int64)) *UserService_GetProfile_Call {
+func (_c *UserService_GetSummary_Call) Run(run func(ctx context.Context, id int64)) *UserService_GetSummary_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -425,12 +425,12 @@ func (_c *UserService_GetProfile_Call) Run(run func(ctx context.Context, id int6
 	return _c
 }
 
-func (_c *UserService_GetProfile_Call) Return(user *domain.User, err error) *UserService_GetProfile_Call {
-	_c.Call.Return(user, err)
+func (_c *UserService_GetSummary_Call) Return(userSummary *domain.UserSummary, err error) *UserService_GetSummary_Call {
+	_c.Call.Return(userSummary, err)
 	return _c
 }
 
-func (_c *UserService_GetProfile_Call) RunAndReturn(run func(ctx context.Context, id int64) (*domain.User, error)) *UserService_GetProfile_Call {
+func (_c *UserService_GetSummary_Call) RunAndReturn(run func(ctx context.Context, id int64) (*domain.UserSummary, error)) *UserService_GetSummary_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -40,7 +40,7 @@ func (s *followServiceSuite) TestFollow() {
 	tests := []struct {
 		name       string
 		args       args
-		setupMocks func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args)
+		setupMocks func(followRepo *mocks.FollowRepository, userSvc *mocks.UserService, cache *mocks.CacheStorage, a args)
 		wantErr    error
 	}{
 		{
@@ -51,10 +51,10 @@ func (s *followServiceSuite) TestFollow() {
 		{
 			name: "get user error",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args) {
-				userRepo.
+			setupMocks: func(followRepo *mocks.FollowRepository, userSvc *mocks.UserService, cache *mocks.CacheStorage, a args) {
+				userSvc.
 					EXPECT().
-					GetByID(mock.Anything, a.followeeID).
+					GetSummary(mock.Anything, a.followeeID).
 					Return(nil, assert.AnError).
 					Once()
 			},
@@ -63,10 +63,10 @@ func (s *followServiceSuite) TestFollow() {
 		{
 			name: "get user not found",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args) {
-				userRepo.
+			setupMocks: func(followRepo *mocks.FollowRepository, userSvc *mocks.UserService, cache *mocks.CacheStorage, a args) {
+				userSvc.
 					EXPECT().
-					GetByID(mock.Anything, a.followeeID).
+					GetSummary(mock.Anything, a.followeeID).
 					Return(nil, nil).
 					Once()
 			},
@@ -75,11 +75,11 @@ func (s *followServiceSuite) TestFollow() {
 		{
 			name: "create follow error",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args) {
-				userRepo.
+			setupMocks: func(followRepo *mocks.FollowRepository, userSvc *mocks.UserService, cache *mocks.CacheStorage, a args) {
+				userSvc.
 					EXPECT().
-					GetByID(mock.Anything, a.followeeID).
-					Return(&domain.User{}, nil).
+					GetSummary(mock.Anything, a.followeeID).
+					Return(&domain.UserSummary{}, nil).
 					Once()
 
 				followRepo.
@@ -93,11 +93,11 @@ func (s *followServiceSuite) TestFollow() {
 		{
 			name: "create follow success",
 			args: validPayload,
-			setupMocks: func(followRepo *mocks.FollowRepository, userRepo *mocks.UserRepository, cache *mocks.CacheStorage, a args) {
-				userRepo.
+			setupMocks: func(followRepo *mocks.FollowRepository, userSvc *mocks.UserService, cache *mocks.CacheStorage, a args) {
+				userSvc.
 					EXPECT().
-					GetByID(mock.Anything, a.followeeID).
-					Return(&domain.User{}, nil).
+					GetSummary(mock.Anything, a.followeeID).
+					Return(&domain.UserSummary{}, nil).
 					Once()
 				followRepo.
 					EXPECT().
@@ -117,14 +117,14 @@ func (s *followServiceSuite) TestFollow() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockUserRepo := mocks.NewUserRepository(s.T())
+			mockUserSvc := mocks.NewUserService(s.T())
 			mockFollowRepo := mocks.NewFollowRepository(s.T())
 			mockCache := mocks.NewCacheStorage(s.T())
 
-			followSvc := NewFollowService(mockFollowRepo, mockUserRepo, mockCache)
+			followSvc := NewFollowService(mockFollowRepo, mockCache, mockUserSvc)
 
 			if tc.setupMocks != nil {
-				tc.setupMocks(mockFollowRepo, mockUserRepo, mockCache, tc.args)
+				tc.setupMocks(mockFollowRepo, mockUserSvc, mockCache, tc.args)
 			}
 
 			err := followSvc.Follow(context.Background(), tc.args.followerID, tc.args.followeeID)
@@ -200,10 +200,9 @@ func (s *followServiceSuite) TestUnfollow() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockFollowRepo := mocks.NewFollowRepository(s.T())
-			mockUserRepo := mocks.NewUserRepository(s.T())
 			mockCache := mocks.NewCacheStorage(s.T())
 
-			followSvc := NewFollowService(mockFollowRepo, mockUserRepo, mockCache)
+			followSvc := NewFollowService(mockFollowRepo, mockCache, nil)
 
 			if tc.setupMocks != nil {
 				tc.setupMocks(mockFollowRepo, mockCache, tc.args)
@@ -436,7 +435,7 @@ func (s *followServiceSuite) TestGetFollowings() {
 			mockFollowRepo := mocks.NewFollowRepository(s.T())
 			mockCache := mocks.NewCacheStorage(s.T())
 
-			followSvc := NewFollowService(mockFollowRepo, nil, mockCache)
+			followSvc := NewFollowService(mockFollowRepo, mockCache, nil)
 
 			if tc.setupMocks != nil {
 				tc.setupMocks(mockFollowRepo, mockCache, tc.args)
@@ -671,7 +670,7 @@ func (s *followServiceSuite) TestGetFollowers() {
 			mockFollowRepo := mocks.NewFollowRepository(s.T())
 			mockCache := mocks.NewCacheStorage(s.T())
 
-			followSvc := NewFollowService(mockFollowRepo, nil, mockCache)
+			followSvc := NewFollowService(mockFollowRepo, mockCache, nil)
 
 			if tc.setupMocks != nil {
 				tc.setupMocks(mockFollowRepo, mockCache, tc.args)

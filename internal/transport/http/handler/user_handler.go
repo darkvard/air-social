@@ -43,7 +43,7 @@ func (h *UserHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userSvc.GetProfile(c.Request.Context(), claims.UserID)
+	user, err := h.userSvc.GetByID(c.Request.Context(), claims.UserID)
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
 			pkg.Unauthorized(c, "account has been deleted or suspended")

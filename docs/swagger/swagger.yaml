@@ -369,10 +369,10 @@ definitions:
     properties:
       avatar:
         type: string
+      full_name:
+        type: string
       id:
         type: integer
-      username:
-        type: string
     type: object
   air-social_internal_transport_http_dto.UserDetailResponse:
     properties:

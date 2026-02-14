@@ -77,3 +77,10 @@ func NewInfrastructures(cfg config.Config) (*Infrastructures, func(), error) {
 	}
 	return infra, cleanup, nil
 }
+
+func (i *Infrastructures) GetRabbit(cfg config.RabbitMQConfig) *rabbitmq.HealthChecker {
+	return &rabbitmq.HealthChecker{
+		Conn: i.Rabbit,
+		URL:  cfg.URL,
+	}
+}
