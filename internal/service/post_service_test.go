@@ -310,3 +310,110 @@ func (s *postServiceSuite) TestDeletePost() {
 		})
 	}
 }
+
+func (s *postServiceSuite) TestUpdatePost() {
+	var (
+		postID      int64 = 1
+		userID      int64 = 10
+		content           = "Updated content"
+		visibility        = domain.VisibilityPrivate
+		params            = domain.UpdatePostParams{
+			PostID:     postID,
+			UserID:     userID,
+			Content:    &content,
+			Visibility: &visibility,
+		}
+		existingPost = &domain.Post{
+			ID:         postID,
+			UserID:     userID,
+			Content:    "Old content",
+			Visibility: domain.VisibilityPublic,
+		}
+		userSummary = &domain.UserSummary{ID: userID}
+	)
+
+	tests := []struct {
+		name      string
+		params    domain.UpdatePostParams
+		setupMock func(postRepo *mocks.PostRepository, userSvc *mocks.UserService)
+		want      *domain.Post
+		wantErr   error
+	}{
+		{
+			name:   "check_owner_error",
+			params: params,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(false, assert.AnError).Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:   "not_owner",
+			params: params,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(false, nil).Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name:   "get_post_error",
+			params: params,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(true, nil).Once()
+				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(nil, pkg.ErrNotFound).Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name:   "success",
+			params: params,
+			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(true, nil).Once()
+				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(existingPost, nil).Once()
+
+				postRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(p *domain.Post) bool {
+					return p.Content == content && p.Visibility == visibility
+				})).Return(nil).Once()
+
+				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+			},
+			want: &domain.Post{
+				ID:         postID,
+				UserID:     userID,
+				Content:    content,
+				Visibility: visibility,
+				User:       userSummary,
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockPostRepo := mocks.NewPostRepository(s.T())
+			mockMediaSvc := mocks.NewMediaService(s.T())
+			mockUserSvc := mocks.NewUserService(s.T())
+
+			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+
+			if tc.setupMock != nil {
+				tc.setupMock(mockPostRepo, mockUserSvc)
+			}
+
+			got, err := svc.UpdatePost(context.Background(), tc.params)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Nil(got)
+			} else {
+				s.NoError(err)
+				s.Equal(tc.want.Content, got.Content)
+				s.Equal(tc.want.Visibility, got.Visibility)
+				s.Equal(tc.want.User, got.User)
+			}
+		})
+	}
+}

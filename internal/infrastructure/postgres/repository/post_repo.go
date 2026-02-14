@@ -45,6 +45,19 @@ func (r *postRepository) GetByUserID(ctx context.Context, userID int64, cursor i
 }
 
 func (r *postRepository) Update(ctx context.Context, post *domain.Post) error {
+	query := `
+		UPDATE posts 
+		SET content = $1, visibility = $2, updated_at = NOW(), version = version + 1
+		WHERE id = $3 AND version = $4 AND deleted_at IS NULL
+		RETURNING updated_at, version
+	`
+
+	args := []any{post.Content, post.Visibility, post.ID, post.Version}
+
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&post.UpdatedAt, &post.Version)
+	if err != nil {
+		return pkg.MapPostgresError(err)
+	}
 	return nil
 }
 

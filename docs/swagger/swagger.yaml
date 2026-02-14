@@ -345,6 +345,17 @@ definitions:
       type:
         type: string
     type: object
+  air-social_internal_transport_http_dto.UpdatePostRequest:
+    properties:
+      content:
+        type: string
+      visibility:
+        enum:
+        - public
+        - followers
+        - private
+        type: string
+    type: object
   air-social_internal_transport_http_dto.UpdateProfileRequest:
     properties:
       bio:
@@ -872,6 +883,55 @@ paths:
       security:
       - BearerAuth: []
       summary: Get post detail
+      tags:
+      - Post
+    patch:
+      consumes:
+      - application/json
+      description: Update post content or visibility. Only the owner can update their
+        post.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update Post Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/air-social_internal_transport_http_dto.UpdatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/air-social_internal_transport_http_dto.PostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a post
       tags:
       - Post
   /users/{id}/follow:

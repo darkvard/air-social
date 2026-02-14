@@ -19,7 +19,6 @@ type MediaItemInput struct {
 type UpdatePostRequest struct {
 	Content    *string `json:"content" binding:"omitempty"`
 	Visibility *string `json:"visibility" binding:"omitempty,oneof=public followers private"`
-	Version    int     `json:"version" binding:"required"`
 }
 
 type PostResponse struct {

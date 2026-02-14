@@ -83,7 +83,34 @@ func (s *PostServiceImpl) GetUserPosts(ctx context.Context, userID int64, cursor
 }
 
 func (s *PostServiceImpl) UpdatePost(ctx context.Context, params domain.UpdatePostParams) (*domain.Post, error) {
-	return nil, nil
+	isOwner, err := s.postRepo.IsOwner(ctx, params.PostID, params.UserID)
+	if err != nil {
+		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+	if !isOwner {
+		return nil, pkg.ErrForbidden
+	}
+
+	post, err := s.postRepo.GetByID(ctx, params.PostID)
+	if err != nil {
+		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	if params.Content != nil {
+		post.Content = *params.Content
+	}
+	if params.Visibility != nil {
+		post.Visibility = domain.PostVisibility(*params.Visibility)
+	}
+
+	if err := s.postRepo.Update(ctx, post); err != nil {
+		return nil, err
+	}
+
+	userSummary, _ := s.userSvc.GetSummary(ctx, post.UserID)
+	post.User = userSummary
+
+	return post, nil
 }
 
 func (s *PostServiceImpl) DeletePost(ctx context.Context, postID int64, userID int64) error {

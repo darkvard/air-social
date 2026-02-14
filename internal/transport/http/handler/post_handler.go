@@ -107,8 +107,56 @@ func (h *PostHandler) GetUserPosts(c *gin.Context) {
 
 }
 
+// UpdatePost godoc
+//
+//	@Summary		Update a post
+//	@Description	Update post content or visibility. Only the owner can update their post.
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int						true	"Post ID"
+//	@Param			request	body		dto.UpdatePostRequest	true	"Update Post Request"
+//	@Success		200		{object}	dto.PostResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		403		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/posts/{id} [patch]
 func (h *PostHandler) UpdatePost(c *gin.Context) {
+	claims, err := middleware.GetAuthClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, err.Error())
+		return
+	}
 
+	var path dto.IDPathParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid post id")
+		return
+	}
+
+	var req dto.UpdatePostRequest
+	if err := pkg.StrictBindJSON(c, &req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	params := domain.UpdatePostParams{
+		PostID:     path.ID,
+		UserID:     claims.UserID,
+		Content:    req.Content,
+		Visibility: (*domain.PostVisibility)(req.Visibility),
+	}
+
+	post, err := h.srv.UpdatePost(c.Request.Context(), params)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, h.toPostResponse(post))
 }
 
 // DeletePost godoc

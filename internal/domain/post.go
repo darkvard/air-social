@@ -75,5 +75,4 @@ type UpdatePostParams struct {
 	PostID     int64
 	Content    *string
 	Visibility *PostVisibility
-	Version    int
 }
