@@ -21,6 +21,14 @@ type MediaService interface {
 	VerifyMedia(ctx context.Context, objectKeys []string) error
 }
 
+type MediaVerifier interface {
+	VerifyMedia(ctx context.Context, objectKeys []string) error
+}
+
+type MediaUploadConfirmer interface {
+	ConfirmUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]string, error)
+}
+
 type MediaServiceImpl struct {
 	storage    domain.FileStorage
 	bucket     domain.FileBucket

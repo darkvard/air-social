@@ -25,6 +25,7 @@ type TokenService interface {
 	Validate(accessToken string) (*jwt.Token, error)
 }
 
+
 type TokenServiceImpl struct {
 	tokenRepo domain.TokenRepository
 	tokenCfg  config.TokenConfig

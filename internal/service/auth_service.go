@@ -2,11 +2,8 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 
 	"air-social/internal/domain"
 	"air-social/pkg"
@@ -23,26 +20,40 @@ type AuthService interface {
 	VerifyEmail(ctx context.Context, emailToken string) error
 }
 
-type AuthServiceImpl struct {
-	userSvc   UserService
-	tokenSvc  TokenService
-	verifySvc VerifyService
-	cache     domain.CacheStorage
+type UserAccountManager interface {
+	GetByEmail(ctx context.Context, email string) (*domain.User, error)
+	CreateUser(ctx context.Context, params domain.CreateUserParams) (*domain.User, error)
+	UpdatePassword(ctx context.Context, email, passwordHashed string) error
+	VerifyEmail(ctx context.Context, email string) error
 }
 
-func NewAuthService(userSvc UserService, tokenSvc TokenService, verifySvc VerifyService, cache domain.CacheStorage) *AuthServiceImpl {
+type SessionManager interface {
+	CreateSession(ctx context.Context, userID int64, deviceID string) (domain.TokenInfo, error)
+	Refresh(ctx context.Context, refreshToken string) (domain.TokenInfo, error)
+	RevokeDeviceSession(ctx context.Context, userID int64, deviceID string) error
+	RevokeAllUserSessions(ctx context.Context, userID int64) error
+}
+
+type AuthServiceImpl struct {
+	accountManager UserAccountManager
+	sessionMgr     SessionManager
+	verifySvc      VerifyService
+	cache          domain.CacheStorage
+}
+
+func NewAuthService(accountMgr UserAccountManager, sessionMgr SessionManager, verifySvc VerifyService, cache domain.CacheStorage) *AuthServiceImpl {
 	return &AuthServiceImpl{
-		userSvc:   userSvc,
-		tokenSvc:  tokenSvc,
-		verifySvc: verifySvc,
-		cache:     cache,
+		accountManager: accountMgr,
+		sessionMgr:     sessionMgr,
+		verifySvc:      verifySvc,
+		cache:          cache,
 	}
 }
 
 func (s *AuthServiceImpl) Register(ctx context.Context, input domain.RegisterParams) (*domain.User, error) {
 	var empty *domain.User
 
-	passwordHashed, err := hashPassword(input.Password)
+	passwordHashed, err := pkg.HashPassword(input.Password)
 	if err != nil {
 		return empty, pkg.ErrInternal
 	}
@@ -52,7 +63,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, input domain.RegisterPar
 		PasswordHashed: passwordHashed,
 	}
 
-	user, err := s.userSvc.CreateUser(ctx, params)
+	user, err := s.accountManager.CreateUser(ctx, params)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
 	}
@@ -70,9 +81,9 @@ func (s *AuthServiceImpl) Logout(ctx context.Context, input domain.LogoutParams)
 
 	var err error
 	if input.IsAllDevices {
-		err = s.tokenSvc.RevokeAllUserSessions(ctx, input.UserID)
+		err = s.sessionMgr.RevokeAllUserSessions(ctx, input.UserID)
 	} else {
-		err = s.tokenSvc.RevokeDeviceSession(ctx, input.UserID, input.DeviceID)
+		err = s.sessionMgr.RevokeDeviceSession(ctx, input.UserID, input.DeviceID)
 	}
 
 	if err == nil {
@@ -85,7 +96,7 @@ func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (
 	var emptyUser *domain.User
 	var emptyToken domain.TokenInfo
 
-	user, err := s.userSvc.GetByEmail(ctx, input.Email)
+	user, err := s.accountManager.GetByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
 			return emptyUser, emptyToken, pkg.ErrInvalidCredentials
@@ -93,11 +104,11 @@ func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (
 		return emptyUser, emptyToken, err
 	}
 
-	if !verifyPassword(input.Password, user.PasswordHash) {
+	if !pkg.VerifyPassword(input.Password, user.PasswordHash) {
 		return emptyUser, emptyToken, pkg.ErrInvalidCredentials
 	}
 
-	tokens, err := s.tokenSvc.CreateSession(ctx, user.ID, input.DeviceID)
+	tokens, err := s.sessionMgr.CreateSession(ctx, user.ID, input.DeviceID)
 	if err != nil {
 		return emptyUser, emptyToken, pkg.OrInternalError(err)
 	}
@@ -106,7 +117,7 @@ func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (
 }
 
 func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, email string) error {
-	user, err := s.userSvc.GetByEmail(ctx, email)
+	user, err := s.accountManager.GetByEmail(ctx, email)
 	if err != nil {
 		return err
 	}
@@ -120,12 +131,12 @@ func (s *AuthServiceImpl) ResetPassword(ctx context.Context, input domain.ResetP
 		return pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
 
-	passwordHashed, err := hashPassword(input.Password)
+	passwordHashed, err := pkg.HashPassword(input.Password)
 	if err != nil {
 		return pkg.ErrInternal
 	}
 
-	err = s.userSvc.UpdatePassword(ctx, email, passwordHashed)
+	err = s.accountManager.UpdatePassword(ctx, email, passwordHashed)
 	if err != nil {
 		return pkg.OrInternalError(err)
 	}
@@ -148,14 +159,14 @@ func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, emailToken string) er
 		return pkg.ErrBadRequest
 	}
 
-	err = s.userSvc.VerifyEmail(ctx, email)
+	err = s.accountManager.VerifyEmail(ctx, email)
 	return pkg.OrInternalError(err)
 }
 
 func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string) (domain.TokenInfo, error) {
 	var empty domain.TokenInfo
 
-	tokens, err := s.tokenSvc.Refresh(ctx, refreshToken)
+	tokens, err := s.sessionMgr.Refresh(ctx, refreshToken)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrUnauthorized)
 	}
@@ -163,24 +174,6 @@ func (s *AuthServiceImpl) RefreshToken(ctx context.Context, refreshToken string)
 }
 
 // Internal helpers
-
-// hashPassword generates a bcrypt hash of the password using the default cost.
-//
-// To circumvent bcrypt's 72-byte input truncation limit, the password is
-// pre-hashed using SHA-256 before being passed to bcrypt. This ensures
-// passwords of any length are securely handled.
-func hashPassword(plainText string) (string, error) {
-	// SHA-256 produces a fixed 32-byte hash, safe for bcrypt.
-	sha := sha256.Sum256([]byte(plainText))
-	hash, err := bcrypt.GenerateFromPassword(sha[:], bcrypt.DefaultCost)
-	return string(hash), err
-}
-
-func verifyPassword(plainPassword, hashPassword string) bool {
-	sha := sha256.Sum256([]byte(plainPassword))
-	err := bcrypt.CompareHashAndPassword([]byte(hashPassword), sha[:])
-	return err == nil
-}
 
 func (s *AuthServiceImpl) isBlockedAccessToken(ctx context.Context, token string) bool {
 	key := domain.GetBlacklistTokenKey(token)

@@ -43,15 +43,15 @@ func (s *postServiceSuite) TestCreatePost() {
 	tests := []struct {
 		name      string
 		input     domain.CreatePostParams
-		setupMock func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService)
+		setupMock func(postRepo *mocks.PostRepository, mediaVerifier *mocks.MediaVerifier, userFetcher *mocks.UserSummaryFetcher)
 		want      *domain.Post
 		wantErr   error
 	}{
 		{
 			name:  "user_not_found",
 			input: input,
-			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, input.UserID).Return(nil, pkg.ErrNotFound).Once()
+			setupMock: func(postRepo *mocks.PostRepository, mediaVerifier *mocks.MediaVerifier, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, input.UserID).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrNotFound,
@@ -61,8 +61,8 @@ func (s *postServiceSuite) TestCreatePost() {
 			input: domain.CreatePostParams{
 				UserID: userID,
 			},
-			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+			setupMock: func(postRepo *mocks.PostRepository, mediaVerifier *mocks.MediaVerifier, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrInvalidData,
@@ -70,9 +70,9 @@ func (s *postServiceSuite) TestCreatePost() {
 		{
 			name:  "media_verify_error",
 			input: mediaInput,
-			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, mediaInput.UserID).Return(userSummary, nil).Once()
-				mediaSvc.EXPECT().VerifyMedia(mock.Anything, []string{"key1"}).Return(pkg.ErrNotFound).Once()
+			setupMock: func(postRepo *mocks.PostRepository, mediaVerifier *mocks.MediaVerifier, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, mediaInput.UserID).Return(userSummary, nil).Once()
+				mediaVerifier.EXPECT().VerifyMedia(mock.Anything, []string{"key1"}).Return(pkg.ErrNotFound).Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrNotFound,
@@ -80,8 +80,8 @@ func (s *postServiceSuite) TestCreatePost() {
 		{
 			name:  "repo_create_error",
 			input: input,
-			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, input.UserID).Return(userSummary, nil).Once()
+			setupMock: func(postRepo *mocks.PostRepository, mediaVerifier *mocks.MediaVerifier, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, input.UserID).Return(userSummary, nil).Once()
 				postRepo.EXPECT().Create(mock.Anything, mock.Anything).Return(assert.AnError).Once()
 			},
 			want:    nil,
@@ -90,8 +90,8 @@ func (s *postServiceSuite) TestCreatePost() {
 		{
 			name:  "success_text_only",
 			input: input,
-			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, input.UserID).Return(userSummary, nil).Once()
+			setupMock: func(postRepo *mocks.PostRepository, mediaVerifier *mocks.MediaVerifier, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, input.UserID).Return(userSummary, nil).Once()
 				postRepo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(p *domain.Post) bool {
 					return p.UserID == input.UserID && p.Content == input.Content
 				})).Return(nil).Once()
@@ -107,9 +107,9 @@ func (s *postServiceSuite) TestCreatePost() {
 		{
 			name:  "success_with_media",
 			input: mediaInput,
-			setupMock: func(postRepo *mocks.PostRepository, mediaSvc *mocks.MediaService, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, mediaInput.UserID).Return(userSummary, nil).Once()
-				mediaSvc.EXPECT().VerifyMedia(mock.Anything, []string{"key1"}).Return(nil).Once()
+			setupMock: func(postRepo *mocks.PostRepository, mediaVerifier *mocks.MediaVerifier, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, mediaInput.UserID).Return(userSummary, nil).Once()
+				mediaVerifier.EXPECT().VerifyMedia(mock.Anything, []string{"key1"}).Return(nil).Once()
 				postRepo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(p *domain.Post) bool {
 					return len(p.Media) == 1 && p.Media[0].MediaKey == "key1"
 				})).Return(nil).Once()
@@ -130,13 +130,13 @@ func (s *postServiceSuite) TestCreatePost() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockPostRepo := mocks.NewPostRepository(s.T())
-			mockMediaSvc := mocks.NewMediaService(s.T())
-			mockUserSvc := mocks.NewUserService(s.T())
+			mockMediaVerifier := mocks.NewMediaVerifier(s.T())
+			mockUserFetcher := mocks.NewUserSummaryFetcher(s.T())
 
-			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+			svc := NewPostService(mockPostRepo, mockMediaVerifier, mockUserFetcher)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockPostRepo, mockMediaSvc, mockUserSvc)
+				tc.setupMock(mockPostRepo, mockMediaVerifier, mockUserFetcher)
 			}
 
 			got, err := svc.CreatePost(context.Background(), tc.input)
@@ -167,14 +167,14 @@ func (s *postServiceSuite) TestGetPostDetail() {
 	tests := []struct {
 		name      string
 		postID    int64
-		setupMock func(postRepo *mocks.PostRepository, userSvc *mocks.UserService)
+		setupMock func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher)
 		want      *domain.Post
 		wantErr   error
 	}{
 		{
 			name:   "post_not_found",
 			postID: postID,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want:    nil,
@@ -183,9 +183,9 @@ func (s *postServiceSuite) TestGetPostDetail() {
 		{
 			name:   "user_service_error",
 			postID: postID,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(post, nil).Once()
-				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(nil, assert.AnError).Once()
+				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(nil, assert.AnError).Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrInternal,
@@ -193,9 +193,9 @@ func (s *postServiceSuite) TestGetPostDetail() {
 		{
 			name:   "success",
 			postID: postID,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(post, nil).Once()
-				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
 			},
 			want: &domain.Post{ID: postID, UserID: userID, User: userSummary},
 		},
@@ -204,13 +204,13 @@ func (s *postServiceSuite) TestGetPostDetail() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockPostRepo := mocks.NewPostRepository(s.T())
-			mockMediaSvc := mocks.NewMediaService(s.T())
-			mockUserSvc := mocks.NewUserService(s.T())
+			mockMediaVerifier := mocks.NewMediaVerifier(s.T())
+			mockUserFetcher := mocks.NewUserSummaryFetcher(s.T())
 
-			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+			svc := NewPostService(mockPostRepo, mockMediaVerifier, mockUserFetcher)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockPostRepo, mockUserSvc)
+				tc.setupMock(mockPostRepo, mockUserFetcher)
 			}
 
 			got, err := svc.GetPostDetail(context.Background(), tc.postID)
@@ -291,10 +291,10 @@ func (s *postServiceSuite) TestDeletePost() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockPostRepo := mocks.NewPostRepository(s.T())
-			mockMediaSvc := mocks.NewMediaService(s.T())
-			mockUserSvc := mocks.NewUserService(s.T())
+			mockMediaVerifier := mocks.NewMediaVerifier(s.T())
+			mockUserFetcher := mocks.NewUserSummaryFetcher(s.T())
 
-			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+			svc := NewPostService(mockPostRepo, mockMediaVerifier, mockUserFetcher)
 
 			if tc.setupMock != nil {
 				tc.setupMock(mockPostRepo)
@@ -335,14 +335,14 @@ func (s *postServiceSuite) TestUpdatePost() {
 	tests := []struct {
 		name      string
 		params    domain.UpdatePostParams
-		setupMock func(postRepo *mocks.PostRepository, userSvc *mocks.UserService)
+		setupMock func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher)
 		want      *domain.Post
 		wantErr   error
 	}{
 		{
 			name:   "check_owner_error",
 			params: params,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(false, assert.AnError).Once()
 			},
 			want:    nil,
@@ -351,7 +351,7 @@ func (s *postServiceSuite) TestUpdatePost() {
 		{
 			name:   "not_owner",
 			params: params,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(false, nil).Once()
 			},
 			want:    nil,
@@ -360,7 +360,7 @@ func (s *postServiceSuite) TestUpdatePost() {
 		{
 			name:   "get_post_error",
 			params: params,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(true, nil).Once()
 				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(nil, pkg.ErrNotFound).Once()
 			},
@@ -370,7 +370,7 @@ func (s *postServiceSuite) TestUpdatePost() {
 		{
 			name:   "success",
 			params: params,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(true, nil).Once()
 				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(existingPost, nil).Once()
 
@@ -378,7 +378,7 @@ func (s *postServiceSuite) TestUpdatePost() {
 					return p.Content == content && p.Visibility == visibility
 				})).Return(nil).Once()
 
-				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
 			},
 			want: &domain.Post{
 				ID:         postID,
@@ -394,13 +394,13 @@ func (s *postServiceSuite) TestUpdatePost() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockPostRepo := mocks.NewPostRepository(s.T())
-			mockMediaSvc := mocks.NewMediaService(s.T())
-			mockUserSvc := mocks.NewUserService(s.T())
+			mockMediaVerifier := mocks.NewMediaVerifier(s.T())
+			mockUserFetcher := mocks.NewUserSummaryFetcher(s.T())
 
-			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+			svc := NewPostService(mockPostRepo, mockMediaVerifier, mockUserFetcher)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockPostRepo, mockUserSvc)
+				tc.setupMock(mockPostRepo, mockUserFetcher)
 			}
 
 			got, err := svc.UpdatePost(context.Background(), tc.params)
@@ -430,15 +430,15 @@ func (s *postServiceSuite) TestGetUserPosts() {
 	tests := []struct {
 		name      string
 		params    domain.CursorQueryParams
-		setupMock func(postRepo *mocks.PostRepository, userSvc *mocks.UserService)
+		setupMock func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher)
 		want      domain.CursorPaginatedResult[domain.Post]
 		wantErr   error
 	}{
 		{
 			name:   "user_not_found",
 			params: params,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(nil, pkg.ErrNotFound).Once()
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want:    domain.CursorPaginatedResult[domain.Post]{},
 			wantErr: pkg.ErrNotFound,
@@ -446,8 +446,8 @@ func (s *postServiceSuite) TestGetUserPosts() {
 		{
 			name:   "repo_error",
 			params: params,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
 				postRepo.EXPECT().GetUserPosts(mock.Anything, userID, params).Return(nil, assert.AnError).Once()
 			},
 			want:    domain.CursorPaginatedResult[domain.Post]{},
@@ -456,8 +456,8 @@ func (s *postServiceSuite) TestGetUserPosts() {
 		{
 			name:   "success_has_next",
 			params: params,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
 				// Return limit + 1 items to simulate hasNextPage
 				posts := make([]domain.Post, limit+1)
 				for i := 0; i < limit+1; i++ {
@@ -474,8 +474,8 @@ func (s *postServiceSuite) TestGetUserPosts() {
 		{
 			name:   "success_no_next",
 			params: params,
-			setupMock: func(postRepo *mocks.PostRepository, userSvc *mocks.UserService) {
-				userSvc.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
+			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
+				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
 				// Return exactly limit items
 				posts := make([]domain.Post, limit)
 				for i := 0; i < limit; i++ {
@@ -494,13 +494,13 @@ func (s *postServiceSuite) TestGetUserPosts() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockPostRepo := mocks.NewPostRepository(s.T())
-			mockMediaSvc := mocks.NewMediaService(s.T())
-			mockUserSvc := mocks.NewUserService(s.T())
+			mockMediaVerifier := mocks.NewMediaVerifier(s.T())
+			mockUserFetcher := mocks.NewUserSummaryFetcher(s.T())
 
-			svc := NewPostService(mockPostRepo, mockMediaSvc, mockUserSvc)
+			svc := NewPostService(mockPostRepo, mockMediaVerifier, mockUserFetcher)
 
 			if tc.setupMock != nil {
-				tc.setupMock(mockPostRepo, mockUserSvc)
+				tc.setupMock(mockPostRepo, mockUserFetcher)
 			}
 
 			got, err := svc.GetUserPosts(context.Background(), userID, tc.params)

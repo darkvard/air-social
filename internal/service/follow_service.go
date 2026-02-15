@@ -18,16 +18,16 @@ type FollowService interface {
 }
 
 type FollowServiceImpl struct {
-	followRepo domain.FollowRepository
-	cache      domain.CacheStorage
-	userSvc    UserService
+	followRepository domain.FollowRepository
+	cache            domain.CacheStorage
+	userFetcher      UserSummaryFetcher
 }
 
-func NewFollowService(followRepo domain.FollowRepository, cache domain.CacheStorage, userSvc UserService) *FollowServiceImpl {
+func NewFollowService(followRepo domain.FollowRepository, cache domain.CacheStorage, userFetcher UserSummaryFetcher) *FollowServiceImpl {
 	return &FollowServiceImpl{
-		followRepo: followRepo,
-		cache:      cache,
-		userSvc:    userSvc,
+		followRepository: followRepo,
+		cache:            cache,
+		userFetcher:      userFetcher,
 	}
 }
 
@@ -36,7 +36,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followerID int64, follow
 		return fmt.Errorf("cannot follow yourself: %w", pkg.ErrBadRequest)
 	}
 
-	user, err := s.userSvc.GetSummary(ctx, followeeID)
+	user, err := s.userFetcher.GetSummary(ctx, followeeID)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (s *FollowServiceImpl) Follow(ctx context.Context, followerID int64, follow
 		return fmt.Errorf("user not found: %w", pkg.ErrBadRequest)
 	}
 
-	if err := s.followRepo.Create(ctx, &domain.Follow{
+	if err := s.followRepository.Create(ctx, &domain.Follow{
 		FollowerID: followerID,
 		FolloweeID: followeeID,
 	}); err != nil {
@@ -60,7 +60,7 @@ func (s *FollowServiceImpl) Unfollow(ctx context.Context, followerID int64, foll
 		return fmt.Errorf("cannot unfollow yourself: %w", pkg.ErrBadRequest)
 	}
 
-	if err := s.followRepo.Delete(ctx, followerID, followeeID); err != nil {
+	if err := s.followRepository.Delete(ctx, followerID, followeeID); err != nil {
 		return pkg.OrInternalError(err)
 	}
 
@@ -73,14 +73,14 @@ func (s *FollowServiceImpl) GetFollowings(ctx context.Context, params domain.Fol
 
 	users, total, err := s.runConcurrentFetch(ctx,
 		func(ctx context.Context) ([]domain.SocialUser, error) {
-			res, err := s.followRepo.GetFollowings(ctx, params)
+			res, err := s.followRepository.GetFollowings(ctx, params)
 			if err != nil {
 				return nil, pkg.OrInternalError(err)
 			}
 			return s.enrichSocialUsers(ctx, params.CurrentUserID, res)
 		},
 		func(ctx context.Context) (int64, error) {
-			return s.fetchTotalCount(ctx, params.TargetUserID, domain.GetFollowingCountKey, s.followRepo.CountFollowings)
+			return s.fetchTotalCount(ctx, params.TargetUserID, domain.GetFollowingCountKey, s.followRepository.CountFollowings)
 		})
 
 	if err != nil {
@@ -95,14 +95,14 @@ func (s *FollowServiceImpl) GetFollowers(ctx context.Context, params domain.Foll
 
 	users, total, err := s.runConcurrentFetch(ctx,
 		func(c context.Context) ([]domain.SocialUser, error) {
-			res, err := s.followRepo.GetFollowers(c, params)
+			res, err := s.followRepository.GetFollowers(c, params)
 			if err != nil {
 				return nil, pkg.OrInternalError(err)
 			}
 			return s.enrichSocialUsers(c, params.CurrentUserID, res)
 		},
 		func(c context.Context) (int64, error) {
-			return s.fetchTotalCount(c, params.TargetUserID, domain.GetFollowerCountKey, s.followRepo.CountFollowers)
+			return s.fetchTotalCount(c, params.TargetUserID, domain.GetFollowerCountKey, s.followRepository.CountFollowers)
 		},
 	)
 
@@ -186,12 +186,12 @@ func (s *FollowServiceImpl) enrichSocialUsers(ctx context.Context, currentUserID
 
 	// Run sequentially to prevent nested concurrency and DB connection pool exhaustion.
 	// Parent already runs concurrently; adding goroutines here wastes CPU on fast queries.
-	followingMap, err := s.followRepo.IsFollowing(ctx, currentUserID, targetIDs)
+	followingMap, err := s.followRepository.IsFollowing(ctx, currentUserID, targetIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	followedByMap, err := s.followRepo.IsFollowedBy(ctx, currentUserID, targetIDs)
+	followedByMap, err := s.followRepository.IsFollowedBy(ctx, currentUserID, targetIDs)
 	if err != nil {
 		return nil, err
 	}

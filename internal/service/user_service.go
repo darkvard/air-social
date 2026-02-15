@@ -20,24 +20,33 @@ type UserService interface {
 	ConfirmImageUpload(ctx context.Context, input []domain.ConfirmFileParams) ([]domain.ConfirmFileResult, error)
 }
 
-type UserServiceImpl struct {
-	userRepo   domain.UserRepository
-	cache      domain.CacheStorage
-	urlFactory domain.URLFactory
-	mediaSvc   MediaService
+type UserSummaryFetcher interface {
+	GetSummary(ctx context.Context, id int64) (*domain.UserSummary, error)
 }
 
-func NewUserService(userRepo domain.UserRepository, mediaSvc MediaService, cache domain.CacheStorage, urlFactory domain.URLFactory) *UserServiceImpl {
+type UserMediaManager interface {
+	MediaVerifier
+	MediaUploadConfirmer
+}
+
+type UserServiceImpl struct {
+	userRepository domain.UserRepository
+	cache          domain.CacheStorage
+	urlFactory     domain.URLFactory
+	mediaMgr       UserMediaManager
+}
+
+func NewUserService(userRepository domain.UserRepository, mediaManager UserMediaManager, cache domain.CacheStorage, urlFactory domain.URLFactory) *UserServiceImpl {
 	return &UserServiceImpl{
-		userRepo:   userRepo,
-		cache:      cache,
-		urlFactory: urlFactory,
-		mediaSvc:   mediaSvc,
+		userRepository: userRepository,
+		cache:          cache,
+		urlFactory:     urlFactory,
+		mediaMgr:       mediaManager,
 	}
 }
 
 func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (*domain.User, error) {
-	user, err := s.userRepo.GetByID(ctx, id)
+	user, err := s.userRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -45,7 +54,7 @@ func (s *UserServiceImpl) GetByID(ctx context.Context, id int64) (*domain.User, 
 }
 
 func (s *UserServiceImpl) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	user, err := s.userRepo.GetByEmail(ctx, email)
+	user, err := s.userRepository.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -60,7 +69,7 @@ func (s *UserServiceImpl) GetSummary(ctx context.Context, id int64) (*domain.Use
 		return &cached, nil
 	}
 
-	user, err := s.userRepo.GetByID(ctx, id)
+	user, err := s.userRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -78,7 +87,7 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, params domain.CreateUs
 		PasswordHash: params.PasswordHashed,
 	}
 
-	if err := s.userRepo.Create(ctx, user); err != nil {
+	if err := s.userRepository.Create(ctx, user); err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
 	}
 
@@ -126,11 +135,11 @@ func (s *UserServiceImpl) ChangePassword(ctx context.Context, params domain.Chan
 	if params.NewPassword == params.CurrentPassword {
 		return pkg.ErrSamePassword
 	}
-	if !verifyPassword(params.CurrentPassword, user.PasswordHash) {
+	if !pkg.VerifyPassword(params.CurrentPassword, user.PasswordHash) {
 		return pkg.ErrInvalidCredentials
 	}
 
-	hashedPwd, err := hashPassword(params.NewPassword)
+	hashedPwd, err := pkg.HashPassword(params.NewPassword)
 	if err != nil {
 		return pkg.OrInternalError(err)
 	}
@@ -170,14 +179,14 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, params []domai
 		}
 	}
 
-	keys, err := s.mediaSvc.ConfirmUpload(ctx, params)
+	keys, err := s.mediaMgr.ConfirmUpload(ctx, params)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrBadRequest, pkg.ErrForbidden, pkg.ErrNotFound)
 	}
 
 	responses := make([]domain.ConfirmFileResult, len(params))
 	for i, input := range params {
-		if err = s.userRepo.UpdateProfileImages(ctx, input.EntityID, keys[i], input.Feature); err != nil {
+		if err = s.userRepository.UpdateProfileImages(ctx, input.EntityID, keys[i], input.Feature); err != nil {
 			return nil, pkg.OrInternalError(err)
 		}
 
@@ -197,7 +206,7 @@ func (s *UserServiceImpl) ConfirmImageUpload(ctx context.Context, params []domai
 // Internal helpers
 
 func (s *UserServiceImpl) updateUser(ctx context.Context, user *domain.User) error {
-	if err := s.userRepo.Update(ctx, user); err != nil {
+	if err := s.userRepository.Update(ctx, user); err != nil {
 		return pkg.OrInternalError(err)
 	}
 	return nil

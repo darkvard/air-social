@@ -17,21 +17,21 @@ type PostService interface {
 }
 
 type PostServiceImpl struct {
-	postRepo domain.PostRepository
-	mediaSvc MediaService
-	userSvc  UserService
+	postRepository domain.PostRepository
+	mediaVerifier  MediaVerifier
+	userFetcher    UserSummaryFetcher
 }
 
-func NewPostService(postRepo domain.PostRepository, mediaSvc MediaService, userSvc UserService) *PostServiceImpl {
+func NewPostService(postRepo domain.PostRepository, mediaVerifier MediaVerifier, userSvc UserSummaryFetcher) *PostServiceImpl {
 	return &PostServiceImpl{
-		postRepo: postRepo,
-		mediaSvc: mediaSvc,
-		userSvc:  userSvc,
+		postRepository: postRepo,
+		mediaVerifier:  mediaVerifier,
+		userFetcher:    userSvc,
 	}
 }
 
 func (s *PostServiceImpl) CreatePost(ctx context.Context, params domain.CreatePostParams) (*domain.Post, error) {
-	user, err := s.userSvc.GetSummary(ctx, params.UserID)
+	user, err := s.userFetcher.GetSummary(ctx, params.UserID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -55,7 +55,7 @@ func (s *PostServiceImpl) CreatePost(ctx context.Context, params domain.CreatePo
 		post.Media = media
 	}
 
-	if err := s.postRepo.Create(ctx, post); err != nil {
+	if err := s.postRepository.Create(ctx, post); err != nil {
 		return nil, err
 	}
 
@@ -63,12 +63,12 @@ func (s *PostServiceImpl) CreatePost(ctx context.Context, params domain.CreatePo
 }
 
 func (s *PostServiceImpl) GetPostDetail(ctx context.Context, id int64) (*domain.Post, error) {
-	post, err := s.postRepo.GetByID(ctx, id)
+	post, err := s.postRepository.GetByID(ctx, id)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
 
-	user, err := s.userSvc.GetSummary(ctx, post.UserID)
+	user, err := s.userFetcher.GetSummary(ctx, post.UserID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -79,7 +79,7 @@ func (s *PostServiceImpl) GetPostDetail(ctx context.Context, id int64) (*domain.
 }
 
 func (s *PostServiceImpl) UpdatePost(ctx context.Context, params domain.UpdatePostParams) (*domain.Post, error) {
-	isOwner, err := s.postRepo.IsOwner(ctx, params.PostID, params.UserID)
+	isOwner, err := s.postRepository.IsOwner(ctx, params.PostID, params.UserID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -87,7 +87,7 @@ func (s *PostServiceImpl) UpdatePost(ctx context.Context, params domain.UpdatePo
 		return nil, pkg.ErrForbidden
 	}
 
-	post, err := s.postRepo.GetByID(ctx, params.PostID)
+	post, err := s.postRepository.GetByID(ctx, params.PostID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -99,18 +99,18 @@ func (s *PostServiceImpl) UpdatePost(ctx context.Context, params domain.UpdatePo
 		post.Visibility = domain.PostVisibility(*params.Visibility)
 	}
 
-	if err := s.postRepo.Update(ctx, post); err != nil {
+	if err := s.postRepository.Update(ctx, post); err != nil {
 		return nil, err
 	}
 
-	userSummary, _ := s.userSvc.GetSummary(ctx, post.UserID)
+	userSummary, _ := s.userFetcher.GetSummary(ctx, post.UserID)
 	post.User = userSummary
 
 	return post, nil
 }
 
 func (s *PostServiceImpl) DeletePost(ctx context.Context, postID int64, userID int64) error {
-	isOwner, err := s.postRepo.IsOwner(ctx, postID, userID)
+	isOwner, err := s.postRepository.IsOwner(ctx, postID, userID)
 	if err != nil {
 		return pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -119,7 +119,7 @@ func (s *PostServiceImpl) DeletePost(ctx context.Context, postID int64, userID i
 		return pkg.ErrForbidden
 	}
 
-	err = s.postRepo.Delete(ctx, postID)
+	err = s.postRepository.Delete(ctx, postID)
 
 	return pkg.OrInternalError(err)
 }
@@ -128,12 +128,12 @@ func (s *PostServiceImpl) GetUserPosts(ctx context.Context, userID int64, param 
 	var empty domain.CursorPaginatedResult[domain.Post]
 	param.EnsureDefaults()
 
-	summary, err := s.userSvc.GetSummary(ctx, userID)
+	summary, err := s.userFetcher.GetSummary(ctx, userID)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
 
-	posts, err := s.postRepo.GetUserPosts(ctx, userID, param)
+	posts, err := s.postRepository.GetUserPosts(ctx, userID, param)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -176,7 +176,7 @@ func (s *PostServiceImpl) validateMedia(ctx context.Context, params []domain.Pos
 	for i, m := range params {
 		keys[i] = m.MediaKey
 	}
-	if err := s.mediaSvc.VerifyMedia(ctx, keys); err != nil {
+	if err := s.mediaVerifier.VerifyMedia(ctx, keys); err != nil {
 		return nil, err
 	}
 
