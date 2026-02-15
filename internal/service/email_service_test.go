@@ -48,12 +48,14 @@ func (s *emailServiceSuite) TestDispatch() {
 				},
 			},
 			setupMock: func(mailer *mocks.Mailer, a args) {
-				mailer.EXPECT().Send(mock.MatchedBy(func(email *domain.Email) bool {
+				mailer.EXPECT().Send(mock.Anything, mock.MatchedBy(func(email *domain.Email) bool {
 					data, ok := email.Data.(domain.EmailVerifyData)
 					return ok &&
 						email.To == baseData.Email &&
 						email.TemplateFile == templates.VerifyEmailPath &&
-						data.Link == baseData.Link
+						data.Link == baseData.Link &&
+						data.Name == baseData.Name &&
+						data.Expiry == baseData.Expiry
 				})).Return(nil).Once()
 			},
 			wantErr: nil,
@@ -67,7 +69,7 @@ func (s *emailServiceSuite) TestDispatch() {
 				},
 			},
 			setupMock: func(mailer *mocks.Mailer, a args) {
-				mailer.EXPECT().Send(mock.Anything).Return(assert.AnError).Once()
+				mailer.EXPECT().Send(mock.Anything, mock.Anything).Return(assert.AnError).Once()
 			},
 			wantErr: assert.AnError,
 		},
@@ -80,9 +82,13 @@ func (s *emailServiceSuite) TestDispatch() {
 				},
 			},
 			setupMock: func(mailer *mocks.Mailer, a args) {
-				mailer.EXPECT().Send(mock.MatchedBy(func(email *domain.Email) bool {
-					return email.To == baseData.Email &&
-						email.TemplateFile == templates.ResetPasswordPath
+				mailer.EXPECT().Send(mock.Anything, mock.MatchedBy(func(email *domain.Email) bool {
+					data, ok := email.Data.(domain.EmailVerifyData)
+					return ok &&
+						email.To == baseData.Email &&
+						email.TemplateFile == templates.ResetPasswordPath &&
+						data.Link == baseData.Link &&
+						data.Name == baseData.Name
 				})).Return(nil).Once()
 			},
 			wantErr: nil,

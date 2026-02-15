@@ -26,6 +26,8 @@ type EventPublisher interface {
 	Close()
 }
 
+type EventHandler func(ctx context.Context, evt Event) error
+
 type Event struct {
 	EventID   string
 	EventType EventType

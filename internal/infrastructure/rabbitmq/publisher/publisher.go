@@ -90,13 +90,7 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any)
 
 	seqNo := pc.ch.GetNextPublishSeqNo()
 
-	var body []byte
-	if evt, ok := payload.(domain.Event); ok {
-		modelEvt := model.FromDomainEvent(evt)
-		body, err = json.Marshal(modelEvt)
-	} else {
-		body, err = json.Marshal(payload)
-	}
+	body, err := p.prepareBody(payload)
 	if err != nil {
 		return err
 	}
@@ -185,4 +179,22 @@ func (p *Publisher) close() {
 	for pc := range p.chPool {
 		pc.ch.Close()
 	}
+}
+
+// prepareBody serializes data for RabbitMQ.
+// It wraps domain.Event into model.Event to ensure a consistent JSON metadata 
+// structure (ID, Type, Timestamp) regardless of the specific business data.
+func (p *Publisher) prepareBody(payload any) ([]byte, error) {
+	var finalPayload any = payload
+
+	if evt, ok := payload.(domain.Event); ok {
+		finalPayload = model.FromDomainEvent(evt)
+	}
+
+	body, err := json.Marshal(finalPayload)
+	if err != nil {
+		return nil, fmt.Errorf("rabbitmq: marshal failed: %w", err)
+	}
+
+	return body, nil
 }

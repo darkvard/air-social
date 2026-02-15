@@ -1,7 +1,9 @@
 package domain
 
+import "context"
+
 type Mailer interface {
-	Send(email *Email) error
+	Send(ctx context.Context, email *Email) error
 }
 
 type Email struct {

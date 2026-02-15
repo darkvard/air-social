@@ -35,18 +35,18 @@ type SessionManager interface {
 }
 
 type AuthServiceImpl struct {
-	accountManager UserAccountManager
-	sessionMgr     SessionManager
-	verifySvc      VerifyService
-	cache          domain.CacheStorage
+	accountMgr UserAccountManager
+	sessionMgr SessionManager
+	verifySvc  VerifyService
+	cache      domain.CacheStorage
 }
 
 func NewAuthService(accountMgr UserAccountManager, sessionMgr SessionManager, verifySvc VerifyService, cache domain.CacheStorage) *AuthServiceImpl {
 	return &AuthServiceImpl{
-		accountManager: accountMgr,
-		sessionMgr:     sessionMgr,
-		verifySvc:      verifySvc,
-		cache:          cache,
+		accountMgr: accountMgr,
+		sessionMgr: sessionMgr,
+		verifySvc:  verifySvc,
+		cache:      cache,
 	}
 }
 
@@ -63,7 +63,7 @@ func (s *AuthServiceImpl) Register(ctx context.Context, input domain.RegisterPar
 		PasswordHashed: passwordHashed,
 	}
 
-	user, err := s.accountManager.CreateUser(ctx, params)
+	user, err := s.accountMgr.CreateUser(ctx, params)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
 	}
@@ -96,7 +96,7 @@ func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (
 	var emptyUser *domain.User
 	var emptyToken domain.TokenInfo
 
-	user, err := s.accountManager.GetByEmail(ctx, input.Email)
+	user, err := s.accountMgr.GetByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
 			return emptyUser, emptyToken, pkg.ErrInvalidCredentials
@@ -117,7 +117,7 @@ func (s *AuthServiceImpl) Login(ctx context.Context, input domain.LoginParams) (
 }
 
 func (s *AuthServiceImpl) ForgotPassword(ctx context.Context, email string) error {
-	user, err := s.accountManager.GetByEmail(ctx, email)
+	user, err := s.accountMgr.GetByEmail(ctx, email)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (s *AuthServiceImpl) ResetPassword(ctx context.Context, input domain.ResetP
 		return pkg.ErrInternal
 	}
 
-	err = s.accountManager.UpdatePassword(ctx, email, passwordHashed)
+	err = s.accountMgr.UpdatePassword(ctx, email, passwordHashed)
 	if err != nil {
 		return pkg.OrInternalError(err)
 	}
@@ -159,7 +159,7 @@ func (s *AuthServiceImpl) VerifyEmail(ctx context.Context, emailToken string) er
 		return pkg.ErrBadRequest
 	}
 
-	err = s.accountManager.VerifyEmail(ctx, email)
+	err = s.accountMgr.VerifyEmail(ctx, email)
 	return pkg.OrInternalError(err)
 }
 

@@ -2,6 +2,7 @@ package mailer
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 
@@ -26,7 +27,7 @@ func NewMailtrap(cfg config.MailConfig) *mailtrap {
 	}
 }
 
-func (m *mailtrap) Send(env *domain.Email) error {
+func (m *mailtrap) Send(ctx context.Context, env *domain.Email) error {
 	// path
 	layoutPath := env.LayoutFile
 	contentPath := env.TemplateFile
@@ -48,13 +49,21 @@ func (m *mailtrap) Send(env *domain.Email) error {
 	}
 
 	// send email
-	msg := gomail.NewMessage()
-	msg.SetHeader("From", m.from)
-	msg.SetHeader("To", env.To)
-	msg.SetHeader("Subject", subjectBuffer.String())
-	msg.SetBody("text/html", bodyBuffer.String())
-	if err := m.dialer.DialAndSend(msg); err != nil {
-		return fmt.Errorf("mailtrap send error: %w", err)
+	errChan := make(chan error, 1)
+
+	go func() {
+		msg := gomail.NewMessage()
+		msg.SetHeader("From", m.from)
+		msg.SetHeader("To", env.To)
+		msg.SetHeader("Subject", subjectBuffer.String())
+		msg.SetBody("text/html", bodyBuffer.String())
+		errChan <- m.dialer.DialAndSend(msg)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-errChan:
+		return err
 	}
-	return nil
 }

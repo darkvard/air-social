@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"air-social/internal/domain"
+	"context"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -38,16 +39,16 @@ func (_m *Mailer) EXPECT() *Mailer_Expecter {
 }
 
 // Send provides a mock function for the type Mailer
-func (_mock *Mailer) Send(email *domain.Email) error {
-	ret := _mock.Called(email)
+func (_mock *Mailer) Send(ctx context.Context, email *domain.Email) error {
+	ret := _mock.Called(ctx, email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Send")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(*domain.Email) error); ok {
-		r0 = returnFunc(email)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.Email) error); ok {
+		r0 = returnFunc(ctx, email)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -60,19 +61,25 @@ type Mailer_Send_Call struct {
 }
 
 // Send is a helper method to define mock.On call
+//   - ctx context.Context
 //   - email *domain.Email
-func (_e *Mailer_Expecter) Send(email interface{}) *Mailer_Send_Call {
-	return &Mailer_Send_Call{Call: _e.mock.On("Send", email)}
+func (_e *Mailer_Expecter) Send(ctx interface{}, email interface{}) *Mailer_Send_Call {
+	return &Mailer_Send_Call{Call: _e.mock.On("Send", ctx, email)}
 }
 
-func (_c *Mailer_Send_Call) Run(run func(email *domain.Email)) *Mailer_Send_Call {
+func (_c *Mailer_Send_Call) Run(run func(ctx context.Context, email *domain.Email)) *Mailer_Send_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *domain.Email
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(*domain.Email)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *domain.Email
+		if args[1] != nil {
+			arg1 = args[1].(*domain.Email)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -83,7 +90,7 @@ func (_c *Mailer_Send_Call) Return(err error) *Mailer_Send_Call {
 	return _c
 }
 
-func (_c *Mailer_Send_Call) RunAndReturn(run func(email *domain.Email) error) *Mailer_Send_Call {
+func (_c *Mailer_Send_Call) RunAndReturn(run func(ctx context.Context, email *domain.Email) error) *Mailer_Send_Call {
 	_c.Call.Return(run)
 	return _c
 }

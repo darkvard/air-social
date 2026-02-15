@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -175,4 +176,16 @@ func IsNil(i any) bool {
 	}
 
 	return false
+}
+
+func UnmarshalEvent[T any](data any) (T, error) {
+	var target T
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return target, fmt.Errorf("failed to marshal event data: %w", err)
+	}
+	if err := json.Unmarshal(bytes, &target); err != nil {
+		return target, fmt.Errorf("failed to unmarshal into target struct: %w", err)
+	}
+	return target, nil
 }
