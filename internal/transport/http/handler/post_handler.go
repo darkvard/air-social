@@ -260,12 +260,16 @@ func (h *PostHandler) toPostResponse(post *domain.Post) dto.PostResponse {
 	}
 
 	return dto.PostResponse{
-		ID:         post.ID,
-		Content:    post.Content,
-		Visibility: string(post.Visibility),
-		Version:    post.Version,
-		CreatedAt:  post.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:  post.UpdatedAt.Format(time.RFC3339),
+		ID:            post.ID,
+		Content:       post.Content,
+		Visibility:    string(post.Visibility),
+		Version:       post.Version,
+		LikesCount:    post.Counts.LikesCount,
+		CommentsCount: post.Counts.CommentsCount,
+		SharesCount:   post.Counts.SharesCount,
+		IsLiked:       post.IsLiked,
+		CreatedAt:     post.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:     post.UpdatedAt.Format(time.RFC3339),
 		User: dto.UserCompactResponse{
 			ID:       post.User.ID,
 			Fullname: post.User.FullName,

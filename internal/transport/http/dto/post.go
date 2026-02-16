@@ -22,14 +22,18 @@ type UpdatePostRequest struct {
 }
 
 type PostResponse struct {
-	ID         int64               `json:"id"`
-	Content    string              `json:"content"`
-	Visibility string              `json:"visibility"`
-	Version    int                 `json:"version"`
-	CreatedAt  string              `json:"created_at"`
-	UpdatedAt  string              `json:"updated_at"`
-	User       UserCompactResponse `json:"user"`
-	Media      []MediaItemResponse `json:"media"`
+	ID            int64               `json:"id"`
+	Content       string              `json:"content"`
+	Visibility    string              `json:"visibility"`
+	Version       int                 `json:"version"`
+	LikesCount    int                 `json:"likes_count"`
+	CommentsCount int                 `json:"comments_count"`
+	SharesCount   int                 `json:"shares_count"`
+	CreatedAt     string              `json:"created_at"`
+	UpdatedAt     string              `json:"updated_at"`
+	IsLiked       bool              `json:"is_liked"`
+	User          UserCompactResponse `json:"user"`
+	Media         []MediaItemResponse `json:"media"`
 }
 
 type MediaItemResponse struct {

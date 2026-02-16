@@ -10,40 +10,54 @@ import (
 )
 
 type Post struct {
-	ID         int64      `db:"id"`
-	UserID     int64      `db:"user_id"`
-	Content    string     `db:"content"`
-	Visibility string     `db:"visibility"`
-	Version    int        `db:"version"`
-	CreatedAt  time.Time  `db:"created_at"`
-	UpdatedAt  time.Time  `db:"updated_at"`
-	DeletedAt  *time.Time `db:"deleted_at"`
+	ID             int64      `db:"id"`
+	UserID         int64      `db:"user_id"`
+	Content        string     `db:"content"`
+	Visibility     string     `db:"visibility"`
+	Version        int        `db:"version"`
+	LikesCount     int        `db:"likes_count"`
+	CommentsCount  int        `db:"comments_count"`
+	SharesCount    int        `db:"shares_count"`
+	OriginalPostID *int64     `db:"original_post_id"`
+	CreatedAt      time.Time  `db:"created_at"`
+	UpdatedAt      time.Time  `db:"updated_at"`
+	DeletedAt      *time.Time `db:"deleted_at"`
 }
 
 func (m *Post) ToDomain() *domain.Post {
 	return &domain.Post{
-		ID:         m.ID,
-		UserID:     m.UserID,
-		Content:    m.Content,
-		Visibility: domain.PostVisibility(m.Visibility),
-		Version:    m.Version,
-		CreatedAt:  m.CreatedAt,
-		UpdatedAt:  m.UpdatedAt,
-		DeletedAt:  m.DeletedAt,
-		Media:      make([]domain.PostMedia, 0),
+		ID:             m.ID,
+		UserID:         m.UserID,
+		Content:        m.Content,
+		Visibility:     domain.PostVisibility(m.Visibility),
+		Version:        m.Version,
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
+		DeletedAt:      m.DeletedAt,
+		OriginalPostID: m.OriginalPostID,
+		Counts: domain.PostCounts{
+			LikesCount:    m.LikesCount,
+			CommentsCount: m.CommentsCount,
+			SharesCount:   m.SharesCount,
+		},
+		Media: make([]domain.PostMedia, 0),
 	}
 }
 
 func FromDomainPost(d *domain.Post) *Post {
 	return &Post{
-		ID:         d.ID,
-		UserID:     d.UserID,
-		Content:    d.Content,
-		Visibility: string(d.Visibility),
-		Version:    d.Version,
-		CreatedAt:  d.CreatedAt,
-		UpdatedAt:  d.UpdatedAt,
-		DeletedAt:  d.DeletedAt,
+		ID:             d.ID,
+		UserID:         d.UserID,
+		Content:        d.Content,
+		Visibility:     string(d.Visibility),
+		Version:        d.Version,
+		CreatedAt:      d.CreatedAt,
+		UpdatedAt:      d.UpdatedAt,
+		DeletedAt:      d.DeletedAt,
+		OriginalPostID: d.OriginalPostID,
+		LikesCount:     d.Counts.LikesCount,
+		CommentsCount:  d.Counts.CommentsCount,
+		SharesCount:    d.Counts.SharesCount,
 	}
 }
 
@@ -98,14 +112,44 @@ type PostMediaMetadata struct {
 	FileName string `json:"file_name,omitempty"`
 }
 
-func (j PostMediaMetadata) Value() (driver.Value, error) {
-	return json.Marshal(j)
+func (m PostMediaMetadata) Value() (driver.Value, error) {
+	return json.Marshal(m)
 }
 
-func (j *PostMediaMetadata) Scan(value any) error {
+func (m *PostMediaMetadata) Scan(value any) error {
+	if value == nil {
+		*m = PostMediaMetadata{}
+		return nil
+	}
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("type assertion to []byte failed")
 	}
-	return json.Unmarshal(b, j)
+	return json.Unmarshal(b, m)
+}
+
+type PostView struct {
+	Post
+	IsLiked bool `db:"is_liked"`
+}
+
+func (m *PostView) ToDomain() *domain.Post {
+	return &domain.Post{
+		ID:             m.ID,
+		UserID:         m.UserID,
+		Content:        m.Content,
+		Visibility:     domain.PostVisibility(m.Visibility),
+		Version:        m.Version,
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
+		DeletedAt:      m.DeletedAt,
+		IsLiked:        m.IsLiked,
+		OriginalPostID: m.OriginalPostID,
+		Counts: domain.PostCounts{
+			LikesCount:    m.LikesCount,
+			CommentsCount: m.CommentsCount,
+			SharesCount:   m.SharesCount,
+		},
+		Media: make([]domain.PostMedia, 0),
+	}
 }

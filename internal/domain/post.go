@@ -12,28 +12,38 @@ const (
 )
 
 type PostRepository interface {
-	GetByID(ctx context.Context, id int64) (*Post, error)
-	GetUserPosts(ctx context.Context, userID int64, params CursorQueryParams) ([]Post, error)
 	Create(ctx context.Context, post *Post) error
 	Update(ctx context.Context, post *Post) error
 	Delete(ctx context.Context, id int64) error
-	IsOwner(ctx context.Context, postID int64, userID int64) (bool, error)
+	IsOwner(ctx context.Context, postID, userID int64) (bool, error)
+	GetByID(ctx context.Context, postID, userID int64) (*Post, error)
+	GetUserPosts(ctx context.Context, userID int64, params CursorQueryParams) ([]Post, error)
 }
 
 type PostVisibility string
 
 type Post struct {
-	ID         int64
-	UserID     int64
-	Content    string
-	Visibility PostVisibility
-	Version    int
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  *time.Time
+	ID             int64
+	UserID         int64
+	Content        string
+	Visibility     PostVisibility
+	OriginalPostID *int64
+	IsLiked        bool
 
-	Media []PostMedia
-	User  *UserSummary
+	Counts PostCounts
+	Media  []PostMedia
+	User   *UserSummary
+
+	Version   int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+}
+
+type PostCounts struct {
+	LikesCount    int
+	CommentsCount int
+	SharesCount   int
 }
 
 type PostMedia struct {

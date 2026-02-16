@@ -153,8 +153,8 @@ func (_c *PostRepository_Delete_Call) RunAndReturn(run func(ctx context.Context,
 }
 
 // GetByID provides a mock function for the type PostRepository
-func (_mock *PostRepository) GetByID(ctx context.Context, id int64) (*domain.Post, error) {
-	ret := _mock.Called(ctx, id)
+func (_mock *PostRepository) GetByID(ctx context.Context, postID int64, userID int64) (*domain.Post, error) {
+	ret := _mock.Called(ctx, postID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
@@ -162,18 +162,18 @@ func (_mock *PostRepository) GetByID(ctx context.Context, id int64) (*domain.Pos
 
 	var r0 *domain.Post
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (*domain.Post, error)); ok {
-		return returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (*domain.Post, error)); ok {
+		return returnFunc(ctx, postID, userID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) *domain.Post); ok {
-		r0 = returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) *domain.Post); ok {
+		r0 = returnFunc(ctx, postID, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Post)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = returnFunc(ctx, id)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = returnFunc(ctx, postID, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -187,12 +187,13 @@ type PostRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id int64
-func (_e *PostRepository_Expecter) GetByID(ctx interface{}, id interface{}) *PostRepository_GetByID_Call {
-	return &PostRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, id)}
+//   - postID int64
+//   - userID int64
+func (_e *PostRepository_Expecter) GetByID(ctx interface{}, postID interface{}, userID interface{}) *PostRepository_GetByID_Call {
+	return &PostRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, postID, userID)}
 }
 
-func (_c *PostRepository_GetByID_Call) Run(run func(ctx context.Context, id int64)) *PostRepository_GetByID_Call {
+func (_c *PostRepository_GetByID_Call) Run(run func(ctx context.Context, postID int64, userID int64)) *PostRepository_GetByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -202,9 +203,14 @@ func (_c *PostRepository_GetByID_Call) Run(run func(ctx context.Context, id int6
 		if args[1] != nil {
 			arg1 = args[1].(int64)
 		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -215,7 +221,7 @@ func (_c *PostRepository_GetByID_Call) Return(post *domain.Post, err error) *Pos
 	return _c
 }
 
-func (_c *PostRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, id int64) (*domain.Post, error)) *PostRepository_GetByID_Call {
+func (_c *PostRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, postID int64, userID int64) (*domain.Post, error)) *PostRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -156,6 +156,7 @@ func (s *postServiceSuite) TestCreatePost() {
 	}
 }
 
+// todo
 func (s *postServiceSuite) TestGetPostDetail() {
 	var (
 		postID      int64 = 1
@@ -175,7 +176,7 @@ func (s *postServiceSuite) TestGetPostDetail() {
 			name:   "post_not_found",
 			postID: postID,
 			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
-				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(nil, pkg.ErrNotFound).Once()
+				postRepo.EXPECT().GetByID(mock.Anything, postID, -1).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrNotFound,
@@ -184,7 +185,7 @@ func (s *postServiceSuite) TestGetPostDetail() {
 			name:   "user_service_error",
 			postID: postID,
 			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
-				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(post, nil).Once()
+				postRepo.EXPECT().GetByID(mock.Anything, postID, -1).Return(post, nil).Once()
 				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(nil, assert.AnError).Once()
 			},
 			want:    nil,
@@ -194,7 +195,7 @@ func (s *postServiceSuite) TestGetPostDetail() {
 			name:   "success",
 			postID: postID,
 			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
-				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(post, nil).Once()
+				postRepo.EXPECT().GetByID(mock.Anything, postID, -1).Return(post, nil).Once()
 				userFetcher.EXPECT().GetSummary(mock.Anything, userID).Return(userSummary, nil).Once()
 			},
 			want: &domain.Post{ID: postID, UserID: userID, User: userSummary},
@@ -362,7 +363,7 @@ func (s *postServiceSuite) TestUpdatePost() {
 			params: params,
 			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(true, nil).Once()
-				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(nil, pkg.ErrNotFound).Once()
+				postRepo.EXPECT().GetByID(mock.Anything, postID, userID).Return(nil, pkg.ErrNotFound).Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrNotFound,
@@ -372,7 +373,7 @@ func (s *postServiceSuite) TestUpdatePost() {
 			params: params,
 			setupMock: func(postRepo *mocks.PostRepository, userFetcher *mocks.UserSummaryFetcher) {
 				postRepo.EXPECT().IsOwner(mock.Anything, postID, userID).Return(true, nil).Once()
-				postRepo.EXPECT().GetByID(mock.Anything, postID).Return(existingPost, nil).Once()
+				postRepo.EXPECT().GetByID(mock.Anything, postID, userID).Return(existingPost, nil).Once()
 
 				postRepo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(p *domain.Post) bool {
 					return p.Content == content && p.Visibility == visibility

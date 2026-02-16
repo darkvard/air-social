@@ -18,13 +18,14 @@ func NewPostRepository(db *sqlx.DB) *postRepository {
 	return &postRepository{db: db}
 }
 
-func (r *postRepository) GetByID(ctx context.Context, id int64) (*domain.Post, error) {
-	post, err := r.getPost(ctx, id)
+func (r *postRepository) GetByID(ctx context.Context, postID, userID int64) (*domain.Post, error) {
+	// todo: post view by user id (get isLiked - Open-Closed Principle)
+	post, err := r.getPost(ctx, postID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
 
-	media, err := r.getPostMedia(ctx, id)
+	media, err := r.getPostMedia(ctx, postID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -65,7 +66,7 @@ func (r *postRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *postRepository) IsOwner(ctx context.Context, postID int64, userID int64) (bool, error) {
+func (r *postRepository) IsOwner(ctx context.Context, postID, userID int64) (bool, error) {
 	var ownerID int64
 	query := `SELECT user_id FROM posts WHERE id = $1 AND deleted_at IS NULL`
 

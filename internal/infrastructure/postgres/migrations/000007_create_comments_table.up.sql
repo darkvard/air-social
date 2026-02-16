@@ -5,7 +5,7 @@ CREATE TABLE
         user_id BIGINT NOT NULL,
         parent_id BIGINT,
         content TEXT NOT NULL,
-        media JSONB,
+        media JSONB NOT NULL DEFAULT '[]'::jsonb,
         likes_count INT NOT NULL DEFAULT 0,
         version INT NOT NULL DEFAULT 1,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
