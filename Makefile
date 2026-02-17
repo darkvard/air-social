@@ -69,7 +69,7 @@ HOST_GID := $(shell id -g)
 
 
 # Path to migrations inside the container
-MIGRATIONS_PATH = /app/internal/infrastructure/postgres/migrations
+MIGRATIONS_PATH = /app/cmd/migrations
 
 
 # Base migrate command (runs inside app container)

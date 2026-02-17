@@ -2,7 +2,9 @@ package provider
 
 import (
 	"air-social/internal/domain"
+	userdomain "air-social/internal/domain/user"
 	"air-social/internal/infrastructure/postgres/repository"
+	userinfra "air-social/internal/infrastructure/postgres/user"
 )
 
 type Repositories struct {
@@ -18,5 +20,17 @@ func NewRepositories(infra *Infrastructures) *Repositories {
 		Token:  repository.NewTokenRepository(infra.DB),
 		Follow: repository.NewFollowRepository(infra.DB),
 		Post:   repository.NewPostRepository(infra.DB),
+	}
+}
+
+// todo: replace Repositories
+type Repository struct {
+	User userdomain.Repository
+}
+
+
+func NewRepository(infra *Infrastructures) *Repository {
+	return &Repository{
+		User: userinfra.NewRepository(infra.DB),
 	}
 }
