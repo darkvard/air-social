@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"air-social/internal/domain"
+	"air-social/internal/domain/shared"
 	"air-social/internal/domain/auth/token"
 	"air-social/internal/domain/auth/verify"
 	"air-social/internal/domain/user"
@@ -28,7 +28,7 @@ type Deps struct {
 	TokenProvider   token.Provider
 	UserFetch       user.FetchUseCase
 	UserAccount     user.AccountUseCase
-	Cache           domain.CacheStorage
+	Cache           shared.CacheStorage
 }
 
 type usecase struct {
@@ -37,7 +37,7 @@ type usecase struct {
 	verifyProvider  verify.Provider
 	userFetch       user.FetchUseCase
 	userAccount     user.AccountUseCase
-	cache           domain.CacheStorage
+	cache           shared.CacheStorage
 }
 
 func NewUseCase(deps Deps) UseCase {

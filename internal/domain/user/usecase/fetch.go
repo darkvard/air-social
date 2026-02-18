@@ -3,22 +3,22 @@ package usecase
 import (
 	"context"
 
-	"air-social/internal/domain"
+	"air-social/internal/domain/shared"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
 
 type fetchUseCase struct {
 	repo  user.Repository
-	cache domain.CacheStorage
-	url   domain.URLFactory
+	cache shared.CacheStorage
+	link  shared.AppLinkProvider
 }
 
 func NewFetchUseCase(d user.Deps) *fetchUseCase {
 	return &fetchUseCase{
 		repo:  d.Repo,
 		cache: d.Cache,
-		url:   d.URL,
+		link:  d.Link,
 	}
 }
 
@@ -60,8 +60,8 @@ func (u *fetchUseCase) toUserSummary(d *user.User) *user.UserSummaryResult {
 	return &user.UserSummaryResult{
 		ID:         d.ID,
 		FullName:   d.Profile.FullName,
-		Avatar:     u.url.PublicFileURL(d.Profile.Avatar),
-		CoverImage: u.url.PublicFileURL(d.Profile.CoverImage),
+		Avatar:     u.link.PublicFile(d.Profile.Avatar),
+		CoverImage: u.link.PublicFile(d.Profile.CoverImage),
 		Verified:   d.Status.Verified,
 	}
 }

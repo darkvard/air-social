@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"air-social/internal/domain"
+	"air-social/internal/domain/shared"
 	"air-social/pkg"
 )
 
@@ -26,69 +26,74 @@ type Provider interface {
 }
 
 type Deps struct {
-	Cache domain.CacheStorage
-	Event domain.EventPublisher
-	URL   domain.URLFactory
+	Cache shared.CacheStorage
+	Event shared.EventPublisher
+	Link  shared.AppLinkProvider
 }
 
 type provider struct {
-	cache domain.CacheStorage
-	event domain.EventPublisher
-	url   domain.URLFactory
+	cache shared.CacheStorage
+	event shared.EventPublisher
+	link  shared.AppLinkProvider
 }
 
 func NewVerifyProvider(d Deps) *provider {
 	return &provider{
 		cache: d.Cache,
 		event: d.Event,
-		url:   d.URL,
+		link:  d.Link,
 	}
 }
 
 func (p *provider) SendVerification(ctx context.Context, email string, username string) error {
 	id := uuid.NewString()
 
-	if err := p.cache.Set(ctx, domain.GetEmailVerificationKey(id), email, verificationTTL); err != nil {
+	if err := p.cache.Set(ctx, getVerifyKey(id), email, verificationTTL); err != nil {
 		return pkg.ErrInternal
 	}
 
-	return p.event.Publish(ctx, domain.RoutingKeyEmailVerify, domain.Event{
-		EventID:   id,
-		EventType: domain.EmailVerify,
+	payload := shared.EmailPayload{
+		Email:  email,
+		Name:   username,
+		Link:   p.link.VerifyEmail(id),
+		Expiry: pkg.FormatTTLHuman(verificationTTL),
+	}
+	event := shared.Event{
+		ID:        id,
+		Typ:       shared.EventVerify,
 		Timestamp: pkg.TimeNowUTC(),
-		Data: domain.EmailEvent{
-			Email:  email,
-			Name:   username,
-			Link:   p.url.VerifyEmailURL(id),
-			Expiry: pkg.FormatTTLVerbose(verificationTTL),
-		},
-	})
+		Data:      payload,
+	}
 
+	return p.event.Publish(ctx, event)
 }
 
 func (p *provider) SendPasswordReset(ctx context.Context, email string, username string) error {
 	id := uuid.NewString()
 
-	if err := p.cache.Set(ctx, domain.GetEmailResetPasswordKey(id), email, resetPasswordTTL); err != nil {
+	if err := p.cache.Set(ctx, getResetKey(id), email, resetPasswordTTL); err != nil {
 		return pkg.ErrInternal
 	}
 
-	return p.event.Publish(ctx, domain.RoutingKeyEmailResetPassword, domain.Event{
-		EventID:   id,
-		EventType: domain.EmailResetPassword,
+	payload := shared.EmailPayload{
+		Email:  email,
+		Name:   username,
+		Link:   p.link.ResetPassword(id),
+		Expiry: pkg.FormatTTLHuman(resetPasswordTTL),
+	}
+	event := shared.Event{
+		ID:        id,
+		Typ:       shared.EventResetPassword,
 		Timestamp: pkg.TimeNowUTC(),
-		Data: domain.EmailEvent{
-			Email:  email,
-			Name:   username,
-			Link:   p.url.ResetPasswordURL(id),
-			Expiry: pkg.FormatTTLVerbose(resetPasswordTTL),
-		},
-	})
+		Data:      payload,
+	}
+
+	return p.event.Publish(ctx, event)
 }
 
 func (p *provider) VerifyVerification(ctx context.Context, token string) (string, error) {
 	var email string
-	if err := p.cache.Get(ctx, domain.GetEmailVerificationKey(token), &email); err != nil {
+	if err := p.cache.Get(ctx, getVerifyKey(token), &email); err != nil {
 		return "", err
 	}
 	return email, nil
@@ -96,12 +101,20 @@ func (p *provider) VerifyVerification(ctx context.Context, token string) (string
 
 func (p *provider) VerifyPasswordReset(ctx context.Context, token string) (string, error) {
 	var email string
-	if err := p.cache.Get(ctx, domain.GetEmailResetPasswordKey(token), &email); err != nil {
+	if err := p.cache.Get(ctx, getResetKey(token), &email); err != nil {
 		return "", err
 	}
 	return email, nil
 }
 
 func (p *provider) InvalidatePasswordReset(ctx context.Context, token string) error {
-	return p.cache.Delete(ctx, domain.GetEmailResetPasswordKey(token))
+	return p.cache.Delete(ctx, getResetKey(token))
+}
+
+func getVerifyKey(token string) string {
+	return shared.BuildCacheKey("worker", "email", "verify", token)
+}
+
+func getResetKey(token string) string {
+	return shared.BuildCacheKey("worker", "email", "reset", token)
 }

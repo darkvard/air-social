@@ -1,8 +1,8 @@
 package provider
 
 import (
-	"air-social/internal/domain"
 	"air-social/internal/domain/auth"
+	"air-social/internal/domain/shared"
 	"air-social/internal/domain/user"
 	uuc "air-social/internal/domain/user/usecase"
 )
@@ -19,18 +19,18 @@ func NewUseCase() *UseCase {
 
 func NewUserUseCases(
 	repo user.Repository,
-	cache domain.CacheStorage,
-	url domain.URLFactory,
+	cache shared.CacheStorage,
+	links shared.AppLinkProvider,
 ) user.UseCases {
-	d := user.Deps{
+	deps := user.Deps{
 		Repo:  repo,
 		Cache: cache,
-		URL:   url,
+		Link:  links,
 	}
 	return user.UseCases{
-		Profile: uuc.NewProfileUseCase(d),
-		Account: uuc.NewAccountUseCase(d),
-		Fetch:   uuc.NewFetchUseCase(d),
+		Profile: uuc.NewProfileUseCase(deps),
+		Account: uuc.NewAccountUseCase(deps),
+		Fetch:   uuc.NewFetchUseCase(deps),
 	}
 }
 

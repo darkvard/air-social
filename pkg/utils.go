@@ -14,7 +14,7 @@ const (
 	DEBUG       = "debug"
 )
 
-// FormatTTLVerbose converts a time.Duration (TTL) into a human-readable string.
+// FormatTTLHuman converts a time.Duration (TTL) into a human-readable string.
 // Example outputs:
 //
 //	49h35m  -> "2 days 1 hour 35 minutes"
@@ -28,7 +28,7 @@ const (
 //   - minutes (remaining minutes)
 //
 // Larger units take priority; smaller units may be omitted depending on UX rules.
-func FormatTTLVerbose(d time.Duration) string {
+func FormatTTLHuman(d time.Duration) string {
 	// Expired or invalid duration
 	if d <= 0 {
 		return "expired"

@@ -81,6 +81,7 @@ func NewPublisher(conn *amqp.Connection, eCfg config.ExchangeConfig, poolSize in
 	return p, nil
 }
 
+// todo
 func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any) error {
 	pc, err := p.acquire(ctx)
 	if err != nil {

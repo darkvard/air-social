@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"air-social/internal/domain"
+	"air-social/internal/domain/shared"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
@@ -15,7 +15,7 @@ type mediaProvider interface {
 
 type profileUseCase struct {
 	repo  user.Repository
-	cache domain.CacheStorage
+	cache shared.CacheStorage
 	media mediaProvider
 }
 

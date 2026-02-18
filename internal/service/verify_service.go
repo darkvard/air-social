@@ -45,7 +45,7 @@ func (s *VerifyServiceImpl) SendEmailVerification(ctx context.Context, email, us
 		Email:  email,
 		Name:   username,
 		Link:   s.url.VerifyEmailURL(id),
-		Expiry: pkg.FormatTTLVerbose(ttl),
+		Expiry: pkg.FormatTTLHuman(ttl),
 	}
 	payload := domain.Event{
 		EventID:   id,
@@ -83,7 +83,7 @@ func (s *VerifyServiceImpl) SendPasswordReset(ctx context.Context, email, userna
 		Email:  email,
 		Name:   username,
 		Link:   s.url.ResetPasswordURL(id),
-		Expiry: pkg.FormatTTLVerbose(ttl),
+		Expiry: pkg.FormatTTLHuman(ttl),
 	}
 
 	payload := domain.Event{

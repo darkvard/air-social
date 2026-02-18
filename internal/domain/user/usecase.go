@@ -3,8 +3,8 @@ package user
 import (
 	"context"
 
-	"air-social/internal/domain"
 	"air-social/internal/domain/media"
+	"air-social/internal/domain/shared"
 )
 
 type AccountUseCase interface {
@@ -35,7 +35,7 @@ type UseCases struct {
 
 type Deps struct {
 	Repo  Repository
-	Cache domain.CacheStorage
-	URL   domain.URLFactory
+	Cache shared.CacheStorage
+	Link  shared.AppLinkProvider
 	Media media.UseCase
 }

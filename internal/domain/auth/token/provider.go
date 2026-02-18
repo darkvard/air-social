@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"air-social/internal/config"
-	"air-social/internal/domain"
+	"air-social/internal/domain/shared"
 	"air-social/pkg"
 )
 
@@ -29,14 +29,19 @@ type Provider interface {
 
 type provider struct {
 	cfg   config.TokenConfig
-	cache domain.CacheStorage
+	cache shared.CacheStorage
 }
 
-func NewProvider(cfg config.TokenConfig, cache domain.CacheStorage) *provider {
+func NewProvider(cfg config.TokenConfig, cache shared.CacheStorage) *provider {
 	return &provider{
 		cfg:   cfg,
 		cache: cache,
 	}
+}
+
+func (p *provider) HashToken(raw string) string {
+	src := sha256.Sum256([]byte(raw))
+	return hex.EncodeToString(src[:])
 }
 
 func (p *provider) GenerateAccessToken(userID int64, deviceID string) (AccessTokenResult, error) {
@@ -129,7 +134,7 @@ func (p *provider) VerifyRefreshToken(token RefreshToken) (bool, error) {
 }
 
 func (p *provider) IsBlacklisted(ctx context.Context, accessToken string) bool {
-	exists, err := p.cache.IsExist(ctx, domain.GetBlacklistTokenKey(accessToken))
+	exists, err := p.cache.IsExist(ctx, getBlacklistTokenKey(accessToken))
 	if err != nil {
 		return false
 	}
@@ -139,12 +144,11 @@ func (p *provider) IsBlacklisted(ctx context.Context, accessToken string) bool {
 func (p *provider) AddToBlacklist(ctx context.Context, accessToken string, expiresAt time.Time) {
 	ttl := time.Until(expiresAt)
 	if ttl > 0 {
-		key := domain.GetBlacklistTokenKey(accessToken)
+		key := getBlacklistTokenKey(accessToken)
 		_ = p.cache.Set(ctx, key, "revoked", ttl)
 	}
 }
 
-func (p *provider) HashToken(raw string) string {
-	src := sha256.Sum256([]byte(raw))
-	return hex.EncodeToString(src[:])
+func getBlacklistTokenKey(token string) string {
+	return shared.BuildCacheKey("user", "blacklist", "access_token", token)
 }
