@@ -3,19 +3,19 @@ package usecase
 import (
 	"context"
 
-	"air-social/internal/domain/shared"
 	"air-social/internal/domain/media"
+	"air-social/internal/domain/shared"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
 
 type mediaProvider interface {
-	ConfirmUpload(ctx context.Context, params []media.ConfirmFileParams) ([]string, error)
+	ConfirmUpload(ctx context.Context, params []media.ConfirmParams) ([]string, error)
 }
 
 type profileUseCase struct {
 	repo  user.Repository
-	cache shared.CacheStorage
+	cache shared.Cache
 	media mediaProvider
 }
 
@@ -58,24 +58,24 @@ func (u *profileUseCase) UpdateProfile(ctx context.Context, params user.UpdatePa
 	return user, nil
 }
 
-func (u *profileUseCase) UpdateAvatar(ctx context.Context, params media.ConfirmFileParams) error {
+func (u *profileUseCase) UpdateAvatar(ctx context.Context, params media.ConfirmParams) error {
 	return u.updateImageUrl(ctx, params, u.repo.UpdateAvatar)
 }
 
-func (u *profileUseCase) UpdateCover(ctx context.Context, params media.ConfirmFileParams) error {
+func (u *profileUseCase) UpdateCover(ctx context.Context, params media.ConfirmParams) error {
 	return u.updateImageUrl(ctx, params, u.repo.UpdateCover)
 }
 
 func (u *profileUseCase) updateImageUrl(
 	ctx context.Context,
-	params media.ConfirmFileParams,
+	params media.ConfirmParams,
 	updateFunc func(context.Context, int64, string) error,
 ) error {
-	if !media.IsConfirmFileValid(params) {
+	if !media.IsDomainFeatureValid(params) {
 		return pkg.ErrBadRequest
 	}
 
-	keys, err := u.media.ConfirmUpload(ctx, []media.ConfirmFileParams{params})
+	keys, err := u.media.ConfirmUpload(ctx, []media.ConfirmParams{params})
 	if err != nil || len(keys) == 0 {
 		return pkg.OrInternalError(err, pkg.ErrBadRequest)
 	}

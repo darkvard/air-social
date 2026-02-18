@@ -13,7 +13,7 @@ import (
 
 type accountUseCase struct {
 	repo  user.Repository
-	cache shared.CacheStorage
+	cache shared.Cache
 }
 
 func NewAccountUseCase(d user.Deps) *accountUseCase {

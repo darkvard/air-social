@@ -17,8 +17,8 @@ type AccountUseCase interface {
 
 type ProfileUseCase interface {
 	UpdateProfile(ctx context.Context, params UpdateParams) (*User, error)
-	UpdateAvatar(ctx context.Context, params media.ConfirmFileParams) error
-	UpdateCover(ctx context.Context, params media.ConfirmFileParams) error
+	UpdateAvatar(ctx context.Context, params media.ConfirmParams) error
+	UpdateCover(ctx context.Context, params media.ConfirmParams) error
 }
 
 type FetchUseCase interface {
@@ -35,7 +35,7 @@ type UseCases struct {
 
 type Deps struct {
 	Repo  Repository
-	Cache shared.CacheStorage
+	Cache shared.Cache
 	Link  shared.AppLinkProvider
 	Media media.UseCase
 }

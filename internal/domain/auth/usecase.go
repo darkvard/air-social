@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"air-social/internal/domain/shared"
 	"air-social/internal/domain/auth/token"
 	"air-social/internal/domain/auth/verify"
+	"air-social/internal/domain/shared"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
@@ -24,20 +24,20 @@ type UseCase interface {
 }
 
 type Deps struct {
-	TokenRepository token.Repository
-	TokenProvider   token.Provider
-	UserFetch       user.FetchUseCase
-	UserAccount     user.AccountUseCase
-	Cache           shared.CacheStorage
+	TokenRepo     token.Repository
+	TokenProvider token.Provider
+	UserFetch     user.FetchUseCase
+	UserAccount   user.AccountUseCase
+	Cache         shared.Cache
 }
 
 type usecase struct {
-	tokenRepository token.Repository
-	tokenProvider   token.Provider
-	verifyProvider  verify.Provider
-	userFetch       user.FetchUseCase
-	userAccount     user.AccountUseCase
-	cache           shared.CacheStorage
+	tokenRepo      token.Repository
+	tokenProvider  token.Provider
+	verifyProvider verify.Provider
+	userFetch      user.FetchUseCase
+	userAccount    user.AccountUseCase
+	cache          shared.Cache
 }
 
 func NewUseCase(deps Deps) UseCase {
@@ -72,9 +72,9 @@ func (u *usecase) Logout(ctx context.Context, params LogoutParams) error {
 
 	var err error
 	if params.IsAllDevices {
-		err = u.tokenRepository.UpdateRevokedByUser(ctx, params.UserID)
+		err = u.tokenRepo.UpdateRevokedByUser(ctx, params.UserID)
 	} else {
-		err = u.tokenRepository.UpdateRevokedByDevice(ctx, params.UserID, params.DeviceID)
+		err = u.tokenRepo.UpdateRevokedByDevice(ctx, params.UserID, params.DeviceID)
 	}
 	if err != nil {
 		return pkg.OrInternalError(err)
@@ -102,7 +102,7 @@ func (u *usecase) Login(ctx context.Context, params LoginParams) (*user.User, To
 		return emptyUser, emptyToken, pkg.ErrInternal
 	}
 
-	if err = u.tokenRepository.Create(ctx, &token.RefreshToken{
+	if err = u.tokenRepo.Create(ctx, &token.RefreshToken{
 		UserID:    account.ID,
 		DeviceID:  params.DeviceID,
 		TokenHash: refreshToken.Hashed,
@@ -162,7 +162,7 @@ func (u *usecase) ResetPassword(ctx context.Context, params ResetPasswordParams)
 func (u *usecase) RefreshToken(ctx context.Context, refreshToken string) (TokenResult, error) {
 	var empty TokenResult
 
-	token, err := u.tokenRepository.GetByHash(ctx, u.tokenProvider.HashToken(refreshToken))
+	token, err := u.tokenRepo.GetByHash(ctx, u.tokenProvider.HashToken(refreshToken))
 	if err != nil {
 		return empty, pkg.ErrUnauthorized
 	}
@@ -179,7 +179,7 @@ func (u *usecase) validateRefreshToken(ctx context.Context, token token.RefreshT
 	if err != nil {
 		if errors.Is(err, pkg.ErrTokenRevoked) {
 			// security
-			_ = u.tokenRepository.UpdateRevokedByUser(ctx, token.UserID)
+			_ = u.tokenRepo.UpdateRevokedByUser(ctx, token.UserID)
 		}
 		return pkg.ErrUnauthorized
 	}
@@ -191,7 +191,7 @@ func (u *usecase) validateRefreshToken(ctx context.Context, token token.RefreshT
 
 func (u *usecase) rotateToken(ctx context.Context, token token.RefreshToken) (TokenResult, error) {
 	var empty TokenResult
-	if err := u.tokenRepository.UpdateRevoked(ctx, token.ID); err != nil {
+	if err := u.tokenRepo.UpdateRevoked(ctx, token.ID); err != nil {
 		return empty, pkg.ErrInternal
 	}
 

@@ -10,7 +10,7 @@ import (
 
 type fetchUseCase struct {
 	repo  user.Repository
-	cache shared.CacheStorage
+	cache shared.Cache
 	link  shared.AppLinkProvider
 }
 

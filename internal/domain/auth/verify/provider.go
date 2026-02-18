@@ -26,13 +26,13 @@ type Provider interface {
 }
 
 type Deps struct {
-	Cache shared.CacheStorage
+	Cache shared.Cache
 	Event shared.EventPublisher
 	Link  shared.AppLinkProvider
 }
 
 type provider struct {
-	cache shared.CacheStorage
+	cache shared.Cache
 	event shared.EventPublisher
 	link  shared.AppLinkProvider
 }

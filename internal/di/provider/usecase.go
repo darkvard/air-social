@@ -2,6 +2,7 @@ package provider
 
 import (
 	"air-social/internal/domain/auth"
+	"air-social/internal/domain/media"
 	"air-social/internal/domain/shared"
 	"air-social/internal/domain/user"
 	uuc "air-social/internal/domain/user/usecase"
@@ -19,7 +20,7 @@ func NewUseCase() *UseCase {
 
 func NewUserUseCases(
 	repo user.Repository,
-	cache shared.CacheStorage,
+	cache shared.Cache,
 	links shared.AppLinkProvider,
 ) user.UseCases {
 	deps := user.Deps{
@@ -35,12 +36,23 @@ func NewUserUseCases(
 }
 
 func NewAuthUseCase() auth.UseCase {
-	d := auth.Deps{
-		TokenRepository: nil,
-		TokenProvider:   nil,
-		UserFetch:       nil,
-		UserAccount:     nil,
-		Cache:           nil,
+	deps := auth.Deps{
+		TokenRepo:     nil,
+		TokenProvider: nil,
+		UserFetch:     nil,
+		UserAccount:   nil,
+		Cache:         nil,
 	}
-	return auth.NewUseCase(d)
+	return auth.NewUseCase(deps)
+}
+
+func NewMediaUseCase() media.UseCase {
+	deps := media.Deps{
+		Bucket:  media.Bucket{},
+		Storage: nil,
+		Link:    nil,
+		Route:   nil,
+	}
+	return media.NewUseCase(deps)
+
 }
