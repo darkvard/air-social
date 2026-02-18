@@ -32,11 +32,19 @@ func (r *redisCache) Get(ctx context.Context, key string, dst any) error {
 }
 
 func (r *redisCache) Set(ctx context.Context, key string, val any, ttl time.Duration) error {
-	b, er := json.Marshal(val)
-	if er != nil {
-		return er
+	b, err := json.Marshal(val)
+	if err != nil {
+		return err
 	}
 	return r.client.Set(ctx, key, b, ttl).Err()
+}
+
+func (r *redisCache) SetNX(ctx context.Context, key string, val any, ttl time.Duration) (bool, error) {
+	b, err := json.Marshal(val)
+	if err != nil {
+		return false, err
+	}
+	return r.client.SetNX(ctx, key, b, ttl).Result()
 }
 
 func (r *redisCache) Delete(ctx context.Context, key string) error {

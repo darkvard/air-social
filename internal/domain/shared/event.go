@@ -2,6 +2,7 @@ package shared
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 )
 
@@ -10,14 +11,15 @@ const (
 	EventResetPassword EventType = EventType("reset_password")
 )
 
-type EventDispatcher interface {
-	Dispatch(ctx context.Context, evt Event) error
+type EventPublisher interface {
+	Publish(ctx context.Context, event Event) error
 }
 
-// todo: ben infra ko can routing key nua, data tuong minh, roi lay routing key tu event type
-type EventPublisher interface {
-	Publish(ctx context.Context, evt Event) error
+type EventDispatcher interface {
+	Dispatch(ctx context.Context, event Event) error
 }
+
+type EventHandler func(ctx context.Context, event Event) error
 
 type EventType string
 
@@ -28,9 +30,25 @@ type Event struct {
 	Data      any
 }
 
-type EmailPayload struct {
+type EmailEventPayload struct {
 	Email  string
 	Name   string
 	Link   string
 	Expiry string
+}
+
+type NotificationEventPayload struct {
+	
+}
+
+func UnmarshalEvent[T any](data any) (T, error) {
+	var target T
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return target, err
+	}
+	if err := json.Unmarshal(bytes, &target); err != nil {
+		return target, err
+	}
+	return target, nil
 }

@@ -15,6 +15,7 @@ import (
 	"air-social/pkg"
 )
 
+// todo: remove
 type EmailWorker struct {
 	conn  *amqp.Connection
 	cache domain.CacheStorage

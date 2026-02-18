@@ -16,6 +16,7 @@ import (
 	"air-social/pkg"
 )
 
+// todo: remove
 type pubChannel struct {
 	ch       *amqp.Channel
 	confirms chan amqp.Confirmation

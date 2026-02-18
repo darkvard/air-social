@@ -52,7 +52,7 @@ func (p *provider) SendVerification(ctx context.Context, email string, username 
 		return pkg.ErrInternal
 	}
 
-	payload := shared.EmailPayload{
+	payload := shared.EmailEventPayload{
 		Email:  email,
 		Name:   username,
 		Link:   p.link.VerifyEmail(id),
@@ -75,7 +75,7 @@ func (p *provider) SendPasswordReset(ctx context.Context, email string, username
 		return pkg.ErrInternal
 	}
 
-	payload := shared.EmailPayload{
+	payload := shared.EmailEventPayload{
 		Email:  email,
 		Name:   username,
 		Link:   p.link.ResetPassword(id),

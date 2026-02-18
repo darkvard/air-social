@@ -25,7 +25,8 @@ var (
 	ErrFileTooLarge = errors.New("file size exceeds limit")        // 413
 	ErrEmptyBody    = errors.New("request body must not be empty") // 400
 
-	ErrTokenRevoked = errors.New("token has been revoked") // 401
+	ErrTokenRevoked   = errors.New("token has been revoked") // 401
+	ErrNoEventHandler = errors.New("event handler must not be empty")
 )
 
 const (
@@ -80,6 +81,8 @@ func IsPermanentError(err error) bool {
 	msg := err.Error()
 
 	switch {
+	case errors.Is(err, ErrNoEventHandler):
+		return true
 	case strings.Contains(msg, "html/template"):
 		return true
 	case strings.Contains(msg, "json:"):
