@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/config"
-	"air-social/internal/service"
+	"air-social/internal/domain/auth/token"
 )
 
 type Manager struct {
@@ -14,10 +14,10 @@ type Manager struct {
 	MultipartOnly gin.HandlerFunc
 }
 
-func NewManager(cfg config.ServerConfig, tokens service.TokenService) *Manager {
+func NewManager(cfg config.ServerConfig, provider token.Provider) *Manager {
 	return &Manager{
 		Basic:         Basic(cfg),
-		Auth:          Auth(tokens),
+		Auth:          Auth(provider),
 		JSONOnly:      JSONOnly(),
 		MultipartOnly: MultipartOnly(),
 	}

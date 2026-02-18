@@ -60,7 +60,7 @@ func (u *accountUseCase) ChangePassword(ctx context.Context, params user.ChangeP
 	if params.NewPassword == params.CurrentPassword {
 		return pkg.ErrSamePassword
 	}
-	if !pkg.VerifyPassword(params.CurrentPassword, user.PasswordHash) {
+	if !verifyPassword(params.CurrentPassword, user.PasswordHash) {
 		return pkg.ErrInvalidCredentials
 	}
 

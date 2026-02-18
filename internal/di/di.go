@@ -41,7 +41,7 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 	repositories := provider.NewRepositories(infrastructures)
 	services := provider.NewServices(cfg, url, infrastructures, repositories, adapters)
 	handlers := provider.NewHandlers(services, url)
-	middlewares := middleware.NewManager(cfg.Server, services.Token)
+	middlewares := middleware.NewManager(cfg.Server, repositories.TokenProvider)
 	workers := provider.NewWorkers(infrastructures, adapters, services)
 	server := server.NewServer(cfg, url, middlewares, handlers)
 

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"air-social/internal/domain"
+	"air-social/internal/domain/auth/token"
 	userdomain "air-social/internal/domain/user"
 	"air-social/internal/infrastructure/postgres/repository"
 	userinfra "air-social/internal/infrastructure/postgres/user"
@@ -12,6 +13,8 @@ type Repositories struct {
 	Token  domain.TokenRepository
 	Follow domain.FollowRepository
 	Post   domain.PostRepository
+
+	TokenProvider token.Provider
 }
 
 func NewRepositories(infra *Infrastructures) *Repositories {

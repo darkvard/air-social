@@ -38,7 +38,7 @@ func NewMediaHandler(srv service.MediaService) *MediaHandler {
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/media/presigned-urls [post]
 func (h *MediaHandler) PresignedUpload(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return

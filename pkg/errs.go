@@ -24,6 +24,8 @@ var (
 
 	ErrFileTooLarge = errors.New("file size exceeds limit")        // 413
 	ErrEmptyBody    = errors.New("request body must not be empty") // 400
+
+	ErrTokenRevoked = errors.New("token has been revoked") // 401
 )
 
 const (

@@ -39,7 +39,7 @@ func NewPostHandler(srv service.PostService, urlFactory domain.URLFactory) *Post
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/posts [post]
 func (h *PostHandler) CreatePost(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return
@@ -160,7 +160,7 @@ func (h *PostHandler) GetUserPosts(c *gin.Context) {
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/posts/{id} [patch]
 func (h *PostHandler) UpdatePost(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
@@ -211,7 +211,7 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/posts/{id} [delete]
 func (h *PostHandler) DeletePost(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return

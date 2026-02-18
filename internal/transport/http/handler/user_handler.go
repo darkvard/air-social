@@ -37,7 +37,7 @@ func NewUserHandler(userSvc service.UserService, urlFactory domain.URLFactory) *
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/users/me [get]
 func (h *UserHandler) Profile(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
@@ -72,7 +72,7 @@ func (h *UserHandler) Profile(c *gin.Context) {
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/me [patch]
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
@@ -123,7 +123,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/me/password [put]
 func (h *UserHandler) ChangePassword(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return
@@ -166,7 +166,7 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/me/profile-image/confirm [post]
 func (h *UserHandler) ConfirmFileUpload(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, err.Error())
 		return

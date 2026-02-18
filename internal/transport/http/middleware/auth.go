@@ -2,67 +2,37 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 
 	"air-social/internal/config"
-	"air-social/internal/domain"
-	"air-social/internal/service"
+	"air-social/internal/domain/auth/token"
 	"air-social/pkg"
+)
+
+const (
+	claimsKey authContextKey = "token_claims_key"
+	accessKey authContextKey = "access_token_key"
 )
 
 type authContextKey string
 
-const AuthPayloadKey authContextKey = "auth_payload"
-const TokenMetaKey authContextKey = "token_meta"
-
-func Auth(tokenService service.TokenService) gin.HandlerFunc {
+func Auth(provider token.Provider) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get raw token string
-		tokenString, err := pkg.ExtractTokenFromHeader(c)
+		jwtToken, err := pkg.ExtractTokenFromHeader(c)
 		if err != nil {
 			pkg.Unauthorized(c, err.Error())
 			c.Abort()
 			return
 		}
 
-		// Validate
-		validatedToken, err := tokenService.Validate(tokenString)
-		if err != nil || !validatedToken.Valid {
+		claims, access, err := provider.VerifyAccessToken(jwtToken)
+		if err != nil {
 			pkg.Unauthorized(c, "invalid or expired token")
 			c.Abort()
 			return
 		}
 
-		// Get data
-		clams, ok := validatedToken.Claims.(jwt.MapClaims)
-		if !ok {
-			pkg.Unauthorized(c, "invalid token claims")
-			c.Abort()
-			return
-		}
-
-		userID := pkg.GetInt64Claims(clams, pkg.JWTClaimSubject)
-		if userID <= 0 {
-			pkg.Unauthorized(c, "user id must be positive")
-			c.Abort()
-			return
-		}
-
-		deviceID := pkg.GetStringClaims(clams, pkg.JWTClaimDevice)
-
-		payload := &domain.AuthClaims{
-			UserID:   userID,
-			DeviceID: deviceID,
-		}
-
-		tokenMeta := domain.TokenMeta{
-			AccessToken: tokenString,
-			ExpiresAt:   pkg.GetInt64Claims(clams, pkg.JWTClaimExpiresAt),
-		}
-
-		// Set context
-		c.Set(AuthPayloadKey, payload)
-		c.Set(TokenMetaKey, tokenMeta)
+		c.Set(claimsKey, claims)
+		c.Set(accessKey, access)
 		c.Next()
 	}
 }
@@ -75,34 +45,30 @@ func Basic(cfg config.ServerConfig) gin.HandlerFunc {
 	)
 }
 
-func GetAuthClaims(c *gin.Context) (*domain.AuthClaims, error) {
-	value, exists := c.Get(AuthPayloadKey)
+func GetTokenClaims(c *gin.Context) (*token.TokenClaims, error) {
+	value, exists := c.Get(claimsKey)
 	if !exists {
 		return nil, pkg.ErrUnauthorized
 	}
-
-	payload, ok := value.(*domain.AuthClaims)
+	token, ok := value.(*token.TokenClaims)
 	if !ok {
 		return nil, pkg.ErrUnauthorized
 	}
-
-	if payload.UserID <= 0 {
+	if token.UserID <= 0 {
 		return nil, pkg.ErrUnauthorized
 	}
-
-	return payload, nil
+	return token, nil
 }
 
-func GetTokenMeta(c *gin.Context) (domain.TokenMeta, error) {
-	value, exists := c.Get(TokenMetaKey)
+func GetAccessToken(c *gin.Context) (token.AccessTokenResult, error) {
+	var empty token.AccessTokenResult
+	value, exists := c.Get(accessKey)
 	if !exists {
-		return domain.TokenMeta{}, pkg.ErrUnauthorized
+		return empty, pkg.ErrUnauthorized
 	}
-
-	meta, ok := value.(domain.TokenMeta)
+	result, ok := value.(token.AccessTokenResult)
 	if !ok {
-		return domain.TokenMeta{}, pkg.ErrUnauthorized
+		return empty, pkg.ErrUnauthorized
 	}
-
-	return meta, nil
+	return result, nil
 }

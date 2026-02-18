@@ -141,13 +141,13 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	var req dto.LogoutRequest
 	_ = c.ShouldBindJSON(&req)
 
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil || claims.UserID < 0 || claims.DeviceID == "" {
 		pkg.Unauthorized(c, "unauthorized")
 		return
 	}
 
-	tokenMeta, err := middleware.GetTokenMeta(c)
+	// tokenMeta, err := middleware.GetAccessToken(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return
@@ -157,7 +157,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		UserID:       claims.UserID,
 		DeviceID:     claims.DeviceID,
 		IsAllDevices: req.IsAllDevices,
-		Token:        tokenMeta,
+		// Token:        tokenMeta,
 	}
 
 	if err := h.authSvc.Logout(c.Request.Context(), params); err != nil {

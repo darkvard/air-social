@@ -40,7 +40,7 @@ func NewFollowHandler(followSvc service.FollowService, userSvc service.UserServi
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/users/{id}/follow [post]
 func (h *FollowHandler) Follow(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return
@@ -76,7 +76,7 @@ func (h *FollowHandler) Follow(c *gin.Context) {
 //	@Failure		500	{object}	pkg.Response
 //	@Router			/users/{id}/follow [delete]
 func (h *FollowHandler) Unfollow(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return
@@ -114,7 +114,7 @@ func (h *FollowHandler) Unfollow(c *gin.Context) {
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/{id}/followers [get]
 func (h *FollowHandler) GetFollowers(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return
@@ -173,7 +173,7 @@ func (h *FollowHandler) GetFollowers(c *gin.Context) {
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/{id}/followings [get]
 func (h *FollowHandler) GetFollowings(c *gin.Context) {
-	claims, err := middleware.GetAuthClaims(c)
+	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
 		pkg.Unauthorized(c, "unauthorized")
 		return

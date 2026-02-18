@@ -19,8 +19,8 @@ func NewRepository(db *sqlx.DB) *repository {
 }
 
 func (r *repository) GetByID(ctx context.Context, id int64) (*user.User, error) {
-	query := `SELECT * FROM users WHERE id = $1`
 	var table Table
+	query := `SELECT * FROM users WHERE id = $1`
 	if err := r.db.GetContext(ctx, &table, query, id); err != nil {
 		return nil, pkg.MapPostgresError(err)
 	}
@@ -28,8 +28,8 @@ func (r *repository) GetByID(ctx context.Context, id int64) (*user.User, error) 
 }
 
 func (r *repository) GetByEmail(ctx context.Context, email string) (*user.User, error) {
-	query := `SELECT * FROM users WHERE email = $1`
 	var table Table
+	query := `SELECT * FROM users WHERE email = $1`
 	if err := r.db.GetContext(ctx, &table, query, email); err != nil {
 		return nil, pkg.MapPostgresError(err)
 	}
@@ -37,6 +37,7 @@ func (r *repository) GetByEmail(ctx context.Context, email string) (*user.User, 
 }
 
 func (r *repository) Create(ctx context.Context, user *user.User) error {
+	var table Table
 	query := `
 		INSERT INTO users (email, username, password_hash)
 		VALUES ($1, $2, $3)
@@ -44,7 +45,6 @@ func (r *repository) Create(ctx context.Context, user *user.User) error {
 	`
 	args := []any{user.Email, user.Username, user.PasswordHash}
 
-	var table Table
 	if err := r.db.QueryRowxContext(ctx, query, args...).StructScan(&table); err != nil {
 		return pkg.MapPostgresError(err)
 	}
