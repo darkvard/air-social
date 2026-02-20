@@ -15,14 +15,14 @@ func getKey(userID int64) string {
 	return shared.BuildCacheKey("user", "info", "public", userID)
 }
 
-func setUserCache(ctx context.Context, cache domain.CacheStorage, user *user.UserSummaryResult) error {
+func setUserCache(ctx context.Context, cache domain.CacheStorage, user *user.UserSummary) error {
 	key := getKey(user.ID)
 	return cache.Set(ctx, key, user, summaryCacheTTL)
 }
 
-func getUserCache(ctx context.Context, cache domain.CacheStorage, id int64) (*user.UserSummaryResult, error) {
+func getUserCache(ctx context.Context, cache domain.CacheStorage, id int64) (*user.UserSummary, error) {
 	key := getKey(id)
-	var cached user.UserSummaryResult
+	var cached user.UserSummary
 	if err := cache.Get(ctx, key, &cached); err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package user
+package token
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"air-social/internal/domain/auth/token"
-	"air-social/internal/infrastructure/postgres"
 	"air-social/pkg"
 )
 
@@ -46,15 +45,24 @@ func (r *repository) GetByHash(ctx context.Context, hash string) (*token.Refresh
 
 func (r *repository) UpdateRevoked(ctx context.Context, tokenID int64) error {
 	query := `UPDATE refresh_tokens SET revoked_at = $1 WHERE id = $2`
-	return postgres.ExecOne(ctx, r.db, query, pkg.TimeNowUTC(), tokenID)
+	if _, err := r.db.ExecContext(ctx, query, pkg.TimeNowUTC(), tokenID); err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	return nil
 }
 
 func (r *repository) UpdateRevokedByUser(ctx context.Context, userID int64) error {
 	query := `UPDATE refresh_tokens SET revoked_at = $1 WHERE user_id = $2`
-	return postgres.ExecOne(ctx, r.db, query, pkg.TimeNowUTC(), userID)
+	if _, err := r.db.ExecContext(ctx, query, pkg.TimeNowUTC(), userID); err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	return nil
 }
 
 func (r *repository) UpdateRevokedByDevice(ctx context.Context, userID int64, deviceID string) error {
 	query := `UPDATE refresh_tokens SET revoked_at = $1 WHERE user_id = $2 AND device_id = $3`
-	return postgres.ExecOne(ctx, r.db, query, pkg.TimeNowUTC(), userID, deviceID)
+	if _, err := r.db.ExecContext(ctx, query, pkg.TimeNowUTC(), userID, deviceID); err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	return nil
 }

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"air-social/internal/domain/auth"
+	"air-social/internal/domain/follow"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/shared"
 	"air-social/internal/domain/user"
@@ -55,4 +56,12 @@ func NewMediaUseCase() media.UseCase {
 	}
 	return media.NewUseCase(deps)
 
+}
+
+func NewFollowUseCase() follow.Usecase {
+	deps := follow.Deps{
+		FollowRepo:  nil,
+		UserFetcher: nil,
+	}
+	return follow.NewUseCase(deps)
 }

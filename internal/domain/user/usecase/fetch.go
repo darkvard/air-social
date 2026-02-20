@@ -39,7 +39,7 @@ func (u *fetchUseCase) GetByEmail(ctx context.Context, email string) (*user.User
 
 }
 
-func (u *fetchUseCase) GetSummary(ctx context.Context, id int64) (*user.UserSummaryResult, error) {
+func (u *fetchUseCase) GetSummary(ctx context.Context, id int64) (*user.UserSummary, error) {
 	cached, err := getUserCache(ctx, u.cache, id)
 	if err == nil && cached != nil {
 		return cached, nil
@@ -56,8 +56,8 @@ func (u *fetchUseCase) GetSummary(ctx context.Context, id int64) (*user.UserSumm
 	return summary, nil
 }
 
-func (u *fetchUseCase) toUserSummary(d *user.User) *user.UserSummaryResult {
-	return &user.UserSummaryResult{
+func (u *fetchUseCase) toUserSummary(d *user.User) *user.UserSummary {
+	return &user.UserSummary{
 		ID:         d.ID,
 		FullName:   d.Profile.FullName,
 		Avatar:     u.link.PublicFile(d.Profile.Avatar),

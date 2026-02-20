@@ -31,7 +31,7 @@ type ResetPasswordParams struct {
 	NewPassword string
 }
 
-type UserSummaryResult struct {
+type UserSummary struct {
 	ID         int64
 	FullName   string
 	Bio        string

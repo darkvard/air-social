@@ -24,7 +24,7 @@ type ProfileUseCase interface {
 type FetchUseCase interface {
 	GetByID(ctx context.Context, id int64) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
-	GetSummary(ctx context.Context, id int64) (*UserSummaryResult, error)
+	GetSummary(ctx context.Context, id int64) (*UserSummary, error)
 }
 
 type UseCases struct {
