@@ -7,7 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"air-social/internal/domain/post"
-	"air-social/internal/domain/shared"
 	"air-social/pkg"
 )
 
@@ -186,12 +185,8 @@ func (r *repository) getMedia(ctx context.Context, postID int64) ([]post.Media, 
 func (r *repository) getUserPosts(ctx context.Context, params post.GetCursorParams) ([]post.Post, error) {
 	fetchLimit := params.Query.GetFetchLimit()
 
-	compareOp := "<"
-	sortOrder := "DESC"
-	if params.Query.Sort == shared.SortOldest {
-		compareOp = ">"
-		sortOrder = "ASC"
-	}
+	compareOp := params.Query.GetCompareOperator()
+	sortOrder := params.Query.GetSortOrder()
 
 	var query string
 	var args []any

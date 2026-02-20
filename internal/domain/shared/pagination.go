@@ -80,9 +80,9 @@ import (
  */
 
 const (
-	offsetPageMin  = 1
-	offsetLimitMin = 1
-	offsetLimitMax = 100
+	offsetPageMin      = 1
+	offsetLimitMin     = 1
+	offsetLimitMax     = 100
 	offsetLimitDefault = 10
 )
 
@@ -159,7 +159,6 @@ func NewOffsetPaginatedResult[T any](data []T, total int64, page, limit int) Off
 
 // --- Cursor Pagination (Keyset) ---
 
-
 // Cursorer defines the interface for cursor pagination.
 // K (cmp.Ordered) supports numbers and strings.
 // WARNING: If K is a string, you MUST use time-sortable IDs (e.g., ULID, UUIDv7).
@@ -168,7 +167,7 @@ type Cursorer[K cmp.Ordered] interface {
 	GetCursor() K
 }
 
-type CursorQueryParams[K cmp.Ordered] struct {  
+type CursorQueryParams[K cmp.Ordered] struct {
 	Cursor K
 	Limit  int
 	Sort   string
@@ -183,7 +182,7 @@ func (q *CursorQueryParams[K]) NormalizePagination() {
 	}
 }
 
-// GetFetchLimit returns Limit + 1 to fetch one extra record from the DB 
+// GetFetchLimit returns Limit + 1 to fetch one extra record from the DB
 // to determine if a next page exists.
 func (q CursorQueryParams[K]) GetFetchLimit() int {
 	return q.Limit + 1
@@ -194,6 +193,13 @@ func (q CursorQueryParams[K]) GetSortOrder() string {
 		return "ASC"
 	}
 	return "DESC"
+}
+
+func (q CursorQueryParams[K]) GetCompareOperator() string {
+	if q.Sort == SortOldest {
+		return ">"
+	}
+	return "<"
 }
 
 type CursorPaginatedResult[T any, K cmp.Ordered] struct {
@@ -210,8 +216,8 @@ func NewCursorPaginatedResult[T Cursorer[K], K cmp.Ordered](data []T, limit int)
 	var hasNextPage bool
 	var nextCursor K
 
-	// Since SQL fetched 'Limit + 1' records (via GetFetchLimit), 
-    // if len(data) > limit, it proves there is a next page.
+	// Since SQL fetched 'Limit + 1' records (via GetFetchLimit),
+	// if len(data) > limit, it proves there is a next page.
 	if len(data) > limit {
 		hasNextPage = true
 		// Remove the extra element to return exactly the requested limit
