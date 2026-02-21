@@ -4,7 +4,6 @@ import "air-social/internal/domain/post"
 
 type PostDetailRow struct {
 	PostTable
-	IsLiked bool `db:"is_liked"`
 	Author
 }
 
@@ -17,14 +16,11 @@ type Author struct {
 
 func (m *PostDetailRow) ToDomain() *post.Post {
 	domain := m.PostTable.ToDomain()
-
-	domain.IsLiked = m.IsLiked
 	domain.Author = &post.Author{
 		ID:         m.AuthorID,
 		FullName:   m.Fullname,
 		Avatar:     m.Avatar,
 		IsVerified: m.Verified,
 	}
-
 	return domain
 }

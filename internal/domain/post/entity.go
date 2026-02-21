@@ -13,20 +13,20 @@ const (
 type Visibility string
 
 type Post struct {
-	ID         int64
-	UserID     int64
-	Content    string
-	Visibility Visibility
-	Version    int
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  *time.Time
-
-	IsLiked        bool
+	ID             int64
+	UserID         int64
+	Content        string
+	Visibility     Visibility
 	OriginalPostID *int64
-	Counts         Counts
-	Media          []Media
-	Author         *Author
+	Version        int32
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      *time.Time
+
+	IsLiked bool
+	Media   []Media
+	Stats   Stats
+	Author  *Author
 }
 
 func (p Post) GetCursor() int64 {
@@ -40,10 +40,12 @@ type Author struct {
 	IsVerified bool
 }
 
-type Counts struct {
-	LikesCount    int
-	CommentsCount int
-	SharesCount   int
+type Stats struct {
+	PostID        int64
+	LikesCount    int32
+	CommentsCount int32
+	SharesCount   int32
+	UpdatedAt     time.Time
 }
 
 type Media struct {

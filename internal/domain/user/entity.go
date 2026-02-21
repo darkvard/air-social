@@ -13,7 +13,7 @@ type User struct {
 	Status       UserStatus
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-	Version      int
+	Version      int32
 }
 
 type UserStatus struct {

@@ -157,7 +157,7 @@ func (r *repository) getPost(ctx context.Context, postID int64) (*post.Post, err
             u.id AS author_id, 
             u.full_name AS author_full_name, 
             u.avatar AS author_avatar, 
-            u.verified AS author_verified,
+            u.verified AS author_verified
         FROM posts p
         JOIN users u ON p.user_id = u.id
         WHERE p.id = $1 AND p.deleted_at IS NULL

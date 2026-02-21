@@ -38,7 +38,7 @@ type UserDetailResponse struct {
 	Status    StatusResponse  `json:"status"`
 	CreatedAt time.Time       `json:"created_at"`
 	UpdatedAt time.Time       `json:"updated_at"`
-	Version   int             `json:"version"`
+	Version   int32           `json:"version"`
 }
 
 type ProfileResponse struct {

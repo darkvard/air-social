@@ -21,7 +21,7 @@ type Table struct {
 	VerifiedAt   *time.Time `db:"verified_at"`
 	CreatedAt    time.Time  `db:"created_at"`
 	UpdatedAt    time.Time  `db:"updated_at"`
-	Version      int        `db:"version"`
+	Version      int32        `db:"version"`
 }
 
 func (m *Table) ToDomain() *user.User {

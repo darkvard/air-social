@@ -11,10 +11,7 @@ type PostTable struct {
 	UserID         int64      `db:"user_id"`
 	Content        string     `db:"content"`
 	Visibility     string     `db:"visibility"`
-	Version        int        `db:"version"`
-	LikesCount     int        `db:"likes_count"`
-	CommentsCount  int        `db:"comments_count"`
-	SharesCount    int        `db:"shares_count"`
+	Version        int32      `db:"version"`
 	OriginalPostID *int64     `db:"original_post_id"`
 	CreatedAt      time.Time  `db:"created_at"`
 	UpdatedAt      time.Time  `db:"updated_at"`
@@ -29,19 +26,17 @@ func (m *PostTable) ToDomain() *post.Post {
 		Visibility:     post.Visibility(m.Visibility),
 		Version:        m.Version,
 		OriginalPostID: m.OriginalPostID,
-		Counts: post.Counts{
-			LikesCount:    m.LikesCount,
-			CommentsCount: m.CommentsCount,
-			SharesCount:   m.SharesCount,
-		},
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
-		DeletedAt: m.DeletedAt,
-		Media:     []post.Media{},
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
+		DeletedAt:      m.DeletedAt,
+		Media:          []post.Media{},
 	}
 }
 
 func FromDomainPost(d *post.Post) *PostTable {
+	if d == nil {
+		return nil
+	}
 	return &PostTable{
 		ID:             d.ID,
 		UserID:         d.UserID,
@@ -52,8 +47,5 @@ func FromDomainPost(d *post.Post) *PostTable {
 		UpdatedAt:      d.UpdatedAt,
 		DeletedAt:      d.DeletedAt,
 		OriginalPostID: d.OriginalPostID,
-		LikesCount:     d.Counts.LikesCount,
-		CommentsCount:  d.Counts.CommentsCount,
-		SharesCount:    d.Counts.SharesCount,
 	}
 }
