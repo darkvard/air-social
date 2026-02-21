@@ -6,14 +6,18 @@ CREATE TABLE
         parent_id BIGINT,
         content TEXT NOT NULL,
         media JSONB NOT NULL DEFAULT '[]'::jsonb,
-        likes_count INT NOT NULL DEFAULT 0,
         version INT NOT NULL DEFAULT 1,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
         deleted_at TIMESTAMPTZ,
+
         FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
         FOREIGN KEY (parent_id) REFERENCES comments (id) ON DELETE CASCADE
     );
 
-CREATE INDEX IF NOT EXISTS idx_comments_post_id_id ON comments (post_id, id DESC);
+-- Index for loading comments of a post ordered newest first
+CREATE INDEX IF NOT EXISTS idx_comments_post_id_id ON comments (post_id, id DESC) WHERE deleted_at IS NULL;
+
+-- Index for loading replies of a specific comment
+CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments (parent_id) WHERE deleted_at IS NULL;

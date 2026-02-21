@@ -9,4 +9,5 @@ CREATE TABLE IF NOT EXISTS post_media (
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
+-- Index for loading media by post
 CREATE INDEX IF NOT EXISTS idx_post_media_post_id ON post_media(post_id);
