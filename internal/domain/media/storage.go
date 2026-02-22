@@ -7,5 +7,3 @@ type Storage interface {
 	Delete(ctx context.Context, location Location) error
 	PresignUpload(ctx context.Context, location Location, constraints Constraints) (UploadForm, error)
 }
-
-// todo: update minio

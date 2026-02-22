@@ -1,16 +1,16 @@
-package auth
+package post
 
 import (
-	"air-social/internal/domain/auth"
+	"air-social/internal/domain/post"
 	"air-social/internal/domain/shared"
 )
 
 type Handler struct {
 	provider shared.LinkProvider
-	usecase  auth.UseCase
+	usecase  post.UseCase
 }
 
-func NewHandler(provider shared.LinkProvider, usecase auth.UseCase) Handler {
+func NewHandler(provider shared.LinkProvider, usecase post.UseCase) Handler {
 	return Handler{
 		provider: provider,
 		usecase:  usecase,

@@ -2,28 +2,31 @@ package minio
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/minio/minio-go/v7"
 
-	"air-social/internal/domain"
+	"air-social/internal/domain/media"
 	"air-social/pkg"
 )
 
-type minioStorage struct {
+type storage struct {
 	client *minio.Client
 }
 
-func newMinioStorage(client *minio.Client) *minioStorage {
-	return &minioStorage{
-		client: client,
+func NewStorage(client *minio.Client) (*storage, error) {
+	if client == nil {
+		return nil, errors.New("minio client cannot nil")
 	}
+	return &storage{
+		client: client,
+	}, nil
 }
 
-func (m *minioStorage) GetPresignedPostPolicy(ctx context.Context, loc domain.StorageLocation, constraints domain.UploadConstraints) (domain.PresignedURLResult, error) {
-	empty := domain.PresignedURLResult{}
+func (m *storage) PresignUpload(ctx context.Context, location media.Location, constraints media.Constraints) (media.UploadForm, error) {
+	empty := media.UploadForm{}
 
-	policy, err := m.setupPostPolicy(loc, constraints)
+	policy, err := m.setupPostPolicy(location, constraints)
 	if err != nil {
 		return empty, err
 	}
@@ -33,18 +36,18 @@ func (m *minioStorage) GetPresignedPostPolicy(ctx context.Context, loc domain.St
 		return empty, err
 	}
 
-	return domain.PresignedURLResult{
-		UploadURL: url.String(),
-		FormData:  formData,
+	return media.UploadForm{
+		URL:    url.String(),
+		Fields: formData,
 	}, nil
 }
 
-func (m *minioStorage) setupPostPolicy(loc domain.StorageLocation, constraints domain.UploadConstraints) (*minio.PostPolicy, error) {
+func (m *storage) setupPostPolicy(location media.Location, constraints media.Constraints) (*minio.PostPolicy, error) {
 	policy := minio.NewPostPolicy()
-	if err := policy.SetBucket(loc.Bucket); err != nil {
+	if err := policy.SetBucket(location.Bucket); err != nil {
 		return nil, err
 	}
-	if err := policy.SetKey(loc.Key); err != nil {
+	if err := policy.SetKey(location.Key); err != nil {
 		return nil, err
 	}
 	if err := policy.SetExpires(pkg.TimeNowUTC().Add(constraints.Expiry)); err != nil {
@@ -59,8 +62,8 @@ func (m *minioStorage) setupPostPolicy(loc domain.StorageLocation, constraints d
 	return policy, nil
 }
 
-func (m *minioStorage) StatFile(ctx context.Context, loc domain.StorageLocation) (bool, error) {
-	_, err := m.client.StatObject(ctx, loc.Bucket, loc.Key, minio.StatObjectOptions{})
+func (m *storage) Exists(ctx context.Context, location media.Location) (bool, error) {
+	_, err := m.client.StatObject(ctx, location.Bucket, location.Key, minio.StatObjectOptions{})
 	if err != nil {
 		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
 			return false, nil
@@ -70,10 +73,6 @@ func (m *minioStorage) StatFile(ctx context.Context, loc domain.StorageLocation)
 	return true, nil
 }
 
-func (m *minioStorage) DeleteFile(ctx context.Context, loc domain.StorageLocation) error {
-	return m.client.RemoveObject(ctx, loc.Bucket, loc.Key, minio.RemoveObjectOptions{})
-}
-
-func (s *minioStorage) GetEndpoint() string {
-	return fmt.Sprintf("http://%s", s.client.EndpointURL().Host)
+func (m *storage) Delete(ctx context.Context, location media.Location) error {
+	return m.client.RemoveObject(ctx, location.Bucket, location.Key, minio.RemoveObjectOptions{})
 }

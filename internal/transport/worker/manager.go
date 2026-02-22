@@ -3,6 +3,8 @@ package worker
 import (
 	"context"
 	"sync"
+
+	"air-social/pkg"
 )
 
 type Worker interface {
@@ -16,7 +18,13 @@ type Manager struct {
 }
 
 func NewManager(workers ...Worker) *Manager {
-	return &Manager{workers: workers}
+	var activeWorkers []Worker
+	for _, w := range workers {
+		if !pkg.IsNil(w) {
+			activeWorkers = append(activeWorkers, w)
+		}
+	}
+	return &Manager{workers: activeWorkers}
 }
 
 func (m *Manager) Start(ctx context.Context) error {

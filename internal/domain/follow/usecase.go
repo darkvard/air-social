@@ -9,25 +9,25 @@ import (
 	"air-social/pkg"
 )
 
-type Usecase interface {
+type UseCase interface {
 	Follow(ctx context.Context, followerID, followeeID int64) error
 	Unfollow(ctx context.Context, followerID, followeeID int64) error
 	GetFollowings(ctx context.Context, params GetFollowsParams) (shared.OffsetPaginatedResult[FollowUser], error)
 	GetFollowers(ctx context.Context, params GetFollowsParams) (shared.OffsetPaginatedResult[FollowUser], error)
 }
 
-type userFetcher interface {
+type UserFetcher interface {
 	GetSummary(ctx context.Context, id int64) (*user.UserSummary, error)
 }
 
 type Deps struct {
 	FollowRepo  Repository
-	UserFetcher userFetcher
+	UserFetcher UserFetcher
 }
 
 type usecase struct {
 	followRepo  Repository
-	userFetcher userFetcher
+	userFetcher UserFetcher
 }
 
 func NewUseCase(deps Deps) *usecase {

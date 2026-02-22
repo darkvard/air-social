@@ -7,16 +7,19 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	"air-social/internal/domain"
+	"air-social/internal/domain/shared"
 	"air-social/internal/infrastructure/rabbitmq/config"
-	"air-social/internal/infrastructure/rabbitmq/model"
-	"air-social/pkg"
+	"air-social/internal/infrastructure/rabbitmq/topology"
 )
 
-// todo: remove
+// eventRoutingMap defines the source of truth for event-to-routing-key mapping
+var eventRoutingMap = map[shared.EventType]string{
+	shared.EventVerify:        "email.verify",
+	shared.EventResetPassword: "email.reset_password",
+}
+
 type pubChannel struct {
 	ch       *amqp.Channel
 	confirms chan amqp.Confirmation
@@ -30,6 +33,7 @@ type Publisher struct {
 	once   sync.Once
 }
 
+// NewPublisher initializes the publisher with a pool of pre-configured channels
 func NewPublisher(conn *amqp.Connection, eCfg config.ExchangeConfig, poolSize int) (*Publisher, error) {
 	if poolSize <= 0 {
 		poolSize = 1
@@ -41,112 +45,121 @@ func NewPublisher(conn *amqp.Connection, eCfg config.ExchangeConfig, poolSize in
 		chPool: make(chan *pubChannel, poolSize),
 	}
 
+	// fill the pool with ready-to-use channels
 	for i := 0; i < poolSize; i++ {
-		ch, err := conn.Channel()
+		pc, err := p.createPoolChannel()
 		if err != nil {
-			p.close()
+			p.Close()
 			return nil, err
 		}
-
-		// ExchangeDeclare is idempotent
-		if err := ch.ExchangeDeclare(
-			eCfg.Name,
-			eCfg.Type,
-			true,  // durable
-			false, // auto-delete
-			false, // internal
-			false, // no-wait
-			nil,
-		); err != nil {
-			ch.Close()
-			p.close()
-			return nil, fmt.Errorf("declare exchange failed: %w", err)
-		}
-
-		// Enable publisher confirm
-		if err := ch.Confirm(false); err != nil {
-			ch.Close()
-			p.close()
-			return nil, fmt.Errorf("enable confirm mode failed: %w", err)
-		}
-
-		pc := &pubChannel{
-			ch:       ch,
-			confirms: ch.NotifyPublish(make(chan amqp.Confirmation, 8)),
-			returns:  ch.NotifyReturn(make(chan amqp.Return, 1)),
-		}
-
 		p.chPool <- pc
 	}
 
 	return p, nil
 }
 
-// todo
-func (p *Publisher) Publish(ctx context.Context, routingKey string, payload any) error {
+// createPoolChannel handles the internal technical setup for each channel in the pool
+func (p *Publisher) createPoolChannel() (*pubChannel, error) {
+	ch, err := p.conn.Channel()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open channel: %w", err)
+	}
+
+	// 1. Ensure exchange exists on the broker (Idempotent)
+	if err := topology.SetupExchange(ch, p.cfg); err != nil {
+		ch.Close()
+		return nil, err
+	}
+
+	// 2. Enable Publisher Confirms: Broker will send an ACK once message is safely stored
+	if err := ch.Confirm(false); err != nil {
+		ch.Close()
+		return nil, fmt.Errorf("failed to enable confirm mode: %w", err)
+	}
+
+	return &pubChannel{
+		ch: ch,
+		// NotifyPublish: receives ACKs/NACKs from the broker
+		confirms: ch.NotifyPublish(make(chan amqp.Confirmation, 10)),
+		// NotifyReturn: receives messages that couldn't be routed (if mandatory=true)
+		returns: ch.NotifyReturn(make(chan amqp.Return, 1)),
+	}, nil
+}
+
+// Publish routes a domain event to RabbitMQ with guaranteed delivery checks
+func (p *Publisher) Publish(ctx context.Context, event shared.Event) error {
 	pc, err := p.acquire(ctx)
 	if err != nil {
 		return err
 	}
 	defer p.release(pc)
 
+	// Resolve the infrastructure routing key from domain event type
+	routingKey, ok := eventRoutingMap[event.Typ]
+	if !ok {
+		return fmt.Errorf("unsupported event type: %s", event.Typ)
+	}
+
+	body, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("marshal failed: %w", err)
+	}
+
+	// Track this specific publish sequence for the confirmation
 	seqNo := pc.ch.GetNextPublishSeqNo()
 
-	body, err := p.prepareBody(payload)
+	err = pc.ch.PublishWithContext(ctx, p.cfg.Name, routingKey,
+		true,  // Mandatory: if true, broker returns message via pc.returns if no queue matches
+		false, // Immediate: deprecated in modern RabbitMQ
+		amqp.Publishing{
+			ContentType:  "application/json",
+			DeliveryMode: amqp.Persistent, // Persistent: write message to disk to survive crashes
+			MessageId:    event.ID,        // Use domain event ID for end-to-end tracing
+			Timestamp:    event.Timestamp,
+			Body:         body,
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	if err := pc.ch.PublishWithContext(
-		ctx,
-		p.cfg.Name,
-		routingKey,
-		true, // mandatory
-		false,
-		amqp.Publishing{
-			ContentType:  "application/json",
-			DeliveryMode: amqp.Persistent,
-			MessageId:    uuid.NewString(),
-			Timestamp:    pkg.TimeNowUTC(),
-			Body:         body,
-		},
-	); err != nil {
-		return err
-	}
+	// Block until broker confirms receipt or context expires
+	return p.waitConfirm(ctx, pc, seqNo)
+}
 
-	// Wait for broker confirm matching our sequence number
+// waitConfirm orchestrates the reliability checks (returns and confirms)
+func (p *Publisher) waitConfirm(ctx context.Context, pc *pubChannel, seqNo uint64) error {
 	for {
 		select {
-		case ret := <-pc.returns: // Routing fail
-			return fmt.Errorf(
-				"publish return: exchange = %s, routingKey = %s, reason = %s",
-				ret.Exchange,
-				ret.RoutingKey,
-				ret.ReplyText,
-			)
+		case ret := <-pc.returns:
+			// If mandatory=true and routingKey doesn't match any queue, broker returns the msg
+			return fmt.Errorf("rabbitmq: message returned, no queue found for key [%s]", ret.RoutingKey)
 
-		case confirm, ok := <-pc.confirms: // Broker confirm
+		case confirm, ok := <-pc.confirms:
 			if !ok {
-				return errors.New("rabbitmq: confirm channel closed")
+				return errors.New("rabbitmq: confirmation channel closed")
 			}
+			// DeliveryTag is a monotonically increasing counter per channel
 			if confirm.DeliveryTag < seqNo {
-				continue
+				continue // Wait for the tag matching our current publish
 			}
 			if !confirm.Ack {
-				return errors.New("rabbitmq: publish not acknowledged by broker")
+				return errors.New("rabbitmq: message nacked by broker (storage failure)")
 			}
 			return nil
-		case <-ctx.Done(): // Timeout, cancel
+
+		case <-ctx.Done():
 			return ctx.Err()
 		}
 	}
 }
 
+// acquire retrieves a channel from the pool
 func (p *Publisher) acquire(ctx context.Context) (*pubChannel, error) {
 	select {
 	case pc, ok := <-p.chPool:
 		if !ok || pc == nil {
-			return nil, errors.New("rabbitmq: publisher closed")
+			return nil, errors.New("publisher is closed")
 		}
 		return pc, nil
 	case <-ctx.Done():
@@ -154,49 +167,21 @@ func (p *Publisher) acquire(ctx context.Context) (*pubChannel, error) {
 	}
 }
 
+// release returns a healthy channel back to the pool
 func (p *Publisher) release(pc *pubChannel) {
-	if pc == nil {
-		return
-	}
-
-	if pc.ch.IsClosed() {
-		return
-	}
-
-	select {
-	case p.chPool <- pc:
-	default:
-		pc.ch.Close()
+	if pc != nil && !pc.ch.IsClosed() {
+		p.chPool <- pc
 	}
 }
 
+// Close gracefully shuts down all channels in the pool
 func (p *Publisher) Close() {
 	p.once.Do(func() {
-		p.close()
+		close(p.chPool)
+		for pc := range p.chPool {
+			if pc != nil && pc.ch != nil {
+				pc.ch.Close()
+			}
+		}
 	})
-}
-
-func (p *Publisher) close() {
-	close(p.chPool)
-	for pc := range p.chPool {
-		pc.ch.Close()
-	}
-}
-
-// prepareBody serializes data for RabbitMQ.
-// It wraps domain.Event into model.Event to ensure a consistent JSON metadata 
-// structure (ID, Type, Timestamp) regardless of the specific business data.
-func (p *Publisher) prepareBody(payload any) ([]byte, error) {
-	var finalPayload any = payload
-
-	if evt, ok := payload.(domain.Event); ok {
-		finalPayload = model.FromDomainEvent(evt)
-	}
-
-	body, err := json.Marshal(finalPayload)
-	if err != nil {
-		return nil, fmt.Errorf("rabbitmq: marshal failed: %w", err)
-	}
-
-	return body, nil
 }

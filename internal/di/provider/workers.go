@@ -1,32 +1,19 @@
 package provider
 
 import (
-	"air-social/internal/infrastructure/rabbitmq/config"
+	"air-social/internal/domain/shared"
 	"air-social/internal/transport/worker"
+	"air-social/internal/transport/worker/email"
 )
 
-func NewWorkers(
-	infra *Infrastructures,
-	adapters *Adapters,
-	services *Services,
-) *worker.Manager {
-	exchangeCfg := config.EventsExchange
-
-	verifyWorker := worker.NewEmailWorker(
-		infra.Rabbit,
-		adapters.Cache,
-		services.Email,
-		exchangeCfg,
-		config.EmailVerifyQueueConfig,
+func NewWorkers(infra *Infrastructure, adapters Adapter) *worker.Manager {
+	deps := email.Deps{
+		Conn:       infra.Rabbit,
+		Cache:      adapters.Cache,
+		Dispatcher: email.NewDispatcher(adapters.Mailer),
+	}
+	return worker.NewManager(
+		email.NewConsumer(deps, shared.EventVerify),
+		email.NewConsumer(deps, shared.EventResetPassword),
 	)
-
-	resetWorker := worker.NewEmailWorker(
-		infra.Rabbit,
-		adapters.Cache,
-		services.Email,
-		exchangeCfg,
-		config.EmailResetPasswordQueueConfig,
-	)
-
-	return worker.NewManager(verifyWorker, resetWorker)
 }

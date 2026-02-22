@@ -16,7 +16,7 @@ type accountUseCase struct {
 	cache shared.Cache
 }
 
-func NewAccountUseCase(d user.Deps) *accountUseCase {
+func NewAccountUseCase(d Deps) *accountUseCase {
 	return &accountUseCase{
 		repo:  d.Repo,
 		cache: d.Cache,

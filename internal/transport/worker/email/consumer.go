@@ -26,11 +26,9 @@ const (
 )
 
 type Deps struct {
-	conn  *amqp.Connection
-	eCfg  config.ExchangeConfig
-	qCfg  config.QueueConfig
-	cache shared.Cache
-	disp  shared.EventDispatcher
+	Conn       *amqp.Connection
+	Cache      shared.Cache
+	Dispatcher shared.EventDispatcher
 }
 
 type Consumer struct {
@@ -46,13 +44,25 @@ type Consumer struct {
 	once sync.Once
 }
 
-func NewConsumer(deps Deps) *Consumer {
+func NewConsumer(deps Deps, event shared.EventType) *Consumer {
+	var queueCfg config.QueueConfig
+
+	switch event {
+	case shared.EventVerify:
+		queueCfg = config.EmailVerifyQueueConfig
+	case shared.EventResetPassword:
+		queueCfg = config.EmailResetPasswordQueueConfig
+	default:
+		pkg.Log().Error("consumer: invalid event type")
+		return nil
+	}
+
 	return &Consumer{
-		conn:  deps.conn,
-		eCfg:  deps.eCfg,
-		qCfg:  deps.qCfg,
-		cache: deps.cache,
-		disp:  deps.disp,
+		conn:  deps.Conn,
+		eCfg:  config.TopicEventsExchange,
+		qCfg:  queueCfg,
+		cache: deps.Cache,
+		disp:  deps.Dispatcher,
 		done:  make(chan struct{}),
 	}
 }

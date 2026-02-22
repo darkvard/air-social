@@ -20,26 +20,24 @@ type UseCase interface {
 	DeleteMedia(ctx context.Context, keys []string) error
 }
 
-type Deps struct {
-	Bucket  Bucket
-	Storage Storage
-	Link    shared.AppLinkProvider
-	Route   shared.RouteProvider
-}
-
 type usecase struct {
 	bucket  Bucket
 	storage Storage
-	link    shared.AppLinkProvider
+	link    shared.LinkProvider
 	route   shared.RouteProvider
 }
 
-func NewUseCase(d Deps) *usecase {
+func NewUseCase(
+	Bucket Bucket,
+	Storage Storage,
+	Link shared.LinkProvider,
+	Route shared.RouteProvider,
+) *usecase {
 	return &usecase{
-		bucket:  d.Bucket,
-		storage: d.Storage,
-		link:    d.Link,
-		route:   d.Route,
+		bucket:  Bucket,
+		storage: Storage,
+		link:    Link,
+		route:   Route,
 	}
 }
 

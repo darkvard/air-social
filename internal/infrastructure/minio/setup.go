@@ -2,7 +2,6 @@ package minio
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -70,11 +69,4 @@ func ensureBucketExists(ctx context.Context, client *minio.Client, bucketName, p
 	}
 
 	return nil
-}
-
-func NewMinioStorage(client *minio.Client) (*minioStorage, error) {
-	if client == nil {
-		return nil, errors.New("minio client cannot nil")
-	}
-	return newMinioStorage(client), nil
 }

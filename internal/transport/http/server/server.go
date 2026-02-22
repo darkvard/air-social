@@ -12,7 +12,7 @@ import (
 	"air-social/internal/di/provider"
 	"air-social/internal/domain"
 	"air-social/internal/transport/http/middleware"
-	"air-social/internal/transport/http/route"
+	// "air-social/internal/transport/http/route"
 	"air-social/pkg"
 	"air-social/templates"
 )
@@ -21,18 +21,19 @@ func NewServer(
 	cfg config.Config,
 	urls domain.URLFactory,
 	mw *middleware.Manager,
-	handler *provider.Handlers,
+	handler *provider.Handler,
 ) *http.Server {
 	engine := setupEngine()
 
-	group := engine.Group(urls.ApiPath())
+	// group := engine.Group(urls.ApiPath())
 	{
-		route.CommonRoutes(group, handler.Health, mw)
-		route.AuthRoutes(group, handler.Auth, mw)
-		route.UserRoutes(group, handler.User, mw)
-		route.MediaRoutes(group, handler.Media, mw)
-		route.FollowRoutes(group, handler.Follow, mw)
-		route.PostRoutes(group, handler.Post, mw)
+		// todo
+		// route.CommonRoutes(group, handler.Health, mw)
+		// route.AuthRoutes(group, handler.Auth, mw)
+		// route.UserRoutes(group, handler.User, mw)
+		// route.MediaRoutes(group, handler.Media, mw)
+		// route.FollowRoutes(group, handler.Follow, mw)
+		// route.PostRoutes(group, handler.Post, mw)
 	}
 
 	return &http.Server{

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"air-social/internal/domain/media"
-	"air-social/internal/domain/shared"
 )
 
 type AccountUseCase interface {
@@ -27,15 +26,8 @@ type FetchUseCase interface {
 	GetSummary(ctx context.Context, id int64) (*UserSummary, error)
 }
 
-type UseCases struct {
+type UseCase struct {
 	Account AccountUseCase
 	Profile ProfileUseCase
 	Fetch   FetchUseCase
-}
-
-type Deps struct {
-	Repo  Repository
-	Cache shared.Cache
-	Link  shared.AppLinkProvider
-	Media media.UseCase
 }

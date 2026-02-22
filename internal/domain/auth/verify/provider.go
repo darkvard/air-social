@@ -28,13 +28,13 @@ type Provider interface {
 type Deps struct {
 	Cache shared.Cache
 	Event shared.EventPublisher
-	Link  shared.AppLinkProvider
+	Link  shared.LinkProvider
 }
 
 type provider struct {
 	cache shared.Cache
 	event shared.EventPublisher
-	link  shared.AppLinkProvider
+	link  shared.LinkProvider
 }
 
 func NewVerifyProvider(d Deps) *provider {

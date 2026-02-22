@@ -40,7 +40,7 @@ func NewEventPublisher(conn *amqp.Connection) (*publisher.Publisher, error) {
 
 	pub, err := publisher.NewPublisher(
 		conn,
-		rmqConfig.EventsExchange,
+		rmqConfig.TopicEventsExchange,
 		10,
 	)
 	if err != nil {

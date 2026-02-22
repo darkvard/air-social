@@ -11,6 +11,14 @@ import (
 
 const summaryCacheTTL = 12 * time.Hour
 
+type Deps struct {
+	Repo  user.Repository
+	Cache shared.Cache
+	Link  shared.LinkProvider
+	Media MediaConfirmer
+}
+
+
 func getKey(userID int64) string {
 	return shared.BuildCacheKey("user", "info", "public", userID)
 }

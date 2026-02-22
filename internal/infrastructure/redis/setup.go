@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -30,11 +29,4 @@ func NewConnection(cfg config.RedisConfig) (*redis.Client, error) {
 	}
 
 	return client, nil
-}
-
-func NewRedisCache(client *redis.Client) (*redisCache, error) {
-	if client == nil {
-		return nil, errors.New("redis client cannot nil")
-	}
-	return newRedisCache(client), nil
 }

@@ -1,26 +1,33 @@
 package provider
 
 import (
-	"air-social/internal/domain"
-	"air-social/internal/transport/http/handler"
+	"air-social/internal/transport/http/auth"
+	"air-social/internal/transport/http/comment"
+	"air-social/internal/transport/http/follow"
+	"air-social/internal/transport/http/health"
+	"air-social/internal/transport/http/media"
+	"air-social/internal/transport/http/post"
+	"air-social/internal/transport/http/user"
 )
 
-type Handlers struct {
-	Auth   *handler.AuthHandler
-	User   *handler.UserHandler
-	Media  *handler.MediaHandler
-	Health *handler.HealthHandler
-	Follow *handler.FollowHandler
-	Post   *handler.PostHandler
+type Handler struct {
+	Health  health.Handler
+	Auth    auth.Handler
+	User    user.Handler
+	Media   media.Handler
+	Follow  follow.Handler
+	Post    post.Handler
+	Comment comment.Handler
 }
 
-func NewHandlers(services *Services, urlFactory domain.URLFactory) *Handlers {
-	return &Handlers{
-		Auth:   handler.NewAuthHandler(services.Auth, urlFactory),
-		User:   handler.NewUserHandler(services.User, urlFactory),
-		Media:  handler.NewMediaHandler(services.Media),
-		Health: handler.NewHealthHandler(services.Health),
-		Follow: handler.NewFollowHandler(services.Follow, services.User, urlFactory),
-		Post:   handler.NewPostHandler(services.Post, urlFactory),
+func NewHandlers(prov Provider, usecase UseCase) *Handler {
+	return &Handler{
+		Health:  health.NewHandler(),
+		Auth:    auth.NewHandler(prov.Link, usecase.Auth),
+		User:    user.NewHandler(prov.Link, usecase.User),
+		Media:   media.NewHandler(prov.Link, usecase.Media),
+		Follow:  follow.NewHandler(prov.Link, usecase.Follow),
+		Post:    post.NewHandler(prov.Link, usecase.Post),
+		Comment: comment.NewHandler(prov.Link, usecase.Comment),
 	}
 }

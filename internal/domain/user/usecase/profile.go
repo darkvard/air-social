@@ -9,17 +9,17 @@ import (
 	"air-social/pkg"
 )
 
-type mediaProvider interface {
+type MediaConfirmer interface {
 	ConfirmUpload(ctx context.Context, params []media.ConfirmParams) ([]string, error)
 }
 
 type profileUseCase struct {
 	repo  user.Repository
 	cache shared.Cache
-	media mediaProvider
+	media MediaConfirmer
 }
 
-func NewProfileUseCase(d user.Deps) *profileUseCase {
+func NewProfileUseCase(d Deps) *profileUseCase {
 	return &profileUseCase{
 		repo:  d.Repo,
 		cache: d.Cache,

@@ -8,15 +8,18 @@ type SystemProvider interface {
 
 type RouteProvider interface {
 	BaseURL() string
-	ApiPath() string // e.g: /api/v1
+	ApiPath() string
 }
 
-type AppLinkProvider interface {
+type LinkProvider interface {
 	VerifyEmail(token string) string
 	ResetPassword(token string) string
-	ResetPasswordApi() string
+	ResetPasswordEndpoint() string
 	PublicFile(key string) string
 }
 
-
-// todo: update impl
+type AppLinkManager struct {
+	SystemProvider
+	RouteProvider
+	LinkProvider
+}

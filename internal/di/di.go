@@ -16,14 +16,14 @@ type Container struct {
 	Server *http.Server
 	Worker *worker.Manager
 	Hub    *ws.Hub
-	Infra  *provider.Infrastructures
+	Infra  *provider.Infrastructure
 }
 
 func Initialize(cfg config.Config) (*Container, func(), error) {
 	url := route.NewURLFactory(cfg)
 	url.PrintInfraConsole()
 
-	infrastructures, cleanup, err := provider.NewInfrastructures(cfg)
+	infra, cleanup, err := provider.NewInfrastructure(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -33,22 +33,31 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 		return nil, nil, err
 	}
 
-	adapters, err := provider.NewAdapters(cfg, infrastructures)
+	adapter, err := provider.NewAdapter(cfg, infra)
 	if err != nil {
 		return handleError(err)
 	}
 
-	repositories := provider.NewRepositories(infrastructures)
-	services := provider.NewServices(cfg, url, infrastructures, repositories, adapters)
-	handlers := provider.NewHandlers(services, url)
-	middlewares := middleware.NewManager(cfg.Server, repositories.TokenProvider)
-	workers := provider.NewWorkers(infrastructures, adapters, services)
-	server := server.NewServer(cfg, url, middlewares, handlers)
+	prov := provider.NewProvider(cfg, adapter)
+	repo := provider.NewRepository(infra)
+	usecase := provider.NewUseCase(provider.UseCaseDeps{
+		Cfg:     cfg,
+		Infra:   infra,
+		Prov:    prov,
+		Repo:    repo,
+		Adapter: adapter,
+	})
+	handler := provider.NewHandlers(prov, usecase)
+
+	workers := provider.NewWorkers(infra, adapter)
+	middleware := middleware.NewManager(cfg.Server, prov.Token)
+
+	server := server.NewServer(cfg, url, middleware, handler)
 
 	return &Container{
 		Server: server,
 		Worker: workers,
 		Hub:    ws.NewHub(),
-		Infra:  infrastructures,
+		Infra:  infra,
 	}, cleanup, nil
 }

@@ -1,6 +1,20 @@
 package config
 
-import "air-social/internal/domain"
+const deadExt = ".dlq"
+
+const (
+	verifyRouting          = "email.verify"
+	verifyQueue            = "email_verify_queue"
+	verifyQueueDead        = verifyQueue + deadExt
+	verifyQueueDeadRouting = verifyRouting + deadExt
+)
+
+const (
+	resetPasswordRouting          = "email.reset_password"
+	resetPasswordQueue            = "email_reset_password_queue"
+	resetPasswordQueueDead        = resetPasswordQueue + deadExt
+	resetPasswordQueueDeadRouting = resetPasswordRouting + deadExt
+)
 
 type ExchangeConfig struct {
 	Name string
@@ -15,23 +29,23 @@ type QueueConfig struct {
 	DeadLetterExchange   string
 }
 
-var EventsExchange = ExchangeConfig{
+var TopicEventsExchange = ExchangeConfig{
 	Name: "events",
 	Type: "topic",
 }
 
 var EmailVerifyQueueConfig = QueueConfig{
-	Queue:                "email_verify_queue",
-	RoutingKey:           domain.RoutingKeyEmailVerify,
-	DeadLetterExchange:   EventsExchange.Name,
-	DeadLetterQueue:      "email_verify_queue.dlq",
-	DeadLetterRoutingKey: domain.RoutingKeyEmailVerify + ".dlq",
+	Queue:                verifyQueue,
+	RoutingKey:           verifyRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      verifyQueueDead,
+	DeadLetterRoutingKey: verifyQueueDeadRouting,
 }
 
 var EmailResetPasswordQueueConfig = QueueConfig{
-	Queue:                "email_reset_password_queue",
-	RoutingKey:           domain.RoutingKeyEmailResetPassword,
-	DeadLetterExchange:   EventsExchange.Name,
-	DeadLetterQueue:      "email_reset_password_queue.dlq",
-	DeadLetterRoutingKey: domain.RoutingKeyEmailResetPassword + ".dlq",
+	Queue:                resetPasswordQueue,
+	RoutingKey:           resetPasswordRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      resetPasswordQueueDead,
+	DeadLetterRoutingKey: resetPasswordQueueDeadRouting,
 }

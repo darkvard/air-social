@@ -11,10 +11,10 @@ import (
 type fetchUseCase struct {
 	repo  user.Repository
 	cache shared.Cache
-	link  shared.AppLinkProvider
+	link  shared.LinkProvider
 }
 
-func NewFetchUseCase(d user.Deps) *fetchUseCase {
+func NewFetchUseCase(d Deps) *fetchUseCase {
 	return &fetchUseCase{
 		repo:  d.Repo,
 		cache: d.Cache,

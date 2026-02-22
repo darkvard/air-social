@@ -9,7 +9,7 @@ import (
 	"gopkg.in/gomail.v2"
 
 	"air-social/internal/config"
-	"air-social/internal/domain"
+	"air-social/internal/domain/shared"
 	"air-social/templates"
 )
 
@@ -18,19 +18,17 @@ type mailtrap struct {
 	from   string
 }
 
-func NewMailtrap(cfg config.MailConfig) *mailtrap {
+func NewMailtrap(cfg config.MailConfig, dialer *gomail.Dialer) *mailtrap {
 	return &mailtrap{
-		dialer: gomail.NewDialer(
-			cfg.Host, cfg.Port, cfg.Username, cfg.Password,
-		),
-		from: fmt.Sprintf("%s <%s>", cfg.FromName, cfg.FromAddress),
+		dialer: dialer,
+		from:   fmt.Sprintf("%s <%s>", cfg.FromName, cfg.FromAddress),
 	}
 }
 
-func (m *mailtrap) Send(ctx context.Context, env *domain.Email) error {
+func (m *mailtrap) Send(ctx context.Context, email shared.Email) error {
 	// path
-	layoutPath := env.LayoutFile
-	contentPath := env.TemplateFile
+	layoutPath := email.LayoutFile
+	contentPath := email.TemplateFile
 
 	// parsing (merge layout + content)
 	t, err := template.ParseFS(templates.TemplatesFS, layoutPath, contentPath)
@@ -40,11 +38,11 @@ func (m *mailtrap) Send(ctx context.Context, env *domain.Email) error {
 
 	// rendering + binding
 	var subjectBuffer bytes.Buffer
-	if err := t.ExecuteTemplate(&subjectBuffer, "subject", env.Data); err != nil {
+	if err := t.ExecuteTemplate(&subjectBuffer, "subject", email.Data); err != nil {
 		return fmt.Errorf("failed to execute 'subject' block: %w", err)
 	}
 	var bodyBuffer bytes.Buffer
-	if err := t.ExecuteTemplate(&bodyBuffer, "layout", env.Data); err != nil {
+	if err := t.ExecuteTemplate(&bodyBuffer, "layout", email.Data); err != nil {
 		return fmt.Errorf("failed to execute 'layout' block: %w", err)
 	}
 
@@ -54,7 +52,7 @@ func (m *mailtrap) Send(ctx context.Context, env *domain.Email) error {
 	go func() {
 		msg := gomail.NewMessage()
 		msg.SetHeader("From", m.from)
-		msg.SetHeader("To", env.To)
+		msg.SetHeader("To", email.To)
 		msg.SetHeader("Subject", subjectBuffer.String())
 		msg.SetBody("text/html", bodyBuffer.String())
 		errChan <- m.dialer.DialAndSend(msg)

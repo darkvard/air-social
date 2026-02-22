@@ -8,8 +8,6 @@ import (
 	"air-social/pkg"
 )
 
-// todo: redesign database: post, like, comment
-// => fix hot row contention
 type UseCase interface {
 	GetPostDetail(ctx context.Context, postID, viewerID int64) (*Post, error)
 	CreatePost(ctx context.Context, params CreateParams) (*Post, error)
@@ -18,18 +16,18 @@ type UseCase interface {
 	GetUserPosts(ctx context.Context, params GetCursorParams) (shared.CursorPaginatedResult[Post, int64], error)
 }
 
-type mediaVerifier interface {
+type MediaVerifier interface {
 	VerifyMedia(ctx context.Context, keys []string) error
 }
 
 type Deps struct {
 	PostRepo      Repository
-	MediaVerifier mediaVerifier
+	MediaVerifier MediaVerifier
 }
 
 type usecase struct {
 	postRepo      Repository
-	mediaVerifier mediaVerifier
+	mediaVerifier MediaVerifier
 }
 
 func NewUseCase(deps Deps) *usecase {
