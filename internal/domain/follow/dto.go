@@ -1,6 +1,6 @@
 package follow
 
-import "air-social/internal/domain/shared"
+import "air-social/internal/domain/common"
 
 const (
 	SortLatest   = "latest"
@@ -9,9 +9,8 @@ const (
 	SortNameDESC = "name_desc"
 )
 
-
 type GetFollowsParams struct {
 	ViewerID int64
 	TargetID int64
-	Paging   shared.OffsetQueryParams
+	Paging   common.OffsetQueryParams
 }

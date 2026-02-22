@@ -2,13 +2,15 @@ package health
 
 import (
 	"context"
+	"strconv"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
+	"air-social/pkg"
 )
 
 type UseCase interface {
 	CheckStatus(ctx context.Context) (bool, map[string]string)
-	AppInfo() map[string]any
+	Overview(ctx context.Context) OverviewResponse
 }
 
 type Checker interface {
@@ -17,12 +19,12 @@ type Checker interface {
 
 type usecase struct {
 	checkers map[string]Checker
-	link     shared.SystemProvider
+	link     common.SystemProvider
 }
 
 func NewUseCase(
 	checkers map[string]Checker,
-	link shared.SystemProvider,
+	link common.SystemProvider,
 ) UseCase {
 	return &usecase{
 		checkers: checkers,
@@ -42,13 +44,28 @@ func (u *usecase) CheckStatus(ctx context.Context) (bool, map[string]string) {
 			details[name] = "ok"
 		}
 	}
+
+	details["status"] = strconv.FormatBool(isHealthy)
+	details["timestamp"] = pkg.TimeNowUTC().String()
+
 	return isHealthy, details
 }
 
-func (u *usecase) AppInfo() map[string]any {
-	return map[string]any{
-		"Title":   "Air Social API",
-		"DocsURL": u.link.SwaggerURL(),
+func (u *usecase) Overview(ctx context.Context) OverviewResponse {
+	isHealthy, _ := u.CheckStatus(ctx)
+
+	status := "Active"
+	httpCode := 200
+
+	if !isHealthy {
+		status = "Maintenance"
+		httpCode = 503
 	}
 
+	return OverviewResponse{
+		Title:    "Air Social API",
+		DocsURL:  u.link.SwaggerURL(),
+		Status:   status,
+		HTTPCode: httpCode,
+	}
 }

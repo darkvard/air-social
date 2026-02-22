@@ -14,8 +14,8 @@ type Manager struct {
 	MultipartOnly gin.HandlerFunc
 }
 
-func NewManager(cfg config.ServerConfig, provider token.Provider) *Manager {
-	return &Manager{
+func NewManager(cfg config.ServerConfig, provider token.Provider) Manager {
+	return Manager{
 		Basic:         Basic(cfg),
 		Auth:          Auth(provider),
 		JSONOnly:      JSONOnly(),

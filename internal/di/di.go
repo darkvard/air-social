@@ -6,7 +6,6 @@ import (
 	"air-social/internal/config"
 	"air-social/internal/di/provider"
 	"air-social/internal/transport/http/middleware"
-	"air-social/internal/transport/http/route"
 	"air-social/internal/transport/http/server"
 	"air-social/internal/transport/worker"
 	"air-social/internal/transport/ws"
@@ -20,9 +19,6 @@ type Container struct {
 }
 
 func Initialize(cfg config.Config) (*Container, func(), error) {
-	url := route.NewURLFactory(cfg)
-	url.PrintInfraConsole()
-
 	infra, cleanup, err := provider.NewInfrastructure(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -47,12 +43,11 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 		Repo:    repo,
 		Adapter: adapter,
 	})
-	handler := provider.NewHandlers(prov, usecase)
+	handler := provider.NewHandler(prov, usecase)
+	middleware := middleware.NewManager(cfg.Server, prov.Token)
+	server := server.NewServer(cfg, prov, handler, middleware)
 
 	workers := provider.NewWorkers(infra, adapter)
-	middleware := middleware.NewManager(cfg.Server, prov.Token)
-
-	server := server.NewServer(cfg, url, middleware, handler)
 
 	return &Container{
 		Server: server,

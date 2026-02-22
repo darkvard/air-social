@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/pkg"
 )
 
@@ -13,7 +13,7 @@ type UseCase interface {
 	CreatePost(ctx context.Context, params CreateParams) (*Post, error)
 	UpdatePost(ctx context.Context, params UpdateParams) (*Post, error)
 	DeletePost(ctx context.Context, postID int64, userID int64) error
-	GetUserPosts(ctx context.Context, params GetCursorParams) (shared.CursorPaginatedResult[Post, int64], error)
+	GetUserPosts(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Post, int64], error)
 }
 
 type MediaVerifier interface {
@@ -100,10 +100,10 @@ func (u *usecase) DeletePost(ctx context.Context, postID, userID int64) error {
 	return pkg.OrInternalError(u.postRepo.Delete(ctx, postID))
 }
 
-func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (shared.CursorPaginatedResult[Post, int64], error) {
+func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Post, int64], error) {
 	params.Query.NormalizePagination()
 
-	var empty shared.CursorPaginatedResult[Post, int64]
+	var empty common.CursorPaginatedResult[Post, int64]
 
 	posts, err := u.postRepo.GetUserPosts(ctx, params)
 	if err != nil {
@@ -112,7 +112,7 @@ func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (sha
 
 	// todo map isLiked, count.....
 
-	result := shared.NewCursorPaginatedResult(posts, params.Query.Limit)
+	result := common.NewCursorPaginatedResult(posts, params.Query.Limit)
 	return result, nil
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"air-social/internal/domain"
 )
+// todo: remove
 
 type PostLike struct {
 	PostID    int64     `db:"post_id"`
@@ -43,9 +44,9 @@ func (m *CommentLike) ToDomain() *domain.CommentLike {
 }
 
 func FromDomainCommentLike(d *domain.CommentLike) *CommentLike {
-    return &CommentLike{
-        CommentID: d.CommentID,
-        UserID:    d.UserID,
-        CreatedAt: d.CreatedAt,
-    }
+	return &CommentLike{
+		CommentID: d.CommentID,
+		UserID:    d.UserID,
+		CreatedAt: d.CreatedAt,
+	}
 }

@@ -3,15 +3,15 @@ package usecase
 import (
 	"context"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
 
 type fetchUseCase struct {
 	repo  user.Repository
-	cache shared.Cache
-	link  shared.LinkProvider
+	cache common.Cache
+	link  common.LinkProvider
 }
 
 func NewFetchUseCase(d Deps) *fetchUseCase {

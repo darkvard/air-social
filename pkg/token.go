@@ -64,17 +64,17 @@ func GetInt64Claims(claim jwt.MapClaims, key string) int64 {
 }
 
 func GetTimeClaims(claims jwt.MapClaims, key string) time.Time {
-    if val, ok := claims[key]; ok {
-        switch v := val.(type) {
-        case float64:
-            return time.Unix(int64(v), 0)
-        case int64:
-            return time.Unix(v, 0)
-        case string:
-            if i, err := strconv.ParseInt(v, 10, 64); err == nil {
-                return time.Unix(i, 0)
-            }
-        }
-    }
-    return time.Time{} 
+	if val, ok := claims[key]; ok {
+		switch v := val.(type) {
+		case float64:
+			return time.Unix(int64(v), 0)
+		case int64:
+			return time.Unix(v, 0)
+		case string:
+			if i, err := strconv.ParseInt(v, 10, 64); err == nil {
+				return time.Unix(i, 0)
+			}
+		}
+	}
+	return time.Time{}
 }

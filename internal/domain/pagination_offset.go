@@ -1,6 +1,7 @@
 package domain
 
 import "math"
+// todo: remove
 
 const (
 	pageMin  = 1

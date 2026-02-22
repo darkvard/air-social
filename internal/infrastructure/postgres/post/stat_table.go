@@ -14,8 +14,8 @@ type StatTable struct {
 	UpdatedAt     time.Time `db:"updated_at"`
 }
 
-func (m *StatTable) ToDomain() *post.Stats {
-	return &post.Stats{
+func (m *StatTable) ToDomain() *post.Stat {
+	return &post.Stat{
 		PostID:        m.PostID,
 		LikesCount:    m.LikesCount,
 		CommentsCount: m.CommentsCount,
@@ -24,7 +24,7 @@ func (m *StatTable) ToDomain() *post.Stats {
 	}
 }
 
-func FromDomainStat(d *post.Stats) *StatTable {
+func FromDomainStat(d *post.Stat) *StatTable {
 	if d == nil {
 		return nil
 	}

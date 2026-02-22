@@ -25,7 +25,7 @@ type Post struct {
 
 	IsLiked bool
 	Media   []Media
-	Stats   Stats
+	Stat    Stat
 	Author  *Author
 }
 
@@ -40,7 +40,7 @@ type Author struct {
 	IsVerified bool
 }
 
-type Stats struct {
+type Stat struct {
 	PostID        int64
 	LikesCount    int32
 	CommentsCount int32
@@ -58,9 +58,9 @@ type Media struct {
 }
 
 type MediaMetadata struct {
-	Width    int
-	Height   int
-	Duration int
+	Width    int32
+	Height   int32
+	Duration int32
 	Size     int64
 	FileName string
 }

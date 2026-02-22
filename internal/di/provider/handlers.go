@@ -20,9 +20,9 @@ type Handler struct {
 	Comment comment.Handler
 }
 
-func NewHandlers(prov Provider, usecase UseCase) *Handler {
-	return &Handler{
-		Health:  health.NewHandler(),
+func NewHandler(prov Provider, usecase UseCase) Handler {
+	return Handler{
+		Health:  health.NewHandler(usecase.Health),
 		Auth:    auth.NewHandler(prov.Link, usecase.Auth),
 		User:    user.NewHandler(prov.Link, usecase.User),
 		Media:   media.NewHandler(prov.Link, usecase.Media),

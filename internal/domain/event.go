@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 )
+// todo: remove
 
 type EventType string
 

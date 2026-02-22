@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
@@ -12,8 +12,8 @@ import (
 type UseCase interface {
 	Follow(ctx context.Context, followerID, followeeID int64) error
 	Unfollow(ctx context.Context, followerID, followeeID int64) error
-	GetFollowings(ctx context.Context, params GetFollowsParams) (shared.OffsetPaginatedResult[FollowUser], error)
-	GetFollowers(ctx context.Context, params GetFollowsParams) (shared.OffsetPaginatedResult[FollowUser], error)
+	GetFollowings(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error)
+	GetFollowers(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error)
 }
 
 type UserFetcher interface {
@@ -51,26 +51,26 @@ func (u *usecase) Unfollow(ctx context.Context, followerID int64, followeeID int
 	return pkg.OrInternalError(u.followRepo.Delete(ctx, followerID, followeeID))
 }
 
-func (u *usecase) GetFollowings(ctx context.Context, params GetFollowsParams) (shared.OffsetPaginatedResult[FollowUser], error) {
+func (u *usecase) GetFollowings(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error) {
 	params.Paging.NormalizePagination()
 
 	data, total, err := u.followRepo.GetFollowings(ctx, params)
 	if err != nil {
-		return shared.OffsetPaginatedResult[FollowUser]{}, err
+		return common.OffsetPaginatedResult[FollowUser]{}, err
 	}
 
-	return shared.NewOffsetPaginatedResult(data, total, params.Paging.Page, params.Paging.Limit), nil
+	return common.NewOffsetPaginatedResult(data, total, params.Paging.Page, params.Paging.Limit), nil
 }
 
-func (u *usecase) GetFollowers(ctx context.Context, params GetFollowsParams) (shared.OffsetPaginatedResult[FollowUser], error) {
+func (u *usecase) GetFollowers(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error) {
 	params.Paging.NormalizePagination()
 
 	data, total, err := u.followRepo.GetFollowers(ctx, params)
 	if err != nil {
-		return shared.OffsetPaginatedResult[FollowUser]{}, err
+		return common.OffsetPaginatedResult[FollowUser]{}, err
 	}
 
-	return shared.NewOffsetPaginatedResult(data, total, params.Paging.Page, params.Paging.Limit), nil
+	return common.NewOffsetPaginatedResult(data, total, params.Paging.Page, params.Paging.Limit), nil
 }
 
 func (u *usecase) validateFollow(ctx context.Context, followerID int64, followeeID int64) error {

@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"air-social/internal/config"
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/pkg"
 )
 
@@ -29,10 +29,10 @@ type Provider interface {
 
 type provider struct {
 	cfg   config.TokenConfig
-	cache shared.Cache
+	cache common.Cache
 }
 
-func NewProvider(cfg config.TokenConfig, cache shared.Cache) *provider {
+func NewProvider(cfg config.TokenConfig, cache common.Cache) *provider {
 	return &provider{
 		cfg:   cfg,
 		cache: cache,
@@ -150,5 +150,5 @@ func (p *provider) AddToBlacklist(ctx context.Context, accessToken string, expir
 }
 
 func getBlacklistTokenKey(token string) string {
-	return shared.BuildCacheKey("user", "blacklist", "access_token", token)
+	return common.BuildCacheKey("user", "blacklist", "access_token", token)
 }

@@ -55,7 +55,7 @@ type StatusResponse struct {
 	VerifiedAt *time.Time `json:"verified_at"`
 }
 
-func NewUserDetailResponse(user *user.User, avatar, cover string) UserDetailResponse {
+func NewUserDetailResponse(user user.User, avatar, cover string) UserDetailResponse {
 	return UserDetailResponse{
 		ID:       user.ID,
 		Email:    user.Email,

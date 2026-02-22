@@ -8,6 +8,7 @@ import (
 
 	"air-social/internal/domain"
 )
+// todo: remove
 
 type Comment struct {
 	ID         int64        `db:"id"`

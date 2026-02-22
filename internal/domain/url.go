@@ -1,4 +1,5 @@
 package domain
+// todo: remove
 
 type URLFactory interface {
 	SwaggerURL() string

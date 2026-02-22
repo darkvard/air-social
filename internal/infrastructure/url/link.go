@@ -5,15 +5,15 @@ import (
 	"strings"
 
 	"air-social/internal/config"
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 )
 
 type link struct {
-	route        shared.RouteProvider
+	route        common.RouteProvider
 	bucketPublic string
 }
 
-func newLinkProvider(route shared.RouteProvider, cfg config.MinioStorageConfig) *link {
+func newLinkProvider(route common.RouteProvider, cfg config.MinioStorageConfig) *link {
 	return &link{
 		route:        route,
 		bucketPublic: cfg.BucketPublic,

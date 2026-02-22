@@ -2,9 +2,6 @@ package auth
 
 import (
 	"time"
-
-	"air-social/internal/domain/auth"
-	"air-social/internal/transport/http/user"
 )
 
 type RegisterRequest struct {
@@ -37,8 +34,25 @@ type ResetPasswordRequest struct {
 }
 
 type LoginResponse struct {
-	User  user.UserDetailResponse `json:"user"`
-	Token TokenResponse           `json:"token"`
+	User  UserResponse  `json:"user"`
+	Token TokenResponse `json:"token"`
+}
+
+type UserResponse struct {
+	ID        int64     `json:"id"`
+	Email     string    `json:"email"`
+	Username  string    `json:"username"`
+	Verified  bool      `json:"verified"`
+	Avatar    string    `json:"avatar"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type RegisterResponse struct {
+	ID        int64     `json:"id"`
+	Email     string    `json:"email"`
+	Username  string    `json:"username"`
+	Verified  bool      `json:"verified"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type TokenResponse struct {
@@ -47,14 +61,4 @@ type TokenResponse struct {
 	AccessExpireAt  time.Time `json:"access_expires_at"`
 	RefreshToken    string    `json:"refresh_token"`
 	RefreshExpireAt time.Time `json:"refresh_expires_at"`
-}
-
-func NewTokenResponse(t auth.TokenResult) TokenResponse {
-	return TokenResponse{
-		Type:            t.Type,
-		AccessToken:     t.AccessToken,
-		RefreshToken:    t.RefreshToken,
-		AccessExpireAt:  t.AccessExpireAt,
-		RefreshExpireAt: t.RefreshExpireAt,
-	}
 }

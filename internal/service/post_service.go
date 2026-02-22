@@ -63,7 +63,7 @@ func (s *PostServiceImpl) CreatePost(ctx context.Context, params domain.CreatePo
 }
 
 func (s *PostServiceImpl) GetPostDetail(ctx context.Context, id int64) (*domain.Post, error) {
-	post, err := s.postRepository.GetByID(ctx, id, -1)	// todo
+	post, err := s.postRepository.GetByID(ctx, id, -1) // todo
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}

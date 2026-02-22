@@ -5,6 +5,7 @@ import (
 
 	"air-social/internal/domain"
 )
+// todo: remove
 
 type RefreshToken struct {
 	ID        int64      `db:"id"`

@@ -2,13 +2,13 @@ package url
 
 import (
 	"air-social/internal/config"
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 )
 
 type Manager struct {
-	System shared.SystemProvider
-	Route  shared.RouteProvider
-	Link   shared.LinkProvider
+	System common.SystemProvider
+	Route  common.RouteProvider
+	Link   common.LinkProvider
 }
 
 func NewManager(cfg config.Config) Manager {

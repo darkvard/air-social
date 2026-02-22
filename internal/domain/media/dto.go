@@ -2,6 +2,7 @@ package media
 
 import "time"
 
+// PresignParams contains the parameters required to generate a presigned URL.
 type PresignParams struct {
 	EntityID int64
 	FileName string
@@ -11,6 +12,7 @@ type PresignParams struct {
 	Feature  UploadFeature
 }
 
+// ConfirmParams contains the parameters required to confirm a file upload.
 type ConfirmParams struct {
 	EntityID  int64
 	ObjectKey string
@@ -18,6 +20,7 @@ type ConfirmParams struct {
 	Feature   UploadFeature
 }
 
+// PresignedResult represents the result of a presigned URL generation.
 type PresignedResult struct {
 	FileName  string
 	UploadURL string
@@ -27,6 +30,7 @@ type PresignedResult struct {
 	ExpireAt  time.Time
 }
 
+// ConfirmResult represents the result of a file confirmation.
 type ConfirmResult struct {
 	Domain  UploadDomain
 	Feature UploadFeature

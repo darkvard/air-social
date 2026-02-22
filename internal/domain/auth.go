@@ -1,5 +1,7 @@
 package domain
 
+// todo: remove
+
 type AuthClaims struct {
 	UserID   int64
 	DeviceID string

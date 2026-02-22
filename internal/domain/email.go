@@ -1,6 +1,7 @@
 package domain
 
 import "context"
+// todo: remove
 
 type Mailer interface {
 	Send(ctx context.Context, email *Email) error

@@ -1,4 +1,4 @@
-package shared
+package common
 
 import (
 	"context"
@@ -38,7 +38,6 @@ type EmailEventPayload struct {
 }
 
 type NotificationEventPayload struct {
-	
 }
 
 func UnmarshalEvent[T any](data any) (T, error) {

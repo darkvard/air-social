@@ -3,7 +3,7 @@ package provider
 // import (
 //
 //
-// 
+//
 
 // 	"air-social/internal/config"
 // 	"air-social/internal/domain"

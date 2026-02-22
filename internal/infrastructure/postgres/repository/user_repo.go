@@ -10,6 +10,7 @@ import (
 	"air-social/internal/infrastructure/postgres/model"
 	"air-social/pkg"
 )
+// todo: remove
 
 type userRepository struct {
 	db *sqlx.DB

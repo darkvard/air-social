@@ -3,11 +3,10 @@ package auth
 import (
 	"github.com/gin-gonic/gin"
 
-	"air-social/internal/transport/http/handler"
 	"air-social/internal/transport/http/middleware"
 )
 
-func RegisterRoute(g *gin.RouterGroup, h *handler.AuthHandler, m *middleware.Manager) {
+func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 	group := g.Group("/auth")
 	{
 		group.GET("/reset-password", h.ShowResetPasswordPage)
@@ -24,5 +23,7 @@ func RegisterRoute(g *gin.RouterGroup, h *handler.AuthHandler, m *middleware.Man
 	}
 
 	auth := group.Group("").Use(m.Auth)
-	auth.POST("/logout", h.Logout)
+	{
+		auth.POST("/logout", h.Logout)
+	}
 }

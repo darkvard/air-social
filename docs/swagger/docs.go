@@ -24,6 +24,32 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/": {
+            "get": {
+                "description": "Render the API welcome page with status overview.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Welcome page",
+                "responses": {
+                    "200": {
+                        "description": "HTML Page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "503": {
+                        "description": "HTML Page (Maintenance)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/forgot-password": {
             "post": {
                 "description": "Initiate password reset process. Sends an email containing a random token to reset the password.",
@@ -44,7 +70,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.ForgotPasswordRequest"
+                            "$ref": "#/definitions/internal_transport_http_auth.ForgotPasswordRequest"
                         }
                     }
                 ],
@@ -52,7 +78,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Instruction message",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/pkg.Response"
                         }
                     },
                     "400": {
@@ -90,15 +116,15 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.LoginRequest"
+                            "$ref": "#/definitions/internal_transport_http_auth.LoginRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Returns user info and tokens",
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.LoginResponse"
+                            "$ref": "#/definitions/internal_transport_http_auth.LoginResponse"
                         }
                     },
                     "400": {
@@ -147,16 +173,13 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.LogoutRequest"
+                            "$ref": "#/definitions/internal_transport_http_auth.LogoutRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "logout success",
-                        "schema": {
-                            "type": "string"
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "401": {
                         "description": "Unauthorized",
@@ -173,7 +196,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/refresh": {
+        "/auth/refresh-token": {
             "post": {
                 "description": "Use a valid Refresh Token to obtain a new pair of JWT Access/Refresh tokens.",
                 "consumes": [
@@ -188,12 +211,12 @@ const docTemplate = `{
                 "summary": "Refresh access token",
                 "parameters": [
                     {
-                        "description": "Refresh Request",
+                        "description": "Refresh Token Request",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.RefreshTokenRequest"
+                            "$ref": "#/definitions/internal_transport_http_auth.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -201,7 +224,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.TokenResponse"
+                            "$ref": "#/definitions/internal_transport_http_auth.TokenResponse"
                         }
                     },
                     "400": {
@@ -245,7 +268,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.RegisterRequest"
+                            "$ref": "#/definitions/internal_transport_http_auth.RegisterRequest"
                         }
                     }
                 ],
@@ -253,7 +276,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UserDetailResponse"
+                            "$ref": "#/definitions/internal_transport_http_auth.RegisterResponse"
                         }
                     },
                     "400": {
@@ -330,7 +353,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.ResetPasswordRequest"
+                            "$ref": "#/definitions/internal_transport_http_auth.ResetPasswordRequest"
                         }
                     }
                 ],
@@ -338,7 +361,7 @@ const docTemplate = `{
                     "200": {
                         "description": "password update successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/pkg.Response"
                         }
                     },
                     "400": {
@@ -416,15 +439,6 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
                             "$ref": "#/definitions/pkg.Response"
                         }
                     }
@@ -456,7 +470,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.BulkPresignedUploadRequest"
+                            "$ref": "#/definitions/internal_transport_http_media.BulkPresignRequest"
                         }
                     }
                 ],
@@ -466,7 +480,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/air-social_internal_transport_http_dto.PresignedFileResponse"
+                                "$ref": "#/definitions/internal_transport_http_media.PresignResponse"
                             }
                         }
                     },
@@ -1000,11 +1014,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "follow success",
-                        "schema": {
-                            "type": "string"
-                        }
+                    "201": {
+                        "description": "Created"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -1059,11 +1070,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "unfollow success",
-                        "schema": {
-                            "type": "string"
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -1120,12 +1128,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "default": 1,
                         "description": "Page number",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
+                        "default": 10,
                         "description": "Items per page",
                         "name": "limit",
                         "in": "query"
@@ -1147,7 +1157,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse"
+                            "$ref": "#/definitions/air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse"
                         }
                     },
                     "400": {
@@ -1199,12 +1209,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "default": 1,
                         "description": "Page number",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
+                        "default": 10,
                         "description": "Items per page",
                         "name": "limit",
                         "in": "query"
@@ -1226,7 +1238,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse"
+                            "$ref": "#/definitions/air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse"
                         }
                     },
                     "400": {
@@ -1339,6 +1351,62 @@ const docTemplate = `{
             ]
         },
         "air-social_internal_domain.UploadFeature": {
+            "type": "string",
+            "enum": [
+                "avatar",
+                "cover",
+                "feed_image",
+                "feed_video",
+                "voice_chat",
+                "attachment"
+            ],
+            "x-enum-varnames": [
+                "FeatureAvatar",
+                "FeatureCover",
+                "FeatureFeedImage",
+                "FeatureFeedVideo",
+                "FeatureVoiceChat",
+                "FeatureAttachment"
+            ]
+        },
+        "air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_follow.UserFollowResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "totalPages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "air-social_internal_domain_media.UploadDomain": {
+            "type": "string",
+            "enum": [
+                "users",
+                "posts",
+                "messages"
+            ],
+            "x-enum-varnames": [
+                "DomainUser",
+                "DomainPost",
+                "DomainMessage"
+            ]
+        },
+        "air-social_internal_domain_media.UploadFeature": {
             "type": "string",
             "enum": [
                 "avatar",
@@ -1491,58 +1559,6 @@ const docTemplate = `{
                 }
             }
         },
-        "air-social_internal_transport_http_dto.ForgotPasswordRequest": {
-            "type": "object",
-            "required": [
-                "email"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.LoginRequest": {
-            "type": "object",
-            "required": [
-                "device_id",
-                "email",
-                "password"
-            ],
-            "properties": {
-                "device_id": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string",
-                    "maxLength": 255
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "minLength": 8
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.LoginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_dto.TokenResponse"
-                },
-                "user": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_dto.UserDetailResponse"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.LogoutRequest": {
-            "type": "object",
-            "properties": {
-                "is_all_devices": {
-                    "type": "boolean"
-                }
-            }
-        },
         "air-social_internal_transport_http_dto.MediaItemInput": {
             "type": "object",
             "required": [
@@ -1616,40 +1632,12 @@ const docTemplate = `{
                 }
             }
         },
-        "air-social_internal_transport_http_dto.MetaPaging": {
-            "type": "object",
-            "properties": {
-                "limit": {
-                    "type": "integer"
-                },
-                "page": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                },
-                "total_pages": {
-                    "type": "integer"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/air-social_internal_transport_http_dto.UserFollowResponse"
-                    }
-                },
-                "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_dto.MetaPaging"
-                }
-            }
-        },
         "air-social_internal_transport_http_dto.PostResponse": {
             "type": "object",
             "properties": {
+                "comments_count": {
+                    "type": "integer"
+                },
                 "content": {
                     "type": "string"
                 },
@@ -1659,11 +1647,20 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "is_liked": {
+                    "type": "boolean"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
                 "media": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/air-social_internal_transport_http_dto.MediaItemResponse"
                     }
+                },
+                "shares_count": {
+                    "type": "integer"
                 },
                 "updated_at": {
                     "type": "string"
@@ -1777,58 +1774,6 @@ const docTemplate = `{
                 }
             }
         },
-        "air-social_internal_transport_http_dto.RefreshTokenRequest": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.RegisterRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "password",
-                "username"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "maxLength": 255
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "minLength": 8
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 30,
-                    "minLength": 3
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.ResetPasswordRequest": {
-            "type": "object",
-            "required": [
-                "password",
-                "token"
-            ],
-            "properties": {
-                "password": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "minLength": 8
-                },
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
         "air-social_internal_transport_http_dto.StatusResponse": {
             "type": "object",
             "properties": {
@@ -1836,26 +1781,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "verified_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.TokenResponse": {
-            "type": "object",
-            "properties": {
-                "access_expire_at": {
-                    "type": "string"
-                },
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_expire_at": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                },
-                "type": {
                     "type": "string"
                 }
             }
@@ -1946,14 +1871,178 @@ const docTemplate = `{
                 }
             }
         },
-        "air-social_internal_transport_http_dto.UserFollowResponse": {
+        "internal_transport_http_auth.ForgotPasswordRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_auth.LoginRequest": {
+            "type": "object",
+            "required": [
+                "device_id",
+                "email",
+                "password"
+            ],
+            "properties": {
+                "device_id": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 8
+                }
+            }
+        },
+        "internal_transport_http_auth.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "$ref": "#/definitions/internal_transport_http_auth.TokenResponse"
+                },
+                "user": {
+                    "$ref": "#/definitions/internal_transport_http_auth.UserResponse"
+                }
+            }
+        },
+        "internal_transport_http_auth.LogoutRequest": {
+            "type": "object",
+            "properties": {
+                "is_all_devices": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_transport_http_auth.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_auth.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 8
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 30,
+                    "minLength": 3
+                }
+            }
+        },
+        "internal_transport_http_auth.RegisterResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_transport_http_auth.ResetPasswordRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "token"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 8
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_auth.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_expires_at": {
+                    "type": "string"
+                },
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_expires_at": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_auth.UserResponse": {
             "type": "object",
             "properties": {
                 "avatar": {
                     "type": "string"
                 },
-                "followed_by_me": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "verified": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_transport_http_follow.UserFollowResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
                 },
                 "full_name": {
                     "type": "string"
@@ -1961,13 +2050,104 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "is_following_me": {
+                "is_follower": {
+                    "type": "boolean"
+                },
+                "is_following": {
                     "type": "boolean"
                 },
                 "is_verified": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_transport_http_media.BulkPresignRequest": {
+            "type": "object",
+            "required": [
+                "files"
+            ],
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_media.PresignRequest"
+                    }
+                }
+            }
+        },
+        "internal_transport_http_media.PresignRequest": {
+            "type": "object",
+            "required": [
+                "domain",
+                "feature",
+                "file_name",
+                "file_size",
+                "file_type"
+            ],
+            "properties": {
+                "domain": {
+                    "enum": [
+                        "users",
+                        "posts",
+                        "groups",
+                        "messages"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/air-social_internal_domain_media.UploadDomain"
+                        }
+                    ]
                 },
-                "username": {
+                "feature": {
+                    "enum": [
+                        "avatar",
+                        "cover",
+                        "feed_image",
+                        "feed_video",
+                        "voice_chat",
+                        "attachment"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/air-social_internal_domain_media.UploadFeature"
+                        }
+                    ]
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "file_size": {
+                    "type": "integer"
+                },
+                "file_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_media.PresignResponse": {
+            "type": "object",
+            "properties": {
+                "expire_at": {
+                    "type": "string"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "form_data": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "object_key": {
+                    "type": "string"
+                },
+                "public_url": {
+                    "type": "string"
+                },
+                "upload_url": {
                     "type": "string"
                 }
             }

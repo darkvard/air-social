@@ -1,6 +1,6 @@
 package post
 
-import "air-social/internal/domain/shared"
+import "air-social/internal/domain/common"
 
 type CreateParams struct {
 	UserID     int64
@@ -12,9 +12,9 @@ type CreateParams struct {
 type MediaParams struct {
 	MediaKey  string
 	MediaType string
-	Width     int
-	Height    int
-	Duration  int
+	Width     int32
+	Height    int32
+	Duration  int32
 	Size      int64
 	FileName  string
 }
@@ -28,7 +28,7 @@ type UpdateParams struct {
 
 type GetCursorParams struct {
 	UserID int64
-	Query  shared.CursorQueryParams[int64]
+	Query  common.CursorQueryParams[int64]
 }
 
 func (p MediaParams) ToDomain() Media {

@@ -11,6 +11,7 @@ import (
 	"air-social/internal/domain"
 	"air-social/internal/infrastructure/postgres/model"
 )
+// todo: remove
 
 type followRepository struct {
 	db *sqlx.DB

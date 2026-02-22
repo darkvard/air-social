@@ -5,6 +5,7 @@ import (
 
 	"air-social/internal/domain"
 )
+// todo: remove
 
 type User struct {
 	// Identifier

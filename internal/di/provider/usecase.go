@@ -72,13 +72,14 @@ func getHealthUseCase(deps UseCaseDeps) health.UseCase {
 
 func getMediaUseCase(deps UseCaseDeps) media.UseCase {
 	return media.NewUseCase(
-		media.Bucket{
-			Public:  deps.Cfg.MinIO.BucketPublic,
-			Private: deps.Cfg.MinIO.BucketPrivate,
+		media.Deps{
+			Bucket: media.Bucket{
+				Public:  deps.Cfg.MinIO.BucketPublic,
+				Private: deps.Cfg.MinIO.BucketPrivate,
+			},
+			Storage: deps.Adapter.Media,
+			Link:    deps.Prov.Link,
 		},
-		deps.Adapter.Media,
-		deps.Prov.Link.LinkProvider,
-		deps.Prov.Link.RouteProvider,
 	)
 }
 

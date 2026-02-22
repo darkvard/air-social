@@ -9,15 +9,15 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/internal/infrastructure/rabbitmq/config"
 	"air-social/internal/infrastructure/rabbitmq/topology"
 )
 
 // eventRoutingMap defines the source of truth for event-to-routing-key mapping
-var eventRoutingMap = map[shared.EventType]string{
-	shared.EventVerify:        "email.verify",
-	shared.EventResetPassword: "email.reset_password",
+var eventRoutingMap = map[common.EventType]string{
+	common.EventVerify:        "email.verify",
+	common.EventResetPassword: "email.reset_password",
 }
 
 type pubChannel struct {
@@ -87,7 +87,7 @@ func (p *Publisher) createPoolChannel() (*pubChannel, error) {
 }
 
 // Publish routes a domain event to RabbitMQ with guaranteed delivery checks
-func (p *Publisher) Publish(ctx context.Context, event shared.Event) error {
+func (p *Publisher) Publish(ctx context.Context, event common.Event) error {
 	pc, err := p.acquire(ctx)
 	if err != nil {
 		return err

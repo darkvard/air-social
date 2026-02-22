@@ -1,4 +1,4 @@
-package shared
+package common
 
 import "context"
 
@@ -12,4 +12,3 @@ type Email struct {
 	TemplateFile string
 	Data         any
 }
- 

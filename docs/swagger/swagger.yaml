@@ -26,6 +26,48 @@ definitions:
     - FeatureFeedVideo
     - FeatureVoiceChat
     - FeatureAttachment
+  air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/internal_transport_http_follow.UserFollowResponse'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        format: int64
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  air-social_internal_domain_media.UploadDomain:
+    enum:
+    - users
+    - posts
+    - messages
+    type: string
+    x-enum-varnames:
+    - DomainUser
+    - DomainPost
+    - DomainMessage
+  air-social_internal_domain_media.UploadFeature:
+    enum:
+    - avatar
+    - cover
+    - feed_image
+    - feed_video
+    - voice_chat
+    - attachment
+    type: string
+    x-enum-varnames:
+    - FeatureAvatar
+    - FeatureCover
+    - FeatureFeedImage
+    - FeatureFeedVideo
+    - FeatureVoiceChat
+    - FeatureAttachment
   air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest:
     properties:
       files:
@@ -114,41 +156,6 @@ definitions:
       meta:
         $ref: '#/definitions/air-social_internal_transport_http_dto.MetaCursor'
     type: object
-  air-social_internal_transport_http_dto.ForgotPasswordRequest:
-    properties:
-      email:
-        type: string
-    required:
-    - email
-    type: object
-  air-social_internal_transport_http_dto.LoginRequest:
-    properties:
-      device_id:
-        type: string
-      email:
-        maxLength: 255
-        type: string
-      password:
-        maxLength: 64
-        minLength: 8
-        type: string
-    required:
-    - device_id
-    - email
-    - password
-    type: object
-  air-social_internal_transport_http_dto.LoginResponse:
-    properties:
-      token:
-        $ref: '#/definitions/air-social_internal_transport_http_dto.TokenResponse'
-      user:
-        $ref: '#/definitions/air-social_internal_transport_http_dto.UserDetailResponse'
-    type: object
-  air-social_internal_transport_http_dto.LogoutRequest:
-    properties:
-      is_all_devices:
-        type: boolean
-    type: object
   air-social_internal_transport_http_dto.MediaItemInput:
     properties:
       duration:
@@ -198,38 +205,26 @@ definitions:
       next_cursor:
         type: integer
     type: object
-  air-social_internal_transport_http_dto.MetaPaging:
-    properties:
-      limit:
-        type: integer
-      page:
-        type: integer
-      total:
-        type: integer
-      total_pages:
-        type: integer
-    type: object
-  air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.UserFollowResponse'
-        type: array
-      meta:
-        $ref: '#/definitions/air-social_internal_transport_http_dto.MetaPaging'
-    type: object
   air-social_internal_transport_http_dto.PostResponse:
     properties:
+      comments_count:
+        type: integer
       content:
         type: string
       created_at:
         type: string
       id:
         type: integer
+      is_liked:
+        type: boolean
+      likes_count:
+        type: integer
       media:
         items:
           $ref: '#/definitions/air-social_internal_transport_http_dto.MediaItemResponse'
         type: array
+      shares_count:
+        type: integer
       updated_at:
         type: string
       user:
@@ -304,61 +299,11 @@ definitions:
       website:
         type: string
     type: object
-  air-social_internal_transport_http_dto.RefreshTokenRequest:
-    properties:
-      refresh_token:
-        type: string
-    required:
-    - refresh_token
-    type: object
-  air-social_internal_transport_http_dto.RegisterRequest:
-    properties:
-      email:
-        maxLength: 255
-        type: string
-      password:
-        maxLength: 64
-        minLength: 8
-        type: string
-      username:
-        maxLength: 30
-        minLength: 3
-        type: string
-    required:
-    - email
-    - password
-    - username
-    type: object
-  air-social_internal_transport_http_dto.ResetPasswordRequest:
-    properties:
-      password:
-        maxLength: 64
-        minLength: 8
-        type: string
-      token:
-        type: string
-    required:
-    - password
-    - token
-    type: object
   air-social_internal_transport_http_dto.StatusResponse:
     properties:
       verified:
         type: boolean
       verified_at:
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.TokenResponse:
-    properties:
-      access_expire_at:
-        type: string
-      access_token:
-        type: string
-      refresh_expire_at:
-        type: string
-      refresh_token:
-        type: string
-      type:
         type: string
     type: object
   air-social_internal_transport_http_dto.UpdatePostRequest:
@@ -420,21 +365,193 @@ definitions:
       version:
         type: integer
     type: object
-  air-social_internal_transport_http_dto.UserFollowResponse:
+  internal_transport_http_auth.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  internal_transport_http_auth.LoginRequest:
+    properties:
+      device_id:
+        type: string
+      email:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - device_id
+    - email
+    - password
+    type: object
+  internal_transport_http_auth.LoginResponse:
+    properties:
+      token:
+        $ref: '#/definitions/internal_transport_http_auth.TokenResponse'
+      user:
+        $ref: '#/definitions/internal_transport_http_auth.UserResponse'
+    type: object
+  internal_transport_http_auth.LogoutRequest:
+    properties:
+      is_all_devices:
+        type: boolean
+    type: object
+  internal_transport_http_auth.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  internal_transport_http_auth.RegisterRequest:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      username:
+        maxLength: 30
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  internal_transport_http_auth.RegisterResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+      verified:
+        type: boolean
+    type: object
+  internal_transport_http_auth.ResetPasswordRequest:
+    properties:
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
+  internal_transport_http_auth.TokenResponse:
+    properties:
+      access_expires_at:
+        type: string
+      access_token:
+        type: string
+      refresh_expires_at:
+        type: string
+      refresh_token:
+        type: string
+      type:
+        type: string
+    type: object
+  internal_transport_http_auth.UserResponse:
     properties:
       avatar:
         type: string
-      followed_by_me:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+      verified:
         type: boolean
+    type: object
+  internal_transport_http_follow.UserFollowResponse:
+    properties:
+      avatar:
+        type: string
       full_name:
         type: string
       id:
         type: integer
-      is_following_me:
+      is_follower:
+        type: boolean
+      is_following:
         type: boolean
       is_verified:
         type: boolean
-      username:
+    type: object
+  internal_transport_http_media.BulkPresignRequest:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/internal_transport_http_media.PresignRequest'
+        maxItems: 10
+        minItems: 1
+        type: array
+    required:
+    - files
+    type: object
+  internal_transport_http_media.PresignRequest:
+    properties:
+      domain:
+        allOf:
+        - $ref: '#/definitions/air-social_internal_domain_media.UploadDomain'
+        enum:
+        - users
+        - posts
+        - groups
+        - messages
+      feature:
+        allOf:
+        - $ref: '#/definitions/air-social_internal_domain_media.UploadFeature'
+        enum:
+        - avatar
+        - cover
+        - feed_image
+        - feed_video
+        - voice_chat
+        - attachment
+      file_name:
+        type: string
+      file_size:
+        type: integer
+      file_type:
+        type: string
+    required:
+    - domain
+    - feature
+    - file_name
+    - file_size
+    - file_type
+    type: object
+  internal_transport_http_media.PresignResponse:
+    properties:
+      expire_at:
+        type: string
+      file_name:
+        type: string
+      form_data:
+        additionalProperties:
+          type: string
+        type: object
+      object_key:
+        type: string
+      public_url:
+        type: string
+      upload_url:
         type: string
     type: object
   pkg.FieldError:
@@ -474,6 +591,23 @@ info:
   title: Air Social API
   version: "1.0"
 paths:
+  /:
+    get:
+      description: Render the API welcome page with status overview.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML Page
+          schema:
+            type: string
+        "503":
+          description: HTML Page (Maintenance)
+          schema:
+            type: string
+      summary: Welcome page
+      tags:
+      - Health
   /auth/forgot-password:
     post:
       consumes:
@@ -486,14 +620,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.ForgotPasswordRequest'
+          $ref: '#/definitions/internal_transport_http_auth.ForgotPasswordRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Instruction message
           schema:
-            type: string
+            $ref: '#/definitions/pkg.Response'
         "400":
           description: Bad Request
           schema:
@@ -517,14 +651,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.LoginRequest'
+          $ref: '#/definitions/internal_transport_http_auth.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Returns user info and tokens
+          description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.LoginResponse'
+            $ref: '#/definitions/internal_transport_http_auth.LoginResponse'
         "400":
           description: Bad Request
           schema:
@@ -551,14 +685,12 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.LogoutRequest'
+          $ref: '#/definitions/internal_transport_http_auth.LogoutRequest'
       produces:
       - application/json
       responses:
-        "200":
-          description: logout success
-          schema:
-            type: string
+        "204":
+          description: No Content
         "401":
           description: Unauthorized
           schema:
@@ -572,26 +704,26 @@ paths:
       summary: Logout user
       tags:
       - Auth
-  /auth/refresh:
+  /auth/refresh-token:
     post:
       consumes:
       - application/json
       description: Use a valid Refresh Token to obtain a new pair of JWT Access/Refresh
         tokens.
       parameters:
-      - description: Refresh Request
+      - description: Refresh Token Request
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.RefreshTokenRequest'
+          $ref: '#/definitions/internal_transport_http_auth.RefreshTokenRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.TokenResponse'
+            $ref: '#/definitions/internal_transport_http_auth.TokenResponse'
         "400":
           description: Bad Request
           schema:
@@ -619,14 +751,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.RegisterRequest'
+          $ref: '#/definitions/internal_transport_http_auth.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.UserDetailResponse'
+            $ref: '#/definitions/internal_transport_http_auth.RegisterResponse'
         "400":
           description: Bad Request
           schema:
@@ -677,14 +809,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.ResetPasswordRequest'
+          $ref: '#/definitions/internal_transport_http_auth.ResetPasswordRequest'
       produces:
       - application/json
       responses:
         "200":
           description: password update successfully
           schema:
-            type: string
+            $ref: '#/definitions/pkg.Response'
         "400":
           description: Bad Request
           schema:
@@ -732,12 +864,6 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
             $ref: '#/definitions/pkg.Response'
       security:
       - BasicAuth: []
@@ -761,7 +887,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.BulkPresignedUploadRequest'
+          $ref: '#/definitions/internal_transport_http_media.BulkPresignRequest'
       produces:
       - application/json
       responses:
@@ -769,7 +895,7 @@ paths:
           description: Upload Credentials List
           schema:
             items:
-              $ref: '#/definitions/air-social_internal_transport_http_dto.PresignedFileResponse'
+              $ref: '#/definitions/internal_transport_http_media.PresignResponse'
             type: array
         "400":
           description: Bad Request
@@ -964,10 +1090,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: unfollow success
-          schema:
-            type: string
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
@@ -1002,10 +1126,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: follow success
-          schema:
-            type: string
+        "201":
+          description: Created
         "400":
           description: Bad Request
           schema:
@@ -1038,11 +1160,13 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Page number
+      - default: 1
+        description: Page number
         in: query
         name: page
         type: integer
-      - description: Items per page
+      - default: 10
+        description: Items per page
         in: query
         name: limit
         type: integer
@@ -1061,7 +1185,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse'
+            $ref: '#/definitions/air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse'
         "400":
           description: Bad Request
           schema:
@@ -1090,11 +1214,13 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Page number
+      - default: 1
+        description: Page number
         in: query
         name: page
         type: integer
-      - description: Items per page
+      - default: 10
+        description: Items per page
         in: query
         name: limit
         type: integer
@@ -1113,7 +1239,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.PaginatedResponse-air-social_internal_transport_http_dto_UserFollowResponse'
+            $ref: '#/definitions/air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse'
         "400":
           description: Bad Request
           schema:

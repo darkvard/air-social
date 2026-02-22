@@ -63,13 +63,12 @@ func (e *EmailServiceImpl) handleResetPassword(ctx context.Context, evt domain.E
 	}
 
 	data := domain.EmailVerifyData{
-		Name:   p.Name,
-		Link:   p.Link,
+		Name: p.Name,
+		Link: p.Link,
 	}
 
 	return e.send(ctx, p.Email, templates.ResetPasswordPath, data)
 }
-
 
 func (e *EmailServiceImpl) send(ctx context.Context, to, templateFile string, data any) error {
 	email := &domain.Email{

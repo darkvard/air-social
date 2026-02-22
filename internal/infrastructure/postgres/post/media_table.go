@@ -53,12 +53,12 @@ func FromDomainMedia(d *post.Media) *MediaTable {
 }
 
 // MediaMetadata represents the JSONB structure in the database.
-// It implements driver.Valuer and sql.Scanner interfaces to handle 
+// It implements driver.Valuer and sql.Scanner interfaces to handle
 // automatic JSON marshaling/unmarshaling between Go structs and Postgres JSONB.
 type MediaMetadata struct {
-	Width    int    `json:"width,omitempty"`
-	Height   int    `json:"height,omitempty"`
-	Duration int    `json:"duration,omitempty"`
+	Width    int32  `json:"width,omitempty"`
+	Height   int32  `json:"height,omitempty"`
+	Duration int32  `json:"duration,omitempty"`
 	Size     int64  `json:"size,omitempty"`
 	FileName string `json:"file_name,omitempty"`
 }

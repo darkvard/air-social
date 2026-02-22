@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 )
+// todo: remove
 
 type CommentRepository interface {
 	Create(ctx context.Context, comment *Comment) error
@@ -24,10 +25,10 @@ type Comment struct {
 	LikesCount int
 	Media      []CommentMedia
 
-	Version    int
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  *time.Time
+	Version   int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
 }
 
 type CommentMedia struct {

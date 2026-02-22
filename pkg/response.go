@@ -7,12 +7,55 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//
+// ============================================================================
+// RESPONSE MODELS
+// ============================================================================
+//
+
+// Response is the standard API response envelope.
+// It ensures consistent response format across the entire system.
 type Response struct {
 	Code    int    `json:"code"`
 	Message string `json:"message,omitempty"`
 	Data    any    `json:"data,omitempty"`
 	Errors  any    `json:"errors,omitempty"`
 }
+
+//
+// ============================================================================
+// RESPONSE MODELS
+// ============================================================================
+//
+
+// ErrorMsg is a custom application error wrapper.
+// It allows attaching a custom message while preserving
+// the original error type for errors.Is comparison.
+type ErrorMsg struct {
+	Err error  // sentinel error (used for errors.Is)
+	Msg string // client-facing message
+}
+
+func (e ErrorMsg) Error() string {
+	return e.Msg
+}
+
+func (e ErrorMsg) Unwrap() error {
+	return e.Err
+}
+
+func NewError(err error, msg string) error {
+	return ErrorMsg{
+		Err: err,
+		Msg: msg,
+	}
+}
+
+//
+// ============================================================================
+// GENERIC JSON RESPONSE HELPERS
+// ============================================================================
+//
 
 func JSON(c *gin.Context, code int, msg string, data any) {
 	c.JSON(code, Response{
@@ -30,8 +73,18 @@ func Error(c *gin.Context, code int, msg string, errs any) {
 	})
 }
 
+//
+// ============================================================================
+// GENERIC JSON RESPONSE HELPERS
+// ============================================================================
+//
+
 func Success(c *gin.Context, data any) {
 	JSON(c, http.StatusOK, "success", data)
+}
+
+func NoContent(c *gin.Context) {
+	c.Status(http.StatusNoContent)
 }
 
 func SuccessWithMsg(c *gin.Context, msg string, data any) {
@@ -41,6 +94,12 @@ func SuccessWithMsg(c *gin.Context, msg string, data any) {
 func Created(c *gin.Context, data any) {
 	JSON(c, http.StatusCreated, "created", data)
 }
+
+//
+// ============================================================================
+// STANDARD HTTP ERROR RESPONSES
+// ============================================================================
+//
 
 func BadRequest(c *gin.Context, msg string) {
 	Error(c, http.StatusBadRequest, msg, nil)
@@ -70,6 +129,12 @@ func InternalError(c *gin.Context, msg string) {
 	Error(c, http.StatusInternalServerError, msg, nil)
 }
 
+//
+// ============================================================================
+// VALIDATION ERROR HANDLER (HTTP BINDING LAYER)
+// ============================================================================
+//
+
 // HandleValidateError processes errors occurring during the HTTP request binding and validation phase.
 // It categorizes errors from `StrictBindJSON` and standard validators into user-friendly JSON responses.
 func HandleValidateError(c *gin.Context, err error) {
@@ -94,6 +159,12 @@ func HandleValidateError(c *gin.Context, err error) {
 	// 4. Fallback: Unknown/Generic Errors
 	BadRequest(c, "invalid request payload")
 }
+
+//
+// ============================================================================
+// SERVICE ERROR HANDLER (DOMAIN → HTTP MAPPING LAYER)
+// ============================================================================
+//
 
 // HandleServiceError maps business logic errors returned by the Service Layer
 // to the appropriate HTTP status codes and JSON responses.

@@ -3,21 +3,20 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 
-	"air-social/internal/transport/http/handler"
 	"air-social/internal/transport/http/middleware"
 )
 
-func RegisterRoute(g *gin.RouterGroup, h *handler.UserHandler, m *middleware.Manager) {
-	group := g.Group("/users", m.Auth)
-	me := group.Group("/me")
+func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
+	group := g.Group("/users/me", m.Auth)
 	{
-		me.GET("", h.Profile)
+		group.GET("", h.Profile)
 
-		json := me.Group("").Use(m.JSONOnly)
+		json := group.Group("").Use(m.JSONOnly)
 		{
 			json.PATCH("", h.UpdateProfile)
 			json.PUT("/password", h.ChangePassword)
-			json.POST("/images", h.ConfirmFileUpload)
+			json.POST("/avatar", h.UpdateAvatar)
+			json.POST("/image-cover", h.UpdateImageCover)
 		}
 	}
 }

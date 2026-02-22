@@ -2,8 +2,8 @@ package provider
 
 import (
 	"air-social/internal/config"
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/media"
-	"air-social/internal/domain/shared"
 	"air-social/internal/infrastructure/mailer"
 	"air-social/internal/infrastructure/minio"
 	"air-social/internal/infrastructure/rabbitmq"
@@ -12,9 +12,9 @@ import (
 
 type Adapter struct {
 	Media    media.Storage
-	Cache    shared.Cache
-	EventPub shared.EventPublisher
-	Mailer   shared.Mailer
+	Cache    common.Cache
+	EventPub common.EventPublisher
+	Mailer   common.Mailer
 }
 
 func NewAdapter(cfg config.Config, infra *Infrastructure) (Adapter, error) {

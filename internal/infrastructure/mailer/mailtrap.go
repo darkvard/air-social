@@ -9,7 +9,7 @@ import (
 	"gopkg.in/gomail.v2"
 
 	"air-social/internal/config"
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/templates"
 )
 
@@ -25,7 +25,7 @@ func NewMailtrap(cfg config.MailConfig, dialer *gomail.Dialer) *mailtrap {
 	}
 }
 
-func (m *mailtrap) Send(ctx context.Context, email shared.Email) error {
+func (m *mailtrap) Send(ctx context.Context, email common.Email) error {
 	// path
 	layoutPath := email.LayoutFile
 	contentPath := email.TemplateFile

@@ -3,14 +3,14 @@ package url
 import (
 	"fmt"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 )
 
 type system struct {
-	route shared.RouteProvider
+	route common.RouteProvider
 }
 
-func newSystemProvider(route shared.RouteProvider) *system {
+func newSystemProvider(route common.RouteProvider) *system {
 	return &system{route: route}
 }
 

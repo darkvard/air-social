@@ -29,4 +29,3 @@ type Profile struct {
 	Location   string
 	Website    string
 }
-

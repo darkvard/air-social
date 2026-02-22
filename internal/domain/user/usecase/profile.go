@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/media"
-	"air-social/internal/domain/shared"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
@@ -15,7 +15,7 @@ type MediaConfirmer interface {
 
 type profileUseCase struct {
 	repo  user.Repository
-	cache shared.Cache
+	cache common.Cache
 	media MediaConfirmer
 }
 

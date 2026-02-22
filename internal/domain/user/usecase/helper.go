@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"air-social/internal/domain"
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/user"
 )
 
@@ -13,14 +13,13 @@ const summaryCacheTTL = 12 * time.Hour
 
 type Deps struct {
 	Repo  user.Repository
-	Cache shared.Cache
-	Link  shared.LinkProvider
+	Cache common.Cache
+	Link  common.LinkProvider
 	Media MediaConfirmer
 }
 
-
 func getKey(userID int64) string {
-	return shared.BuildCacheKey("user", "info", "public", userID)
+	return common.BuildCacheKey("user", "info", "public", userID)
 }
 
 func setUserCache(ctx context.Context, cache domain.CacheStorage, user *user.UserSummary) error {

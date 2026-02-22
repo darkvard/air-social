@@ -16,8 +16,6 @@ func NewHealth(client *redis.Client) *Health {
 	}
 }
 
-
 func (h *Health) Ping(ctx context.Context) error {
 	return h.client.Ping(ctx).Err()
 }
-

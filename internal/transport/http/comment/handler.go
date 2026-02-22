@@ -2,15 +2,15 @@ package comment
 
 import (
 	"air-social/internal/domain/comment"
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 )
 
 type Handler struct {
-	provider shared.LinkProvider
+	provider common.LinkProvider
 	usecase  comment.UseCase
 }
 
-func NewHandler(provider shared.LinkProvider, usecase comment.UseCase) Handler {
+func NewHandler(provider common.LinkProvider, usecase comment.UseCase) Handler {
 	return Handler{
 		provider: provider,
 		usecase:  usecase,

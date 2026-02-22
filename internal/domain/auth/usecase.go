@@ -6,7 +6,7 @@ import (
 
 	"air-social/internal/domain/auth/token"
 	"air-social/internal/domain/auth/verify"
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
@@ -19,6 +19,7 @@ type UseCase interface {
 	VerifyEmail(ctx context.Context, emailToken string) error
 	ForgotPassword(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, params ResetPasswordParams) error
+	ValidateResetPasswordToken(ctx context.Context, token string) bool
 
 	RefreshToken(ctx context.Context, refreshToken string) (TokenResult, error)
 }
@@ -28,7 +29,7 @@ type Deps struct {
 	TokenProvider token.Provider
 	UserFetch     user.FetchUseCase
 	UserAccount   user.AccountUseCase
-	Cache         shared.Cache
+	Cache         common.Cache
 }
 
 type usecase struct {
@@ -37,7 +38,7 @@ type usecase struct {
 	verifyProvider verify.Provider
 	userFetch      user.FetchUseCase
 	userAccount    user.AccountUseCase
-	cache          shared.Cache
+	cache          common.Cache
 }
 
 func NewUseCase(deps Deps) UseCase {
@@ -157,6 +158,10 @@ func (u *usecase) ResetPassword(ctx context.Context, params ResetPasswordParams)
 	_ = u.verifyProvider.InvalidatePasswordReset(ctx, params.EmailToken)
 
 	return nil
+}
+
+func (u *usecase) ValidateResetPasswordToken(ctx context.Context, token string) bool {
+	return u.verifyProvider.ValidateResetPasswordToken(ctx, token)
 }
 
 func (u *usecase) RefreshToken(ctx context.Context, refreshToken string) (TokenResult, error) {

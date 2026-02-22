@@ -4,12 +4,12 @@ import (
 	"air-social/internal/config"
 	"air-social/internal/domain/auth/token"
 	"air-social/internal/domain/auth/verify"
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/internal/infrastructure/url"
 )
 
 type Provider struct {
-	Link   shared.AppLinkManager
+	Link   common.AppLinkManager
 	Token  token.Provider
 	Verify verify.Provider
 }
@@ -26,16 +26,16 @@ func NewProvider(cfg config.Config, adapter Adapter) Provider {
 	}
 }
 
-func newLinkManager(cfg config.Config) shared.AppLinkManager {
+func newLinkManager(cfg config.Config) common.AppLinkManager {
 	manager := url.NewManager(cfg)
-	return shared.AppLinkManager{
+	return common.AppLinkManager{
 		SystemProvider: manager.System,
 		RouteProvider:  manager.Route,
 		LinkProvider:   manager.Link,
 	}
 }
 
-func newVerifyProvider(adapter Adapter, link shared.LinkProvider) verify.Provider {
+func newVerifyProvider(adapter Adapter, link common.LinkProvider) verify.Provider {
 	return verify.NewVerifyProvider(verify.Deps{
 		Cache: adapter.Cache,
 		Event: adapter.EventPub,

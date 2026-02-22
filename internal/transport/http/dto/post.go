@@ -31,7 +31,7 @@ type PostResponse struct {
 	SharesCount   int                 `json:"shares_count"`
 	CreatedAt     string              `json:"created_at"`
 	UpdatedAt     string              `json:"updated_at"`
-	IsLiked       bool              `json:"is_liked"`
+	IsLiked       bool                `json:"is_liked"`
 	User          UserCompactResponse `json:"user"`
 	Media         []MediaItemResponse `json:"media"`
 }

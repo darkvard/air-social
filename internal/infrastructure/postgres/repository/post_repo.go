@@ -9,6 +9,7 @@ import (
 	"air-social/internal/infrastructure/postgres/model"
 	"air-social/pkg"
 )
+// todo: remove
 
 type postRepository struct {
 	db *sqlx.DB

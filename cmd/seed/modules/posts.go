@@ -25,7 +25,7 @@ func SeedPosts(db *sqlx.DB, userIDs []int64, postsPerUser int) {
 	if err := tx.Commit(); err != nil {
 		log.Panicf("seed posts commit failed: %v", err)
 	}
-	
+
 	log.Printf("Seeded: %d Posts (%d per user)", len(userIDs)*postsPerUser, postsPerUser)
 }
 
@@ -71,7 +71,7 @@ func seedMediaForPost(stmt *sqlx.Stmt, postID int64) {
 		for range numMedia {
 			mType, ext := getRandMediaType()
 			meta := generateMeta(ext)
-			
+
 			if _, err := stmt.Exec(postID, gofakeit.UUID(), mType, meta); err != nil {
 				log.Panicf("insert media failed: %v", err)
 			}

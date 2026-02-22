@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 )
+// todo: remove
 
 const (
 	VisibilityPublic    PostVisibility = "public"

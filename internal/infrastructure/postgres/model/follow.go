@@ -5,6 +5,7 @@ import (
 
 	"air-social/internal/domain"
 )
+// todo: remove
 
 type Follow struct {
 	FollowerID int64     `db:"follower_id"`

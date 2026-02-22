@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/pkg"
 )
 
@@ -20,24 +20,25 @@ type UseCase interface {
 	DeleteMedia(ctx context.Context, keys []string) error
 }
 
+type Deps struct {
+	Bucket  Bucket
+	Storage Storage
+	Link    common.AppLinkManager
+}
+
 type usecase struct {
 	bucket  Bucket
 	storage Storage
-	link    shared.LinkProvider
-	route   shared.RouteProvider
+	link    common.LinkProvider
+	route   common.RouteProvider
 }
 
-func NewUseCase(
-	Bucket Bucket,
-	Storage Storage,
-	Link shared.LinkProvider,
-	Route shared.RouteProvider,
-) *usecase {
+func NewUseCase(d Deps) *usecase {
 	return &usecase{
-		bucket:  Bucket,
-		storage: Storage,
-		link:    Link,
-		route:   Route,
+		bucket:  d.Bucket,
+		storage: d.Storage,
+		link:    d.Link.LinkProvider,
+		route:   d.Link.RouteProvider,
 	}
 }
 

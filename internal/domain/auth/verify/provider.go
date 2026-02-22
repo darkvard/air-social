@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/pkg"
 )
 
@@ -23,18 +23,19 @@ type Provider interface {
 	VerifyPasswordReset(ctx context.Context, token string) (string, error)
 
 	InvalidatePasswordReset(ctx context.Context, token string) error
+	ValidateResetPasswordToken(ctx context.Context, emailToken string) bool
 }
 
 type Deps struct {
-	Cache shared.Cache
-	Event shared.EventPublisher
-	Link  shared.LinkProvider
+	Cache common.Cache
+	Event common.EventPublisher
+	Link  common.LinkProvider
 }
 
 type provider struct {
-	cache shared.Cache
-	event shared.EventPublisher
-	link  shared.LinkProvider
+	cache common.Cache
+	event common.EventPublisher
+	link  common.LinkProvider
 }
 
 func NewVerifyProvider(d Deps) *provider {
@@ -52,15 +53,15 @@ func (p *provider) SendVerification(ctx context.Context, email string, username 
 		return pkg.ErrInternal
 	}
 
-	payload := shared.EmailEventPayload{
+	payload := common.EmailEventPayload{
 		Email:  email,
 		Name:   username,
 		Link:   p.link.VerifyEmail(id),
 		Expiry: pkg.FormatTTLHuman(verificationTTL),
 	}
-	event := shared.Event{
+	event := common.Event{
 		ID:        id,
-		Typ:       shared.EventVerify,
+		Typ:       common.EventVerify,
 		Timestamp: pkg.TimeNowUTC(),
 		Data:      payload,
 	}
@@ -75,15 +76,15 @@ func (p *provider) SendPasswordReset(ctx context.Context, email string, username
 		return pkg.ErrInternal
 	}
 
-	payload := shared.EmailEventPayload{
+	payload := common.EmailEventPayload{
 		Email:  email,
 		Name:   username,
 		Link:   p.link.ResetPassword(id),
 		Expiry: pkg.FormatTTLHuman(resetPasswordTTL),
 	}
-	event := shared.Event{
+	event := common.Event{
 		ID:        id,
-		Typ:       shared.EventResetPassword,
+		Typ:       common.EventResetPassword,
 		Timestamp: pkg.TimeNowUTC(),
 		Data:      payload,
 	}
@@ -111,10 +112,18 @@ func (p *provider) InvalidatePasswordReset(ctx context.Context, token string) er
 	return p.cache.Delete(ctx, getResetKey(token))
 }
 
+func (p *provider) ValidateResetPasswordToken(ctx context.Context, token string) bool {
+	exists, err := p.cache.IsExist(ctx, getResetKey(token))
+	if err != nil {
+		return false
+	}
+	return exists
+}
+
 func getVerifyKey(token string) string {
-	return shared.BuildCacheKey("worker", "email", "verify", token)
+	return common.BuildCacheKey("worker", "email", "verify", token)
 }
 
 func getResetKey(token string) string {
-	return shared.BuildCacheKey("worker", "email", "reset", token)
+	return common.BuildCacheKey("worker", "email", "reset", token)
 }

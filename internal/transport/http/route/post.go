@@ -1,27 +1,30 @@
 package route
 
-import (
-	"github.com/gin-gonic/gin"
+// import (
+//
+ 
 
-	"air-social/internal/transport/http/handler"
-	"air-social/internal/transport/http/middleware"
-)
+// 	"github.com/gin-gonic/gin"
 
-func PostRoutes(r *gin.RouterGroup, h *handler.PostHandler, m *middleware.Manager) {
-	post := r.Group(PostGroup, m.Auth)
-	{
-		post.GET(ID, h.GetPost)
-		post.DELETE(ID, h.DeletePost)
+// 	"air-social/internal/transport/http/handler"
+// 	"air-social/internal/transport/http/middleware"
+// )
 
-		json := post.Group("").Use(m.JSONOnly)
-		{
-			json.PATCH(ID, h.UpdatePost)
-			json.POST("", h.CreatePost)
-		}
-	}
+// func PostRoutes(r *gin.RouterGroup, h *handler.PostHandler, m *middleware.Manager) {
+// 	post := r.Group(PostGroup, m.Auth)
+// 	{
+// 		post.GET(ID, h.GetPost)
+// 		post.DELETE(ID, h.DeletePost)
 
-	user := r.Group(UserGroup, m.Auth)
-	{
-		user.GET(ID+PostGroup, h.GetUserPosts)
-	}
-}
+// 		json := post.Group("").Use(m.JSONOnly)
+// 		{
+// 			json.PATCH(ID, h.UpdatePost)
+// 			json.POST("", h.CreatePost)
+// 		}
+// 	}
+
+// 	user := r.Group(UserGroup, m.Auth)
+// 	{
+// 		user.GET(ID+PostGroup, h.GetUserPosts)
+// 	}
+// }

@@ -8,7 +8,7 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/internal/infrastructure/rabbitmq/config"
 	"air-social/internal/infrastructure/rabbitmq/topology"
 	"air-social/pkg"
@@ -27,8 +27,8 @@ const (
 
 type Deps struct {
 	Conn       *amqp.Connection
-	Cache      shared.Cache
-	Dispatcher shared.EventDispatcher
+	Cache      common.Cache
+	Dispatcher common.EventDispatcher
 }
 
 type Consumer struct {
@@ -36,21 +36,21 @@ type Consumer struct {
 	eCfg config.ExchangeConfig
 	qCfg config.QueueConfig
 
-	cache shared.Cache
-	disp  shared.EventDispatcher
+	cache common.Cache
+	disp  common.EventDispatcher
 
 	ch   *amqp.Channel
 	done chan struct{}
 	once sync.Once
 }
 
-func NewConsumer(deps Deps, event shared.EventType) *Consumer {
+func NewConsumer(deps Deps, event common.EventType) *Consumer {
 	var queueCfg config.QueueConfig
 
 	switch event {
-	case shared.EventVerify:
+	case common.EventVerify:
 		queueCfg = config.EmailVerifyQueueConfig
-	case shared.EventResetPassword:
+	case common.EventResetPassword:
 		queueCfg = config.EmailResetPasswordQueueConfig
 	default:
 		pkg.Log().Error("consumer: invalid event type")
@@ -111,7 +111,7 @@ func (c *Consumer) Stop() error {
 }
 
 func (c *Consumer) handleMessage(ctx context.Context, msg amqp.Delivery) {
-	var event shared.Event
+	var event common.Event
 	if err := json.Unmarshal(msg.Body, &event); err != nil {
 		msg.Nack(false, false) // drop malformed messages
 		return
@@ -166,9 +166,9 @@ func (c *Consumer) handleFailure(ctx context.Context, msg amqp.Delivery, err err
 }
 
 func getProcessedKey(token string) string {
-	return shared.BuildCacheKey("worker", "email", "processed", token)
+	return common.BuildCacheKey("worker", "email", "processed", token)
 }
 
 func getRetryKey(token string) string {
-	return shared.BuildCacheKey("worker", "email", "retry", token)
+	return common.BuildCacheKey("worker", "email", "retry", token)
 }

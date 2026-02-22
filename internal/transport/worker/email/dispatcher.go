@@ -4,26 +4,26 @@ import (
 	"context"
 	"fmt"
 
-	"air-social/internal/domain/shared"
+	"air-social/internal/domain/common"
 	"air-social/pkg"
 	"air-social/templates"
 )
 
 type Dispatcher struct {
-	mailer   shared.Mailer
-	handlers map[shared.EventType]shared.EventHandler
+	mailer   common.Mailer
+	handlers map[common.EventType]common.EventHandler
 }
 
-func NewDispatcher(mailer shared.Mailer) *Dispatcher {
+func NewDispatcher(mailer common.Mailer) *Dispatcher {
 	disp := &Dispatcher{
 		mailer:   mailer,
-		handlers: make(map[shared.EventType]shared.EventHandler),
+		handlers: make(map[common.EventType]common.EventHandler),
 	}
 	disp.registerHandlers()
 	return disp
 }
 
-func (d *Dispatcher) Dispatch(ctx context.Context, event shared.Event) error {
+func (d *Dispatcher) Dispatch(ctx context.Context, event common.Event) error {
 	handler, ok := d.handlers[event.Typ]
 	if !ok {
 		return fmt.Errorf("no handler for event type %s: %w", event.Typ, pkg.ErrNoEventHandler)
@@ -32,18 +32,18 @@ func (d *Dispatcher) Dispatch(ctx context.Context, event shared.Event) error {
 }
 
 func (d *Dispatcher) registerHandlers() {
-	d.handlers[shared.EventVerify] = d.makeEmailHandler(templates.VerifyEmailPath)
-	d.handlers[shared.EventResetPassword] = d.makeEmailHandler(templates.ResetPasswordPath)
+	d.handlers[common.EventVerify] = d.makeEmailHandler(templates.VerifyEmailPath)
+	d.handlers[common.EventResetPassword] = d.makeEmailHandler(templates.ResetPasswordPath)
 }
 
-func (d *Dispatcher) makeEmailHandler(templateFile string) shared.EventHandler {
-	return func(ctx context.Context, event shared.Event) error {
-		payload, err := shared.UnmarshalEvent[shared.EmailEventPayload](event.Data)
+func (d *Dispatcher) makeEmailHandler(templateFile string) common.EventHandler {
+	return func(ctx context.Context, event common.Event) error {
+		payload, err := common.UnmarshalEvent[common.EmailEventPayload](event.Data)
 		if err != nil {
 			return err
 		}
 
-		email := shared.Email{
+		email := common.Email{
 			To:           payload.Email,
 			LayoutFile:   templates.LayoutPath,
 			TemplateFile: templateFile,
