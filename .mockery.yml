@@ -1,20 +1,16 @@
-# .mockery.yaml
-structname: "{{.InterfaceName}}"
+structname: "Mock{{.InterfaceName}}"
 pkgname: "mocks"
-filename: "{{.InterfaceName | snakecase}}.go"
 
-dir: "internal/mocks"
+dir: "{{.InterfaceDir}}/mocks"
+
+filename: "{{.InterfaceName | snakecase}}_mock.go"
+
 formatter: goimports
 inpackage: false
 force-file-write: true
 
 packages:
   air-social/internal/domain:
-    config:
-      recursive: true
-      all: true
-  
-  air-social/internal/service:
     config:
       recursive: true
       all: true

@@ -7,6 +7,6 @@ import (
 )
 
 func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
-	group := g.Group("/media", m.Auth)
-	group.GET("/presigned-urls", m.Basic, h.PresignedUpload)
+	auth := g.Group("/media", m.Auth)
+	auth.POST("/presigned-urls", h.PresignedUpload)
 }

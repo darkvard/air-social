@@ -530,7 +530,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.CreatePostRequest"
+                            "$ref": "#/definitions/internal_transport_http_post.CreateRequest"
                         }
                     }
                 ],
@@ -538,19 +538,13 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PostResponse"
+                            "$ref": "#/definitions/internal_transport_http_post.CreateResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
                         }
                     },
                     "500": {
@@ -593,7 +587,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PostResponse"
+                            "$ref": "#/definitions/internal_transport_http_post.PostResponse"
                         }
                     },
                     "400": {
@@ -643,20 +637,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Deleted",
-                        "schema": {
-                            "type": "string"
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/pkg.Response"
                         }
@@ -712,7 +697,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UpdatePostRequest"
+                            "$ref": "#/definitions/internal_transport_http_post.UpdateRequest"
                         }
                     }
                 ],
@@ -720,19 +705,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.PostResponse"
+                            "$ref": "#/definitions/internal_transport_http_post.PostResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
                         }
                     },
                     "403": {
@@ -778,7 +757,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UserDetailResponse"
+                            "$ref": "#/definitions/internal_transport_http_user.UserResponse"
                         }
                     },
                     "401": {
@@ -819,7 +798,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UpdateProfileRequest"
+                            "$ref": "#/definitions/internal_transport_http_user.UpdateProfileRequest"
                         }
                     }
                 ],
@@ -827,7 +806,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.UserDetailResponse"
+                            "$ref": "#/definitions/internal_transport_http_user.UserResponse"
                         }
                     },
                     "400": {
@@ -836,16 +815,106 @@ const docTemplate = `{
                             "$ref": "#/definitions/pkg.ValidationResult"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/pkg.Response"
                         }
+                    }
+                }
+            }
+        },
+        "/users/me/avatar": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Confirm avatar upload and update user profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Update avatar",
+                "parameters": [
+                    {
+                        "description": "Update Avatar Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_user.UpdateImageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_user.UserResponse"
+                        }
                     },
-                    "409": {
-                        "description": "Conflict",
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/cover": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Confirm cover image upload and update user profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Update cover image",
+                "parameters": [
+                    {
+                        "description": "Update Cover Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_user.UpdateImageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_user.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.ValidationResult"
                         }
                     },
                     "500": {
@@ -882,99 +951,18 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.ChangePasswordRequest"
+                            "$ref": "#/definitions/internal_transport_http_user.ChangePasswordRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "password changed successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/me/profile-image/confirm": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Confirm that the file has been uploaded successfully and update the user profile with the new image URL.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Confirm file upload",
-                "parameters": [
-                    {
-                        "description": "Confirm Upload Request List",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Returns list of confirmed files",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/air-social_internal_transport_http_dto.ConfirmFileResponse"
-                            }
-                        }
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
                         }
                     },
                     "500": {
@@ -1305,25 +1293,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_transport_http_dto.CursorPaginatedResponse-air-social_internal_transport_http_dto_PostResponse"
+                            "$ref": "#/definitions/internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_PostResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/pkg.ValidationResult"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
                         }
                     },
                     "500": {
@@ -1337,38 +1313,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "air-social_internal_domain.UploadDomain": {
-            "type": "string",
-            "enum": [
-                "users",
-                "posts",
-                "messages"
-            ],
-            "x-enum-varnames": [
-                "DomainUser",
-                "DomainPost",
-                "DomainMessage"
-            ]
-        },
-        "air-social_internal_domain.UploadFeature": {
-            "type": "string",
-            "enum": [
-                "avatar",
-                "cover",
-                "feed_image",
-                "feed_video",
-                "voice_chat",
-                "attachment"
-            ],
-            "x-enum-varnames": [
-                "FeatureAvatar",
-                "FeatureCover",
-                "FeatureFeedImage",
-                "FeatureFeedVideo",
-                "FeatureVoiceChat",
-                "FeatureAttachment"
-            ]
-        },
         "air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse": {
             "type": "object",
             "properties": {
@@ -1424,452 +1368,6 @@ const docTemplate = `{
                 "FeatureVoiceChat",
                 "FeatureAttachment"
             ]
-        },
-        "air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest": {
-            "type": "object",
-            "required": [
-                "files"
-            ],
-            "properties": {
-                "files": {
-                    "type": "array",
-                    "maxItems": 10,
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/air-social_internal_transport_http_dto.ConfirmProfileImageRequest"
-                    }
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.BulkPresignedUploadRequest": {
-            "type": "object",
-            "required": [
-                "files"
-            ],
-            "properties": {
-                "files": {
-                    "type": "array",
-                    "maxItems": 10,
-                    "minItems": 1,
-                    "items": {
-                        "$ref": "#/definitions/air-social_internal_transport_http_dto.PresignedUploadRequest"
-                    }
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.ChangePasswordRequest": {
-            "type": "object",
-            "required": [
-                "current_password",
-                "new_password"
-            ],
-            "properties": {
-                "current_password": {
-                    "type": "string"
-                },
-                "new_password": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "minLength": 8
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.ConfirmFileResponse": {
-            "type": "object",
-            "properties": {
-                "domain": {
-                    "$ref": "#/definitions/air-social_internal_domain.UploadDomain"
-                },
-                "feature": {
-                    "$ref": "#/definitions/air-social_internal_domain.UploadFeature"
-                },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.ConfirmProfileImageRequest": {
-            "type": "object",
-            "required": [
-                "domain",
-                "feature",
-                "object_key"
-            ],
-            "properties": {
-                "domain": {
-                    "enum": [
-                        "users"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/air-social_internal_domain.UploadDomain"
-                        }
-                    ]
-                },
-                "feature": {
-                    "enum": [
-                        "avatar",
-                        "cover"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/air-social_internal_domain.UploadFeature"
-                        }
-                    ]
-                },
-                "object_key": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.CreatePostRequest": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "media": {
-                    "type": "array",
-                    "maxItems": 10,
-                    "items": {
-                        "$ref": "#/definitions/air-social_internal_transport_http_dto.MediaItemInput"
-                    }
-                },
-                "visibility": {
-                    "type": "string",
-                    "enum": [
-                        "public",
-                        "followers",
-                        "private"
-                    ]
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.CursorPaginatedResponse-air-social_internal_transport_http_dto_PostResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/air-social_internal_transport_http_dto.PostResponse"
-                    }
-                },
-                "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_dto.MetaCursor"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.MediaItemInput": {
-            "type": "object",
-            "required": [
-                "media_key",
-                "media_type"
-            ],
-            "properties": {
-                "duration": {
-                    "type": "integer"
-                },
-                "file_name": {
-                    "type": "string"
-                },
-                "height": {
-                    "type": "integer"
-                },
-                "media_key": {
-                    "type": "string"
-                },
-                "media_type": {
-                    "type": "string",
-                    "enum": [
-                        "image",
-                        "video",
-                        "audio",
-                        "document"
-                    ]
-                },
-                "size": {
-                    "type": "integer"
-                },
-                "width": {
-                    "type": "integer"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.MediaItemResponse": {
-            "type": "object",
-            "properties": {
-                "duration": {
-                    "type": "integer"
-                },
-                "file_name": {
-                    "type": "string"
-                },
-                "height": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "media_type": {
-                    "type": "string"
-                },
-                "url": {
-                    "type": "string"
-                },
-                "width": {
-                    "type": "integer"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.MetaCursor": {
-            "type": "object",
-            "properties": {
-                "has_next_page": {
-                    "type": "boolean"
-                },
-                "next_cursor": {
-                    "type": "integer"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.PostResponse": {
-            "type": "object",
-            "properties": {
-                "comments_count": {
-                    "type": "integer"
-                },
-                "content": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_liked": {
-                    "type": "boolean"
-                },
-                "likes_count": {
-                    "type": "integer"
-                },
-                "media": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/air-social_internal_transport_http_dto.MediaItemResponse"
-                    }
-                },
-                "shares_count": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_dto.UserCompactResponse"
-                },
-                "version": {
-                    "type": "integer"
-                },
-                "visibility": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.PresignedFileResponse": {
-            "type": "object",
-            "properties": {
-                "expire_at": {
-                    "type": "string"
-                },
-                "file_name": {
-                    "type": "string"
-                },
-                "form_data": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                },
-                "object_key": {
-                    "type": "string"
-                },
-                "public_url": {
-                    "type": "string"
-                },
-                "upload_url": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.PresignedUploadRequest": {
-            "type": "object",
-            "required": [
-                "domain",
-                "feature",
-                "file_name",
-                "file_size",
-                "file_type"
-            ],
-            "properties": {
-                "domain": {
-                    "enum": [
-                        "users",
-                        "posts",
-                        "groups",
-                        "messages"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/air-social_internal_domain.UploadDomain"
-                        }
-                    ]
-                },
-                "feature": {
-                    "enum": [
-                        "avatar",
-                        "cover",
-                        "feed_image",
-                        "feed_video",
-                        "voice_chat",
-                        "attachment"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/air-social_internal_domain.UploadFeature"
-                        }
-                    ]
-                },
-                "file_name": {
-                    "type": "string"
-                },
-                "file_size": {
-                    "type": "integer"
-                },
-                "file_type": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.ProfileResponse": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "bio": {
-                    "type": "string"
-                },
-                "cover_image": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "location": {
-                    "type": "string"
-                },
-                "website": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.StatusResponse": {
-            "type": "object",
-            "properties": {
-                "verified": {
-                    "type": "boolean"
-                },
-                "verified_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.UpdatePostRequest": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "visibility": {
-                    "type": "string",
-                    "enum": [
-                        "public",
-                        "followers",
-                        "private"
-                    ]
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.UpdateProfileRequest": {
-            "type": "object",
-            "properties": {
-                "bio": {
-                    "type": "string",
-                    "maxLength": 255
-                },
-                "full_name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 2
-                },
-                "location": {
-                    "type": "string",
-                    "maxLength": 100
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 3
-                },
-                "website": {
-                    "type": "string",
-                    "maxLength": 255
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.UserCompactResponse": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "air-social_internal_transport_http_dto.UserDetailResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "profile": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_dto.ProfileResponse"
-                },
-                "status": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_dto.StatusResponse"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "integer"
-                }
-            }
         },
         "internal_transport_http_auth.ForgotPasswordRequest": {
             "type": "object",
@@ -2149,6 +1647,331 @@ const docTemplate = `{
                 },
                 "upload_url": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_post.CreateRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "media": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_post.MediaItemInput"
+                    }
+                },
+                "visibility": {
+                    "type": "string",
+                    "enum": [
+                        "public",
+                        "followers",
+                        "private"
+                    ]
+                }
+            }
+        },
+        "internal_transport_http_post.CreateResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_post.MediaItemResponse"
+                    }
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_PostResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_post.PostResponse"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/internal_transport_http_post.MetaCursor"
+                }
+            }
+        },
+        "internal_transport_http_post.MediaItemInput": {
+            "type": "object",
+            "required": [
+                "media_key",
+                "media_type"
+            ],
+            "properties": {
+                "duration": {
+                    "type": "integer"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "media_key": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string",
+                    "enum": [
+                        "image",
+                        "video",
+                        "audio",
+                        "document"
+                    ]
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_transport_http_post.MediaItemResponse": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "integer"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_transport_http_post.MetaCursor": {
+            "type": "object",
+            "properties": {
+                "has_next_page": {
+                    "type": "boolean"
+                },
+                "next_cursor": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_transport_http_post.PostResponse": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/internal_transport_http_post.UserResponse"
+                },
+                "comments_count": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_liked": {
+                    "type": "boolean"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_post.MediaItemResponse"
+                    }
+                },
+                "shares_count": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_post.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string",
+                    "enum": [
+                        "public",
+                        "followers",
+                        "private"
+                    ]
+                }
+            }
+        },
+        "internal_transport_http_post.UserResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_verified": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_transport_http_user.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "current_password",
+                "new_password"
+            ],
+            "properties": {
+                "current_password": {
+                    "type": "string"
+                },
+                "new_password": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 8
+                }
+            }
+        },
+        "internal_transport_http_user.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "cover_image": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "website": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_user.StatusResponse": {
+            "type": "object",
+            "properties": {
+                "verified": {
+                    "type": "boolean"
+                },
+                "verified_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_user.UpdateImageRequest": {
+            "type": "object",
+            "required": [
+                "object_key"
+            ],
+            "properties": {
+                "object_key": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_user.UpdateProfileRequest": {
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "full_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "location": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3
+                },
+                "website": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "internal_transport_http_user.UserResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "profile": {
+                    "$ref": "#/definitions/internal_transport_http_user.ProfileResponse"
+                },
+                "status": {
+                    "$ref": "#/definitions/internal_transport_http_user.StatusResponse"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
                 }
             }
         },

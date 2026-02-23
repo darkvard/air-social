@@ -1,0 +1,7 @@
+package verify
+
+
+
+func a() {
+	 
+}

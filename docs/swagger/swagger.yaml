@@ -1,31 +1,5 @@
 basePath: /air-social/api/v1
 definitions:
-  air-social_internal_domain.UploadDomain:
-    enum:
-    - users
-    - posts
-    - messages
-    type: string
-    x-enum-varnames:
-    - DomainUser
-    - DomainPost
-    - DomainMessage
-  air-social_internal_domain.UploadFeature:
-    enum:
-    - avatar
-    - cover
-    - feed_image
-    - feed_video
-    - voice_chat
-    - attachment
-    type: string
-    x-enum-varnames:
-    - FeatureAvatar
-    - FeatureCover
-    - FeatureFeedImage
-    - FeatureFeedVideo
-    - FeatureVoiceChat
-    - FeatureAttachment
   air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse:
     properties:
       data:
@@ -68,303 +42,6 @@ definitions:
     - FeatureFeedVideo
     - FeatureVoiceChat
     - FeatureAttachment
-  air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest:
-    properties:
-      files:
-        items:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.ConfirmProfileImageRequest'
-        maxItems: 10
-        minItems: 1
-        type: array
-    required:
-    - files
-    type: object
-  air-social_internal_transport_http_dto.BulkPresignedUploadRequest:
-    properties:
-      files:
-        items:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.PresignedUploadRequest'
-        maxItems: 10
-        minItems: 1
-        type: array
-    required:
-    - files
-    type: object
-  air-social_internal_transport_http_dto.ChangePasswordRequest:
-    properties:
-      current_password:
-        type: string
-      new_password:
-        maxLength: 64
-        minLength: 8
-        type: string
-    required:
-    - current_password
-    - new_password
-    type: object
-  air-social_internal_transport_http_dto.ConfirmFileResponse:
-    properties:
-      domain:
-        $ref: '#/definitions/air-social_internal_domain.UploadDomain'
-      feature:
-        $ref: '#/definitions/air-social_internal_domain.UploadFeature'
-      url:
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.ConfirmProfileImageRequest:
-    properties:
-      domain:
-        allOf:
-        - $ref: '#/definitions/air-social_internal_domain.UploadDomain'
-        enum:
-        - users
-      feature:
-        allOf:
-        - $ref: '#/definitions/air-social_internal_domain.UploadFeature'
-        enum:
-        - avatar
-        - cover
-      object_key:
-        type: string
-    required:
-    - domain
-    - feature
-    - object_key
-    type: object
-  air-social_internal_transport_http_dto.CreatePostRequest:
-    properties:
-      content:
-        type: string
-      media:
-        items:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.MediaItemInput'
-        maxItems: 10
-        type: array
-      visibility:
-        enum:
-        - public
-        - followers
-        - private
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.CursorPaginatedResponse-air-social_internal_transport_http_dto_PostResponse:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.PostResponse'
-        type: array
-      meta:
-        $ref: '#/definitions/air-social_internal_transport_http_dto.MetaCursor'
-    type: object
-  air-social_internal_transport_http_dto.MediaItemInput:
-    properties:
-      duration:
-        type: integer
-      file_name:
-        type: string
-      height:
-        type: integer
-      media_key:
-        type: string
-      media_type:
-        enum:
-        - image
-        - video
-        - audio
-        - document
-        type: string
-      size:
-        type: integer
-      width:
-        type: integer
-    required:
-    - media_key
-    - media_type
-    type: object
-  air-social_internal_transport_http_dto.MediaItemResponse:
-    properties:
-      duration:
-        type: integer
-      file_name:
-        type: string
-      height:
-        type: integer
-      id:
-        type: integer
-      media_type:
-        type: string
-      url:
-        type: string
-      width:
-        type: integer
-    type: object
-  air-social_internal_transport_http_dto.MetaCursor:
-    properties:
-      has_next_page:
-        type: boolean
-      next_cursor:
-        type: integer
-    type: object
-  air-social_internal_transport_http_dto.PostResponse:
-    properties:
-      comments_count:
-        type: integer
-      content:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: integer
-      is_liked:
-        type: boolean
-      likes_count:
-        type: integer
-      media:
-        items:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.MediaItemResponse'
-        type: array
-      shares_count:
-        type: integer
-      updated_at:
-        type: string
-      user:
-        $ref: '#/definitions/air-social_internal_transport_http_dto.UserCompactResponse'
-      version:
-        type: integer
-      visibility:
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.PresignedFileResponse:
-    properties:
-      expire_at:
-        type: string
-      file_name:
-        type: string
-      form_data:
-        additionalProperties:
-          type: string
-        type: object
-      object_key:
-        type: string
-      public_url:
-        type: string
-      upload_url:
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.PresignedUploadRequest:
-    properties:
-      domain:
-        allOf:
-        - $ref: '#/definitions/air-social_internal_domain.UploadDomain'
-        enum:
-        - users
-        - posts
-        - groups
-        - messages
-      feature:
-        allOf:
-        - $ref: '#/definitions/air-social_internal_domain.UploadFeature'
-        enum:
-        - avatar
-        - cover
-        - feed_image
-        - feed_video
-        - voice_chat
-        - attachment
-      file_name:
-        type: string
-      file_size:
-        type: integer
-      file_type:
-        type: string
-    required:
-    - domain
-    - feature
-    - file_name
-    - file_size
-    - file_type
-    type: object
-  air-social_internal_transport_http_dto.ProfileResponse:
-    properties:
-      avatar:
-        type: string
-      bio:
-        type: string
-      cover_image:
-        type: string
-      full_name:
-        type: string
-      location:
-        type: string
-      website:
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.StatusResponse:
-    properties:
-      verified:
-        type: boolean
-      verified_at:
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.UpdatePostRequest:
-    properties:
-      content:
-        type: string
-      visibility:
-        enum:
-        - public
-        - followers
-        - private
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.UpdateProfileRequest:
-    properties:
-      bio:
-        maxLength: 255
-        type: string
-      full_name:
-        maxLength: 100
-        minLength: 2
-        type: string
-      location:
-        maxLength: 100
-        type: string
-      username:
-        maxLength: 50
-        minLength: 3
-        type: string
-      website:
-        maxLength: 255
-        type: string
-    type: object
-  air-social_internal_transport_http_dto.UserCompactResponse:
-    properties:
-      avatar:
-        type: string
-      full_name:
-        type: string
-      id:
-        type: integer
-    type: object
-  air-social_internal_transport_http_dto.UserDetailResponse:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: integer
-      profile:
-        $ref: '#/definitions/air-social_internal_transport_http_dto.ProfileResponse'
-      status:
-        $ref: '#/definitions/air-social_internal_transport_http_dto.StatusResponse'
-      updated_at:
-        type: string
-      username:
-        type: string
-      version:
-        type: integer
-    type: object
   internal_transport_http_auth.ForgotPasswordRequest:
     properties:
       email:
@@ -553,6 +230,224 @@ definitions:
         type: string
       upload_url:
         type: string
+    type: object
+  internal_transport_http_post.CreateRequest:
+    properties:
+      content:
+        type: string
+      media:
+        items:
+          $ref: '#/definitions/internal_transport_http_post.MediaItemInput'
+        maxItems: 10
+        type: array
+      visibility:
+        enum:
+        - public
+        - followers
+        - private
+        type: string
+    type: object
+  internal_transport_http_post.CreateResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      media:
+        items:
+          $ref: '#/definitions/internal_transport_http_post.MediaItemResponse'
+        type: array
+      visibility:
+        type: string
+    type: object
+  internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_PostResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/internal_transport_http_post.PostResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/internal_transport_http_post.MetaCursor'
+    type: object
+  internal_transport_http_post.MediaItemInput:
+    properties:
+      duration:
+        type: integer
+      file_name:
+        type: string
+      height:
+        type: integer
+      media_key:
+        type: string
+      media_type:
+        enum:
+        - image
+        - video
+        - audio
+        - document
+        type: string
+      size:
+        type: integer
+      width:
+        type: integer
+    required:
+    - media_key
+    - media_type
+    type: object
+  internal_transport_http_post.MediaItemResponse:
+    properties:
+      duration:
+        type: integer
+      file_name:
+        type: string
+      height:
+        type: integer
+      id:
+        type: integer
+      media_type:
+        type: string
+      url:
+        type: string
+      width:
+        type: integer
+    type: object
+  internal_transport_http_post.MetaCursor:
+    properties:
+      has_next_page:
+        type: boolean
+      next_cursor:
+        type: integer
+    type: object
+  internal_transport_http_post.PostResponse:
+    properties:
+      author:
+        $ref: '#/definitions/internal_transport_http_post.UserResponse'
+      comments_count:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_liked:
+        type: boolean
+      likes_count:
+        type: integer
+      media:
+        items:
+          $ref: '#/definitions/internal_transport_http_post.MediaItemResponse'
+        type: array
+      shares_count:
+        type: integer
+      updated_at:
+        type: string
+      visibility:
+        type: string
+    type: object
+  internal_transport_http_post.UpdateRequest:
+    properties:
+      content:
+        type: string
+      visibility:
+        enum:
+        - public
+        - followers
+        - private
+        type: string
+    type: object
+  internal_transport_http_post.UserResponse:
+    properties:
+      avatar:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      is_verified:
+        type: boolean
+    type: object
+  internal_transport_http_user.ChangePasswordRequest:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - current_password
+    - new_password
+    type: object
+  internal_transport_http_user.ProfileResponse:
+    properties:
+      avatar:
+        type: string
+      bio:
+        type: string
+      cover_image:
+        type: string
+      full_name:
+        type: string
+      location:
+        type: string
+      website:
+        type: string
+    type: object
+  internal_transport_http_user.StatusResponse:
+    properties:
+      verified:
+        type: boolean
+      verified_at:
+        type: string
+    type: object
+  internal_transport_http_user.UpdateImageRequest:
+    properties:
+      object_key:
+        type: string
+    required:
+    - object_key
+    type: object
+  internal_transport_http_user.UpdateProfileRequest:
+    properties:
+      bio:
+        maxLength: 255
+        type: string
+      full_name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      location:
+        maxLength: 100
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+      website:
+        maxLength: 255
+        type: string
+    type: object
+  internal_transport_http_user.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      profile:
+        $ref: '#/definitions/internal_transport_http_user.ProfileResponse'
+      status:
+        $ref: '#/definitions/internal_transport_http_user.StatusResponse'
+      updated_at:
+        type: string
+      username:
+        type: string
+      version:
+        type: integer
     type: object
   pkg.FieldError:
     properties:
@@ -925,22 +820,18 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.CreatePostRequest'
+          $ref: '#/definitions/internal_transport_http_post.CreateRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.PostResponse'
+            $ref: '#/definitions/internal_transport_http_post.CreateResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pkg.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -964,16 +855,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: Deleted
-          schema:
-            type: string
+        "204":
+          description: No Content
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "401":
-          description: Unauthorized
           schema:
             $ref: '#/definitions/pkg.Response'
         "403":
@@ -1009,7 +894,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.PostResponse'
+            $ref: '#/definitions/internal_transport_http_post.PostResponse'
         "400":
           description: Bad Request
           schema:
@@ -1043,22 +928,18 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.UpdatePostRequest'
+          $ref: '#/definitions/internal_transport_http_post.UpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.PostResponse'
+            $ref: '#/definitions/internal_transport_http_post.PostResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pkg.Response'
         "403":
           description: Forbidden
           schema:
@@ -1282,19 +1163,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.CursorPaginatedResponse-air-social_internal_transport_http_dto_PostResponse'
+            $ref: '#/definitions/internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_PostResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pkg.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -1315,7 +1188,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.UserDetailResponse'
+            $ref: '#/definitions/internal_transport_http_user.UserResponse'
         "401":
           description: Unauthorized
           schema:
@@ -1339,26 +1212,18 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.UpdateProfileRequest'
+          $ref: '#/definitions/internal_transport_http_user.UpdateProfileRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/air-social_internal_transport_http_dto.UserDetailResponse'
+            $ref: '#/definitions/internal_transport_http_user.UserResponse'
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/pkg.ValidationResult'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/pkg.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -1366,6 +1231,70 @@ paths:
       security:
       - BearerAuth: []
       summary: Update user profile
+      tags:
+      - User
+  /users/me/avatar:
+    put:
+      consumes:
+      - application/json
+      description: Confirm avatar upload and update user profile
+      parameters:
+      - description: Update Avatar Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_user.UpdateImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_user.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Update avatar
+      tags:
+      - User
+  /users/me/cover:
+    put:
+      consumes:
+      - application/json
+      description: Confirm cover image upload and update user profile
+      parameters:
+      - description: Update Cover Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_user.UpdateImageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_user.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.ValidationResult'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Update cover image
       tags:
       - User
   /users/me/password:
@@ -1379,22 +1308,16 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.ChangePasswordRequest'
+          $ref: '#/definitions/internal_transport_http_user.ChangePasswordRequest'
       produces:
       - application/json
       responses:
-        "200":
-          description: password changed successfully
-          schema:
-            type: string
+        "204":
+          description: No Content
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pkg.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pkg.Response'
+            $ref: '#/definitions/pkg.ValidationResult'
         "500":
           description: Internal Server Error
           schema:
@@ -1402,53 +1325,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Change password
-      tags:
-      - User
-  /users/me/profile-image/confirm:
-    post:
-      consumes:
-      - application/json
-      description: Confirm that the file has been uploaded successfully and update
-        the user profile with the new image URL.
-      parameters:
-      - description: Confirm Upload Request List
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/air-social_internal_transport_http_dto.BulkConfirmProfileImageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Returns list of confirmed files
-          schema:
-            items:
-              $ref: '#/definitions/air-social_internal_transport_http_dto.ConfirmFileResponse'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/pkg.ValidationResult'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/pkg.Response'
-      security:
-      - BearerAuth: []
-      summary: Confirm file upload
       tags:
       - User
 securityDefinitions:

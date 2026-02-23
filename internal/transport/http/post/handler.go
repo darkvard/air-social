@@ -21,6 +21,19 @@ func NewHandler(provider common.LinkProvider, usecase post.UseCase) Handler {
 	}
 }
 
+// CreatePost godoc
+//
+//	@Summary		Create a new post
+//	@Description	Create a new post with content and optional media attachments.
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		CreateRequest	true	"Create Post Request"
+//	@Success		201		{object}	CreateResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/posts [post]
 func (h Handler) CreatePost(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -56,6 +69,20 @@ func (h Handler) CreatePost(c *gin.Context) {
 	pkg.Created(c, h.toCreateResponse(post))
 }
 
+// GetPost godoc
+//
+//	@Summary		Get post detail
+//	@Description	Get post details by ID
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		int	true	"Post ID"
+//	@Success		200	{object}	PostResponse
+//	@Failure		400	{object}	pkg.Response
+//	@Failure		404	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
+//	@Router			/posts/{id} [get]
 func (h Handler) GetPost(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -78,6 +105,21 @@ func (h Handler) GetPost(c *gin.Context) {
 	pkg.Success(c, h.toPostResponse(post))
 }
 
+// GetUserPosts godoc
+//
+//	@Summary		Get user posts
+//	@Description	Get a list of posts for a specific user using cursor-based pagination.
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int	true	"User ID"
+//	@Param			cursor	query		int	false	"Cursor for pagination (last post ID)"
+//	@Param			limit	query		int	false	"Number of items to return"
+//	@Success		200		{object}	CursorPaginatedResponse[PostResponse]
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/{id}/posts [get]
 func (h Handler) GetUserPosts(c *gin.Context) {
 	var path PathIDParam
 	if err := c.ShouldBindUri(&path); err != nil {
@@ -98,10 +140,25 @@ func (h Handler) GetUserPosts(c *gin.Context) {
 		return
 	}
 
-	_ = common.NewCursorPaginatedResult(result.Data, req.Limit)
-	// todo: map to dto
+	pkg.Success(c, h.toPostListResponse(result))
 }
 
+// UpdatePost godoc
+//
+//	@Summary		Update a post
+//	@Description	Update post content or visibility. Only the owner can update their post.
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int				true	"Post ID"
+//	@Param			request	body		UpdateRequest	true	"Update Post Request"
+//	@Success		200		{object}	PostResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		403		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/posts/{id} [patch]
 func (h Handler) UpdatePost(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -137,6 +194,21 @@ func (h Handler) UpdatePost(c *gin.Context) {
 	pkg.Success(c, h.toPostResponse(post))
 }
 
+// DeletePost godoc
+//
+//	@Summary		Delete a post
+//	@Description	Delete a post by ID. Only the owner can delete their post.
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		int	true	"Post ID"
+//	@Success		204	{object}	nil
+//	@Failure		400	{object}	pkg.Response
+//	@Failure		403	{object}	pkg.Response
+//	@Failure		404	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
+//	@Router			/posts/{id} [delete]
 func (h Handler) DeletePost(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -208,10 +280,26 @@ func (h Handler) toPostResponse(post *post.Post) PostResponse {
 		CreatedAt:     post.CreatedAt,
 		UpdatedAt:     post.UpdatedAt,
 		User: UserResponse{
-			ID:       post.Author.ID,
-			Fullname: post.Author.FullName,
-			Avatar:   h.provider.PublicFile(post.Author.Avatar),
+			ID:         post.Author.ID,
+			Fullname:   post.Author.FullName,
+			Avatar:     h.provider.PublicFile(post.Author.Avatar),
+			IsVerified: post.Author.IsVerified,
 		},
 		Media: h.toMediaItemResponse(post.Media),
+	}
+}
+
+func (h Handler) toPostListResponse(result common.CursorPaginatedResult[post.Post, int64]) CursorPaginatedResponse[PostResponse] {
+	data := make([]PostResponse, len(result.Data))
+	for i := range result.Data {
+		data[i] = h.toPostResponse(&result.Data[i])
+	}
+
+	return CursorPaginatedResponse[PostResponse]{
+		Data: data,
+		Meta: MetaCursor{
+			NextCursor:  result.NextCursor,
+			HasNextPage: result.HasNextPage,
+		},
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"air-social/internal/domain"
 	"air-social/internal/domain/common"
 	"air-social/internal/domain/user"
 )
@@ -22,12 +21,12 @@ func getKey(userID int64) string {
 	return common.BuildCacheKey("user", "info", "public", userID)
 }
 
-func setUserCache(ctx context.Context, cache domain.CacheStorage, user *user.UserSummary) error {
+func setUserCache(ctx context.Context, cache common.Cache, user *user.UserSummary) error {
 	key := getKey(user.ID)
 	return cache.Set(ctx, key, user, summaryCacheTTL)
 }
 
-func getUserCache(ctx context.Context, cache domain.CacheStorage, id int64) (*user.UserSummary, error) {
+func getUserCache(ctx context.Context, cache common.Cache, id int64) (*user.UserSummary, error) {
 	key := getKey(id)
 	var cached user.UserSummary
 	if err := cache.Get(ctx, key, &cached); err != nil {
@@ -36,7 +35,7 @@ func getUserCache(ctx context.Context, cache domain.CacheStorage, id int64) (*us
 	return &cached, nil
 }
 
-func clearUserCache(ctx context.Context, cache domain.CacheStorage, id int64) error {
+func clearUserCache(ctx context.Context, cache common.Cache, id int64) error {
 	key := getKey(id)
 	return cache.Delete(ctx, key)
 }

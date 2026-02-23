@@ -24,6 +24,18 @@ func NewHandler(provider common.LinkProvider, usecase user.UseCase) Handler {
 	}
 }
 
+// Profile godoc
+//
+//	@Summary		Get user profile
+//	@Description	Get current user profile information
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	UserResponse
+//	@Failure		401	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
+//	@Router			/users/me [get]
 func (h Handler) Profile(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -44,6 +56,19 @@ func (h Handler) Profile(c *gin.Context) {
 	pkg.Success(c, h.toUserResponse(*user))
 }
 
+// UpdateProfile godoc
+//
+//	@Summary		Update user profile
+//	@Description	Update user profile information
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		UpdateProfileRequest	true	"Update Profile Request"
+//	@Success		200		{object}	UserResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/me [patch]
 func (h Handler) UpdateProfile(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -79,6 +104,19 @@ func (h Handler) UpdateProfile(c *gin.Context) {
 	pkg.Success(c, h.toUserResponse(*user))
 }
 
+// ChangePassword godoc
+//
+//	@Summary		Change password
+//	@Description	Change user password
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		ChangePasswordRequest	true	"Change Password Request"
+//	@Success		204		{object}	nil
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/me/password [put]
 func (h Handler) ChangePassword(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -106,6 +144,19 @@ func (h Handler) ChangePassword(c *gin.Context) {
 	pkg.NoContent(c)
 }
 
+// UpdateAvatar godoc
+//
+//	@Summary		Update avatar
+//	@Description	Confirm avatar upload and update user profile
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		UpdateImageRequest	true	"Update Avatar Request"
+//	@Success		200		{object}	UserResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/me/avatar [put]
 func (h Handler) UpdateAvatar(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -135,6 +186,19 @@ func (h Handler) UpdateAvatar(c *gin.Context) {
 	pkg.Success(c, h.toUserResponse(*user))
 }
 
+// UpdateCover godoc
+//
+//	@Summary		Update cover image
+//	@Description	Confirm cover image upload and update user profile
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		UpdateImageRequest	true	"Update Cover Request"
+//	@Success		200		{object}	UserResponse
+//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/me/cover [put]
 func (h Handler) UpdateCover(c *gin.Context) {
 	claims, err := middleware.GetTokenClaims(c)
 	if err != nil {
@@ -189,7 +253,7 @@ func (h Handler) toUserResponse(user user.User) UserResponse {
 
 // todo:
 //  - handler: remove package dto, handler (old)
-//	- usecase: add unit tests	
+//	- usecase: add unit tests
 //	- service: remove services (old)
 //	- domain: remove files...
 //	- test: test all api
