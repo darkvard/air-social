@@ -58,12 +58,32 @@ func (u *profileUseCase) UpdateProfile(ctx context.Context, params user.UpdatePa
 	return user, nil
 }
 
-func (u *profileUseCase) UpdateAvatar(ctx context.Context, params media.ConfirmParams) error {
-	return u.updateImageUrl(ctx, params, u.repo.UpdateAvatar)
+func (u *profileUseCase) UpdateAvatar(ctx context.Context, params media.ConfirmParams) (*user.User, error) {
+	if err := u.updateImageUrl(ctx, params, u.repo.UpdateAvatar); err != nil {
+		return nil, err
+	}
+
+	result, err := u.repo.GetByID(ctx, params.EntityID)
+	if err != nil {
+		return nil, err
+	}
+	_ = clearUserCache(ctx, u.cache, params.EntityID)
+
+	return result, nil
 }
 
-func (u *profileUseCase) UpdateCover(ctx context.Context, params media.ConfirmParams) error {
-	return u.updateImageUrl(ctx, params, u.repo.UpdateCover)
+func (u *profileUseCase) UpdateCover(ctx context.Context, params media.ConfirmParams) (*user.User, error) {
+	if err := u.updateImageUrl(ctx, params, u.repo.UpdateCover); err != nil {
+		return nil, err
+	}
+
+	result, err := u.repo.GetByID(ctx, params.EntityID)
+	if err != nil {
+		return nil, err
+	}
+	_ = clearUserCache(ctx, u.cache, params.EntityID)
+
+	return result, nil
 }
 
 func (u *profileUseCase) updateImageUrl(

@@ -16,8 +16,8 @@ type AccountUseCase interface {
 
 type ProfileUseCase interface {
 	UpdateProfile(ctx context.Context, params UpdateParams) (*User, error)
-	UpdateAvatar(ctx context.Context, params media.ConfirmParams) error
-	UpdateCover(ctx context.Context, params media.ConfirmParams) error
+	UpdateAvatar(ctx context.Context, params media.ConfirmParams) (*User, error)
+	UpdateCover(ctx context.Context, params media.ConfirmParams) (*User, error)
 }
 
 type FetchUseCase interface {
