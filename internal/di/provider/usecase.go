@@ -11,7 +11,6 @@ import (
 	"air-social/internal/domain/post"
 	"air-social/internal/domain/user"
 	uuc "air-social/internal/domain/user/usecase"
-	"air-social/internal/infrastructure/mailer"
 	"air-social/internal/infrastructure/minio"
 	"air-social/internal/infrastructure/postgres"
 	"air-social/internal/infrastructure/rabbitmq"
@@ -62,8 +61,7 @@ func getHealthUseCase(deps UseCaseDeps) health.UseCase {
 	healths["postgres"] = postgres.NewHealth(deps.Infra.DB)
 	healths["redis"] = redis.NewHealth(deps.Infra.Redis)
 	healths["rabbitmq"] = rabbitmq.NewHealth(deps.Infra.Rabbit, deps.Cfg.RabbitMQ)
-	healths["minio"] = minio.NewHealth(deps.Infra.Minio)
-	healths["mailtrap"] = mailer.NewHealth(deps.Infra.Mailtrap)
+	healths["minio"] = minio.NewHealth(deps.Infra.Minio, deps.Cfg.MinIO.BucketPublic)
 
 	return health.NewUseCase(
 		healths, deps.Prov.Link.SystemProvider,

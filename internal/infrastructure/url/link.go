@@ -6,6 +6,7 @@ import (
 
 	"air-social/internal/config"
 	"air-social/internal/domain/common"
+	"air-social/pkg"
 )
 
 type link struct {
@@ -42,4 +43,11 @@ func (u *link) PublicFile(key string) string {
 
 func (u *link) getApiPath() string {
 	return u.route.ApiPath()
+}
+
+func (u *link) Print() {
+	pkg.Log().Infow("VerifyEmail", "url", u.VerifyEmail("{token}"))
+	pkg.Log().Infow("ResetPassword", "url", u.ResetPassword("{token}"))
+	pkg.Log().Infow("ResetPasswordEndpoint", "url", u.ResetPasswordEndpoint())
+	pkg.Log().Infow("PublicFile", "url", u.PublicFile("{key}"))
 }

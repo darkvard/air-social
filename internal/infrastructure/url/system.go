@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"air-social/internal/domain/common"
+	"air-social/pkg"
 )
 
 type system struct {
@@ -24,4 +25,10 @@ func (u *system) MinioConsoleURL() string {
 
 func (u *system) RabbitMQDashboardURL() string {
 	return fmt.Sprintf("%s/rabbitmq/", u.route.BaseURL())
+}
+
+func (u *system) Print() {
+	pkg.Log().Infow("SwaggerURL", "url", u.SwaggerURL())
+	pkg.Log().Infow("MinioConsoleURL", "url", u.MinioConsoleURL())
+	pkg.Log().Infow("RabbitMQDashboardURL", "url", u.RabbitMQDashboardURL())
 }

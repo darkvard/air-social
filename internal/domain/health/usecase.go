@@ -3,6 +3,8 @@ package health
 import (
 	"context"
 	"strconv"
+	"sync"
+	"time"
 
 	"air-social/internal/domain/common"
 	"air-social/pkg"
@@ -33,17 +35,37 @@ func NewUseCase(
 }
 
 func (u *usecase) CheckStatus(ctx context.Context) (bool, map[string]string) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
 	details := make(map[string]string)
 	isHealthy := true
 
 	for name, checker := range u.checkers {
-		if err := checker.Ping(ctx); err != nil {
-			details[name] = err.Error()
-			isHealthy = false
-		} else {
-			details[name] = "ok"
-		}
+		wg.Add(1)
+
+		go func(name string, checker Checker) {
+			defer wg.Done()
+
+			err := checker.Ping(ctx)
+
+			mu.Lock()
+			defer mu.Unlock()
+			
+			if err != nil {
+				details[name] = err.Error()
+				isHealthy = false
+			} else {
+				details[name] = "ok"
+			}
+
+		}(name, checker)
+
 	}
+	wg.Wait()
 
 	details["status"] = strconv.FormatBool(isHealthy)
 	details["timestamp"] = pkg.TimeNowUTC().String()

@@ -18,10 +18,12 @@ type mailtrap struct {
 	from   string
 }
 
-func NewMailtrap(cfg config.MailConfig, dialer *gomail.Dialer) *mailtrap {
+func NewMailtrap(cfg config.MailConfig) *mailtrap {
 	return &mailtrap{
-		dialer: dialer,
-		from:   fmt.Sprintf("%s <%s>", cfg.FromName, cfg.FromAddress),
+		dialer: gomail.NewDialer(
+			cfg.Host, cfg.Port, cfg.Username, cfg.Password,
+		),
+		from: fmt.Sprintf("%s <%s>", cfg.FromName, cfg.FromAddress),
 	}
 }
 

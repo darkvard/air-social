@@ -21,13 +21,14 @@ type Handler struct {
 }
 
 func NewHandler(prov Provider, usecase UseCase) Handler {
+	link := prov.Link.LinkProvider
 	return Handler{
 		Health:  health.NewHandler(usecase.Health),
-		Auth:    auth.NewHandler(prov.Link, usecase.Auth),
-		User:    user.NewHandler(prov.Link, usecase.User),
-		Media:   media.NewHandler(prov.Link, usecase.Media),
-		Follow:  follow.NewHandler(prov.Link, usecase.Follow),
-		Post:    post.NewHandler(prov.Link, usecase.Post),
-		Comment: comment.NewHandler(prov.Link, usecase.Comment),
+		Auth:    auth.NewHandler(link, usecase.Auth),
+		User:    user.NewHandler(link, usecase.User),
+		Media:   media.NewHandler(link, usecase.Media),
+		Follow:  follow.NewHandler(link, usecase.Follow),
+		Post:    post.NewHandler(link, usecase.Post),
+		Comment: comment.NewHandler(link, usecase.Comment),
 	}
 }

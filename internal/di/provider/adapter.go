@@ -35,7 +35,7 @@ func NewAdapter(cfg config.Config, infra *Infrastructure) (Adapter, error) {
 		return empty, err
 	}
 
-	mailer := mailer.NewMailtrap(cfg.Mailer, infra.Mailtrap)
+	mailer := mailer.NewMailtrap(cfg.Mailer)
 
 	return Adapter{
 		Media:    fileStorage,

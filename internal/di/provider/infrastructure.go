@@ -7,7 +7,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
-	"gopkg.in/gomail.v2"
 
 	"air-social/internal/config"
 	mi "air-social/internal/infrastructure/minio"
@@ -18,12 +17,11 @@ import (
 )
 
 type Infrastructure struct {
-	DB       *sqlx.DB
-	Redis    *redis.Client
-	Rabbit   *amqp.Connection
-	Minio    *minio.Client
-	Mailtrap *gomail.Dialer
-	Logger   *zap.SugaredLogger
+	DB     *sqlx.DB
+	Redis  *redis.Client
+	Rabbit *amqp.Connection
+	Minio  *minio.Client
+	Logger *zap.SugaredLogger
 }
 
 func NewInfrastructure(cfg config.Config) (*Infrastructure, func(), error) {
@@ -70,24 +68,12 @@ func NewInfrastructure(cfg config.Config) (*Infrastructure, func(), error) {
 		return nil, func() {}, err
 	}
 
-	mailer := gomail.NewDialer(
-		cfg.Mailer.Host, cfg.Mailer.Port, cfg.Mailer.Username, cfg.Mailer.Password,
-	)
-
 	infra := &Infrastructure{
-		DB:       db,
-		Redis:    cache,
-		Rabbit:   queue,
-		Minio:    minioClient,
-		Mailtrap: mailer,
-		Logger:   pkg.Log(),
+		DB:     db,
+		Redis:  cache,
+		Rabbit: queue,
+		Minio:  minioClient,
+		Logger: pkg.Log(),
 	}
 	return infra, cleanup, nil
-}
-
-func (i *Infrastructure) GetRabbit(cfg config.RabbitMQConfig) *rabbitmq.HealthChecker {
-	return &rabbitmq.HealthChecker{
-		Conn: i.Rabbit,
-		URL:  cfg.URL,
-	}
 }

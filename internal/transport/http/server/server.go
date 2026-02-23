@@ -29,11 +29,14 @@ func NewServer(
 	h provider.Handler,
 	mw middleware.Manager,
 ) *http.Server {
+	prov.Link.SystemProvider.Print()
+	
 	router := setupEngine()
-	router.GET("", h.Health.Welcome)
-
-	group := router.Group(prov.Link.ApiPath())
+	group := router.Group(prov.Link.ApiVersion())
 	{
+		group.GET("", h.Health.Welcome)
+		group.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 		health.RegisterRoute(group, h.Health, mw)
 		auth.RegisterRoute(group, h.Auth, mw)
 		user.RegisterRoute(group, h.User, mw)
@@ -72,8 +75,6 @@ func setupEngine() *gin.Engine {
 		details := "This endpoint only supports: " + allowed
 		pkg.Error(c, http.StatusMethodNotAllowed, "Method not allowed", details)
 	})
-
-	e.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return e
 }
