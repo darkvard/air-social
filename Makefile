@@ -1,6 +1,5 @@
 # Load environment variables
 include .env
-export
 
 # Project variables
 PROJECT_NAME := air-social
