@@ -10,7 +10,7 @@ import (
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/post"
 	"air-social/internal/domain/user"
-	uuc "air-social/internal/domain/user/usecase"
+	userusecase "air-social/internal/domain/user/usecase"
 	"air-social/internal/infrastructure/minio"
 	"air-social/internal/infrastructure/postgres"
 	"air-social/internal/infrastructure/rabbitmq"
@@ -81,28 +81,29 @@ func getMediaUseCase(deps UseCaseDeps) media.UseCase {
 	)
 }
 
-func getUserUseCase(deps UseCaseDeps, confirmer uuc.MediaConfirmer) user.UseCase {
-	d := uuc.Deps{
+func getUserUseCase(deps UseCaseDeps, confirmer userusecase.MediaConfirmer) user.UseCase {
+	d := userusecase.Deps{
 		Repo:  deps.Repo.User,
 		Cache: deps.Adapter.Cache,
 		Link:  deps.Prov.Link.LinkProvider,
 		Media: confirmer,
 	}
 	return user.UseCase{
-		Account: uuc.NewAccountUseCase(d),
-		Profile: uuc.NewProfileUseCase(d),
-		Fetch:   uuc.NewFetchUseCase(d),
+		Account: userusecase.NewAccountUseCase(d),
+		Profile: userusecase.NewProfileUseCase(d),
+		Fetch:   userusecase.NewFetchUseCase(d),
 	}
 }
 
 func getAuthUseCase(deps UseCaseDeps, userFetch user.FetchUseCase, userAccount user.AccountUseCase) auth.UseCase {
 	return auth.NewUseCase(
 		auth.Deps{
-			TokenRepo:     deps.Repo.Token,
-			TokenProvider: deps.Prov.Token,
-			UserFetch:     userFetch,
-			UserAccount:   userAccount,
-			Cache:         deps.Adapter.Cache,
+			TokenRepo:      deps.Repo.Token,
+			TokenProvider:  deps.Prov.Token,
+			VerifyProvider: deps.Prov.Verify,
+			UserFetch:      userFetch,
+			UserAccount:    userAccount,
+			Cache:          deps.Adapter.Cache,
 		},
 	)
 }

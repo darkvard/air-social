@@ -11,6 +11,7 @@ import (
 	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/user"
+	mediamocks "air-social/internal/domain/media/mocks"
 	usermocks "air-social/internal/domain/user/mocks"
 	"air-social/internal/domain/user/usecase"
 	usecasemocks "air-social/internal/domain/user/usecase/mocks"
@@ -25,31 +26,29 @@ func TestProfileUseCaseSuite(t *testing.T) {
 	suite.Run(t, new(profileUseCaseSuite))
 }
 
+
 func (s *profileUseCaseSuite) TestUpdateProfile() {
 	var (
 		userID   int64 = 1
-		fullName       = "New Name"
 		bio            = "New Bio"
+		fullName       = "New Name"
+		location       = "New York"
+		website        = "https://example.com"
+		username       = "newuser"
 	)
-
-	baseInput := user.UpdateParams{
-		UserID:   userID,
-		FullName: &fullName,
-		Bio:      &bio,
-	}
 
 	existingUser := &user.User{
 		ID: userID,
 		Profile: user.Profile{
-			FullName: "Old Name",
 			Bio:      "Old Bio",
+			FullName: "Old Name",
 		},
+		Username: "olduser",
 	}
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
 		cache *commonmocks.MockCache
-		media *usecasemocks.MockMediaConfirmer
 	}
 
 	type args struct {
@@ -57,38 +56,83 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 		params user.UpdateParams
 	}
 
-	type want struct {
-		user *user.User
-		err  error
-	}
-
 	tests := []struct {
 		name      string
 		args      args
 		setupMock func(deps testDeps)
-		want      want
+		want      *user.User
+		wantErr   error
 	}{
 		{
-			name: "get_user_error",
+			name: "success_all_fields",
 			args: args{
-				ctx:    context.Background(),
-				params: baseInput,
+				ctx: context.Background(),
+				params: user.UpdateParams{
+					UserID:   userID,
+					Bio:      &bio,
+					FullName: &fullName,
+					Location: &location,
+					Website:  &website,
+					Username: &username,
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, userID).
+					Return(existingUser, nil).Once()
+
+				deps.repo.EXPECT().
+					UpdateProfile(mock.Anything, mock.MatchedBy(func(u *user.User) bool {
+						return u.ID == userID &&
+							u.Profile.Bio == bio &&
+							u.Profile.FullName == fullName &&
+							u.Profile.Location == location &&
+							u.Profile.Website == website &&
+							u.Username == username
+					})).
+					Return(nil).Once()
+
+				deps.cache.EXPECT().
+					Delete(mock.Anything, mock.Anything).
+					Return(nil).Once()
+			},
+			want: &user.User{
+				ID: userID,
+				Profile: user.Profile{
+					Bio:      bio,
+					FullName: fullName,
+					Location: location,
+					Website:  website,
+				},
+				Username: username,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repo_get_error",
+			args: args{
+				ctx: context.Background(),
+				params: user.UpdateParams{
+					UserID: userID,
+					Bio:    &bio,
+				},
 			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, userID).
 					Return(nil, pkg.ErrNotFound).Once()
 			},
-			want: want{
-				user: nil,
-				err:  pkg.ErrNotFound,
-			},
+			want:    nil,
+			wantErr: pkg.ErrNotFound,
 		},
 		{
-			name: "update_repo_error",
+			name: "repo_update_error",
 			args: args{
-				ctx:    context.Background(),
-				params: baseInput,
+				ctx: context.Background(),
+				params: user.UpdateParams{
+					UserID: userID,
+					Bio:    &bio,
+				},
 			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
@@ -96,41 +140,11 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 					Return(existingUser, nil).Once()
 
 				deps.repo.EXPECT().
-					UpdateProfile(mock.Anything, mock.MatchedBy(func(u *user.User) bool {
-						return u.Profile.FullName == fullName && u.Profile.Bio == bio
-					})).
+					UpdateProfile(mock.Anything, mock.Anything).
 					Return(assert.AnError).Once()
 			},
-			want: want{
-				user: nil,
-				err:  pkg.ErrInternal,
-			},
-		},
-		{
-			name: "success",
-			args: args{
-				ctx:    context.Background(),
-				params: baseInput,
-			},
-			setupMock: func(deps testDeps) {
-				deps.repo.EXPECT().
-					GetByID(mock.Anything, userID).
-					Return(existingUser, nil).Once()
-
-				deps.repo.EXPECT().
-					UpdateProfile(mock.Anything, mock.MatchedBy(func(u *user.User) bool {
-						return u.Profile.FullName == fullName && u.Profile.Bio == bio
-					})).
-					Return(nil).Once()
-
-				deps.cache.EXPECT().
-					Delete(mock.Anything, usecase.GetKey(userID)).
-					Return(nil).Once()
-			},
-			want: want{
-				user: existingUser,
-				err:  nil,
-			},
+			want:    nil,
+			wantErr: pkg.ErrInternal,
 		},
 	}
 
@@ -138,17 +152,19 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
 			mockCache := commonmocks.NewMockCache(s.T())
-			mockMedia := usecasemocks.NewMockMediaConfirmer(s.T())
+			mockMedia := mediamocks.NewMockUseCase(s.T())
+			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
 				repo:  mockRepo,
 				cache: mockCache,
-				media: mockMedia,
 			}
+
 			uc := usecase.NewProfileUseCase(usecase.Deps{
 				Repo:  mockRepo,
 				Cache: mockCache,
 				Media: mockMedia,
+				Link:  mockLink,
 			})
 
 			if tc.setupMock != nil {
@@ -157,17 +173,19 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 
 			got, err := uc.UpdateProfile(tc.args.ctx, tc.args.params)
 
-			if tc.want.err != nil {
-				s.ErrorIs(err, tc.want.err)
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
 				s.Nil(got)
 			} else {
 				s.NoError(err)
-				s.Equal(tc.want.user.Profile.FullName, got.Profile.FullName)
-				s.Equal(tc.want.user.Profile.Bio, got.Profile.Bio)
+				s.Equal(tc.want.Profile.Location, got.Profile.Location)
+				s.Equal(tc.want.Profile.Website, got.Profile.Website)
+				s.Equal(tc.want.Username, got.Username)
 			}
 		})
 	}
 }
+
 
 func (s *profileUseCaseSuite) TestUpdateAvatar() {
 	var (
@@ -193,6 +211,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 		repo  *usermocks.MockRepository
 		cache *commonmocks.MockCache
 		media *usecasemocks.MockMediaConfirmer
+		link  *commonmocks.MockLinkProvider
 	}
 
 	type args struct {
@@ -260,6 +279,33 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 			},
 		},
 		{
+			name: "repo_get_fail",
+			args: args{
+				ctx:    context.Background(),
+				params: validParams,
+			},
+			setupMock: func(deps testDeps) {
+				deps.media.EXPECT().
+					ConfirmUpload(mock.Anything, []media.ConfirmParams{validParams}).
+					Return([]string{objectKey}, nil).Once()
+
+				deps.repo.EXPECT().
+					UpdateAvatar(mock.Anything, userID, objectKey).
+					Return(nil).Once()
+
+				deps.cache.EXPECT().
+					Delete(mock.Anything, usecase.GetKey(userID)).
+					Return(nil).Once()
+
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, userID).
+					Return(nil, pkg.ErrNotFound).Once()
+			},
+			want: want{
+				err: pkg.ErrNotFound,
+			},
+		},
+		{
 			name: "success",
 			args: args{
 				ctx:    context.Background(),
@@ -299,13 +345,15 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 			mockRepo := usermocks.NewMockRepository(s.T())
 			mockCache := commonmocks.NewMockCache(s.T())
 			mockMedia := usecasemocks.NewMockMediaConfirmer(s.T())
+			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
 				repo:  mockRepo,
 				cache: mockCache,
 				media: mockMedia,
+				link:  mockLink,
 			}
-			uc := usecase.NewProfileUseCase(usecase.Deps{Repo: mockRepo, Cache: mockCache, Media: mockMedia})
+			uc := usecase.NewProfileUseCase(usecase.Deps{Repo: mockRepo, Cache: mockCache, Media: mockMedia, Link: mockLink})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -327,10 +375,10 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 func (s *profileUseCaseSuite) TestUpdateCover() {
 	var (
 		userID    int64 = 1
-		objectKey       = "users/1/cover/img.jpg"
+		objectKey       = "users/1/cover/image.jpg"
 	)
 
-	validParams := media.ConfirmParams{
+	params := media.ConfirmParams{
 		EntityID:  userID,
 		ObjectKey: objectKey,
 		Domain:    media.DomainUser,
@@ -347,7 +395,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 	type testDeps struct {
 		repo  *usermocks.MockRepository
 		cache *commonmocks.MockCache
-		media *usecasemocks.MockMediaConfirmer
+		media *mediamocks.MockUseCase
 	}
 
 	type args struct {
@@ -359,15 +407,15 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 		name      string
 		args      args
 		setupMock func(deps testDeps)
-		wantUser  *user.User
+		want      *user.User
 		wantErr   error
 	}{
 		{
 			name: "success",
-			args: args{ctx: context.Background(), params: validParams},
+			args: args{ctx: context.Background(), params: params},
 			setupMock: func(deps testDeps) {
 				deps.media.EXPECT().
-					ConfirmUpload(mock.Anything, []media.ConfirmParams{validParams}).
+					ConfirmUpload(mock.Anything, []media.ConfirmParams{params}).
 					Return([]string{objectKey}, nil).Once()
 
 				deps.repo.EXPECT().
@@ -375,15 +423,64 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 					Return(nil).Once()
 
 				deps.cache.EXPECT().
-					Delete(mock.Anything, usecase.GetKey(userID)).
+					Delete(mock.Anything, mock.Anything).
 					Return(nil).Once()
 
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, userID).
 					Return(updatedUser, nil).Once()
 			},
-			wantUser: updatedUser,
-			wantErr:  nil,
+			want:    updatedUser,
+			wantErr: nil,
+		},
+		{
+			name: "media_confirm_error",
+			args: args{ctx: context.Background(), params: params},
+			setupMock: func(deps testDeps) {
+				deps.media.EXPECT().
+					ConfirmUpload(mock.Anything, []media.ConfirmParams{params}).
+					Return(nil, pkg.ErrBadRequest).Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name: "repo_update_error",
+			args: args{ctx: context.Background(), params: params},
+			setupMock: func(deps testDeps) {
+				deps.media.EXPECT().
+					ConfirmUpload(mock.Anything, []media.ConfirmParams{params}).
+					Return([]string{objectKey}, nil).Once()
+
+				deps.repo.EXPECT().
+					UpdateCover(mock.Anything, userID, objectKey).
+					Return(assert.AnError).Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "repo_get_error",
+			args: args{ctx: context.Background(), params: params},
+			setupMock: func(deps testDeps) {
+				deps.media.EXPECT().
+					ConfirmUpload(mock.Anything, []media.ConfirmParams{params}).
+					Return([]string{objectKey}, nil).Once()
+
+				deps.repo.EXPECT().
+					UpdateCover(mock.Anything, userID, objectKey).
+					Return(nil).Once()
+
+				deps.cache.EXPECT().
+					Delete(mock.Anything, mock.Anything).
+					Return(nil).Once()
+
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, userID).
+					Return(nil, pkg.ErrNotFound).Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrNotFound,
 		},
 	}
 
@@ -391,24 +488,34 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
 			mockCache := commonmocks.NewMockCache(s.T())
-			mockMedia := usecasemocks.NewMockMediaConfirmer(s.T())
+			mockMedia := mediamocks.NewMockUseCase(s.T())
+			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
 				repo:  mockRepo,
 				cache: mockCache,
 				media: mockMedia,
 			}
-			uc := usecase.NewProfileUseCase(usecase.Deps{Repo: mockRepo, Cache: mockCache, Media: mockMedia})
+
+			uc := usecase.NewProfileUseCase(usecase.Deps{
+				Repo:  mockRepo,
+				Cache: mockCache,
+				Media: mockMedia,
+				Link:  mockLink,
+			})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
 			}
+
 			got, err := uc.UpdateCover(tc.args.ctx, tc.args.params)
+
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
+				s.Nil(got)
 			} else {
 				s.NoError(err)
-				s.Equal(tc.wantUser, got)
+				s.Equal(tc.want, got)
 			}
 		})
 	}

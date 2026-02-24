@@ -16,7 +16,6 @@ docs: ## Generate Swagger documentation
 .PHONY: mocks
 mocks: ## Generate mocks using mockery
 	@echo "Generating mocks..."
-	@rm -rf internal/mocks/*
 	@mockery
 	@echo "Mocks generated successfully!"	
 

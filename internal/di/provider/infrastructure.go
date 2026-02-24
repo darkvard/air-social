@@ -9,10 +9,10 @@ import (
 	"go.uber.org/zap"
 
 	"air-social/internal/config"
-	mi "air-social/internal/infrastructure/minio"
+	minioinfra "air-social/internal/infrastructure/minio"
 	"air-social/internal/infrastructure/postgres"
 	"air-social/internal/infrastructure/rabbitmq"
-	ri "air-social/internal/infrastructure/redis"
+	redisinfra "air-social/internal/infrastructure/redis"
 	"air-social/pkg"
 )
 
@@ -56,13 +56,13 @@ func NewInfrastructure(cfg config.Config) (*Infrastructure, func(), error) {
 		return nil, func() {}, err
 	}
 
-	cache, err = ri.NewConnection(cfg.Redis)
+	cache, err = redisinfra.NewConnection(cfg.Redis)
 	if err != nil {
 		cleanup()
 		return nil, func() {}, err
 	}
 
-	minioClient, err = mi.NewConnection(cfg.MinIO)
+	minioClient, err = minioinfra.NewConnection(cfg.MinIO)
 	if err != nil {
 		cleanup()
 		return nil, func() {}, err

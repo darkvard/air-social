@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
@@ -153,6 +154,44 @@ func (s *authUseCaseSuite) TestLogin() {
 			wantErr: pkg.ErrInvalidCredentials, // OrInternalError(ErrInvalidCredentials, ErrInvalidCredentials) -> ErrInvalidCredentials
 		},
 		{
+			name: "access_token_error",
+			setupMock: func(deps testDeps) {
+				deps.userAccount.EXPECT().
+					Authenticate(mock.Anything, mock.Anything).
+					Return(authUser, nil).Once()
+
+				deps.tokenProvider.EXPECT().
+					GenerateRefreshToken().
+					Return(refreshToken).Once()
+
+				deps.tokenProvider.EXPECT().
+					GenerateAccessToken(userID, deviceID).
+					Return(token.AccessTokenResult{}, assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "repo_create_error",
+			setupMock: func(deps testDeps) {
+				deps.userAccount.EXPECT().
+					Authenticate(mock.Anything, mock.Anything).
+					Return(authUser, nil).Once()
+
+				deps.tokenProvider.EXPECT().
+					GenerateRefreshToken().
+					Return(refreshToken).Once()
+
+				deps.tokenProvider.EXPECT().
+					GenerateAccessToken(userID, deviceID).
+					Return(accessToken, nil).Once()
+
+				deps.tokenRepo.EXPECT().
+					Create(mock.Anything, mock.Anything).
+					Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
 			name: "success",
 			setupMock: func(deps testDeps) {
 				deps.userAccount.EXPECT().
@@ -215,12 +254,6 @@ func (s *authUseCaseSuite) TestLogout() {
 		tokenStr = "access-token"
 	)
 
-	params := auth.LogoutParams{
-		UserID:   userID,
-		DeviceID: deviceID,
-		Token:    tokenStr,
-	}
-
 	type testDeps struct {
 		tokenProvider *tokenmocks.MockProvider
 		tokenRepo     *tokenmocks.MockRepository
@@ -228,11 +261,13 @@ func (s *authUseCaseSuite) TestLogout() {
 
 	tests := []struct {
 		name      string
+		args      auth.LogoutParams
 		setupMock func(deps testDeps)
 		wantErr   error
 	}{
 		{
 			name: "already_blacklisted",
+			args: auth.LogoutParams{UserID: userID, DeviceID: deviceID, Token: tokenStr},
 			setupMock: func(deps testDeps) {
 				deps.tokenProvider.EXPECT().
 					IsBlacklisted(mock.Anything, tokenStr).
@@ -241,10 +276,39 @@ func (s *authUseCaseSuite) TestLogout() {
 			wantErr: pkg.ErrUnauthorized,
 		},
 		{
-			name: "success",
+			name: "revoke_device_error",
+			args: auth.LogoutParams{UserID: userID, DeviceID: deviceID, Token: tokenStr, IsAllDevices: false},
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().IsBlacklisted(mock.Anything, tokenStr).Return(false).Once()
+				deps.tokenRepo.EXPECT().UpdateRevokedByDevice(mock.Anything, userID, deviceID).Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "revoke_all_error",
+			args: auth.LogoutParams{UserID: userID, DeviceID: deviceID, Token: tokenStr, IsAllDevices: true},
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().IsBlacklisted(mock.Anything, tokenStr).Return(false).Once()
+				deps.tokenRepo.EXPECT().UpdateRevokedByUser(mock.Anything, userID).Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "success_single_device",
+			args: auth.LogoutParams{UserID: userID, DeviceID: deviceID, Token: tokenStr, IsAllDevices: false},
 			setupMock: func(deps testDeps) {
 				deps.tokenProvider.EXPECT().IsBlacklisted(mock.Anything, tokenStr).Return(false).Once()
 				deps.tokenRepo.EXPECT().UpdateRevokedByDevice(mock.Anything, userID, deviceID).Return(nil).Once()
+				deps.tokenProvider.EXPECT().AddToBlacklist(mock.Anything, tokenStr, mock.Anything).Return().Once()
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success_all_devices",
+			args: auth.LogoutParams{UserID: userID, DeviceID: deviceID, Token: tokenStr, IsAllDevices: true},
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().IsBlacklisted(mock.Anything, tokenStr).Return(false).Once()
+				deps.tokenRepo.EXPECT().UpdateRevokedByUser(mock.Anything, userID).Return(nil).Once()
 				deps.tokenProvider.EXPECT().AddToBlacklist(mock.Anything, tokenStr, mock.Anything).Return().Once()
 			},
 			wantErr: nil,
@@ -260,7 +324,328 @@ func (s *authUseCaseSuite) TestLogout() {
 			if tc.setupMock != nil {
 				tc.setupMock(testDeps{tokenProvider: mockTokenProv, tokenRepo: mockTokenRepo})
 			}
-			err := uc.Logout(context.Background(), params)
+			err := uc.Logout(context.Background(), tc.args)
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}
+
+func (s *authUseCaseSuite) TestForgotPassword() {
+	var (
+		email    = "test@example.com"
+		username = "testuser"
+	)
+
+	userObj := &user.User{
+		Email:    email,
+		Username: username,
+	}
+
+	type testDeps struct {
+		userFetch *usermocks.MockFetchUseCase
+		verify    *verifymocks.MockProvider
+	}
+
+	tests := []struct {
+		name      string
+		setupMock func(deps testDeps)
+		wantErr   error
+	}{
+		{
+			name: "user_not_found",
+			setupMock: func(deps testDeps) {
+				deps.userFetch.EXPECT().
+					GetByEmail(mock.Anything, email).
+					Return(nil, pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrInvalidCredentials,
+		},
+		{
+			name: "success",
+			setupMock: func(deps testDeps) {
+				deps.userFetch.EXPECT().
+					GetByEmail(mock.Anything, email).
+					Return(userObj, nil).Once()
+				deps.verify.EXPECT().
+					SendPasswordReset(mock.Anything, email, username).
+					Return(nil).Once()
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockFetch := usermocks.NewMockFetchUseCase(s.T())
+			mockVerify := verifymocks.NewMockProvider(s.T())
+
+			uc := auth.NewUseCase(auth.Deps{
+				UserFetch:      mockFetch,
+				VerifyProvider: mockVerify,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(testDeps{userFetch: mockFetch, verify: mockVerify})
+			}
+
+			err := uc.ForgotPassword(context.Background(), email)
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}
+
+func (s *authUseCaseSuite) TestResetPassword() {
+	var (
+		emailToken = "valid-token"
+		email      = "test@example.com"
+		password   = "new-password"
+	)
+
+	params := auth.ResetPasswordParams{
+		EmailToken: emailToken,
+		Password:   password,
+	}
+
+	type testDeps struct {
+		verify      *verifymocks.MockProvider
+		userAccount *usermocks.MockAccountUseCase
+	}
+
+	tests := []struct {
+		name      string
+		setupMock func(deps testDeps)
+		wantErr   error
+	}{
+		{
+			name: "verify_token_error",
+			setupMock: func(deps testDeps) {
+				deps.verify.EXPECT().
+					VerifyPasswordReset(mock.Anything, emailToken).
+					Return("", pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name: "update_password_error",
+			setupMock: func(deps testDeps) {
+				deps.verify.EXPECT().
+					VerifyPasswordReset(mock.Anything, emailToken).
+					Return(email, nil).Once()
+				deps.userAccount.EXPECT().
+					ResetPassword(mock.Anything, user.ResetPasswordParams{
+						Email:       email,
+						NewPassword: password,
+					}).
+					Return(pkg.ErrInvalidCredentials).Once()
+			},
+			wantErr: pkg.ErrInvalidCredentials,
+		},
+		{
+			name: "success",
+			setupMock: func(deps testDeps) {
+				deps.verify.EXPECT().
+					VerifyPasswordReset(mock.Anything, emailToken).
+					Return(email, nil).Once()
+				deps.userAccount.EXPECT().
+					ResetPassword(mock.Anything, user.ResetPasswordParams{
+						Email:       email,
+						NewPassword: password,
+					}).
+					Return(nil).Once()
+				deps.verify.EXPECT().
+					InvalidatePasswordReset(mock.Anything, emailToken).
+					Return(nil).Once()
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockVerify := verifymocks.NewMockProvider(s.T())
+			mockAccount := usermocks.NewMockAccountUseCase(s.T())
+
+			uc := auth.NewUseCase(auth.Deps{
+				VerifyProvider: mockVerify,
+				UserAccount:    mockAccount,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(testDeps{verify: mockVerify, userAccount: mockAccount})
+			}
+
+			err := uc.ResetPassword(context.Background(), params)
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}
+
+func (s *authUseCaseSuite) TestValidateResetPasswordToken() {
+	var tokenStr = "token"
+
+	type testDeps struct {
+		verify *verifymocks.MockProvider
+	}
+
+	tests := []struct {
+		name      string
+		setupMock func(deps testDeps)
+		want      bool
+	}{
+		{
+			name: "valid",
+			setupMock: func(deps testDeps) {
+				deps.verify.EXPECT().
+					ValidateResetPasswordToken(mock.Anything, tokenStr).
+					Return(true).Once()
+			},
+			want: true,
+		},
+		{
+			name: "invalid",
+			setupMock: func(deps testDeps) {
+				deps.verify.EXPECT().
+					ValidateResetPasswordToken(mock.Anything, tokenStr).
+					Return(false).Once()
+			},
+			want: false,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockVerify := verifymocks.NewMockProvider(s.T())
+			uc := auth.NewUseCase(auth.Deps{VerifyProvider: mockVerify})
+
+			if tc.setupMock != nil {
+				tc.setupMock(testDeps{verify: mockVerify})
+			}
+
+			got := uc.ValidateResetPasswordToken(context.Background(), tokenStr)
+			s.Equal(tc.want, got)
+		})
+	}
+}
+
+func (s *authUseCaseSuite) TestRefreshToken() {
+	var (
+		rawRefreshToken = "raw-refresh-token"
+		hashedToken     = "hashed-token"
+		userID          = int64(1)
+		deviceID        = "device-1"
+		tokenID         = int64(100)
+	)
+
+	storedToken := &token.RefreshToken{
+		ID:        tokenID,
+		UserID:    userID,
+		DeviceID:  deviceID,
+		TokenHash: hashedToken,
+	}
+
+	newAccessToken := token.AccessTokenResult{Token: "new-access", ExpiresAt: time.Now()}
+	newRefreshToken := token.RefreshTokenResult{Raw: "new-refresh", Hashed: "new-hashed", ExpiresAt: time.Now()}
+
+	type testDeps struct {
+		tokenRepo     *tokenmocks.MockRepository
+		tokenProvider *tokenmocks.MockProvider
+	}
+
+	tests := []struct {
+		name      string
+		setupMock func(deps testDeps)
+		wantErr   error
+	}{
+		{
+			name: "token_not_found",
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
+				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(nil, pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrUnauthorized,
+		},
+		{
+			name: "verify_failed_revoked",
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
+				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(storedToken, nil).Once()
+				deps.tokenProvider.EXPECT().VerifyRefreshToken(*storedToken).Return(false, pkg.ErrTokenRevoked).Once()
+				deps.tokenRepo.EXPECT().UpdateRevokedByUser(mock.Anything, userID).Return(nil).Once()
+			},
+			wantErr: pkg.ErrUnauthorized,
+		},
+		{
+			name: "verify_failed_invalid",
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
+				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(storedToken, nil).Once()
+				deps.tokenProvider.EXPECT().VerifyRefreshToken(*storedToken).Return(false, nil).Once()
+			},
+			wantErr: pkg.ErrUnauthorized,
+		},
+		{
+			name: "rotate_revoke_error",
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
+				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(storedToken, nil).Once()
+				deps.tokenProvider.EXPECT().VerifyRefreshToken(*storedToken).Return(true, nil).Once()
+				deps.tokenRepo.EXPECT().UpdateRevoked(mock.Anything, tokenID).Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "rotate_access_token_error",
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
+				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(storedToken, nil).Once()
+				deps.tokenProvider.EXPECT().VerifyRefreshToken(*storedToken).Return(true, nil).Once()
+				deps.tokenRepo.EXPECT().UpdateRevoked(mock.Anything, tokenID).Return(nil).Once()
+				deps.tokenProvider.EXPECT().GenerateRefreshToken().Return(newRefreshToken).Once()
+				deps.tokenProvider.EXPECT().GenerateAccessToken(userID, deviceID).Return(token.AccessTokenResult{}, assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "success",
+			setupMock: func(deps testDeps) {
+				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
+				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(storedToken, nil).Once()
+				deps.tokenProvider.EXPECT().VerifyRefreshToken(*storedToken).Return(true, nil).Once()
+				deps.tokenRepo.EXPECT().UpdateRevoked(mock.Anything, tokenID).Return(nil).Once()
+				deps.tokenProvider.EXPECT().GenerateRefreshToken().Return(newRefreshToken).Once()
+				deps.tokenProvider.EXPECT().GenerateAccessToken(userID, deviceID).Return(newAccessToken, nil).Once()
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockTokenRepo := tokenmocks.NewMockRepository(s.T())
+			mockTokenProv := tokenmocks.NewMockProvider(s.T())
+
+			uc := auth.NewUseCase(auth.Deps{
+				TokenRepo:     mockTokenRepo,
+				TokenProvider: mockTokenProv,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(testDeps{tokenRepo: mockTokenRepo, tokenProvider: mockTokenProv})
+			}
+
+			_, err := uc.RefreshToken(context.Background(), rawRefreshToken)
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
 			} else {
