@@ -79,6 +79,50 @@ func (_c *MockRouteProvider_ApiPath_Call) RunAndReturn(run func() string) *MockR
 	return _c
 }
 
+// ApiVersion provides a mock function for the type MockRouteProvider
+func (_mock *MockRouteProvider) ApiVersion() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ApiVersion")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// MockRouteProvider_ApiVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApiVersion'
+type MockRouteProvider_ApiVersion_Call struct {
+	*mock.Call
+}
+
+// ApiVersion is a helper method to define mock.On call
+func (_e *MockRouteProvider_Expecter) ApiVersion() *MockRouteProvider_ApiVersion_Call {
+	return &MockRouteProvider_ApiVersion_Call{Call: _e.mock.On("ApiVersion")}
+}
+
+func (_c *MockRouteProvider_ApiVersion_Call) Run(run func()) *MockRouteProvider_ApiVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockRouteProvider_ApiVersion_Call) Return(s string) *MockRouteProvider_ApiVersion_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *MockRouteProvider_ApiVersion_Call) RunAndReturn(run func() string) *MockRouteProvider_ApiVersion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // BaseURL provides a mock function for the type MockRouteProvider
 func (_mock *MockRouteProvider) BaseURL() string {
 	ret := _mock.Called()

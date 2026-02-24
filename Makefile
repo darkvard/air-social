@@ -163,11 +163,31 @@ test:
 	@echo "==> Running all tests..."
 	@go test -v ./...
 
+# Usage: make test-cover
 .PHONY: test-cover
 test-cover:
-	@echo "==> Running tests with coverage..."
-	@go test -cover -v ./...
+	@echo "==> Running tests with coverage overview..."
+	@go test -cover ./...
 
+# Usage: make test-cover-html
+.PHONY: test-cover-html
+test-cover-html:
+	@echo "==> Generating HTML coverage report..."
+	@mkdir -p tmp
+	@go test -coverprofile=tmp/coverage.out ./...
+	@go tool cover -func=tmp/coverage.out
+	@echo "==> Opening coverage report in browser..."
+	@go tool cover -html=tmp/coverage.out
+
+# Usage: make test-cover-func
+.PHONY: test-cover-func
+test-cover-func:
+	@echo "==> Generating function coverage report..."
+	@mkdir -p tmp
+	@go test -coverprofile=tmp/coverage.out ./...
+	@go tool cover -func=tmp/coverage.out
+
+# Usage: make test-bench
 .PHONY: test-bench
 test-bench:
 	@echo "==> Running benchmarks..."
@@ -179,11 +199,14 @@ test-pkg:
 	@echo "==> Testing package: $(pkg)"
 	@go test -v $(pkg)
 
-# Usage: make test-pkg-cover pkg=./mypackage
+# Usage: make test-pkg-cover pkg=./internal/domain/post/...
 .PHONY: test-pkg-cover
 test-pkg-cover:
-	@echo "==> Testing package with coverage: $(pkg)"
-	@go test -cover -v $(pkg)
+	@echo "==> Generating HTML coverage report for package: $(pkg)"
+	@mkdir -p tmp
+	@go test -coverprofile=tmp/coverage.out $(pkg)
+	@echo "==> Opening coverage report in browser..."
+	@go tool cover -html=tmp/coverage.out
 
 # Usage: make bench-pkg pkg=./mypackage
 .PHONY: test-bench-pkg

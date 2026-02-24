@@ -67,7 +67,6 @@ func (u *profileUseCase) UpdateAvatar(ctx context.Context, params media.ConfirmP
 	if err != nil {
 		return nil, err
 	}
-	_ = clearUserCache(ctx, u.cache, params.EntityID)
 
 	return result, nil
 }
@@ -81,7 +80,6 @@ func (u *profileUseCase) UpdateCover(ctx context.Context, params media.ConfirmPa
 	if err != nil {
 		return nil, err
 	}
-	_ = clearUserCache(ctx, u.cache, params.EntityID)
 
 	return result, nil
 }

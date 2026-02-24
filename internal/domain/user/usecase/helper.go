@@ -17,17 +17,17 @@ type Deps struct {
 	Media MediaConfirmer
 }
 
-func getKey(userID int64) string {
+func GetKey(userID int64) string {
 	return common.BuildCacheKey("user", "info", "public", userID)
 }
 
 func setUserCache(ctx context.Context, cache common.Cache, user *user.UserSummary) error {
-	key := getKey(user.ID)
+	key := GetKey(user.ID)
 	return cache.Set(ctx, key, user, summaryCacheTTL)
 }
 
 func getUserCache(ctx context.Context, cache common.Cache, id int64) (*user.UserSummary, error) {
-	key := getKey(id)
+	key := GetKey(id)
 	var cached user.UserSummary
 	if err := cache.Get(ctx, key, &cached); err != nil {
 		return nil, err
@@ -36,6 +36,6 @@ func getUserCache(ctx context.Context, cache common.Cache, id int64) (*user.User
 }
 
 func clearUserCache(ctx context.Context, cache common.Cache, id int64) error {
-	key := getKey(id)
+	key := GetKey(id)
 	return cache.Delete(ctx, key)
 }

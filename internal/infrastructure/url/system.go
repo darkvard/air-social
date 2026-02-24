@@ -12,7 +12,9 @@ type system struct {
 }
 
 func newSystemProvider(route common.RouteProvider) *system {
-	return &system{route: route}
+	u := &system{route: route}
+	u. Print()
+	return u
 }
 
 func (u *system) SwaggerURL() string {

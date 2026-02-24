@@ -94,7 +94,7 @@ func (u *accountUseCase) Authenticate(ctx context.Context, params user.Authentic
 		return nil, pkg.ErrInvalidCredentials
 	}
 
-	if verifyPassword(params.Password, user.PasswordHash) {
+	if !verifyPassword(params.Password, user.PasswordHash) {
 		return nil, pkg.ErrInvalidCredentials
 	}
 

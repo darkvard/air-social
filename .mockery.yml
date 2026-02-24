@@ -1,16 +1,13 @@
-structname: "Mock{{.InterfaceName}}"
-pkgname: "mocks"
-
-dir: "{{.InterfaceDir}}/mocks"
-
-filename: "{{.InterfaceName | snakecase}}_mock.go"
-
-formatter: goimports
 inpackage: false
 force-file-write: true
+formatter: goimports
 
 packages:
-  air-social/internal/domain:
+  air-social/internal:
     config:
       recursive: true
       all: true
+      dir: "{{.InterfaceDir}}/mocks"
+      filename: "{{.InterfaceName | snakecase}}_mock.go"
+      structname: "Mock{{.InterfaceName}}"
+      pkgname: "mocks"

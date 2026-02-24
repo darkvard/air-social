@@ -29,8 +29,6 @@ func NewServer(
 	h provider.Handler,
 	mw middleware.Manager,
 ) *http.Server {
-	prov.Link.SystemProvider.Print()
-	
 	router := setupEngine()
 	group := router.Group(prov.Link.ApiVersion())
 	{

@@ -10,13 +10,13 @@ type User struct {
 	Username     string
 	PasswordHash string
 	Profile      Profile
-	Status       UserStatus
+	Status       Status
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	Version      int32
 }
 
-type UserStatus struct {
+type Status struct {
 	Verified   bool
 	VerifiedAt *time.Time
 }

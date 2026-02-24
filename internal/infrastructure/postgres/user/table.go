@@ -38,7 +38,7 @@ func (m *Table) ToDomain() *user.User {
 			Location:   m.Location,
 			Website:    m.Website,
 		},
-		Status: user.UserStatus{
+		Status: user.Status{
 			Verified:   m.Verified,
 			VerifiedAt: m.VerifiedAt,
 		},

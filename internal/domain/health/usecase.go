@@ -54,7 +54,7 @@ func (u *usecase) CheckStatus(ctx context.Context) (bool, map[string]string) {
 
 			mu.Lock()
 			defer mu.Unlock()
-			
+
 			if err != nil {
 				details[name] = err.Error()
 				isHealthy = false

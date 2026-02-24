@@ -4,14 +4,12 @@ type SystemProvider interface {
 	SwaggerURL() string
 	MinioConsoleURL() string
 	RabbitMQDashboardURL() string
-	Print()
 }
 
 type RouteProvider interface {
 	BaseURL() string
 	ApiPath() string
 	ApiVersion() string
-	Print()
 }
 
 type LinkProvider interface {
@@ -19,7 +17,6 @@ type LinkProvider interface {
 	ResetPassword(token string) string
 	ResetPasswordEndpoint() string
 	PublicFile(key string) string
-	Print()
 }
 
 type AppLinkManager struct {

@@ -25,11 +25,12 @@ type UseCase interface {
 }
 
 type Deps struct {
-	TokenRepo     token.Repository
-	TokenProvider token.Provider
-	UserFetch     user.FetchUseCase
-	UserAccount   user.AccountUseCase
-	Cache         common.Cache
+	TokenRepo      token.Repository
+	TokenProvider  token.Provider
+	VerifyProvider verify.Provider
+	UserFetch      user.FetchUseCase
+	UserAccount    user.AccountUseCase
+	Cache          common.Cache
 }
 
 type usecase struct {
@@ -43,10 +44,12 @@ type usecase struct {
 
 func NewUseCase(deps Deps) UseCase {
 	return &usecase{
-		tokenProvider: deps.TokenProvider,
-		userFetch:     deps.UserFetch,
-		userAccount:   deps.UserAccount,
-		cache:         deps.Cache,
+		tokenRepo:      deps.TokenRepo,
+		tokenProvider:  deps.TokenProvider,
+		verifyProvider: deps.VerifyProvider,
+		userFetch:      deps.UserFetch,
+		userAccount:    deps.UserAccount,
+		cache:          deps.Cache,
 	}
 }
 
