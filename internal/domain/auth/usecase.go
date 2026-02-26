@@ -64,7 +64,10 @@ func (u *usecase) Register(ctx context.Context, params RegisterParams) (*user.Us
 	if err != nil {
 		return nil, err
 	}
-	_ = u.verifyProvider.SendVerification(ctx, arg.Email, arg.Username)
+	err = u.verifyProvider.SendVerification(ctx, arg.Email, arg.Username)
+	if err != nil {
+		pkg.Log().Errorw("rabbitmq", "err", err.Error())
+	}
 
 	return result, nil
 }

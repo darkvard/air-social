@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain/auth"
@@ -50,6 +52,9 @@ func (h Handler) Register(c *gin.Context) {
 
 	user, err := h.usecase.Register(c.Request.Context(), params)
 	if err != nil {
+		if errors.Is(err, pkg.ErrAlreadyExists) {
+			err = pkg.NewError(err, "email or username already exists")
+		}
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -138,7 +143,7 @@ func (h Handler) Logout(c *gin.Context) {
 	_ = c.ShouldBindJSON(&req)
 
 	claims, err := middleware.GetTokenClaims(c)
-	if err != nil || claims.UserID < 0 || claims.DeviceID == "" {
+	if err != nil || claims.DeviceID == "" {
 		pkg.Unauthorized(c, "unauthorized")
 		return
 	}

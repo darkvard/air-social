@@ -68,6 +68,8 @@ func NewConsumer(deps Deps, event common.EventType) *Consumer {
 }
 
 func (c *Consumer) Start(ctx context.Context, wg *sync.WaitGroup) error {
+	pkg.Log().Infof("Consumer started for queue:", c.qCfg.Queue)
+
 	ch, err := topology.PrepareConsumerChannel(c.conn, c.eCfg, c.qCfg)
 	if err != nil {
 		return err
@@ -111,6 +113,7 @@ func (c *Consumer) Stop() error {
 }
 
 func (c *Consumer) handleMessage(ctx context.Context, msg amqp.Delivery) {
+	pkg.Log().Infof("Received message:", msg.RoutingKey, "message id", msg.MessageId)
 	var event common.Event
 	if err := json.Unmarshal(msg.Body, &event); err != nil {
 		msg.Nack(false, false) // drop malformed messages

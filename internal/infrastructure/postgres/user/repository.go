@@ -48,7 +48,10 @@ func (r *repository) Create(ctx context.Context, user *user.User) error {
 	if err := r.db.QueryRowxContext(ctx, query, args...).StructScan(&table); err != nil {
 		return pkg.MapPostgresError(err)
 	}
-	*user = *table.ToDomain()
+	user.ID = table.ID
+	user.CreatedAt = table.CreatedAt
+	user.UpdatedAt = table.UpdatedAt
+	user.Version = table.Version
 
 	return nil
 }

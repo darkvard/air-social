@@ -47,7 +47,7 @@ func (d *Dispatcher) makeEmailHandler(templateFile string) common.EventHandler {
 			To:           payload.Email,
 			LayoutFile:   templates.LayoutPath,
 			TemplateFile: templateFile,
-			Data:         event,
+			Data:         payload,
 		}
 
 		return d.mailer.Send(ctx, email)

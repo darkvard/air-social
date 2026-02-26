@@ -14,18 +14,33 @@ import (
 	"air-social/internal/infrastructure/rabbitmq/topology"
 )
 
-// eventRoutingMap defines the source of truth for event-to-routing-key mapping
+// eventRoutingMap is the single source of truth that maps
+// domain-level event types to infrastructure routing keys.
 var eventRoutingMap = map[common.EventType]string{
-	common.EventVerify:        "email.verify",
-	common.EventResetPassword: "email.reset_password",
+	common.EventVerify:        config.EmailVerifyQueueConfig.RoutingKey,
+	common.EventResetPassword: config.EmailResetPasswordQueueConfig.RoutingKey,
 }
 
+// pubChannel wraps an AMQP channel together with its confirm
+// and return notification channels.
+//
+// Each channel operates in confirm mode so we can guarantee
+// broker-level persistence acknowledgement.
 type pubChannel struct {
 	ch       *amqp.Channel
 	confirms chan amqp.Confirmation
 	returns  chan amqp.Return
 }
 
+// Publisher is a synchronous confirm-based RabbitMQ publisher.
+//
+// Design philosophy:
+//
+//	1 HTTP request = 1 publish = wait confirm = return channel.
+//
+// We intentionally keep the implementation SIMPLE.
+// No self-healing, no auto-recreate channel, no force-close on timeout.
+// Simplicity here increases reliability for request-response flows.
 type Publisher struct {
 	conn   *amqp.Connection
 	cfg    config.ExchangeConfig
@@ -33,7 +48,10 @@ type Publisher struct {
 	once   sync.Once
 }
 
-// NewPublisher initializes the publisher with a pool of pre-configured channels
+// NewPublisher initializes a pool of confirm-enabled channels.
+//
+// Exchange declaration is idempotent, so it is safe to call during startup.
+// Channels are created once and reused to avoid channel churn.
 func NewPublisher(conn *amqp.Connection, eCfg config.ExchangeConfig, poolSize int) (*Publisher, error) {
 	if poolSize <= 0 {
 		poolSize = 1
@@ -45,9 +63,8 @@ func NewPublisher(conn *amqp.Connection, eCfg config.ExchangeConfig, poolSize in
 		chPool: make(chan *pubChannel, poolSize),
 	}
 
-	// fill the pool with ready-to-use channels
 	for i := 0; i < poolSize; i++ {
-		pc, err := p.createPoolChannel()
+		pc, err := p.createChannel()
 		if err != nil {
 			p.Close()
 			return nil, err
@@ -58,23 +75,24 @@ func NewPublisher(conn *amqp.Connection, eCfg config.ExchangeConfig, poolSize in
 	return p, nil
 }
 
-// createPoolChannel handles the internal technical setup for each channel in the pool
-func (p *Publisher) createPoolChannel() (*pubChannel, error) {
+// createChannel creates one AMQP channel configured in confirm mode.
+func (p *Publisher) createChannel() (*pubChannel, error) {
 	ch, err := p.conn.Channel()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open channel: %w", err)
+		return nil, fmt.Errorf("open channel failed: %w", err)
 	}
 
-	// 1. Ensure exchange exists on the broker (Idempotent)
+	// Ensure exchange exists (idempotent operation)
 	if err := topology.SetupExchange(ch, p.cfg); err != nil {
 		ch.Close()
 		return nil, err
 	}
 
-	// 2. Enable Publisher Confirms: Broker will send an ACK once message is safely stored
+	// Enable publisher confirms.
+	// Broker will ACK once message is durably persisted.
 	if err := ch.Confirm(false); err != nil {
 		ch.Close()
-		return nil, fmt.Errorf("failed to enable confirm mode: %w", err)
+		return nil, fmt.Errorf("enable confirm failed: %w", err)
 	}
 
 	return &pubChannel{
@@ -86,7 +104,15 @@ func (p *Publisher) createPoolChannel() (*pubChannel, error) {
 	}, nil
 }
 
-// Publish routes a domain event to RabbitMQ with guaranteed delivery checks
+// Publish sends a domain event to RabbitMQ and waits synchronously
+// for broker confirmation (ACK/NACK or Return).
+//
+// Flow:
+//	acquire channel
+//	resolve routing key
+//	publish
+//	wait confirm
+//	release channel
 func (p *Publisher) Publish(ctx context.Context, event common.Event) error {
 	pc, err := p.acquire(ctx)
 	if err != nil {
@@ -94,7 +120,6 @@ func (p *Publisher) Publish(ctx context.Context, event common.Event) error {
 	}
 	defer p.release(pc)
 
-	// Resolve the infrastructure routing key from domain event type
 	routingKey, ok := eventRoutingMap[event.Typ]
 	if !ok {
 		return fmt.Errorf("unsupported event type: %s", event.Typ)
@@ -105,7 +130,8 @@ func (p *Publisher) Publish(ctx context.Context, event common.Event) error {
 		return fmt.Errorf("marshal failed: %w", err)
 	}
 
-	// Track this specific publish sequence for the confirmation
+	// Capture the next publish sequence number.
+	// We wait specifically for the confirm matching this sequence.
 	seqNo := pc.ch.GetNextPublishSeqNo()
 
 	err = pc.ch.PublishWithContext(ctx, p.cfg.Name, routingKey,
@@ -123,43 +149,61 @@ func (p *Publisher) Publish(ctx context.Context, event common.Event) error {
 		return err
 	}
 
-	// Block until broker confirms receipt or context expires
-	return p.waitConfirm(ctx, pc, seqNo)
-}
-
-// waitConfirm orchestrates the reliability checks (returns and confirms)
-func (p *Publisher) waitConfirm(ctx context.Context, pc *pubChannel, seqNo uint64) error {
+	// Wait for broker confirm or context cancellation.
 	for {
 		select {
 		case ret := <-pc.returns:
 			// If mandatory=true and routingKey doesn't match any queue, broker returns the msg
-			return fmt.Errorf("rabbitmq: message returned, no queue found for key [%s]", ret.RoutingKey)
+			return fmt.Errorf(
+				"message returned: exchange=%s routingKey=%s reason=%s",
+				ret.Exchange,
+				ret.RoutingKey,
+				ret.ReplyText,
+			)
 
 		case confirm, ok := <-pc.confirms:
+			// Broker confirm (ACK/NACK)
 			if !ok {
-				return errors.New("rabbitmq: confirmation channel closed")
+				return errors.New("confirm channel closed")
 			}
-			// DeliveryTag is a monotonically increasing counter per channel
 			if confirm.DeliveryTag < seqNo {
-				continue // Wait for the tag matching our current publish
+				// DeliveryTag is a monotonically increasing counter per channel
+				// Wait for the tag matching our current publish
+				continue
 			}
 			if !confirm.Ack {
-				return errors.New("rabbitmq: message nacked by broker (storage failure)")
+				return errors.New("message nacked by broker")
 			}
 			return nil
 
 		case <-ctx.Done():
+			// Context timeout or cancellation.
+			//
+			// IMPORTANT:
+			// We DO NOT close the channel here.
+			//
+			// Reason:
+			// - Confirm is asynchronous.
+			// - Broker may still send ACK after our HTTP timeout.
+			// - Closing the channel would:
+			//     * discard pending confirms
+			//     * break in-flight confirm stream
+			//     * potentially destabilize connection
+			//
+			// Since channels are long-lived and reused,
+			// we simply return the error and let the channel
+			// continue operating normally.
 			return ctx.Err()
 		}
 	}
 }
 
-// acquire retrieves a channel from the pool
+// acquire gets a channel from the pool.
 func (p *Publisher) acquire(ctx context.Context) (*pubChannel, error) {
 	select {
 	case pc, ok := <-p.chPool:
 		if !ok || pc == nil {
-			return nil, errors.New("publisher is closed")
+			return nil, errors.New("publisher closed")
 		}
 		return pc, nil
 	case <-ctx.Done():
@@ -167,19 +211,28 @@ func (p *Publisher) acquire(ctx context.Context) (*pubChannel, error) {
 	}
 }
 
-// release returns a healthy channel back to the pool
+// release returns the channel back to the pool.
+// If the pool is already full (rare case), the channel is closed.
 func (p *Publisher) release(pc *pubChannel) {
-	if pc != nil && !pc.ch.IsClosed() {
-		p.chPool <- pc
+	if pc == nil {
+		return
+	}
+
+	select {
+	case p.chPool <- pc:
+	default:
+		if !pc.ch.IsClosed() {
+			pc.ch.Close()
+		}
 	}
 }
 
-// Close gracefully shuts down all channels in the pool
+// Close gracefully shuts down the publisher and all channels.
 func (p *Publisher) Close() {
 	p.once.Do(func() {
 		close(p.chPool)
 		for pc := range p.chPool {
-			if pc != nil && pc.ch != nil {
+			if pc != nil && !pc.ch.IsClosed() {
 				pc.ch.Close()
 			}
 		}

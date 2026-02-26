@@ -45,17 +45,18 @@ func Basic(cfg config.ServerConfig) gin.HandlerFunc {
 	)
 }
 
-func GetTokenClaims(c *gin.Context) (*token.TokenClaims, error) {
+func GetTokenClaims(c *gin.Context) (token.TokenClaims, error) {
+	var empty token.TokenClaims
 	value, exists := c.Get(claimsKey)
 	if !exists {
-		return nil, pkg.ErrUnauthorized
+		return empty, pkg.ErrUnauthorized
 	}
-	token, ok := value.(*token.TokenClaims)
+	token, ok := value.(token.TokenClaims)
 	if !ok {
-		return nil, pkg.ErrUnauthorized
+		return empty, pkg.ErrUnauthorized
 	}
 	if token.UserID <= 0 {
-		return nil, pkg.ErrUnauthorized
+		return empty, pkg.ErrUnauthorized
 	}
 	return token, nil
 }
