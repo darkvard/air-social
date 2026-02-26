@@ -596,24 +596,27 @@ func (s *authUseCaseSuite) TestRefreshToken() {
 			wantErr: pkg.ErrUnauthorized,
 		},
 		{
-			name: "rotate_revoke_error",
+			name: "generate_access_token_error",
 			setupMock: func(deps testDeps) {
 				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
 				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(storedToken, nil).Once()
 				deps.tokenProvider.EXPECT().VerifyRefreshToken(*storedToken).Return(true, nil).Once()
-				deps.tokenRepo.EXPECT().UpdateRevoked(mock.Anything, tokenID).Return(assert.AnError).Once()
+				deps.tokenProvider.EXPECT().GenerateRefreshToken().Return(newRefreshToken).Once()
+				deps.tokenProvider.EXPECT().GenerateAccessToken(userID, deviceID).Return(token.AccessTokenResult{}, assert.AnError).Once()
 			},
 			wantErr: pkg.ErrInternal,
 		},
 		{
-			name: "rotate_access_token_error",
+			name: "rotate_token_repo_error",
 			setupMock: func(deps testDeps) {
 				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
 				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(storedToken, nil).Once()
 				deps.tokenProvider.EXPECT().VerifyRefreshToken(*storedToken).Return(true, nil).Once()
-				deps.tokenRepo.EXPECT().UpdateRevoked(mock.Anything, tokenID).Return(nil).Once()
 				deps.tokenProvider.EXPECT().GenerateRefreshToken().Return(newRefreshToken).Once()
-				deps.tokenProvider.EXPECT().GenerateAccessToken(userID, deviceID).Return(token.AccessTokenResult{}, assert.AnError).Once()
+				deps.tokenProvider.EXPECT().GenerateAccessToken(userID, deviceID).Return(newAccessToken, nil).Once()
+				deps.tokenRepo.EXPECT().RotateToken(mock.Anything, tokenID, mock.MatchedBy(func(t *token.RefreshToken) bool {
+					return t.UserID == userID && t.TokenHash == newRefreshToken.Hashed
+				})).Return(assert.AnError).Once()
 			},
 			wantErr: pkg.ErrInternal,
 		},
@@ -623,9 +626,11 @@ func (s *authUseCaseSuite) TestRefreshToken() {
 				deps.tokenProvider.EXPECT().HashToken(rawRefreshToken).Return(hashedToken).Once()
 				deps.tokenRepo.EXPECT().GetByHash(mock.Anything, hashedToken).Return(storedToken, nil).Once()
 				deps.tokenProvider.EXPECT().VerifyRefreshToken(*storedToken).Return(true, nil).Once()
-				deps.tokenRepo.EXPECT().UpdateRevoked(mock.Anything, tokenID).Return(nil).Once()
 				deps.tokenProvider.EXPECT().GenerateRefreshToken().Return(newRefreshToken).Once()
 				deps.tokenProvider.EXPECT().GenerateAccessToken(userID, deviceID).Return(newAccessToken, nil).Once()
+				deps.tokenRepo.EXPECT().RotateToken(mock.Anything, tokenID, mock.MatchedBy(func(t *token.RefreshToken) bool {
+					return t.UserID == userID && t.TokenHash == newRefreshToken.Hashed
+				})).Return(nil).Once()
 			},
 			wantErr: nil,
 		},

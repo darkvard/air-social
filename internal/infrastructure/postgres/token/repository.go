@@ -66,3 +66,34 @@ func (r *repository) UpdateRevokedByDevice(ctx context.Context, userID int64, de
 	}
 	return nil
 }
+
+func (r *repository) RotateToken(ctx context.Context, oldTokenID int64, newToken *token.RefreshToken) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	defer tx.Rollback()
+
+	// revoke
+	revokeQuery := `UPDATE refresh_tokens SET revoked_at = $1 WHERE id = $2`
+	if _, err := tx.ExecContext(ctx, revokeQuery, pkg.TimeNowUTC(), oldTokenID); err != nil {
+		return pkg.MapPostgresError(err)
+	}
+
+	// insert
+	insertQuery := `
+		INSERT INTO refresh_tokens (user_id, token_hash, expires_at, device_id)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at
+	`
+	args := []any{newToken.UserID, newToken.TokenHash, newToken.ExpiresAt, newToken.DeviceID}
+	if err := tx.QueryRowContext(ctx, insertQuery, args...).Scan(&newToken.ID, &newToken.CreatedAt); err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	
+	// commit
+	if err := tx.Commit(); err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	return nil
+}

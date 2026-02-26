@@ -68,8 +68,6 @@ func NewConsumer(deps Deps, event common.EventType) *Consumer {
 }
 
 func (c *Consumer) Start(ctx context.Context, wg *sync.WaitGroup) error {
-	pkg.Log().Infof("Consumer started for queue:", c.qCfg.Queue)
-
 	ch, err := topology.PrepareConsumerChannel(c.conn, c.eCfg, c.qCfg)
 	if err != nil {
 		return err

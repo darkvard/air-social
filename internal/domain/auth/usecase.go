@@ -64,10 +64,7 @@ func (u *usecase) Register(ctx context.Context, params RegisterParams) (*user.Us
 	if err != nil {
 		return nil, err
 	}
-	err = u.verifyProvider.SendVerification(ctx, arg.Email, arg.Username)
-	if err != nil {
-		pkg.Log().Errorw("rabbitmq", "err", err.Error())
-	}
+	_ = u.verifyProvider.SendVerification(ctx, arg.Email, arg.Username)
 
 	return result, nil
 }
@@ -200,15 +197,22 @@ func (u *usecase) validateRefreshToken(ctx context.Context, token token.RefreshT
 	return nil
 }
 
-func (u *usecase) rotateToken(ctx context.Context, token token.RefreshToken) (TokenResult, error) {
+func (u *usecase) rotateToken(ctx context.Context, oldToken token.RefreshToken) (TokenResult, error) {
 	var empty TokenResult
-	if err := u.tokenRepo.UpdateRevoked(ctx, token.ID); err != nil {
+
+	refreshToken := u.tokenProvider.GenerateRefreshToken()
+	accessToken, err := u.tokenProvider.GenerateAccessToken(oldToken.UserID, oldToken.DeviceID)
+	if err != nil {
 		return empty, pkg.ErrInternal
 	}
 
-	refreshToken := u.tokenProvider.GenerateRefreshToken()
-	accessToken, err := u.tokenProvider.GenerateAccessToken(token.UserID, token.DeviceID)
-	if err != nil {
+	if err := u.tokenRepo.RotateToken(ctx, oldToken.ID, &token.RefreshToken{
+		UserID:    oldToken.UserID,
+		DeviceID:  oldToken.DeviceID,
+		TokenHash: refreshToken.Hashed,
+		ExpiresAt: refreshToken.ExpiresAt,
+		CreatedAt: pkg.TimeNowUTC(),
+	}); err != nil {
 		return empty, pkg.ErrInternal
 	}
 

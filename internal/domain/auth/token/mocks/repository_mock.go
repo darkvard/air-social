@@ -163,6 +163,69 @@ func (_c *MockRepository_GetByHash_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// RotateToken provides a mock function for the type MockRepository
+func (_mock *MockRepository) RotateToken(ctx context.Context, oldTokenID int64, newToken *token.RefreshToken) error {
+	ret := _mock.Called(ctx, oldTokenID, newToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RotateToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, *token.RefreshToken) error); ok {
+		r0 = returnFunc(ctx, oldTokenID, newToken)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_RotateToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RotateToken'
+type MockRepository_RotateToken_Call struct {
+	*mock.Call
+}
+
+// RotateToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - oldTokenID int64
+//   - newToken *token.RefreshToken
+func (_e *MockRepository_Expecter) RotateToken(ctx interface{}, oldTokenID interface{}, newToken interface{}) *MockRepository_RotateToken_Call {
+	return &MockRepository_RotateToken_Call{Call: _e.mock.On("RotateToken", ctx, oldTokenID, newToken)}
+}
+
+func (_c *MockRepository_RotateToken_Call) Run(run func(ctx context.Context, oldTokenID int64, newToken *token.RefreshToken)) *MockRepository_RotateToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 *token.RefreshToken
+		if args[2] != nil {
+			arg2 = args[2].(*token.RefreshToken)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_RotateToken_Call) Return(err error) *MockRepository_RotateToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_RotateToken_Call) RunAndReturn(run func(ctx context.Context, oldTokenID int64, newToken *token.RefreshToken) error) *MockRepository_RotateToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateRevoked provides a mock function for the type MockRepository
 func (_mock *MockRepository) UpdateRevoked(ctx context.Context, tokenID int64) error {
 	ret := _mock.Called(ctx, tokenID)
