@@ -39,11 +39,11 @@ func (r *repository) Delete(ctx context.Context, followerID int64, followeeID in
 }
 
 func (r *repository) CountFollowings(ctx context.Context, userID int64) (int64, error) {
-	return r.count(ctx, "followee_id", userID)
+	return r.count(ctx, "follower_id", userID)
 }
 
 func (r *repository) CountFollowers(ctx context.Context, userID int64) (int64, error) {
-	return r.count(ctx, "follower_id", userID)
+	return r.count(ctx, "followee_id", userID)
 }
 
 func (r *repository) GetFollowers(ctx context.Context, params follow.GetFollowsParams) ([]follow.FollowUser, int64, error) {
@@ -154,8 +154,13 @@ func (r *repository) GetRelationships(ctx context.Context, userID int64, targetI
 
 func (r *repository) fetchFollows(ctx context.Context, query string, params follow.GetFollowsParams) ([]follow.FollowUser, int64, error) {
 	type row struct {
-		follow.FollowUser
-		TotalCount int64 `db:"total_count"`
+		ID          int64  `db:"id"`
+		FullName    string `db:"full_name"`
+		Avatar      string `db:"avatar"`
+		IsVerified  bool   `db:"verified"`
+		IsFollowing bool   `db:"is_following"`
+		IsFollower  bool   `db:"is_follower"`
+		TotalCount  int64  `db:"total_count"`
 	}
 
 	var rows []row
@@ -176,14 +181,29 @@ func (r *repository) fetchFollows(ctx context.Context, query string, params foll
 	total := rows[0].TotalCount
 	users := make([]follow.FollowUser, len(rows))
 	for i, v := range rows {
-		users[i] = v.FollowUser
+		users[i] = follow.FollowUser{
+			ID:         v.ID,
+			FullName:   v.FullName,
+			Avatar:     v.Avatar,
+			IsVerified: v.IsVerified,
+			Relationship: follow.Relationship{
+				IsFollowing: v.IsFollowing,
+				IsFollower:  v.IsFollower,
+			},
+		}
 	}
 
 	return users, total, nil
 }
 
-func (r *repository) count(ctx context.Context, whereCol string, userID int64) (int64, error) {
-	query := fmt.Sprintf("SELECT COUNT(*) FROM follows WHERE %s = $1", whereCol)
+func (r *repository) count(ctx context.Context, column string, userID int64) (int64, error) {
+	var query string
+	switch column {
+	case "follower_id", "followee_id":
+		query = fmt.Sprintf("SELECT COUNT(*) FROM follows WHERE %s = $1", column)
+	default:
+		return 0, fmt.Errorf("invalid column for count: %s", column)
+	}
 	var total int64
 	err := r.db.GetContext(ctx, &total, query, userID)
 	return total, err

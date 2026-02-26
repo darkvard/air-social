@@ -14,7 +14,7 @@ type Health struct {
 
 func NewHealth(client *minio.Client, bucketName string) *Health {
 	return &Health{
-		Client:           client,
+		Client:     client,
 		bucketName: bucketName,
 	}
 }

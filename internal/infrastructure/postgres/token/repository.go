@@ -90,7 +90,7 @@ func (r *repository) RotateToken(ctx context.Context, oldTokenID int64, newToken
 	if err := tx.QueryRowContext(ctx, insertQuery, args...).Scan(&newToken.ID, &newToken.CreatedAt); err != nil {
 		return pkg.MapPostgresError(err)
 	}
-	
+
 	// commit
 	if err := tx.Commit(); err != nil {
 		return pkg.MapPostgresError(err)

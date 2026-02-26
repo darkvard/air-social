@@ -108,6 +108,7 @@ func (p *Publisher) createChannel() (*pubChannel, error) {
 // for broker confirmation (ACK/NACK or Return).
 //
 // Flow:
+//
 //	acquire channel
 //	resolve routing key
 //	publish

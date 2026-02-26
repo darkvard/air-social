@@ -13,7 +13,7 @@ type system struct {
 
 func newSystemProvider(route common.RouteProvider) *system {
 	u := &system{route: route}
-	u. Print()
+	u.Print()
 	return u
 }
 
