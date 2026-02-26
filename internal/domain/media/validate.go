@@ -54,7 +54,7 @@ func validateConfirmParams(input ConfirmParams) error {
 	expectedPrefix := fmt.Sprintf("%s/%d/%s/", input.Domain, input.EntityID, input.Feature)
 
 	if !strings.HasPrefix(input.ObjectKey, expectedPrefix) {
-		return fmt.Errorf("object key mismatch (expected prefix: %s): %w", expectedPrefix, pkg.ErrForbidden)
+		return fmt.Errorf("object key mismatch (expected prefix: %s): %w", expectedPrefix, pkg.ErrBadRequest)
 	}
 
 	return nil

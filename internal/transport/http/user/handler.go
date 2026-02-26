@@ -250,11 +250,3 @@ func (h Handler) toUserResponse(user user.User) UserResponse {
 		Version:   user.Version,
 	}
 }
-
-// todo:
-//  - handler: remove package dto, handler (old)
-//	- usecase: add unit tests
-//	- service: remove services (old)
-//	- domain: remove files...
-//	- test: test all api
-//

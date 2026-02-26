@@ -95,7 +95,7 @@ func (u *profileUseCase) updateImageUrl(
 
 	keys, err := u.media.ConfirmUpload(ctx, []media.ConfirmParams{params})
 	if err != nil || len(keys) == 0 {
-		return pkg.OrInternalError(err, pkg.ErrBadRequest)
+		return pkg.OrInternalError(err, pkg.ErrBadRequest, pkg.ErrNotFound)
 	}
 
 	if err := updateFunc(ctx, params.EntityID, keys[0]); err != nil {

@@ -15,8 +15,8 @@ func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 		{
 			json.PATCH("", h.UpdateProfile)
 			json.PUT("/password", h.ChangePassword)
-			json.POST("/avatar", h.UpdateAvatar)
-			json.POST("/cover", h.UpdateCover)
+			json.PUT("/avatar", h.UpdateAvatar)
+			json.PUT("/cover", h.UpdateCover)
 		}
 	}
 }
