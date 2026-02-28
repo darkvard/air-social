@@ -5,6 +5,8 @@
 package mocks
 
 import (
+	"context"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -33,4 +35,256 @@ type MockUseCase_Expecter struct {
 
 func (_m *MockUseCase) EXPECT() *MockUseCase_Expecter {
 	return &MockUseCase_Expecter{mock: &_m.Mock}
+}
+
+// LikeComment provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) LikeComment(ctx context.Context, commentID int64, userID int64) error {
+	ret := _mock.Called(ctx, commentID, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LikeComment")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
+		r0 = returnFunc(ctx, commentID, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUseCase_LikeComment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LikeComment'
+type MockUseCase_LikeComment_Call struct {
+	*mock.Call
+}
+
+// LikeComment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - commentID int64
+//   - userID int64
+func (_e *MockUseCase_Expecter) LikeComment(ctx interface{}, commentID interface{}, userID interface{}) *MockUseCase_LikeComment_Call {
+	return &MockUseCase_LikeComment_Call{Call: _e.mock.On("LikeComment", ctx, commentID, userID)}
+}
+
+func (_c *MockUseCase_LikeComment_Call) Run(run func(ctx context.Context, commentID int64, userID int64)) *MockUseCase_LikeComment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_LikeComment_Call) Return(err error) *MockUseCase_LikeComment_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUseCase_LikeComment_Call) RunAndReturn(run func(ctx context.Context, commentID int64, userID int64) error) *MockUseCase_LikeComment_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// LikePost provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) LikePost(ctx context.Context, postID int64, userID int64) error {
+	ret := _mock.Called(ctx, postID, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LikePost")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
+		r0 = returnFunc(ctx, postID, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUseCase_LikePost_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LikePost'
+type MockUseCase_LikePost_Call struct {
+	*mock.Call
+}
+
+// LikePost is a helper method to define mock.On call
+//   - ctx context.Context
+//   - postID int64
+//   - userID int64
+func (_e *MockUseCase_Expecter) LikePost(ctx interface{}, postID interface{}, userID interface{}) *MockUseCase_LikePost_Call {
+	return &MockUseCase_LikePost_Call{Call: _e.mock.On("LikePost", ctx, postID, userID)}
+}
+
+func (_c *MockUseCase_LikePost_Call) Run(run func(ctx context.Context, postID int64, userID int64)) *MockUseCase_LikePost_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_LikePost_Call) Return(err error) *MockUseCase_LikePost_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUseCase_LikePost_Call) RunAndReturn(run func(ctx context.Context, postID int64, userID int64) error) *MockUseCase_LikePost_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UnlikeComment provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) UnlikeComment(ctx context.Context, commentID int64, userID int64) error {
+	ret := _mock.Called(ctx, commentID, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnlikeComment")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
+		r0 = returnFunc(ctx, commentID, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUseCase_UnlikeComment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UnlikeComment'
+type MockUseCase_UnlikeComment_Call struct {
+	*mock.Call
+}
+
+// UnlikeComment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - commentID int64
+//   - userID int64
+func (_e *MockUseCase_Expecter) UnlikeComment(ctx interface{}, commentID interface{}, userID interface{}) *MockUseCase_UnlikeComment_Call {
+	return &MockUseCase_UnlikeComment_Call{Call: _e.mock.On("UnlikeComment", ctx, commentID, userID)}
+}
+
+func (_c *MockUseCase_UnlikeComment_Call) Run(run func(ctx context.Context, commentID int64, userID int64)) *MockUseCase_UnlikeComment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_UnlikeComment_Call) Return(err error) *MockUseCase_UnlikeComment_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUseCase_UnlikeComment_Call) RunAndReturn(run func(ctx context.Context, commentID int64, userID int64) error) *MockUseCase_UnlikeComment_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UnlikePost provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) UnlikePost(ctx context.Context, postID int64, userID int64) error {
+	ret := _mock.Called(ctx, postID, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnlikePost")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
+		r0 = returnFunc(ctx, postID, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUseCase_UnlikePost_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UnlikePost'
+type MockUseCase_UnlikePost_Call struct {
+	*mock.Call
+}
+
+// UnlikePost is a helper method to define mock.On call
+//   - ctx context.Context
+//   - postID int64
+//   - userID int64
+func (_e *MockUseCase_Expecter) UnlikePost(ctx interface{}, postID interface{}, userID interface{}) *MockUseCase_UnlikePost_Call {
+	return &MockUseCase_UnlikePost_Call{Call: _e.mock.On("UnlikePost", ctx, postID, userID)}
+}
+
+func (_c *MockUseCase_UnlikePost_Call) Run(run func(ctx context.Context, postID int64, userID int64)) *MockUseCase_UnlikePost_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_UnlikePost_Call) Return(err error) *MockUseCase_UnlikePost_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUseCase_UnlikePost_Call) RunAndReturn(run func(ctx context.Context, postID int64, userID int64) error) *MockUseCase_UnlikePost_Call {
+	_c.Call.Return(run)
+	return _c
 }

@@ -5,6 +5,7 @@ import (
 	"air-social/internal/transport/http/comment"
 	"air-social/internal/transport/http/follow"
 	"air-social/internal/transport/http/health"
+	"air-social/internal/transport/http/like"
 	"air-social/internal/transport/http/media"
 	"air-social/internal/transport/http/post"
 	"air-social/internal/transport/http/user"
@@ -18,6 +19,7 @@ type Handler struct {
 	Follow  follow.Handler
 	Post    post.Handler
 	Comment comment.Handler
+	Like    like.Handler
 }
 
 func NewHandler(prov Provider, usecase UseCase) Handler {
@@ -30,5 +32,6 @@ func NewHandler(prov Provider, usecase UseCase) Handler {
 		Follow:  follow.NewHandler(link, usecase.Follow),
 		Post:    post.NewHandler(link, usecase.Post),
 		Comment: comment.NewHandler(link, usecase.Comment),
+		Like:    like.NewHandler(usecase.Like),
 	}
 }

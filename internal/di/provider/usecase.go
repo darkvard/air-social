@@ -43,6 +43,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	authUC := getAuthUseCase(deps, userUC.Fetch, userUC.Account)
 	followUC := getFollowUseCase(deps, userUC.Fetch)
 	postUC := getPostUseCase(deps, mediaUC)
+	likeUC := getLikeUseCase(deps)
 
 	return UseCase{
 		Health:  healthUC,
@@ -52,7 +53,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 		Follow:  followUC,
 		Post:    postUC,
 		Comment: nil,
-		Like:    nil,
+		Like:    likeUC,
 	}
 }
 
@@ -130,6 +131,11 @@ func getCommentUseCase() comment.UseCase {
 	return nil
 }
 
-func getLikeUseCase() like.UseCase {
-	return nil
+func getLikeUseCase(deps UseCaseDeps) like.UseCase {
+	return like.NewUsecase(
+		like.Deps{
+			Repo:  deps.Repo.Like,
+			Event: deps.Adapter.EventPub,
+		},
+	)
 }

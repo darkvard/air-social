@@ -761,6 +761,71 @@ paths:
       summary: Verify email address
       tags:
       - Auth
+  /comments/{id}/likes:
+    delete:
+      consumes:
+      - application/json
+      description: Unlike a comment
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Unlike a comment
+      tags:
+      - Like
+    post:
+      consumes:
+      - application/json
+      description: Like a comment
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Like a comment
+      tags:
+      - Like
   /health:
     get:
       description: Check the health status of the application components
@@ -842,7 +907,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pkg.ValidationResult'
+            $ref: '#/definitions/pkg.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -950,7 +1015,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pkg.ValidationResult'
+            $ref: '#/definitions/pkg.Response'
         "403":
           description: Forbidden
           schema:
@@ -964,6 +1029,71 @@ paths:
       summary: Update a post
       tags:
       - Post
+  /posts/{id}/likes:
+    delete:
+      consumes:
+      - application/json
+      description: Unlike a post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Unlike a post
+      tags:
+      - Like
+    post:
+      consumes:
+      - application/json
+      description: Like a post
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Like a post
+      tags:
+      - Like
   /users/{id}/follow:
     delete:
       consumes:
@@ -1174,7 +1304,7 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pkg.ValidationResult'
+            $ref: '#/definitions/pkg.Response'
         "500":
           description: Internal Server Error
           schema:
