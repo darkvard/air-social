@@ -33,7 +33,24 @@ ps: ## List containers
 debug: ## Start services in debug mode
 	docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d	
 
-## Utils
+## ===================== DEV WORKFLOW ======================
+
+.PHONY: infra
+infra: ## Start only dependencies (DB, Redis, MQ, Nginx, MinIO)
+	@echo "🏗️  Starting infrastructure..."
+	@docker compose up -d db redis rabbitmq nginx minio
+
+.PHONY: app-up
+app-up: ## Start/Restart App container only
+	@echo "🚀 Starting App container..."
+	@docker compose up -d app
+
+.PHONY: app-down
+app-down: ## Stop App container only
+	@echo "🛑 Stopping App container..."
+	@docker compose stop app
+
+## ===================== Utils ======================
 
 .PHONY: sh-app
 sh-app: ## Open shell in app container
