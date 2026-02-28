@@ -37,7 +37,7 @@ type ErrorMsg struct {
 }
 
 func (e ErrorMsg) Error() string {
-	return e.Msg
+	return e.Msg // Return client-facing message by default for simple printing
 }
 
 func (e ErrorMsg) Unwrap() error {
@@ -170,38 +170,50 @@ func HandleValidateError(c *gin.Context, err error) {
 // to the appropriate HTTP status codes and JSON responses.
 // It acts as a centralized error translation layer to ensure consistent API behavior.
 func HandleServiceError(c *gin.Context, err error) {
-	msg := err.Error()
+	// 1. Determine Client Message and Root Cause
+	var (
+		clientMsg = err.Error() // Default to error message
+		rootErr   = err         // Default to original error
+		appErr    *ErrorMsg     // Custom wrapper check
+	)
 
+	// If wrapped with pkg.NewError, extract the custom message and the inner error
+	if errors.As(err, &appErr) {
+		clientMsg = appErr.Msg
+		rootErr = appErr.Err
+	}
+
+	// 2. Map Root Cause to HTTP Status
 	switch {
 	// 401 Unauthorized
-	case errors.Is(err, ErrUnauthorized), errors.Is(err, ErrInvalidCredentials):
-		Unauthorized(c, msg)
+	case errors.Is(rootErr, ErrUnauthorized), errors.Is(rootErr, ErrInvalidCredentials):
+		Unauthorized(c, clientMsg)
 
 	// 403 Forbidden
-	case errors.Is(err, ErrForbidden):
-		Forbidden(c, msg)
+	case errors.Is(rootErr, ErrForbidden):
+		Forbidden(c, clientMsg)
 
 	// 409 Conflict
-	case errors.Is(err, ErrAlreadyExists):
-		Conflict(c, msg)
+	case errors.Is(rootErr, ErrAlreadyExists):
+		Conflict(c, clientMsg)
 
 	// 404 Not Found
-	case errors.Is(err, ErrNotFound):
-		NotFound(c, msg)
+	case errors.Is(rootErr, ErrNotFound):
+		NotFound(c, clientMsg)
 
 	// 413 Payload Too Large
-	case errors.Is(err, ErrFileTooLarge):
-		EntityTooLarge(c, msg)
+	case errors.Is(rootErr, ErrFileTooLarge):
+		EntityTooLarge(c, clientMsg)
 
 	// 400 Bad Request
-	case errors.Is(err, ErrBadRequest),
-		errors.Is(err, ErrInvalidData),
-		errors.Is(err, ErrSamePassword):
-		BadRequest(c, msg)
+	case errors.Is(rootErr, ErrBadRequest),
+		errors.Is(rootErr, ErrInvalidData),
+		errors.Is(rootErr, ErrSamePassword):
+		BadRequest(c, clientMsg)
 
 	// 500 Internal Server Error
 	default:
-		Log().Errorw("[SERVICE ERROR]", "error", err)
+		Log().Errorw("internal server error", "error", err)
 		InternalError(c, "an unexpected error occurred")
 	}
 }

@@ -304,7 +304,7 @@ func (s *mediaUseCaseSuite) TestConfirmUpload() {
 				}},
 			},
 			setupMock: func(deps testDeps) {},
-			wantErr:   pkg.ErrForbidden,
+			wantErr:   pkg.ErrBadRequest,
 		},
 		{
 			name: "storage_error",

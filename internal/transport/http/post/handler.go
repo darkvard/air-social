@@ -33,7 +33,7 @@ func NewHandler(provider common.LinkProvider, usecase post.UseCase) Handler {
 //	@Security		BearerAuth
 //	@Param			request	body		CreateRequest	true	"Create Post Request"
 //	@Success		201		{object}	CreateResponse
-//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		400		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/posts [post]
 func (h Handler) CreatePost(c *gin.Context) {
@@ -122,7 +122,7 @@ func (h Handler) GetPost(c *gin.Context) {
 //	@Param			cursor	query		int	false	"Cursor for pagination (last post ID)"
 //	@Param			limit	query		int	false	"Number of items to return"
 //	@Success		200		{object}	CursorPaginatedResponse[PostResponse]
-//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		400		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/users/{id}/posts [get]
 func (h Handler) GetUserPosts(c *gin.Context) {
@@ -159,7 +159,7 @@ func (h Handler) GetUserPosts(c *gin.Context) {
 //	@Param			id		path		int				true	"Post ID"
 //	@Param			request	body		UpdateRequest	true	"Update Post Request"
 //	@Success		200		{object}	PostResponse
-//	@Failure		400		{object}	pkg.ValidationResult
+//	@Failure		400		{object}	pkg.Response
 //	@Failure		403		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/posts/{id} [patch]
@@ -198,9 +198,6 @@ func (h Handler) UpdatePost(c *gin.Context) {
 
 	post, err := h.usecase.UpdatePost(c.Request.Context(), params)
 	if err != nil {
-		if errors.Is(err, pkg.ErrNotFound) {
-			err = pkg.NewError(pkg.ErrBadRequest, "post or media not found")
-		}
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -327,5 +324,3 @@ func (h Handler) toPostListResponse(result common.CursorPaginatedResult[post.Pos
 		},
 	}
 }
-
-// note: recovery can log lai

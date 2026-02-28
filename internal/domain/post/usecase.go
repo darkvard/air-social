@@ -2,6 +2,7 @@ package post
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"air-social/internal/domain/common"
@@ -40,7 +41,10 @@ func NewUseCase(deps Deps) *usecase {
 func (u *usecase) GetPostDetail(ctx context.Context, postID, viewerID int64) (*Post, error) {
 	post, err := u.postRepo.GetDetail(ctx, postID)
 	if err != nil {
-		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+		if errors.Is(err, pkg.ErrNotFound) {
+			return nil, pkg.NewError(err, "post not found")
+		}
+		return nil, pkg.OrInternalError(err)
 	}
 
 	// todo map isLiked, count.....
@@ -62,7 +66,10 @@ func (u *usecase) CreatePost(ctx context.Context, params CreateParams) (*Post, e
 	if len(params.Media) > 0 {
 		media, err := u.validateMedia(ctx, params.Media)
 		if err != nil {
-			return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+			if errors.Is(err, pkg.ErrNotFound) {
+				return nil, pkg.NewError(pkg.ErrBadRequest, "media validation failed")
+			}
+			return nil, pkg.OrInternalError(err)
 		}
 		post.Media = media
 	}
@@ -88,7 +95,10 @@ func (u *usecase) UpdatePost(ctx context.Context, params UpdateParams) (*Post, e
 	if params.Media != nil {
 		media, err := u.validateMedia(ctx, params.Media)
 		if err != nil {
-			return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+			if errors.Is(err, pkg.ErrNotFound) {
+				return nil, pkg.NewError(pkg.ErrBadRequest, "media items not found or invalid")
+			}
+			return nil, pkg.OrInternalError(err)
 		}
 		post.Media = media // update
 	} else {
@@ -146,8 +156,12 @@ func (u *usecase) validateMedia(ctx context.Context, params []MediaParams) ([]Me
 func (u *usecase) getPostOwner(ctx context.Context, postID, viewerID int64) (*Post, error) {
 	post, err := u.postRepo.GetByID(ctx, postID)
 	if err != nil {
-		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+		if errors.Is(err, pkg.ErrNotFound) {
+			return nil, pkg.NewError(err, "post not found")
+		}
+		return nil, pkg.OrInternalError(err)
 	}
+
 	if post.UserID != viewerID {
 		return nil, pkg.ErrForbidden
 	}

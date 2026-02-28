@@ -70,6 +70,8 @@ func MapPostgresError(err error) error {
 		return ErrConflict
 	}
 
+	// LOGGING: Log unmapped database errors (e.g. connection issues, syntax errors)
+	Log().Errorw("database error", "code", pgCode(err), "error", err)
 	return err
 }
 

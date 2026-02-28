@@ -55,7 +55,7 @@ func NewServer(
 func setupEngine() *gin.Engine {
 	e := gin.New()
 	e.Use(gin.Logger())
-	e.Use(gin.Recovery())
+	e.Use(middleware.Recovery())
 	e.SetTrustedProxies(nil)
 	e.HandleMethodNotAllowed = true
 

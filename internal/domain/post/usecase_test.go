@@ -177,7 +177,7 @@ func (s *postUseCaseSuite) TestCreatePost() {
 					Once()
 			},
 			want:    nil,
-			wantErr: pkg.ErrNotFound,
+			wantErr: pkg.ErrBadRequest,
 		},
 		{
 			name: "repo_create_error",
@@ -383,7 +383,7 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 					Once()
 			},
 			want:    nil,
-			wantErr: pkg.ErrNotFound,
+			wantErr: pkg.ErrBadRequest,
 		},
 		{
 			name: "repo_update_error",
