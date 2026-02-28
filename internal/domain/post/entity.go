@@ -17,15 +17,15 @@ type Post struct {
 	UserID         int64
 	Content        string
 	Visibility     Visibility
-	OriginalPostID *int64
 	Version        int32
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      *time.Time
+	OriginalPostID *int64
 
-	IsLiked bool
 	Media   []Media
 	Stat    Stat
+	IsLiked *bool
 	Author  *Author
 }
 

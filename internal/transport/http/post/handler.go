@@ -1,6 +1,8 @@
 package post
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain/common"
@@ -62,6 +64,9 @@ func (h Handler) CreatePost(c *gin.Context) {
 
 	post, err := h.usecase.CreatePost(c.Request.Context(), params)
 	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			err = pkg.NewError(pkg.ErrBadRequest, "media not found")
+		}
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -156,7 +161,6 @@ func (h Handler) GetUserPosts(c *gin.Context) {
 //	@Success		200		{object}	PostResponse
 //	@Failure		400		{object}	pkg.ValidationResult
 //	@Failure		403		{object}	pkg.Response
-//	@Failure		404		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/posts/{id} [patch]
 func (h Handler) UpdatePost(c *gin.Context) {
@@ -185,8 +189,18 @@ func (h Handler) UpdatePost(c *gin.Context) {
 		Visibility: (*post.Visibility)(req.Visibility),
 	}
 
+	if req.Media != nil {
+		params.Media = make([]post.MediaParams, len(req.Media))
+		for i, v := range req.Media {
+			params.Media[i] = h.toMediaParams(v)
+		}
+	}
+
 	post, err := h.usecase.UpdatePost(c.Request.Context(), params)
 	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			err = pkg.NewError(pkg.ErrBadRequest, "post or media not found")
+		}
 		pkg.HandleServiceError(c, err)
 		return
 	}
@@ -269,6 +283,21 @@ func (h Handler) toMediaItemResponse(media []post.Media) []MediaItemResponse {
 }
 
 func (h Handler) toPostResponse(post *post.Post) PostResponse {
+	var author *UserResponse
+	if post.Author != nil {
+		author = &UserResponse{
+			ID:         post.Author.ID,
+			Fullname:   post.Author.FullName,
+			Avatar:     h.provider.PublicFile(post.Author.Avatar),
+			IsVerified: post.Author.IsVerified,
+		}
+	}
+
+	var viewerLiked *bool
+	if post.IsLiked != nil {
+		viewerLiked = post.IsLiked
+	}
+
 	return PostResponse{
 		ID:            post.ID,
 		Content:       post.Content,
@@ -276,16 +305,11 @@ func (h Handler) toPostResponse(post *post.Post) PostResponse {
 		LikesCount:    post.Stat.LikesCount,
 		CommentsCount: post.Stat.CommentsCount,
 		SharesCount:   post.Stat.SharesCount,
-		IsLiked:       post.IsLiked,
 		CreatedAt:     post.CreatedAt,
 		UpdatedAt:     post.UpdatedAt,
-		User: UserResponse{
-			ID:         post.Author.ID,
-			Fullname:   post.Author.FullName,
-			Avatar:     h.provider.PublicFile(post.Author.Avatar),
-			IsVerified: post.Author.IsVerified,
-		},
-		Media: h.toMediaItemResponse(post.Media),
+		Media:         h.toMediaItemResponse(post.Media),
+		User:          author,
+		IsLiked:       viewerLiked,
 	}
 }
 
@@ -303,3 +327,5 @@ func (h Handler) toPostListResponse(result common.CursorPaginatedResult[post.Pos
 		},
 	}
 }
+
+// note: recovery can log lai

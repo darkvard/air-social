@@ -274,10 +274,13 @@ definitions:
   internal_transport_http_post.MediaItemInput:
     properties:
       duration:
+        minimum: 0
         type: integer
       file_name:
+        maxLength: 255
         type: string
       height:
+        minimum: 0
         type: integer
       media_key:
         type: string
@@ -291,10 +294,13 @@ definitions:
       size:
         type: integer
       width:
+        minimum: 0
         type: integer
     required:
+    - file_name
     - media_key
     - media_type
+    - size
     type: object
   internal_transport_http_post.MediaItemResponse:
     properties:
@@ -351,6 +357,11 @@ definitions:
     properties:
       content:
         type: string
+      media:
+        items:
+          $ref: '#/definitions/internal_transport_http_post.MediaItemInput'
+        maxItems: 10
+        type: array
       visibility:
         enum:
         - public
@@ -942,10 +953,6 @@ paths:
             $ref: '#/definitions/pkg.ValidationResult'
         "403":
           description: Forbidden
-          schema:
-            $ref: '#/definitions/pkg.Response'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/pkg.Response'
         "500":

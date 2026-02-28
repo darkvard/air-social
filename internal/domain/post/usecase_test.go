@@ -297,20 +297,20 @@ func (s *postUseCaseSuite) TestCreatePost() {
 
 func (s *postUseCaseSuite) TestUpdatePost() {
 	var (
-		postID      = int64(1)
-		userID      = int64(10)
-		otherUserID = int64(99)
-		newContent  = "Updated Content"
+		postID        = int64(1)
+		userID        = int64(10)
+		otherUserID   = int64(99)
+		newContent    = "Updated Content"
+		newVisibility = post.VisibilityFollowers
 	)
 
-	existingPost := &post.Post{
-		ID:      postID,
-		UserID:  userID,
-		Content: "Old Content",
+	mediaParams := []post.MediaParams{
+		{MediaKey: "new-key", MediaType: "image/jpeg"},
 	}
 
 	type testDeps struct {
-		repo *postmocks.MockRepository
+		repo     *postmocks.MockRepository
+		verifier *postmocks.MockMediaVerifier
 	}
 
 	type args struct {
@@ -355,11 +355,35 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, postID).
-					Return(existingPost, nil).
+					Return(&post.Post{ID: postID, UserID: userID}, nil).
 					Once()
 			},
 			want:    nil,
 			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name: "media_verification_failed",
+			args: args{
+				ctx: context.Background(),
+				params: post.UpdateParams{
+					PostID: postID,
+					UserID: userID,
+					Media:  mediaParams,
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, postID).
+					Return(&post.Post{ID: postID, UserID: userID}, nil).
+					Once()
+
+				deps.verifier.EXPECT().
+					VerifyMedia(mock.Anything, []string{"new-key"}).
+					Return(pkg.ErrNotFound).
+					Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrNotFound,
 		},
 		{
 			name: "repo_update_error",
@@ -374,7 +398,7 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, postID).
-					Return(existingPost, nil).
+					Return(&post.Post{ID: postID, UserID: userID, Content: "Old"}, nil).
 					Once()
 
 				deps.repo.EXPECT().
@@ -388,7 +412,7 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 			wantErr: pkg.ErrInternal,
 		},
 		{
-			name: "success",
+			name: "success_content_only",
 			args: args{
 				ctx: context.Background(),
 				params: post.UpdateParams{
@@ -400,20 +424,103 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, postID).
-					Return(existingPost, nil).
+					Return(&post.Post{ID: postID, UserID: userID, Content: "Old", Visibility: post.VisibilityPublic}, nil).
 					Once()
 
 				deps.repo.EXPECT().
 					Update(mock.Anything, mock.MatchedBy(func(p *post.Post) bool {
-						return p.ID == postID && p.Content == newContent
+						return p.ID == postID && p.Content == newContent && p.Media == nil
 					})).
 					Return(nil).
 					Once()
 			},
 			want: &post.Post{
-				ID:      postID,
-				UserID:  userID,
-				Content: newContent,
+				ID:         postID,
+				UserID:     userID,
+				Content:    newContent,
+				Visibility: post.VisibilityPublic, // Ensure visibility is preserved
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success_with_media_and_visibility",
+			args: args{
+				ctx: context.Background(),
+				params: post.UpdateParams{
+					PostID:     postID,
+					UserID:     userID,
+					Visibility: &newVisibility,
+					Media:      mediaParams,
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, postID).
+					Return(&post.Post{ID: postID, UserID: userID, Content: "Old Content", Visibility: post.VisibilityPublic}, nil).
+					Once()
+
+				deps.verifier.EXPECT().
+					VerifyMedia(mock.Anything, []string{"new-key"}).
+					Return(nil).
+					Once()
+
+				deps.repo.EXPECT().
+					Update(mock.Anything, mock.MatchedBy(func(p *post.Post) bool {
+						return p.ID == postID &&
+							p.Visibility == newVisibility &&
+							len(p.Media) == 1 &&
+							p.Media[0].MediaKey == "new-key"
+					})).
+					Return(nil).
+					Once()
+			},
+			want: &post.Post{
+				ID:         postID,
+				UserID:     userID,
+				Content:    "Old Content", // Ensure content is preserved
+				Visibility: newVisibility,
+				Media: []post.Media{
+					{MediaKey: "new-key", MediaType: "image/jpeg"},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success_clear_media",
+			args: args{
+				ctx: context.Background(),
+				params: post.UpdateParams{
+					PostID: postID,
+					UserID: userID,
+					Media:  []post.MediaParams{},
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, postID).
+					Return(&post.Post{
+						ID:     postID,
+						UserID: userID,
+						Media:  []post.Media{{MediaKey: "old"}},
+					}, nil).
+					Once()
+
+				deps.verifier.EXPECT().
+					VerifyMedia(mock.Anything, []string{}).
+					Return(nil).
+					Once()
+
+				deps.repo.EXPECT().
+					Update(mock.Anything, mock.MatchedBy(func(p *post.Post) bool {
+						return p.ID == postID && p.Media != nil && len(p.Media) == 0
+					})).
+					Return(nil).
+					Once()
+			},
+			want: &post.Post{
+				ID:     postID,
+				UserID: userID,
+				Media:  []post.Media{},
 			},
 			wantErr: nil,
 		},
@@ -425,7 +532,8 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
 
 			deps := testDeps{
-				repo: mockRepo,
+				repo:     mockRepo,
+				verifier: mockVerifier,
 			}
 
 			uc := post.NewUseCase(post.Deps{
@@ -444,7 +552,19 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 				s.Nil(got)
 			} else {
 				s.NoError(err)
-				s.Equal(tc.want.Content, got.Content)
+				if tc.want.Content != "" {
+					s.Equal(tc.want.Content, got.Content)
+				}
+				if tc.want.Visibility != "" {
+					s.Equal(tc.want.Visibility, got.Visibility)
+				}
+				if tc.want.Media != nil {
+					s.Equal(len(tc.want.Media), len(got.Media))
+					if len(tc.want.Media) > 0 {
+						s.Equal(tc.want.Media[0].MediaKey, got.Media[0].MediaKey)
+						s.Equal(tc.want.Media[0].MediaType, got.Media[0].MediaType)
+					}
+				}
 			}
 		})
 	}

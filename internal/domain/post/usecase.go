@@ -85,6 +85,15 @@ func (u *usecase) UpdatePost(ctx context.Context, params UpdateParams) (*Post, e
 	if params.Visibility != nil {
 		post.Visibility = Visibility(*params.Visibility)
 	}
+	if params.Media != nil {
+		media, err := u.validateMedia(ctx, params.Media)
+		if err != nil {
+			return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+		}
+		post.Media = media // update
+	} else {
+		post.Media = nil // skip
+	}
 
 	if err := u.postRepo.Update(ctx, post); err != nil {
 		return nil, pkg.ErrInternal

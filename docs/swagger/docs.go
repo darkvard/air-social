@@ -720,12 +720,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/pkg.Response"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1713,18 +1707,23 @@ const docTemplate = `{
         "internal_transport_http_post.MediaItemInput": {
             "type": "object",
             "required": [
+                "file_name",
                 "media_key",
-                "media_type"
+                "media_type",
+                "size"
             ],
             "properties": {
                 "duration": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "file_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255
                 },
                 "height": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "media_key": {
                     "type": "string"
@@ -1742,7 +1741,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "width": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 }
             }
         },
@@ -1829,6 +1829,13 @@ const docTemplate = `{
             "properties": {
                 "content": {
                     "type": "string"
+                },
+                "media": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_post.MediaItemInput"
+                    }
                 },
                 "visibility": {
                     "type": "string",

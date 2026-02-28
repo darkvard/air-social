@@ -24,6 +24,7 @@ type UpdateParams struct {
 	PostID     int64
 	Content    *string
 	Visibility *Visibility
+	Media      []MediaParams
 }
 
 type GetCursorParams struct {

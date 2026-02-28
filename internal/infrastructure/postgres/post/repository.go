@@ -38,17 +38,40 @@ func (r *repository) Create(ctx context.Context, post *post.Post) error {
 }
 
 func (r *repository) Update(ctx context.Context, post *post.Post) error {
-	query := `
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	defer tx.Rollback()
+
+	if err := tx.QueryRowContext(ctx, `
         UPDATE posts 
         SET content = $1, visibility = $2, updated_at = $3, version = version + 1
         WHERE id = $4 AND version = $5 AND deleted_at IS NULL
         RETURNING updated_at, version
-    `
-	now := pkg.TimeNowUTC()
-	args := []any{post.Content, post.Visibility, now, post.ID, post.Version}
+    `,
+		post.Content,
+		string(post.Visibility),
+		pkg.TimeNowUTC(),
+		post.ID,
+		post.Version,
+	).Scan(&post.UpdatedAt, &post.Version); err != nil {
+		return pkg.MapPostgresError(err)
+	}
 
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&post.UpdatedAt, &post.Version)
-	return pkg.MapPostgresError(err)
+	if post.Media != nil {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM post_media WHERE post_id = $1`, post.ID); err != nil {
+			return pkg.MapPostgresError(err)
+		}
+		if err := r.insertMedia(ctx, tx, post.ID, post.Media); err != nil {
+			return pkg.MapPostgresError(err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return pkg.MapPostgresError(err)
+	}
+	return nil
 }
 
 func (r *repository) Delete(ctx context.Context, id int64) error {
@@ -60,12 +83,12 @@ func (r *repository) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *repository) GetByID(ctx context.Context, postID int64) (*post.Post, error) {
-	var result post.Post
+	var table PostTable
 	query := `SELECT * FROM posts WHERE id = $1 AND deleted_at IS NULL`
-	if err := r.db.GetContext(ctx, &result, query, postID); err != nil {
+	if err := r.db.GetContext(ctx, &table, query, postID); err != nil {
 		return nil, pkg.MapPostgresError(err)
 	}
-	return &result, nil
+	return table.ToDomain(), nil
 }
 
 func (r *repository) GetDetail(ctx context.Context, postID int64) (*post.Post, error) {

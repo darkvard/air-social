@@ -20,16 +20,17 @@ type CreateRequest struct {
 type MediaItemInput struct {
 	MediaKey  string `json:"media_key" binding:"required"`
 	MediaType string `json:"media_type" binding:"required,oneof=image video audio document"`
-	Width     int32  `json:"width"`
-	Height    int32  `json:"height"`
-	Duration  int32  `json:"duration"`
-	Size      int64  `json:"size"`
-	FileName  string `json:"file_name"`
+	Width     int32  `json:"width" binding:"omitempty,min=0"`
+	Height    int32  `json:"height" binding:"omitempty,min=0"`
+	Duration  int32  `json:"duration" binding:"omitempty,min=0"`
+	Size      int64  `json:"size" binding:"required,gt=0"`
+	FileName  string `json:"file_name" binding:"required,max=255"`
 }
 
 type UpdateRequest struct {
-	Content    *string `json:"content" binding:"omitempty"`
-	Visibility *string `json:"visibility" binding:"omitempty,oneof=public followers private"`
+	Content    *string          `json:"content" binding:"omitempty"`
+	Visibility *string          `json:"visibility" binding:"omitempty,oneof=public followers private"`
+	Media      []MediaItemInput `json:"media" binding:"omitempty,max=10,dive"`
 }
 
 type CursorQueryParams struct {
@@ -65,9 +66,9 @@ type PostResponse struct {
 	SharesCount   int32               `json:"shares_count"`
 	CreatedAt     time.Time           `json:"created_at"`
 	UpdatedAt     time.Time           `json:"updated_at"`
-	IsLiked       bool                `json:"is_liked"`
-	User          UserResponse        `json:"author"`
 	Media         []MediaItemResponse `json:"media"`
+	IsLiked       *bool               `json:"is_liked,omitempty"`
+	User          *UserResponse       `json:"author,omitempty"`
 }
 
 type MediaItemResponse struct {
