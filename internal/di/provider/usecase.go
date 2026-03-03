@@ -24,8 +24,8 @@ type UseCase struct {
 	Media   media.UseCase
 	Follow  follow.UseCase
 	Post    post.UseCase
-	Comment comment.UseCase
 	Like    like.UseCase
+	Comment comment.UseCase
 }
 
 type UseCaseDeps struct {
@@ -44,6 +44,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	followUC := getFollowUseCase(deps, userUC.Fetch)
 	postUC := getPostUseCase(deps, mediaUC)
 	likeUC := getLikeUseCase(deps)
+	commentUC := getCommentUseCase(deps)
 
 	return UseCase{
 		Health:  healthUC,
@@ -52,8 +53,8 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 		Media:   mediaUC,
 		Follow:  followUC,
 		Post:    postUC,
-		Comment: nil,
 		Like:    likeUC,
+		Comment: commentUC,
 	}
 }
 
@@ -127,8 +128,8 @@ func getPostUseCase(deps UseCaseDeps, mediaVerifier post.MediaVerifier) post.Use
 	)
 }
 
-func getCommentUseCase() comment.UseCase {
-	return nil
+func getCommentUseCase(deps UseCaseDeps) comment.UseCase {
+	return comment.NewUseCase(deps.Repo.Comment)
 }
 
 func getLikeUseCase(deps UseCaseDeps) like.UseCase {

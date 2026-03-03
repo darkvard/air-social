@@ -18,6 +18,7 @@ type Comment struct {
 
 	IsLiked bool
 	Stat    Stat
+	Author  Author
 }
 
 type Media struct {
@@ -30,4 +31,11 @@ type Stat struct {
 	LikesCount   int32
 	RepliesCount int32
 	UpdatedAt    time.Time
+}
+
+type Author struct {
+	ID         int64
+	Username   string
+	Avatar     string
+	IsVerified bool
 }

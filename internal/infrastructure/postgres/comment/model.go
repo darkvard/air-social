@@ -1,58 +1,26 @@
 package comment
 
-import (
-	"database/sql/driver"
-	"encoding/json"
-	"errors"
+import "air-social/internal/domain/comment"
 
-	"air-social/internal/domain/comment"
-)
-
-type Media []Metadata
-
-type Metadata struct {
-	URL  string `json:"url"`
-	Type string `json:"type"`
+type CommentRow struct {
+	CommentTable
+	Author
 }
 
-func (m Media) Value() (driver.Value, error) {
-	if len(m) == 0 {
-		return nil, nil
-	}
-	return json.Marshal(m)
+type Author struct {
+	AuthorID int64  `db:"author_id"`
+	Fullname string `db:"author_full_name"`
+	Avatar   string `db:"author_avatar"`
+	Verified bool   `db:"author_verified"`
 }
 
-func (m *Media) Scan(value any) error {
-	if value == nil {
-		*m = nil
-		return nil
+func (r *CommentRow) ToDomain() *comment.Comment {
+	c := r.CommentTable.ToDomain()  
+	c.Author = comment.Author{
+		ID:         r.AuthorID,
+		Username:   r.Fullname,
+		Avatar:     r.Avatar,
+		IsVerified: r.Verified,
 	}
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion failed")
-	}
-	return json.Unmarshal(b, m)
-}
-
-func (m Media) ToDomain() []comment.Media {
-	media := make([]comment.Media, len(m))
-	for i, v := range m {
-		media[i] = comment.Media{
-			URL:  v.URL,
-			Type: v.Type,
-		}
-	}
-	return media
-}
-
-func FromDomainMedia(d []comment.Media) Media {
-	media := make([]Metadata, len(d))
-	for i, v := range d {
-		media[i] = Metadata{
-			URL:  v.URL,
-			Type: v.Type,
-		}
-	}
-	return media
-
+	return c
 }
