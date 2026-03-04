@@ -155,6 +155,58 @@ definitions:
       verified:
         type: boolean
     type: object
+  internal_transport_http_comment.CreateRequest:
+    properties:
+      content:
+        maxLength: 1000
+        type: string
+      media:
+        items:
+          $ref: '#/definitions/internal_transport_http_comment.MediaItemInput'
+        maxItems: 4
+        type: array
+      parent_id:
+        type: integer
+    required:
+    - content
+    type: object
+  internal_transport_http_comment.CreateResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      media:
+        items:
+          $ref: '#/definitions/internal_transport_http_comment.MediaItemResponse'
+        type: array
+      parent_id:
+        type: integer
+    type: object
+  internal_transport_http_comment.MediaItemInput:
+    properties:
+      media_key:
+        type: string
+      media_type:
+        enum:
+        - image
+        - video
+        - audio
+        - document
+        type: string
+    required:
+    - media_key
+    - media_type
+    type: object
+  internal_transport_http_comment.MediaItemResponse:
+    properties:
+      media_type:
+        type: string
+      url:
+        type: string
+    type: object
   internal_transport_http_follow.UserFollowResponse:
     properties:
       avatar:
@@ -1029,6 +1081,43 @@ paths:
       summary: Update a post
       tags:
       - Post
+  /posts/{id}/comments:
+    post:
+      consumes:
+      - application/json
+      description: Create a new comment on a post or reply to an existing comment.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Create Comment Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_comment.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_transport_http_comment.CreateResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Create a new comment
+      tags:
+      - Comment
   /posts/{id}/likes:
     delete:
       consumes:

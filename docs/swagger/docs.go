@@ -831,6 +831,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/posts/{id}/comments": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new comment on a post or reply to an existing comment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "Create a new comment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Create Comment Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_comment.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_comment.CreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/posts/{id}/likes": {
             "post": {
                 "security": [
@@ -1731,6 +1789,83 @@ const docTemplate = `{
                 },
                 "verified": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_transport_http_comment.CreateRequest": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "media": {
+                    "type": "array",
+                    "maxItems": 4,
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_comment.MediaItemInput"
+                    }
+                },
+                "parent_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_transport_http_comment.CreateResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_comment.MediaItemResponse"
+                    }
+                },
+                "parent_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_transport_http_comment.MediaItemInput": {
+            "type": "object",
+            "required": [
+                "media_key",
+                "media_type"
+            ],
+            "properties": {
+                "media_key": {
+                    "type": "string"
+                },
+                "media_type": {
+                    "type": "string",
+                    "enum": [
+                        "image",
+                        "video",
+                        "audio",
+                        "document"
+                    ]
+                }
+            }
+        },
+        "internal_transport_http_comment.MediaItemResponse": {
+            "type": "object",
+            "properties": {
+                "media_type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },

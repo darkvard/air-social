@@ -109,7 +109,7 @@ func (h Handler) LikeComment(c *gin.Context) {
 
 	var path PathIDParam
 	if err := c.ShouldBindUri(&path); err != nil {
-		pkg.BadRequest(c, "invalid comment id") 
+		pkg.BadRequest(c, "invalid comment id")
 		return
 	}
 

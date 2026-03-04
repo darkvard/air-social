@@ -234,6 +234,78 @@ func (_c *MockUseCase_GetFollowings_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// GetRelationship provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetRelationship(ctx context.Context, userID int64, targetID int64) (follow.Relationship, error) {
+	ret := _mock.Called(ctx, userID, targetID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRelationship")
+	}
+
+	var r0 follow.Relationship
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (follow.Relationship, error)); ok {
+		return returnFunc(ctx, userID, targetID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) follow.Relationship); ok {
+		r0 = returnFunc(ctx, userID, targetID)
+	} else {
+		r0 = ret.Get(0).(follow.Relationship)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = returnFunc(ctx, userID, targetID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUseCase_GetRelationship_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRelationship'
+type MockUseCase_GetRelationship_Call struct {
+	*mock.Call
+}
+
+// GetRelationship is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID int64
+//   - targetID int64
+func (_e *MockUseCase_Expecter) GetRelationship(ctx interface{}, userID interface{}, targetID interface{}) *MockUseCase_GetRelationship_Call {
+	return &MockUseCase_GetRelationship_Call{Call: _e.mock.On("GetRelationship", ctx, userID, targetID)}
+}
+
+func (_c *MockUseCase_GetRelationship_Call) Run(run func(ctx context.Context, userID int64, targetID int64)) *MockUseCase_GetRelationship_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_GetRelationship_Call) Return(relationship follow.Relationship, err error) *MockUseCase_GetRelationship_Call {
+	_c.Call.Return(relationship, err)
+	return _c
+}
+
+func (_c *MockUseCase_GetRelationship_Call) RunAndReturn(run func(ctx context.Context, userID int64, targetID int64) (follow.Relationship, error)) *MockUseCase_GetRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Unfollow provides a mock function for the type MockUseCase
 func (_mock *MockUseCase) Unfollow(ctx context.Context, followerID int64, followeeID int64) error {
 	ret := _mock.Called(ctx, followerID, followeeID)

@@ -102,7 +102,7 @@ func (r *repository) GetReplies(ctx context.Context, parentID int64, params comm
 
 func (r *repository) fetchComments(ctx context.Context, params comment.GetCursorParams, baseCondition string, baseArgs ...any) ([]comment.Comment, error) {
 	var args []any
-    args = append(args, baseArgs...)
+	args = append(args, baseArgs...)
 	argID := len(args) + 1
 
 	var builder strings.Builder

@@ -55,8 +55,6 @@ func FromDomainComment(d *comment.Comment) *CommentTable {
 	}
 }
 
-
-
 type Media []Metadata
 
 type Metadata struct {
@@ -87,8 +85,8 @@ func (m Media) ToDomain() []comment.Media {
 	media := make([]comment.Media, len(m))
 	for i, v := range m {
 		media[i] = comment.Media{
-			URL:  v.URL,
-			Type: v.Type,
+			MediaKey:  v.URL,
+			MediaType: v.Type,
 		}
 	}
 	return media
@@ -98,8 +96,8 @@ func FromDomainMedia(d []comment.Media) Media {
 	media := make([]Metadata, len(d))
 	for i, v := range d {
 		media[i] = Metadata{
-			URL:  v.URL,
-			Type: v.Type,
+			URL:  v.MediaKey,
+			Type: v.MediaType,
 		}
 	}
 	return media

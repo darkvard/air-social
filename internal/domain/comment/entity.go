@@ -21,9 +21,13 @@ type Comment struct {
 	Author  Author
 }
 
+func (c Comment) GetCursor() int64 {
+	return c.ID
+}
+
 type Media struct {
-	URL  string
-	Type string
+	MediaKey  string
+	MediaType string
 }
 
 type Stat struct {

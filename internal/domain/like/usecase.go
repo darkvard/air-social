@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"air-social/internal/domain/common"  
+	"air-social/internal/domain/common"
 	"air-social/pkg"
 )
 
