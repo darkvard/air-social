@@ -22,7 +22,7 @@ func (c CreateParams) GetMediaKeys() []string {
 
 type UpdateParams struct {
 	CommentID, UserID int64
-	Content           string
+	Content           *string
 	Media             []Media
 }
 

@@ -155,6 +155,21 @@ definitions:
       verified:
         type: boolean
     type: object
+  internal_transport_http_comment.CommentResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      media:
+        items:
+          $ref: '#/definitions/internal_transport_http_comment.MediaItemResponse'
+        type: array
+      parent_id:
+        type: integer
+    type: object
   internal_transport_http_comment.CreateRequest:
     properties:
       content:
@@ -170,21 +185,6 @@ definitions:
         type: integer
     required:
     - content
-    type: object
-  internal_transport_http_comment.CreateResponse:
-    properties:
-      content:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: integer
-      media:
-        items:
-          $ref: '#/definitions/internal_transport_http_comment.MediaItemResponse'
-        type: array
-      parent_id:
-        type: integer
     type: object
   internal_transport_http_comment.MediaItemInput:
     properties:
@@ -207,6 +207,17 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  internal_transport_http_comment.UpdateRequest:
+    properties:
+      content:
+        maxLength: 1000
+        type: string
+      media:
+        items:
+          $ref: '#/definitions/internal_transport_http_comment.MediaItemInput'
+        maxItems: 4
+        type: array
     type: object
   internal_transport_http_follow.UserFollowResponse:
     properties:
@@ -851,6 +862,51 @@ paths:
       summary: Delete a comment
       tags:
       - Comment
+    patch:
+      consumes:
+      - application/json
+      description: Update a comment's content and/or media. Only the author can update
+        their comment.
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update Comment Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_comment.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_comment.CommentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a comment
+      tags:
+      - Comment
   /comments/{id}/likes:
     delete:
       consumes:
@@ -1142,7 +1198,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_transport_http_comment.CreateResponse'
+            $ref: '#/definitions/internal_transport_http_comment.CommentResponse'
         "400":
           description: Bad Request
           schema:

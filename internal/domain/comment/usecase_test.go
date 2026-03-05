@@ -469,3 +469,198 @@ func (s *commentUseCaseSuite) TestDeleteComment() {
 		})
 	}
 }
+
+func (s *commentUseCaseSuite) TestUpdateComment() {
+	var (
+		commentID   int64 = 1
+		userID      int64 = 10
+		otherUserID int64 = 99
+		oldContent        = "Old content"
+		newContent        = "New content"
+		oldMedia          = []comment.Media{{MediaKey: "old.jpg", MediaType: "image"}}
+		newMediaParam     = []comment.Media{{MediaKey: "new.jpg", MediaType: "image"}}
+	)
+
+	type testDeps struct {
+		repo          *commentmocks.MockRepository
+		mediaVerifier *commentmocks.MockMediaVerifier
+	}
+
+	tests := []struct {
+		name      string
+		args      comment.UpdateParams
+		setupMock func(deps testDeps)
+		want      *comment.Comment
+		wantErr   error
+	}{
+		{
+			name: "fail_comment_not_found",
+			args: comment.UpdateParams{CommentID: commentID, UserID: userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(nil, pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name: "fail_forbidden",
+			args: comment.UpdateParams{CommentID: commentID, UserID: otherUserID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(&comment.Comment{ID: commentID, UserID: userID}, nil).Once()
+			},
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name: "fail_media_verification",
+			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: newMediaParam},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(&comment.Comment{ID: commentID, UserID: userID}, nil).Once()
+				deps.mediaVerifier.EXPECT().
+					VerifyMedia(mock.Anything, []string{"new.jpg"}).
+					Return(pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name: "fail_repo_update_error",
+			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Content: &newContent},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(&comment.Comment{ID: commentID, UserID: userID}, nil).Once()
+				deps.repo.EXPECT().
+					Update(mock.Anything, mock.Anything).
+					Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "success_update_content_only",
+			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Content: &newContent},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(&comment.Comment{
+						ID:      commentID,
+						UserID:  userID,
+						Content: oldContent,
+						Media:   oldMedia,
+					}, nil).Once()
+
+				deps.repo.EXPECT().
+					Update(mock.Anything, mock.MatchedBy(func(c *comment.Comment) bool {
+						return c.Content == newContent && len(c.Media) == 1 && c.Media[0].MediaKey == "old.jpg"
+					})).
+					Return(nil).Once()
+			},
+			want: &comment.Comment{
+				Content: newContent,
+				Media:   oldMedia,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success_update_media_only",
+			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: newMediaParam},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(&comment.Comment{
+						ID:      commentID,
+						UserID:  userID,
+						Content: oldContent,
+						Media:   oldMedia,
+					}, nil).Once()
+
+				deps.mediaVerifier.EXPECT().
+					VerifyMedia(mock.Anything, []string{"new.jpg"}).
+					Return(nil).Once()
+
+				deps.repo.EXPECT().
+					Update(mock.Anything, mock.MatchedBy(func(c *comment.Comment) bool {
+						return c.Content == oldContent && len(c.Media) == 1 && c.Media[0].MediaKey == "new.jpg"
+					})).
+					Return(nil).Once()
+			},
+			want: &comment.Comment{
+				Content: oldContent,
+				Media:   newMediaParam,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success_clear_media",
+			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: []comment.Media{}},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(&comment.Comment{
+						ID:      commentID,
+						UserID:  userID,
+						Content: oldContent,
+						Media:   oldMedia,
+					}, nil).Once()
+
+				deps.mediaVerifier.EXPECT().
+					VerifyMedia(mock.Anything, []string{}).
+					Return(nil).Once()
+
+				deps.repo.EXPECT().
+					Update(mock.Anything, mock.MatchedBy(func(c *comment.Comment) bool {
+						return c.Content == oldContent && len(c.Media) == 0
+					})).
+					Return(nil).Once()
+			},
+			want: &comment.Comment{
+				Content: oldContent,
+				Media:   []comment.Media{},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := commentmocks.NewMockRepository(s.T())
+			mockPostFetcher := commentmocks.NewMockPostFetcher(s.T())
+			mockFollowChecker := commentmocks.NewMockFollowChecker(s.T())
+			mockMediaVerifier := commentmocks.NewMockMediaVerifier(s.T())
+
+			deps := testDeps{
+				repo:          mockRepo,
+				mediaVerifier: mockMediaVerifier,
+			}
+
+			uc := comment.NewUseCase(comment.Deps{
+				CommentRepo:   mockRepo,
+				PostFetcher:   mockPostFetcher,
+				FollowChecker: mockFollowChecker,
+				MediaVerifier: mockMediaVerifier,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.UpdateComment(context.Background(), tc.args)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Nil(got)
+			} else {
+				s.NoError(err)
+				s.NotNil(got)
+				s.Equal(tc.want.Content, got.Content)
+				s.Equal(len(tc.want.Media), len(got.Media))
+				if len(tc.want.Media) > 0 {
+					s.Equal(tc.want.Media[0].MediaKey, got.Media[0].MediaKey)
+				}
+			}
+		})
+	}
+}

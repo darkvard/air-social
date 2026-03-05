@@ -470,6 +470,74 @@
                         }
                     }
                 }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a comment's content and/or media. Only the author can update their comment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "Update a comment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update Comment Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_comment.UpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_comment.CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
             }
         },
         "/comments/{id}/likes": {
@@ -923,7 +991,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/internal_transport_http_comment.CreateResponse"
+                            "$ref": "#/definitions/internal_transport_http_comment.CommentResponse"
                         }
                     },
                     "400": {
@@ -1844,6 +1912,29 @@
                 }
             }
         },
+        "internal_transport_http_comment.CommentResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_comment.MediaItemResponse"
+                    }
+                },
+                "parent_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_transport_http_comment.CreateRequest": {
             "type": "object",
             "required": [
@@ -1864,29 +1955,6 @@
                 "parent_id": {
                     "type": "integer",
                     "minimum": 1
-                }
-            }
-        },
-        "internal_transport_http_comment.CreateResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "media": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_transport_http_comment.MediaItemResponse"
-                    }
-                },
-                "parent_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -1919,6 +1987,22 @@
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_comment.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "media": {
+                    "type": "array",
+                    "maxItems": 4,
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_comment.MediaItemInput"
+                    }
                 }
             }
         },

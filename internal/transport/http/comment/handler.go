@@ -31,7 +31,7 @@ func NewHandler(provider common.LinkProvider, usecase comment.UseCase) Handler {
 //	@Security		BearerAuth
 //	@Param			id		path		int				true	"Post ID"
 //	@Param			request	body		CreateRequest	true	"Create Comment Request"
-//	@Success		201		{object}	CreateResponse
+//	@Success		201		{object}	CommentResponse
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/posts/{id}/comments [post]
@@ -59,16 +59,7 @@ func (h Handler) CreateComment(c *gin.Context) {
 		PostID:   path.ID,
 		Content:  req.Content,
 		ParentID: req.ParentID,
-	}
-
-	if len(req.Media) > 0 {
-		params.Media = make([]comment.Media, len(req.Media))
-		for i, v := range req.Media {
-			params.Media[i] = comment.Media{
-				MediaKey:  v.MediaKey,
-				MediaType: v.MediaType,
-			}
-		}
+		Media:    toMediaParams(req.Media),
 	}
 
 	result, err := h.usecase.CreateComment(c.Request.Context(), params)
@@ -77,15 +68,64 @@ func (h Handler) CreateComment(c *gin.Context) {
 		return
 	}
 
-	pkg.Created(c, h.toCreateResponse(result))
+	pkg.Created(c, h.toCommentResponse(result))
 }
 
 func (h Handler) GetComments(c *gin.Context) {
 
 }
 
+// UpdateComment godoc
+//
+//	@Summary		Update a comment
+//	@Description	Update a comment's content and/or media. Only the author can update their comment.
+//	@Tags			Comment
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int				true	"Comment ID"
+//	@Param			request	body		UpdateRequest	true	"Update Comment Request"
+//	@Success		200		{object}	CommentResponse
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		403		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/comments/{id} [patch]
 func (h Handler) UpdateComment(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
 
+	var path PathIDParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid comment id")
+		return
+	}
+
+	var req UpdateRequest
+	if err := pkg.StrictBindJSON(c, &req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	params := comment.UpdateParams{
+		CommentID: path.ID,
+		UserID:    claims.UserID,
+		Content:   req.Content,
+	}
+	if req.Media != nil {
+		params.Media = toMediaParams(req.Media)
+	}
+
+	updatedComment, err := h.usecase.UpdateComment(c.Request.Context(), params)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, h.toCommentResponse(updatedComment))
 }
 
 // DeleteComment godoc
@@ -128,12 +168,12 @@ func (h Handler) GetReplies(c *gin.Context) {
 
 }
 
-func (h Handler) toCreateResponse(c *comment.Comment) CreateResponse {
+func (h Handler) toCommentResponse(c *comment.Comment) CommentResponse {
 	if c == nil {
-		return CreateResponse{}
+		return CommentResponse{}
 	}
 
-	resp := CreateResponse{
+	resp := CommentResponse{
 		ID:        c.ID,
 		Content:   c.Content,
 		ParentID:  c.ParentID,
@@ -150,4 +190,18 @@ func (h Handler) toCreateResponse(c *comment.Comment) CreateResponse {
 		}
 	}
 	return resp
+}
+
+func toMediaParams(data []MediaItemInput) []comment.Media {
+	result := make([]comment.Media, len(data))
+	if data == nil {
+		return result
+	}
+	for i, v := range data {
+		result[i] = comment.Media{
+			MediaKey:  v.MediaKey,
+			MediaType: v.MediaType,
+		}
+	}
+	return result
 }

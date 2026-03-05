@@ -10,13 +10,13 @@ import (
 )
 
 type UseCase interface {
-	CreateComment(ctx context.Context, params CreateParams) (*Comment, error)
-
 	GetComments(ctx context.Context, postID int64, params GetCursorParams) ([]Comment, int64, error)
 
 	GetReplies(ctx context.Context, parentID int64, params GetCursorParams) ([]Comment, int64, error)
 
-	UpdateComment(ctx context.Context, params UpdateParams) error
+	CreateComment(ctx context.Context, params CreateParams) (*Comment, error)
+
+	UpdateComment(ctx context.Context, params UpdateParams) (*Comment, error)
 
 	DeleteComment(ctx context.Context, commentID, userID int64) error
 }
@@ -56,6 +56,63 @@ func NewUseCase(deps Deps) *usecase {
 	}
 }
 
+func (u *usecase) GetComments(ctx context.Context, postID int64, params GetCursorParams) ([]Comment, int64, error) {
+	return nil, -1, nil
+}
+
+func (u *usecase) GetReplies(ctx context.Context, parentID int64, params GetCursorParams) ([]Comment, int64, error) {
+	return nil, -1, nil
+}
+
+func (u *usecase) DeleteComment(ctx context.Context, commentID int64, userID int64) error {
+	comment, err := u.commentRepo.GetByID(ctx, commentID)
+	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			return pkg.NewError(pkg.ErrBadRequest, "comment not found")
+		}
+		return pkg.OrInternalError(err)
+	}
+
+	if comment.UserID != userID {
+		return pkg.NewError(pkg.ErrForbidden, "only the author has that right")
+	}
+
+	if err := u.commentRepo.Delete(ctx, comment.ID); err != nil {
+		return pkg.OrInternalError(err)
+	}
+	return nil
+}
+
+func (u *usecase) UpdateComment(ctx context.Context, params UpdateParams) (*Comment, error) {
+	comment, err := u.commentRepo.GetByID(ctx, params.CommentID)
+	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			return nil, pkg.NewError(pkg.ErrBadRequest, "comment not found")
+		}
+		return nil, pkg.OrInternalError(err)
+	}
+
+	if comment.UserID != params.UserID {
+		return nil, pkg.NewError(pkg.ErrForbidden, "only the author has that right")
+	}
+
+	if params.Content != nil {
+		comment.Content = *params.Content
+	}
+	if params.Media != nil {
+		res, err := u.validateMedia(ctx, params.Media)
+		if err != nil {
+			return nil, err
+		}
+		comment.Media = res
+	}
+
+	if err := u.commentRepo.Update(ctx, comment); err != nil {
+		return nil, pkg.OrInternalError(err)
+	}
+	return comment, nil
+}
+
 func (u *usecase) CreateComment(ctx context.Context, params CreateParams) (*Comment, error) {
 	_, err := u.validatePostVisibility(ctx, params.PostID, params.UserID)
 	if err != nil {
@@ -86,38 +143,6 @@ func (u *usecase) CreateComment(ctx context.Context, params CreateParams) (*Comm
 		return nil, pkg.OrInternalError(err)
 	}
 	return comment, nil
-}
-
-func (u *usecase) GetComments(ctx context.Context, postID int64, params GetCursorParams) ([]Comment, int64, error) {
-	return nil, -1, nil
-}
-
-func (u *usecase) GetReplies(ctx context.Context, parentID int64, params GetCursorParams) ([]Comment, int64, error) {
-	return nil, -1, nil
-}
-
-func (u *usecase) UpdateComment(ctx context.Context, params UpdateParams) error {
-	return nil
-}
-
-func (u *usecase) DeleteComment(ctx context.Context, commentID int64, userID int64) error {
-	comment, err := u.commentRepo.GetByID(ctx, commentID)
-	if err != nil {
-		if errors.Is(err, pkg.ErrNotFound) {
-			return pkg.NewError(pkg.ErrBadRequest, "comment not found")
-		}
-		return pkg.OrInternalError(err)
-	}
-
-	if comment.UserID != userID {
-		return pkg.NewError(pkg.ErrForbidden, "only the author has that right")
-	}
-
-	if err := u.commentRepo.Delete(ctx, comment.ID); err != nil {
-		return pkg.OrInternalError(err)
-	}
-
-	return nil
 }
 
 func (u *usecase) validatePostVisibility(ctx context.Context, postID, userID int64) (*post.Post, error) {
@@ -168,4 +193,21 @@ func (u *usecase) resolveParentID(ctx context.Context, parentID *int64, postID i
 	}
 
 	return parentID, nil
+}
+
+func (u *usecase) validateMedia(ctx context.Context, params []Media) ([]Media, error) {
+	size := len(params)
+	keys := make([]string, size)
+	for i, m := range params {
+		keys[i] = m.MediaKey
+	}
+
+	if err := u.mediaVerifier.VerifyMedia(ctx, keys); err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			return nil, pkg.NewError(pkg.ErrBadRequest, "media validation failed")
+		}
+		return nil, pkg.OrInternalError(err)
+	}
+
+	return params, nil
 }

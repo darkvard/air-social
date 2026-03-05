@@ -22,10 +22,15 @@ type MediaItemResponse struct {
 	MediaType string `json:"media_type"`
 }
 
-type CreateResponse struct {
+type CommentResponse struct {
 	ID        int64               `json:"id"`
 	Content   string              `json:"content"`
 	ParentID  *int64              `json:"parent_id,omitempty"`
 	CreatedAt time.Time           `json:"created_at"`
 	Media     []MediaItemResponse `json:"media,omitempty"`
+}
+
+type UpdateRequest struct {
+	Content *string          `json:"content" binding:"omitempty,max=1000"`
+	Media   []MediaItemInput `json:"media" binding:"omitempty,max=4,dive"`
 }
