@@ -101,6 +101,22 @@ func (u *usecase) UpdateComment(ctx context.Context, params UpdateParams) error 
 }
 
 func (u *usecase) DeleteComment(ctx context.Context, commentID int64, userID int64) error {
+	comment, err := u.commentRepo.GetByID(ctx, commentID)
+	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			return pkg.NewError(pkg.ErrBadRequest, "comment not found")
+		}
+		return pkg.OrInternalError(err)
+	}
+
+	if comment.UserID != userID {
+		return pkg.NewError(pkg.ErrForbidden, "only the author has that right")
+	}
+
+	if err := u.commentRepo.Delete(ctx, comment.ID); err != nil {
+		return pkg.OrInternalError(err)
+	}
+
 	return nil
 }
 

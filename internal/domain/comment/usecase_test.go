@@ -331,3 +331,141 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		})
 	}
 }
+
+func (s *commentUseCaseSuite) TestDeleteComment() {
+	var (
+		commentID int64 = 100
+		userID    int64 = 1
+		otherUser int64 = 2
+	)
+
+	ownComment := &comment.Comment{
+		ID:     commentID,
+		UserID: userID,
+	}
+
+	otherComment := &comment.Comment{
+		ID:     commentID,
+		UserID: otherUser,
+	}
+
+	type testDeps struct {
+		repo *commentmocks.MockRepository
+	}
+
+	tests := []struct {
+		name      string
+		args      struct {
+			ctx       context.Context
+			commentID int64
+			userID    int64
+		}
+		setupMock func(deps testDeps)
+		wantErr   error
+	}{
+		{
+			name: "success",
+			args: struct {
+				ctx       context.Context
+				commentID int64
+				userID    int64
+			}{context.Background(), commentID, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(ownComment, nil).Once()
+
+				deps.repo.EXPECT().
+					Delete(mock.Anything, commentID).
+					Return(nil).Once()
+			},
+			wantErr: nil,
+		},
+		{
+			name: "comment_not_found",
+			args: struct {
+				ctx       context.Context
+				commentID int64
+				userID    int64
+			}{context.Background(), commentID, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(nil, pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name: "repo_get_error",
+			args: struct {
+				ctx       context.Context
+				commentID int64
+				userID    int64
+			}{context.Background(), commentID, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(nil, assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "forbidden_not_owner",
+			args: struct {
+				ctx       context.Context
+				commentID int64
+				userID    int64
+			}{context.Background(), commentID, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(otherComment, nil).Once()
+			},
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name: "repo_delete_error",
+			args: struct {
+				ctx       context.Context
+				commentID int64
+				userID    int64
+			}{context.Background(), commentID, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, commentID).
+					Return(ownComment, nil).Once()
+
+				deps.repo.EXPECT().
+					Delete(mock.Anything, commentID).
+					Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := commentmocks.NewMockRepository(s.T())
+
+			deps := testDeps{
+				repo: mockRepo,
+			}
+
+			uc := comment.NewUseCase(comment.Deps{
+				CommentRepo: mockRepo,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			err := uc.DeleteComment(tc.args.ctx, tc.args.commentID, tc.args.userID)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}

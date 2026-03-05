@@ -1,7 +1,6 @@
 package comment
 
 import (
-
 	"github.com/gin-gonic/gin"
 
 	"air-social/internal/domain/comment"
@@ -89,8 +88,40 @@ func (h Handler) UpdateComment(c *gin.Context) {
 
 }
 
+// DeleteComment godoc
+//
+//	@Summary		Delete a comment
+//	@Description	Delete a comment by ID. Only the author can delete their comment.
+//	@Tags			Comment
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		int	true	"Comment ID"
+//	@Success		204	{object}	nil
+//	@Failure		400	{object}	pkg.Response
+//	@Failure		401	{object}	pkg.Response
+//	@Failure		403	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
+//	@Router			/comments/{id} [delete]
 func (h Handler) DeleteComment(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
 
+	var path PathIDParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid comment id")
+		return
+	}
+
+	if err := h.usecase.DeleteComment(c.Request.Context(), path.ID, claims.UserID); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.NoContent(c)
 }
 
 func (h Handler) GetReplies(c *gin.Context) {

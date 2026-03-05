@@ -166,6 +166,7 @@ definitions:
         maxItems: 4
         type: array
       parent_id:
+        minimum: 1
         type: integer
     required:
     - content
@@ -813,6 +814,43 @@ paths:
       summary: Verify email address
       tags:
       - Auth
+  /comments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a comment by ID. Only the author can delete their comment.
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a comment
+      tags:
+      - Comment
   /comments/{id}/likes:
     delete:
       consumes:
