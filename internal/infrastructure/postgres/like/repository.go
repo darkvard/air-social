@@ -71,3 +71,35 @@ func (r *repository) DeleteCommentLike(ctx context.Context, commentID, userID in
 	_, err := r.db.ExecContext(ctx, query, commentID, userID)
 	return pkg.MapPostgresError(err)
 }
+
+func (r *repository) GetPostLiked(ctx context.Context, postIDs []int64, userID int64) ([]int64, error) {
+	if len(postIDs) == 0 {
+		return nil, nil
+	}
+
+	query, args, err := sqlx.In(`SELECT post_id FROM post_likes WHERE user_id = ? AND post_id IN (?)`, userID, postIDs)
+	if err != nil {
+		return nil, err
+	}
+	query = r.db.Rebind(query)
+
+	var likedIDs []int64
+	err = r.db.SelectContext(ctx, &likedIDs, query, args...)
+	return likedIDs, pkg.MapPostgresError(err)
+}
+
+func (r *repository) GetCommentLiked(ctx context.Context, commentIDs []int64, userID int64) ([]int64, error) {
+	if len(commentIDs) == 0 {
+		return nil, nil
+	}
+
+	query, args, err := sqlx.In(`SELECT comment_id FROM comment_likes WHERE user_id = ? AND comment_id IN (?)`, userID, commentIDs)
+	if err != nil {
+		return nil, err
+	}
+	query = r.db.Rebind(query)
+
+	var likedIDs []int64
+	err = r.db.SelectContext(ctx, &likedIDs, query, args...)
+	return likedIDs, pkg.MapPostgresError(err)
+}

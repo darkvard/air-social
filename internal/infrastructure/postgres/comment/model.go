@@ -16,7 +16,7 @@ type Author struct {
 
 func (r *CommentRow) ToDomain() *comment.Comment {
 	c := r.CommentTable.ToDomain()
-	c.Author = comment.Author{
+	c.Author = &comment.Author{
 		ID:         r.AuthorID,
 		Username:   r.Fullname,
 		Avatar:     r.Avatar,

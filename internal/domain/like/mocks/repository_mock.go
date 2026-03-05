@@ -163,6 +163,154 @@ func (_c *MockRepository_DeletePostLike_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// GetCommentLiked provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCommentLiked(ctx context.Context, commentIDs []int64, userID int64) ([]int64, error) {
+	ret := _mock.Called(ctx, commentIDs, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCommentLiked")
+	}
+
+	var r0 []int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64, int64) ([]int64, error)); ok {
+		return returnFunc(ctx, commentIDs, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64, int64) []int64); ok {
+		r0 = returnFunc(ctx, commentIDs, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int64)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []int64, int64) error); ok {
+		r1 = returnFunc(ctx, commentIDs, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetCommentLiked_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentLiked'
+type MockRepository_GetCommentLiked_Call struct {
+	*mock.Call
+}
+
+// GetCommentLiked is a helper method to define mock.On call
+//   - ctx context.Context
+//   - commentIDs []int64
+//   - userID int64
+func (_e *MockRepository_Expecter) GetCommentLiked(ctx interface{}, commentIDs interface{}, userID interface{}) *MockRepository_GetCommentLiked_Call {
+	return &MockRepository_GetCommentLiked_Call{Call: _e.mock.On("GetCommentLiked", ctx, commentIDs, userID)}
+}
+
+func (_c *MockRepository_GetCommentLiked_Call) Run(run func(ctx context.Context, commentIDs []int64, userID int64)) *MockRepository_GetCommentLiked_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCommentLiked_Call) Return(int64s []int64, err error) *MockRepository_GetCommentLiked_Call {
+	_c.Call.Return(int64s, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCommentLiked_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64, userID int64) ([]int64, error)) *MockRepository_GetCommentLiked_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPostLiked provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetPostLiked(ctx context.Context, postIDs []int64, userID int64) ([]int64, error) {
+	ret := _mock.Called(ctx, postIDs, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPostLiked")
+	}
+
+	var r0 []int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64, int64) ([]int64, error)); ok {
+		return returnFunc(ctx, postIDs, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64, int64) []int64); ok {
+		r0 = returnFunc(ctx, postIDs, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int64)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []int64, int64) error); ok {
+		r1 = returnFunc(ctx, postIDs, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetPostLiked_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostLiked'
+type MockRepository_GetPostLiked_Call struct {
+	*mock.Call
+}
+
+// GetPostLiked is a helper method to define mock.On call
+//   - ctx context.Context
+//   - postIDs []int64
+//   - userID int64
+func (_e *MockRepository_Expecter) GetPostLiked(ctx interface{}, postIDs interface{}, userID interface{}) *MockRepository_GetPostLiked_Call {
+	return &MockRepository_GetPostLiked_Call{Call: _e.mock.On("GetPostLiked", ctx, postIDs, userID)}
+}
+
+func (_c *MockRepository_GetPostLiked_Call) Run(run func(ctx context.Context, postIDs []int64, userID int64)) *MockRepository_GetPostLiked_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetPostLiked_Call) Return(int64s []int64, err error) *MockRepository_GetPostLiked_Call {
+	_c.Call.Return(int64s, err)
+	return _c
+}
+
+func (_c *MockRepository_GetPostLiked_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64, userID int64) ([]int64, error)) *MockRepository_GetPostLiked_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // InsertCommentLike provides a mock function for the type MockRepository
 func (_mock *MockRepository) InsertCommentLike(ctx context.Context, commentID int64, userID int64) (bool, error) {
 	ret := _mock.Called(ctx, commentID, userID)

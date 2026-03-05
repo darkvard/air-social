@@ -14,6 +14,9 @@ type UseCase interface {
 	UnlikePost(ctx context.Context, postID, userID int64) error
 	LikeComment(ctx context.Context, commentID, userID int64) error
 	UnlikeComment(ctx context.Context, commentID, userID int64) error
+
+	IsPostLiked(ctx context.Context, postIDs []int64, userID int64) (map[int64]bool, error)
+	IsCommentLiked(ctx context.Context, commentIDs []int64, userID int64) (map[int64]bool, error)
 }
 
 type Deps struct {
@@ -48,6 +51,48 @@ func (u *usecase) LikePost(ctx context.Context, postID, userID int64) error {
 	}
 
 	return nil
+}
+
+func (u *usecase) IsPostLiked(ctx context.Context, postIDs []int64, userID int64) (map[int64]bool, error) {
+	if len(postIDs) == 0 {
+		return map[int64]bool{}, nil
+	}
+
+	likedIDs, err := u.repo.GetPostLiked(ctx, postIDs, userID)
+	if err != nil {
+		return nil, pkg.OrInternalError(err)
+	}
+
+	result := make(map[int64]bool, len(postIDs))
+	for _, id := range postIDs {
+		result[id] = false
+	}
+	for _, id := range likedIDs {
+		result[id] = true
+	}
+
+	return result, nil
+}
+
+func (u *usecase) IsCommentLiked(ctx context.Context, commentIDs []int64, userID int64) (map[int64]bool, error) {
+	if len(commentIDs) == 0 {
+		return map[int64]bool{}, nil
+	}
+
+	likedIDs, err := u.repo.GetCommentLiked(ctx, commentIDs, userID)
+	if err != nil {
+		return nil, pkg.OrInternalError(err)
+	}
+
+	result := make(map[int64]bool, len(commentIDs))
+	for _, id := range commentIDs {
+		result[id] = false
+	}
+	for _, id := range likedIDs {
+		result[id] = true
+	}
+
+	return result, nil
 }
 
 func (u *usecase) UnlikePost(ctx context.Context, postID, userID int64) error {

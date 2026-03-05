@@ -10,6 +10,7 @@ import (
 
 	"air-social/internal/domain/comment"
 	commentmocks "air-social/internal/domain/comment/mocks"
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/follow"
 	"air-social/internal/domain/post"
 	"air-social/pkg"
@@ -663,4 +664,153 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 			}
 		})
 	}
+}
+
+func (s *commentUseCaseSuite) TestGetComments() {
+	var (
+		postID int64 = 100
+		userID int64 = 1
+	)
+
+	params := comment.GetCursorParams{
+		UserID: userID,
+		Query: common.CursorQueryParams[int64]{
+			Limit: 10,
+		},
+	}
+
+	comments := []comment.Comment{
+		{ID: 1, PostID: postID, Content: "c1"},
+		{ID: 2, PostID: postID, Content: "c2"},
+	}
+
+	type testDeps struct {
+		repo *commentmocks.MockRepository
+		like *commentmocks.MockLikeChecker
+	}
+
+	tests := []struct {
+		name      string
+		args      struct {
+			ctx    context.Context
+			postID int64
+			params comment.GetCursorParams
+		}
+		setupMock func(deps testDeps)
+		wantLen   int
+		wantErr   error
+	}{
+		{
+			name: "success",
+			args: struct {
+				ctx    context.Context
+				postID int64
+				params comment.GetCursorParams
+			}{context.Background(), postID, params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetComments(mock.Anything, postID, mock.Anything).
+					Return(comments, nil).Once()
+
+				deps.like.EXPECT().
+					IsCommentLiked(mock.Anything, []int64{1, 2}, userID).
+					Return(map[int64]bool{1: true, 2: false}, nil).Once()
+			},
+			wantLen: 2,
+			wantErr: nil,
+		},
+		{
+			name: "repo_error",
+			args: struct {
+				ctx    context.Context
+				postID int64
+				params comment.GetCursorParams
+			}{context.Background(), postID, params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetComments(mock.Anything, postID, mock.Anything).
+					Return(nil, assert.AnError).Once()
+			},
+			wantLen: 0,
+			wantErr: pkg.ErrInternal,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := commentmocks.NewMockRepository(s.T())
+			mockLike := commentmocks.NewMockLikeChecker(s.T())
+			deps := testDeps{repo: mockRepo, like: mockLike}
+			uc := comment.NewUseCase(comment.Deps{
+				CommentRepo: mockRepo,
+				LikeChecker: mockLike,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.GetComments(tc.args.ctx, tc.args.postID, tc.args.params)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+				s.Len(got.Data, tc.wantLen)
+				if tc.wantLen > 0 {
+					// Verify IsLiked mapping from mock
+					s.NotNil(got.Data[0].IsLiked)
+					s.True(*got.Data[0].IsLiked)
+				}
+			}
+		})
+	}
+}
+
+func (s *commentUseCaseSuite) TestGetReplies() {
+	var (
+		parentID int64 = 50
+		userID   int64 = 1
+	)
+
+	params := comment.GetCursorParams{
+		UserID: userID,
+		Query: common.CursorQueryParams[int64]{
+			Limit: 10,
+		},
+	}
+
+	replies := []comment.Comment{
+		{ID: 51, ParentID: &parentID, Content: "r1"},
+	}
+
+	s.Run("success", func() {
+		mockRepo := commentmocks.NewMockRepository(s.T())
+		mockLike := commentmocks.NewMockLikeChecker(s.T())
+		uc := comment.NewUseCase(comment.Deps{CommentRepo: mockRepo, LikeChecker: mockLike})
+
+		mockRepo.EXPECT().
+			GetReplies(mock.Anything, parentID, mock.Anything).
+			Return(replies, nil).Once()
+
+		mockLike.EXPECT().
+			IsCommentLiked(mock.Anything, []int64{51}, userID).
+			Return(map[int64]bool{51: false}, nil).Once()
+
+		got, err := uc.GetReplies(context.Background(), parentID, params)
+		s.NoError(err)
+		s.Len(got.Data, 1)
+	})
+
+	s.Run("repo_error", func() {
+		mockRepo := commentmocks.NewMockRepository(s.T())
+		uc := comment.NewUseCase(comment.Deps{CommentRepo: mockRepo})
+
+		mockRepo.EXPECT().
+			GetReplies(mock.Anything, parentID, mock.Anything).
+			Return(nil, assert.AnError).Once()
+
+		_, err := uc.GetReplies(context.Background(), parentID, params)
+		s.ErrorIs(err, pkg.ErrInternal)
+	})
 }

@@ -648,6 +648,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/comments/{id}/replies": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of replies for a specific comment using cursor-based pagination.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "Get replies for a comment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Parent Comment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cursor for pagination (last comment ID)",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to return",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_comment.CursorPaginatedResponse-internal_transport_http_comment_CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "security": [
@@ -958,6 +1019,65 @@ const docTemplate = `{
             }
         },
         "/posts/{id}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of comments for a specific post using cursor-based pagination.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "Get comments for a post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cursor for pagination (last comment ID)",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to return",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_comment.CursorPaginatedResponse-internal_transport_http_comment_CommentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -1921,6 +2041,9 @@ const docTemplate = `{
         "internal_transport_http_comment.CommentResponse": {
             "type": "object",
             "properties": {
+                "author": {
+                    "$ref": "#/definitions/internal_transport_http_comment.UserResponse"
+                },
                 "content": {
                     "type": "string"
                 },
@@ -1929,6 +2052,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_liked": {
+                    "type": "boolean"
                 },
                 "media": {
                     "type": "array",
@@ -1964,6 +2090,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_transport_http_comment.CursorPaginatedResponse-internal_transport_http_comment_CommentResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_comment.CommentResponse"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/internal_transport_http_comment.MetaCursor"
+                }
+            }
+        },
         "internal_transport_http_comment.MediaItemInput": {
             "type": "object",
             "required": [
@@ -1996,6 +2136,17 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_transport_http_comment.MetaCursor": {
+            "type": "object",
+            "properties": {
+                "has_next_page": {
+                    "type": "boolean"
+                },
+                "next_cursor": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_transport_http_comment.UpdateRequest": {
             "type": "object",
             "properties": {
@@ -2009,6 +2160,23 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_comment.MediaItemInput"
                     }
+                }
+            }
+        },
+        "internal_transport_http_comment.UserResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_verified": {
+                    "type": "boolean"
                 }
             }
         },

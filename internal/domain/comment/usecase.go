@@ -4,21 +4,26 @@ import (
 	"context"
 	"errors"
 
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/follow"
 	"air-social/internal/domain/post"
 	"air-social/pkg"
 )
 
 type UseCase interface {
-	GetComments(ctx context.Context, postID int64, params GetCursorParams) ([]Comment, int64, error)
+	GetComments(ctx context.Context, postID int64, params GetCursorParams) (common.CursorPaginatedResult[Comment, int64], error)
 
-	GetReplies(ctx context.Context, parentID int64, params GetCursorParams) ([]Comment, int64, error)
+	GetReplies(ctx context.Context, parentID int64, params GetCursorParams) (common.CursorPaginatedResult[Comment, int64], error)
 
 	CreateComment(ctx context.Context, params CreateParams) (*Comment, error)
 
 	UpdateComment(ctx context.Context, params UpdateParams) (*Comment, error)
 
 	DeleteComment(ctx context.Context, commentID, userID int64) error
+}
+
+type LikeChecker interface {
+	IsCommentLiked(ctx context.Context, commentIDs []int64, userID int64) (map[int64]bool, error)
 }
 
 type PostFetcher interface {
@@ -38,6 +43,7 @@ type Deps struct {
 	PostFetcher   PostFetcher
 	FollowChecker FollowChecker
 	MediaVerifier MediaVerifier
+	LikeChecker   LikeChecker
 }
 
 type usecase struct {
@@ -45,6 +51,7 @@ type usecase struct {
 	postFetcher   PostFetcher
 	followChecker FollowChecker
 	mediaVerifier MediaVerifier
+	likeChecker   LikeChecker
 }
 
 func NewUseCase(deps Deps) *usecase {
@@ -53,15 +60,46 @@ func NewUseCase(deps Deps) *usecase {
 		postFetcher:   deps.PostFetcher,
 		followChecker: deps.FollowChecker,
 		mediaVerifier: deps.MediaVerifier,
+		likeChecker:   deps.LikeChecker,
 	}
 }
 
-func (u *usecase) GetComments(ctx context.Context, postID int64, params GetCursorParams) ([]Comment, int64, error) {
-	return nil, -1, nil
+func (u *usecase) GetComments(ctx context.Context, postID int64, params GetCursorParams) (common.CursorPaginatedResult[Comment, int64], error) {
+	params.Query.NormalizePagination()
+
+	var empty common.CursorPaginatedResult[Comment, int64]
+	comments, err := u.commentRepo.GetComments(ctx, postID, params)
+	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			return empty, nil
+		}
+		return empty, pkg.OrInternalError(err)
+	}
+
+	if err := u.mapIsLikedForComments(ctx, params.UserID, comments); err != nil {
+		return empty, pkg.OrInternalError(err)
+	}
+
+	return common.NewCursorPaginatedResult(comments, params.Query.Limit), nil
 }
 
-func (u *usecase) GetReplies(ctx context.Context, parentID int64, params GetCursorParams) ([]Comment, int64, error) {
-	return nil, -1, nil
+func (u *usecase) GetReplies(ctx context.Context, parentID int64, params GetCursorParams) (common.CursorPaginatedResult[Comment, int64], error) {
+	params.Query.NormalizePagination()
+
+	var empty common.CursorPaginatedResult[Comment, int64]
+	comments, err := u.commentRepo.GetReplies(ctx, parentID, params)
+	if err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			return empty, nil
+		}
+		return empty, pkg.OrInternalError(err)
+	}
+
+	if err := u.mapIsLikedForComments(ctx, params.UserID, comments); err != nil {
+		return empty, pkg.OrInternalError(err)
+	}
+
+	return common.NewCursorPaginatedResult(comments, params.Query.Limit), nil
 }
 
 func (u *usecase) DeleteComment(ctx context.Context, commentID int64, userID int64) error {
@@ -210,4 +248,28 @@ func (u *usecase) validateMedia(ctx context.Context, params []Media) ([]Media, e
 	}
 
 	return params, nil
+}
+
+func (u *usecase) mapIsLikedForComments(ctx context.Context, userID int64, comments []Comment) error {
+	if len(comments) == 0 {
+		return nil
+	}
+
+	commentIDs := make([]int64, len(comments))
+	for i, c := range comments {
+		commentIDs[i] = c.ID
+	}
+
+	likedMap, err := u.likeChecker.IsCommentLiked(ctx, commentIDs, userID)
+	if err != nil {
+		return err
+	}
+
+	for i := range comments {
+		if isLiked, ok := likedMap[comments[i].ID]; ok {
+			comments[i].IsLiked = &isLiked
+		}
+	}
+
+	return nil
 }

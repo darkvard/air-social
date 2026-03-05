@@ -16,9 +16,9 @@ type Comment struct {
 	UpdatedAt time.Time
 	DeletedAt *time.Time
 
-	IsLiked bool
 	Stat    Stat
-	Author  Author
+	IsLiked *bool
+	Author  *Author
 }
 
 func (c Comment) GetCursor() int64 {

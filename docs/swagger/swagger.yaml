@@ -157,12 +157,16 @@ definitions:
     type: object
   internal_transport_http_comment.CommentResponse:
     properties:
+      author:
+        $ref: '#/definitions/internal_transport_http_comment.UserResponse'
       content:
         type: string
       created_at:
         type: string
       id:
         type: integer
+      is_liked:
+        type: boolean
       media:
         items:
           $ref: '#/definitions/internal_transport_http_comment.MediaItemResponse'
@@ -186,6 +190,15 @@ definitions:
     required:
     - content
     type: object
+  internal_transport_http_comment.CursorPaginatedResponse-internal_transport_http_comment_CommentResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/internal_transport_http_comment.CommentResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/internal_transport_http_comment.MetaCursor'
+    type: object
   internal_transport_http_comment.MediaItemInput:
     properties:
       media_key:
@@ -208,6 +221,13 @@ definitions:
       url:
         type: string
     type: object
+  internal_transport_http_comment.MetaCursor:
+    properties:
+      has_next_page:
+        type: boolean
+      next_cursor:
+        type: integer
+    type: object
   internal_transport_http_comment.UpdateRequest:
     properties:
       content:
@@ -218,6 +238,17 @@ definitions:
           $ref: '#/definitions/internal_transport_http_comment.MediaItemInput'
         maxItems: 4
         type: array
+    type: object
+  internal_transport_http_comment.UserResponse:
+    properties:
+      avatar:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      is_verified:
+        type: boolean
     type: object
   internal_transport_http_follow.UserFollowResponse:
     properties:
@@ -972,6 +1003,46 @@ paths:
       summary: Like a comment
       tags:
       - Like
+  /comments/{id}/replies:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of replies for a specific comment using cursor-based
+        pagination.
+      parameters:
+      - description: Parent Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Cursor for pagination (last comment ID)
+        in: query
+        name: cursor
+        type: integer
+      - description: Number of items to return
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_comment.CursorPaginatedResponse-internal_transport_http_comment_CommentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get replies for a comment
+      tags:
+      - Comment
   /health:
     get:
       description: Check the health status of the application components
@@ -1176,6 +1247,44 @@ paths:
       tags:
       - Post
   /posts/{id}/comments:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of comments for a specific post using cursor-based pagination.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Cursor for pagination (last comment ID)
+        in: query
+        name: cursor
+        type: integer
+      - description: Number of items to return
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_comment.CursorPaginatedResponse-internal_transport_http_comment_CommentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get comments for a post
+      tags:
+      - Comment
     post:
       consumes:
       - application/json

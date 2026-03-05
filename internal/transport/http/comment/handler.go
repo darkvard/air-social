@@ -71,10 +71,6 @@ func (h Handler) CreateComment(c *gin.Context) {
 	pkg.Created(c, h.toCommentResponse(result))
 }
 
-func (h Handler) GetComments(c *gin.Context) {
-
-}
-
 // UpdateComment godoc
 //
 //	@Summary		Update a comment
@@ -164,8 +160,106 @@ func (h Handler) DeleteComment(c *gin.Context) {
 	pkg.NoContent(c)
 }
 
-func (h Handler) GetReplies(c *gin.Context) {
+// GetComments godoc
+//
+//	@Summary		Get comments for a post
+//	@Description	Get a list of comments for a specific post using cursor-based pagination.
+//	@Tags			Comment
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int	true	"Post ID"
+//	@Param			cursor	query		int	false	"Cursor for pagination (last comment ID)"
+//	@Param			limit	query		int	false	"Number of items to return"
+//	@Success		200		{object}	CursorPaginatedResponse[CommentResponse]
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/posts/{id}/comments [get]
+func (h Handler) GetComments(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
 
+	var path PathIDParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid post id")
+		return
+	}
+
+	var req CursorQueryParams
+	if err := c.ShouldBindQuery(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	result, err := h.usecase.GetComments(c.Request.Context(), path.ID, req.ToDomain(claims.UserID))
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, h.toListResponse(result))
+}
+
+func (h Handler) toListResponse(result common.CursorPaginatedResult[comment.Comment, int64]) CursorPaginatedResponse[CommentResponse] {
+	data := make([]CommentResponse, len(result.Data))
+	for i := range result.Data {
+		data[i] = h.toCommentResponse(&result.Data[i])
+	}
+
+	return CursorPaginatedResponse[CommentResponse]{
+		Data: data,
+		Meta: MetaCursor{
+			NextCursor:  result.NextCursor,
+			HasNextPage: result.HasNextPage,
+		},
+	}
+
+}
+
+// GetReplies godoc
+//
+//	@Summary		Get replies for a comment
+//	@Description	Get a list of replies for a specific comment using cursor-based pagination.
+//	@Tags			Comment
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int	true	"Parent Comment ID"
+//	@Param			cursor	query		int	false	"Cursor for pagination (last comment ID)"
+//	@Param			limit	query		int	false	"Number of items to return"
+//	@Success		200		{object}	CursorPaginatedResponse[CommentResponse]
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/comments/{id}/replies [get]
+func (h Handler) GetReplies(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
+	var path PathIDParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid comment id")
+		return
+	}
+
+	var req CursorQueryParams
+	if err := c.ShouldBindQuery(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	result, err := h.usecase.GetReplies(c.Request.Context(), path.ID, req.ToDomain(claims.UserID))
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, h.toListResponse(result))
 }
 
 func (h Handler) toCommentResponse(c *comment.Comment) CommentResponse {
@@ -173,23 +267,39 @@ func (h Handler) toCommentResponse(c *comment.Comment) CommentResponse {
 		return CommentResponse{}
 	}
 
-	resp := CommentResponse{
+	var author *UserResponse
+	if c.Author != nil {
+		author = &UserResponse{
+			ID:         c.Author.ID,
+			Fullname:   c.Author.Username,
+			Avatar:     h.provider.PublicFile(c.Author.Avatar),
+			IsVerified: c.Author.IsVerified,
+		}
+	}
+
+	return CommentResponse{
 		ID:        c.ID,
 		Content:   c.Content,
 		ParentID:  c.ParentID,
 		CreatedAt: c.CreatedAt,
+		Media:     h.toMediaItemResponse(c.Media),
+		IsLiked:   c.IsLiked,
+		User:      author,
 	}
+}
 
-	if len(c.Media) > 0 {
-		resp.Media = make([]MediaItemResponse, len(c.Media))
-		for i, m := range c.Media {
-			resp.Media[i] = MediaItemResponse{
-				URL:       h.provider.PublicFile(m.MediaKey),
-				MediaType: m.MediaType,
-			}
+func (h Handler) toMediaItemResponse(media []comment.Media) []MediaItemResponse {
+	result := make([]MediaItemResponse, len(media))
+	if media == nil {
+		return result
+	}
+	for i, m := range media {
+		result[i] = MediaItemResponse{
+			URL:       h.provider.PublicFile(m.MediaKey),
+			MediaType: m.MediaType,
 		}
 	}
-	return resp
+	return result
 }
 
 func toMediaParams(data []MediaItemInput) []comment.Media {

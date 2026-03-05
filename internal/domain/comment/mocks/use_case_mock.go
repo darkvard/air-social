@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"air-social/internal/domain/comment"
+	"air-social/internal/domain/common"
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
@@ -170,37 +171,29 @@ func (_c *MockUseCase_DeleteComment_Call) RunAndReturn(run func(ctx context.Cont
 }
 
 // GetComments provides a mock function for the type MockUseCase
-func (_mock *MockUseCase) GetComments(ctx context.Context, postID int64, params comment.GetCursorParams) ([]comment.Comment, int64, error) {
+func (_mock *MockUseCase) GetComments(ctx context.Context, postID int64, params comment.GetCursorParams) (common.CursorPaginatedResult[comment.Comment, int64], error) {
 	ret := _mock.Called(ctx, postID, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetComments")
 	}
 
-	var r0 []comment.Comment
-	var r1 int64
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, comment.GetCursorParams) ([]comment.Comment, int64, error)); ok {
+	var r0 common.CursorPaginatedResult[comment.Comment, int64]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, comment.GetCursorParams) (common.CursorPaginatedResult[comment.Comment, int64], error)); ok {
 		return returnFunc(ctx, postID, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, comment.GetCursorParams) []comment.Comment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, comment.GetCursorParams) common.CursorPaginatedResult[comment.Comment, int64]); ok {
 		r0 = returnFunc(ctx, postID, params)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]comment.Comment)
-		}
+		r0 = ret.Get(0).(common.CursorPaginatedResult[comment.Comment, int64])
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, comment.GetCursorParams) int64); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, comment.GetCursorParams) error); ok {
 		r1 = returnFunc(ctx, postID, params)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, int64, comment.GetCursorParams) error); ok {
-		r2 = returnFunc(ctx, postID, params)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockUseCase_GetComments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetComments'
@@ -239,48 +232,40 @@ func (_c *MockUseCase_GetComments_Call) Run(run func(ctx context.Context, postID
 	return _c
 }
 
-func (_c *MockUseCase_GetComments_Call) Return(comments []comment.Comment, n int64, err error) *MockUseCase_GetComments_Call {
-	_c.Call.Return(comments, n, err)
+func (_c *MockUseCase_GetComments_Call) Return(cursorPaginatedResult common.CursorPaginatedResult[comment.Comment, int64], err error) *MockUseCase_GetComments_Call {
+	_c.Call.Return(cursorPaginatedResult, err)
 	return _c
 }
 
-func (_c *MockUseCase_GetComments_Call) RunAndReturn(run func(ctx context.Context, postID int64, params comment.GetCursorParams) ([]comment.Comment, int64, error)) *MockUseCase_GetComments_Call {
+func (_c *MockUseCase_GetComments_Call) RunAndReturn(run func(ctx context.Context, postID int64, params comment.GetCursorParams) (common.CursorPaginatedResult[comment.Comment, int64], error)) *MockUseCase_GetComments_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetReplies provides a mock function for the type MockUseCase
-func (_mock *MockUseCase) GetReplies(ctx context.Context, parentID int64, params comment.GetCursorParams) ([]comment.Comment, int64, error) {
+func (_mock *MockUseCase) GetReplies(ctx context.Context, parentID int64, params comment.GetCursorParams) (common.CursorPaginatedResult[comment.Comment, int64], error) {
 	ret := _mock.Called(ctx, parentID, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetReplies")
 	}
 
-	var r0 []comment.Comment
-	var r1 int64
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, comment.GetCursorParams) ([]comment.Comment, int64, error)); ok {
+	var r0 common.CursorPaginatedResult[comment.Comment, int64]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, comment.GetCursorParams) (common.CursorPaginatedResult[comment.Comment, int64], error)); ok {
 		return returnFunc(ctx, parentID, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, comment.GetCursorParams) []comment.Comment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, comment.GetCursorParams) common.CursorPaginatedResult[comment.Comment, int64]); ok {
 		r0 = returnFunc(ctx, parentID, params)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]comment.Comment)
-		}
+		r0 = ret.Get(0).(common.CursorPaginatedResult[comment.Comment, int64])
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, comment.GetCursorParams) int64); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, comment.GetCursorParams) error); ok {
 		r1 = returnFunc(ctx, parentID, params)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, int64, comment.GetCursorParams) error); ok {
-		r2 = returnFunc(ctx, parentID, params)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockUseCase_GetReplies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetReplies'
@@ -319,31 +304,42 @@ func (_c *MockUseCase_GetReplies_Call) Run(run func(ctx context.Context, parentI
 	return _c
 }
 
-func (_c *MockUseCase_GetReplies_Call) Return(comments []comment.Comment, n int64, err error) *MockUseCase_GetReplies_Call {
-	_c.Call.Return(comments, n, err)
+func (_c *MockUseCase_GetReplies_Call) Return(cursorPaginatedResult common.CursorPaginatedResult[comment.Comment, int64], err error) *MockUseCase_GetReplies_Call {
+	_c.Call.Return(cursorPaginatedResult, err)
 	return _c
 }
 
-func (_c *MockUseCase_GetReplies_Call) RunAndReturn(run func(ctx context.Context, parentID int64, params comment.GetCursorParams) ([]comment.Comment, int64, error)) *MockUseCase_GetReplies_Call {
+func (_c *MockUseCase_GetReplies_Call) RunAndReturn(run func(ctx context.Context, parentID int64, params comment.GetCursorParams) (common.CursorPaginatedResult[comment.Comment, int64], error)) *MockUseCase_GetReplies_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateComment provides a mock function for the type MockUseCase
-func (_mock *MockUseCase) UpdateComment(ctx context.Context, params comment.UpdateParams) error {
+func (_mock *MockUseCase) UpdateComment(ctx context.Context, params comment.UpdateParams) (*comment.Comment, error) {
 	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateComment")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, comment.UpdateParams) error); ok {
+	var r0 *comment.Comment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, comment.UpdateParams) (*comment.Comment, error)); ok {
+		return returnFunc(ctx, params)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, comment.UpdateParams) *comment.Comment); ok {
 		r0 = returnFunc(ctx, params)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*comment.Comment)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, comment.UpdateParams) error); ok {
+		r1 = returnFunc(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockUseCase_UpdateComment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateComment'
@@ -376,12 +372,12 @@ func (_c *MockUseCase_UpdateComment_Call) Run(run func(ctx context.Context, para
 	return _c
 }
 
-func (_c *MockUseCase_UpdateComment_Call) Return(err error) *MockUseCase_UpdateComment_Call {
-	_c.Call.Return(err)
+func (_c *MockUseCase_UpdateComment_Call) Return(comment1 *comment.Comment, err error) *MockUseCase_UpdateComment_Call {
+	_c.Call.Return(comment1, err)
 	return _c
 }
 
-func (_c *MockUseCase_UpdateComment_Call) RunAndReturn(run func(ctx context.Context, params comment.UpdateParams) error) *MockUseCase_UpdateComment_Call {
+func (_c *MockUseCase_UpdateComment_Call) RunAndReturn(run func(ctx context.Context, params comment.UpdateParams) (*comment.Comment, error)) *MockUseCase_UpdateComment_Call {
 	_c.Call.Return(run)
 	return _c
 }

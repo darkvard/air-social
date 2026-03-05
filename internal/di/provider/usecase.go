@@ -44,7 +44,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	followUC := getFollowUseCase(deps, userUC.Fetch)
 	postUC := getPostUseCase(deps, mediaUC)
 	likeUC := getLikeUseCase(deps)
-	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC)
+	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC)
 
 	return UseCase{
 		Health:  healthUC,
@@ -128,12 +128,19 @@ func getPostUseCase(deps UseCaseDeps, mediaVerifier post.MediaVerifier) post.Use
 	)
 }
 
-func getCommentUseCase(deps UseCaseDeps, postFetcher comment.PostFetcher, followFetcher comment.FollowChecker, mediaVerifier comment.MediaVerifier) comment.UseCase {
+func getCommentUseCase(
+	deps UseCaseDeps,
+	postFetcher comment.PostFetcher,
+	followFetcher comment.FollowChecker,
+	mediaVerifier comment.MediaVerifier,
+	likeChecker comment.LikeChecker,
+) comment.UseCase {
 	return comment.NewUseCase(comment.Deps{
 		CommentRepo:   deps.Repo.Comment,
 		PostFetcher:   postFetcher,
 		FollowChecker: followFetcher,
 		MediaVerifier: mediaVerifier,
+		LikeChecker:   likeChecker,
 	})
 }
 

@@ -264,9 +264,12 @@ func (h Handler) toCreateResponse(post *post.Post) CreateResponse {
 }
 
 func (h Handler) toMediaItemResponse(media []post.Media) []MediaItemResponse {
-	mediaResp := make([]MediaItemResponse, len(media))
+	result := make([]MediaItemResponse, len(media))
+	if media == nil {
+		return result
+	}
 	for i, m := range media {
-		mediaResp[i] = MediaItemResponse{
+		result[i] = MediaItemResponse{
 			ID:        m.ID,
 			URL:       h.provider.PublicFile(m.MediaKey),
 			MediaType: m.MediaType,
@@ -276,10 +279,14 @@ func (h Handler) toMediaItemResponse(media []post.Media) []MediaItemResponse {
 			FileName:  m.Metadata.FileName,
 		}
 	}
-	return mediaResp
+	return result
 }
 
 func (h Handler) toPostResponse(post *post.Post) PostResponse {
+	if post == nil {
+		return PostResponse{}
+	}
+
 	var author *UserResponse
 	if post.Author != nil {
 		author = &UserResponse{

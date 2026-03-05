@@ -27,6 +27,6 @@ type UpdateParams struct {
 }
 
 type GetCursorParams struct {
-	ViewerID int64
-	Query    common.CursorQueryParams[int64]
+	UserID int64
+	Query  common.CursorQueryParams[int64]
 }
