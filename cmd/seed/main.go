@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"sync"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/jmoiron/sqlx"
 
 	"air-social/cmd/seed/config"
 	"air-social/cmd/seed/db"
@@ -15,25 +17,57 @@ func main() {
 	start := time.Now()
 	log.Println("🌱 Starting database seeding...")
 
-	// 1. Setup
+	// 1. Initial setup
 	gofakeit.Seed(0)
 	cfg := config.Load()
 	conn := db.Connect()
 	defer conn.Close()
 
-	// 2. Truncate data in reverse order of dependency
-	log.Println("🗑️  Cleaning existing data...")
-	modules.TruncateComments(conn)
-	modules.TruncatePosts(conn)
-	modules.TruncateUser(conn) // This will cascade to follows, likes, etc.
-	log.Println("✅ Data cleaned.")
+	// 2. Clean database
+	truncateData(conn)
 
-	// 3. Seed data in order of dependency
-	userIDs := modules.SeedUsers(conn, cfg.Users.Total)
-	modules.SeedFollows(conn, userIDs, cfg.Follows.PerUser)
-	postIDs := modules.SeedPosts(conn, userIDs, cfg)
-	commentIDs := modules.SeedComments(conn, postIDs, userIDs, cfg)
-	modules.SeedLikes(conn, postIDs, commentIDs, userIDs, cfg)
+	// 3. Seed new data
+	seedData(conn, cfg)
 
 	log.Printf("✅ Seeding finished in %s", time.Since(start))
+}
+
+// truncateData cleans all relevant tables in the correct order to respect foreign key constraints.
+func truncateData(db *sqlx.DB) {
+	log.Println("🗑️  Cleaning existing data...")
+	// The order is important. We start from tables that depend on others.
+	modules.TruncateComments(db)
+	modules.TruncatePosts(db)
+	// Truncating 'users' will cascade to 'follows', 'post_likes', 'comment_likes' etc.
+	// due to `ON DELETE CASCADE` in the database schema.
+	modules.TruncateUser(db)
+	log.Println("✅ Data cleaned.")
+}
+
+// seedData populates the database with new records.
+// It runs independent tasks in parallel while maintaining the correct sequence for dependent tasks.
+func seedData(db *sqlx.DB, cfg config.SeedConfig) {
+	log.Println("🌱 Seeding new data...")
+
+	// --- Sequential Step 1: Users must exist first ---
+	userIDs := modules.SeedUsers(db, cfg.Users.Total)
+
+	var wg sync.WaitGroup
+
+	// --- Parallel Branch 1: Social Graph (Follows) ---
+	// This branch only depends on users, so it can run in parallel with the content branch.
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		modules.SeedFollows(db, userIDs, cfg.Follows.PerUser)
+	}()
+
+	// --- Sequential Branch 2: Content Graph ---
+	// This branch has its own internal sequential dependencies.
+	postIDs := modules.SeedPosts(db, userIDs, cfg)
+	commentIDs := modules.SeedComments(db, postIDs, userIDs, cfg)
+	modules.SeedLikes(db, postIDs, commentIDs, userIDs, cfg)
+
+	// Wait for all parallel branches to complete
+	wg.Wait()
 }

@@ -1,78 +1,105 @@
 package modules
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
-
-	"air-social/cmd/seed/config"
+	"strings"
+	"sync"
 
 	"github.com/jmoiron/sqlx"
+
+	"air-social/cmd/seed/config"
 )
 
+// batchSize defines how many records to insert in a single query.
+const likesBatchSize = 1000
+
 func SeedLikes(db *sqlx.DB, postIDs, commentIDs, userIDs []int64, cfg config.SeedConfig) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Goroutine 1: Seed Post Likes using Batch Insert
+	go func() {
+		defer wg.Done()
+		seedLikesFor(db, "post_likes", "post_id", postIDs, userIDs, cfg.Likes.PerPost)
+	}()
+
+	// Goroutine 2: Seed Comment Likes using Batch Insert
+	go func() {
+		defer wg.Done()
+		seedLikesFor(db, "comment_likes", "comment_id", commentIDs, userIDs, cfg.Likes.PerComment)
+	}()
+
+	wg.Wait()
+}
+
+// seedLikesFor is a generic helper to perform batch inserts for likes.
+func seedLikesFor(db *sqlx.DB, tableName, entityColumn string, entityIDs, userIDs []int64, likesPerEntity int) {
+	// 1. Collect all like pairs first to avoid inserting one-by-one
+	var likePairs [][2]int64
+	uniqueLikes := make(map[string]struct{})
+
+	// Create a mutable copy of userIDs for shuffling
+	shuffledUserIDs := make([]int64, len(userIDs))
+	copy(shuffledUserIDs, userIDs)
+
+	for _, entityID := range entityIDs {
+		rand.Shuffle(len(shuffledUserIDs), func(i, j int) { shuffledUserIDs[i], shuffledUserIDs[j] = shuffledUserIDs[j], shuffledUserIDs[i] })
+		numLikes := rand.Intn(likesPerEntity + 1)
+
+		for i := 0; i < numLikes && i < len(shuffledUserIDs); i++ {
+			userID := shuffledUserIDs[i]
+			// Use a map to ensure a user doesn't like the same entity twice in the seed data
+			key := fmt.Sprintf("%d-%d", entityID, userID)
+			if _, exists := uniqueLikes[key]; !exists {
+				likePairs = append(likePairs, [2]int64{entityID, userID})
+				uniqueLikes[key] = struct{}{}
+			}
+		}
+	}
+
+	if len(likePairs) == 0 {
+		log.Printf("Seeded: 0 %s", tableName)
+		return
+	}
+
 	tx := db.MustBegin()
 	defer tx.Rollback()
 
-	postLikeStmt := preparePostLikeStmt(tx)
-	commentLikeStmt := prepareCommentLikeStmt(tx)
-
-	// Seed Post Likes
-	totalPostLikes := 0
-	for _, postID := range postIDs {
-		rand.Shuffle(len(userIDs), func(i, j int) { userIDs[i], userIDs[j] = userIDs[j], userIDs[i] })
-
-		numLikes := rand.Intn(cfg.Likes.PerPost + 1)
-		for i := 0; i < numLikes && i < len(userIDs); i++ {
-			_, err := postLikeStmt.Exec(postID, userIDs[i])
-			if err != nil {
-				log.Panicf("insert post_like for post %d failed: %v", postID, err)
-			}
-			totalPostLikes++
+	// 2. Insert the collected pairs in batches
+	totalInserted := 0
+	for i := 0; i < len(likePairs); i += likesBatchSize {
+		end := i + likesBatchSize
+		if end > len(likePairs) {
+			end = len(likePairs)
 		}
-	}
+		batch := likePairs[i:end]
 
-	// Seed Comment Likes
-	totalCommentLikes := 0
-	for _, commentID := range commentIDs {
-		rand.Shuffle(len(userIDs), func(i, j int) { userIDs[i], userIDs[j] = userIDs[j], userIDs[i] })
-
-		numLikes := rand.Intn(cfg.Likes.PerComment + 1)
-		for i := 0; i < numLikes && i < len(userIDs); i++ {
-			_, err := commentLikeStmt.Exec(commentID, userIDs[i])
-			if err != nil {
-				log.Panicf("insert comment_like for comment %d failed: %v", commentID, err)
-			}
-			totalCommentLikes++
+		if len(batch) == 0 {
+			continue
 		}
+
+		// Build the multi-value INSERT statement for the current batch
+		valueStrings := make([]string, 0, len(batch))
+		valueArgs := make([]interface{}, 0, len(batch)*2)
+		argCounter := 1
+		for _, pair := range batch {
+			valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d)", argCounter, argCounter+1))
+			valueArgs = append(valueArgs, pair[0], pair[1])
+			argCounter += 2
+		}
+
+		stmt := fmt.Sprintf("INSERT INTO %s (%s, user_id) VALUES %s ON CONFLICT (%s, user_id) DO NOTHING", tableName, entityColumn, strings.Join(valueStrings, ","), entityColumn)
+		_, err := tx.Exec(stmt, valueArgs...)
+		if err != nil {
+			log.Panicf("batch insert for %s failed: %v", tableName, err)
+		}
+		totalInserted += len(batch)
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Panicf("commit likes failed: %v", err)
+		log.Panicf("commit for %s failed: %v", tableName, err)
 	}
-
-	log.Printf("Seeded: %d Post Likes and %d Comment Likes", totalPostLikes, totalCommentLikes)
-}
-
-func preparePostLikeStmt(tx *sqlx.Tx) *sqlx.Stmt {
-	stmt, err := tx.Preparex(`
-        INSERT INTO post_likes (post_id, user_id)
-        VALUES ($1, $2)
-        ON CONFLICT (post_id, user_id) DO NOTHING
-    `)
-	if err != nil {
-		log.Panicf("prepare post_likes stmt failed: %v", err)
-	}
-	return stmt
-}
-
-func prepareCommentLikeStmt(tx *sqlx.Tx) *sqlx.Stmt {
-	stmt, err := tx.Preparex(`
-        INSERT INTO comment_likes (comment_id, user_id)
-        VALUES ($1, $2)
-        ON CONFLICT (comment_id, user_id) DO NOTHING
-    `)
-	if err != nil {
-		log.Panicf("prepare comment_likes stmt failed: %v", err)
-	}
-	return stmt
+	log.Printf("Seeded: %d %s", totalInserted, tableName)
 }
