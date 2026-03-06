@@ -118,9 +118,10 @@ func (h Handler) GetPost(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		int	true	"User ID"
-//	@Param			cursor	query		int	false	"Cursor for pagination (last post ID)"
-//	@Param			limit	query		int	false	"Number of items to return"
+//	@Param			id		path		int		true	"User ID"
+//	@Param			cursor	query		int		false	"Cursor for pagination (last post ID)"
+//	@Param			limit	query		int		false	"Number of items to return"
+//	@Param			sort	query		string	false	"Sort order"	Enums(latest, oldest)
 //	@Success		200		{object}	CursorPaginatedResponse[PostResponse]
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response

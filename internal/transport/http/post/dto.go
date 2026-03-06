@@ -45,6 +45,7 @@ func (q CursorQueryParams) ToDomain(userID int64) post.GetCursorParams {
 		Query: common.CursorQueryParams[int64]{
 			Cursor: q.Cursor,
 			Limit:  q.Limit,
+			Sort:   q.Sort,
 		},
 	}
 }

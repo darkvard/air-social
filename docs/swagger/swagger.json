@@ -679,6 +679,16 @@
                         "description": "Number of items to return",
                         "name": "limit",
                         "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1048,6 +1058,16 @@
                         "type": "integer",
                         "description": "Number of items to return",
                         "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
                         "in": "query"
                     }
                 ],
@@ -1782,6 +1802,16 @@
                         "type": "integer",
                         "description": "Number of items to return",
                         "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
                         "in": "query"
                     }
                 ],

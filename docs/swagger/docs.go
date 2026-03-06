@@ -685,6 +685,16 @@ const docTemplate = `{
                         "description": "Number of items to return",
                         "name": "limit",
                         "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1054,6 +1064,16 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Number of items to return",
                         "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
                         "in": "query"
                     }
                 ],
@@ -1788,6 +1808,16 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Number of items to return",
                         "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
                         "in": "query"
                     }
                 ],

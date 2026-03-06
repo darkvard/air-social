@@ -1023,6 +1023,13 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
@@ -1265,6 +1272,13 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:
@@ -1586,6 +1600,13 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        in: query
+        name: sort
+        type: string
       produces:
       - application/json
       responses:

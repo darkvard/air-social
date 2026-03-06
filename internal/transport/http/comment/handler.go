@@ -168,9 +168,10 @@ func (h Handler) DeleteComment(c *gin.Context) {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		int	true	"Post ID"
-//	@Param			cursor	query		int	false	"Cursor for pagination (last comment ID)"
-//	@Param			limit	query		int	false	"Number of items to return"
+//	@Param			id		path		int		true	"Post ID"
+//	@Param			cursor	query		int		false	"Cursor for pagination (last comment ID)"
+//	@Param			limit	query		int		false	"Number of items to return"
+//	@Param			sort	query		string	false	"Sort order"	Enums(latest, oldest)
 //	@Success		200		{object}	CursorPaginatedResponse[CommentResponse]
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -203,22 +204,6 @@ func (h Handler) GetComments(c *gin.Context) {
 	pkg.Success(c, h.toListResponse(result))
 }
 
-func (h Handler) toListResponse(result common.CursorPaginatedResult[comment.Comment, int64]) CursorPaginatedResponse[CommentResponse] {
-	data := make([]CommentResponse, len(result.Data))
-	for i := range result.Data {
-		data[i] = h.toCommentResponse(&result.Data[i])
-	}
-
-	return CursorPaginatedResponse[CommentResponse]{
-		Data: data,
-		Meta: MetaCursor{
-			NextCursor:  result.NextCursor,
-			HasNextPage: result.HasNextPage,
-		},
-	}
-
-}
-
 // GetReplies godoc
 //
 //	@Summary		Get replies for a comment
@@ -227,9 +212,10 @@ func (h Handler) toListResponse(result common.CursorPaginatedResult[comment.Comm
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		int	true	"Parent Comment ID"
-//	@Param			cursor	query		int	false	"Cursor for pagination (last comment ID)"
-//	@Param			limit	query		int	false	"Number of items to return"
+//	@Param			id		path		int		true	"Parent Comment ID"
+//	@Param			cursor	query		int		false	"Cursor for pagination (last comment ID)"
+//	@Param			limit	query		int		false	"Number of items to return"
+//	@Param			sort	query		string	false	"Sort order"	Enums(latest, oldest)
 //	@Success		200		{object}	CursorPaginatedResponse[CommentResponse]
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -316,5 +302,18 @@ func toMediaParams(data []MediaItemInput) []comment.Media {
 	return result
 }
 
+func (h Handler) toListResponse(result common.CursorPaginatedResult[comment.Comment, int64]) CursorPaginatedResponse[CommentResponse] {
+	data := make([]CommentResponse, len(result.Data))
+	for i := range result.Data {
+		data[i] = h.toCommentResponse(&result.Data[i])
+	}
 
-// todo: seed data and test
+	return CursorPaginatedResponse[CommentResponse]{
+		Data: data,
+		Meta: MetaCursor{
+			NextCursor:  result.NextCursor,
+			HasNextPage: result.HasNextPage,
+		},
+	}
+
+}
