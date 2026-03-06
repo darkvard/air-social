@@ -315,3 +315,6 @@ func toMediaParams(data []MediaItemInput) []comment.Media {
 	}
 	return result
 }
+
+
+// todo: seed data and test

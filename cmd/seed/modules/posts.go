@@ -1,106 +1,93 @@
 package modules
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jmoiron/sqlx"
+	"github.com/oklog/ulid/v2"
+
+	"air-social/cmd/seed/config"
+	"air-social/internal/domain/post"
 )
 
-func SeedPosts(db *sqlx.DB, userIDs []int64, postsPerUser int) {
+func SeedPosts(db *sqlx.DB, userIDs []int64, cfg config.SeedConfig) []int64 {
 	tx := db.MustBegin()
 	defer tx.Rollback()
 
 	postStmt := preparePostStmt(tx)
-	mediaStmt := prepareMediaStmt(tx)
+	mediaStmt := preparePostMediaStmt(tx)
+
+	totalPosts := len(userIDs) * cfg.Posts.PerUser
+	postIDs := make([]int64, 0, totalPosts)
 
 	for _, userID := range userIDs {
-		for range postsPerUser {
-			postID := execInsertPost(postStmt, userID)
-			seedMediaForPost(mediaStmt, postID)
+		for range cfg.Posts.PerUser {
+			var postID int64
+			visibility := gofakeit.RandomString([]string{"public", "followers", "private"})
+			err := postStmt.QueryRow(userID, gofakeit.Sentence(15), visibility).Scan(&postID)
+			if err != nil {
+				log.Panicf("insert post for user %d failed: %v", userID, err)
+			}
+			postIDs = append(postIDs, postID)
+
+			// Seed media for this post
+			numMedia := rand.Intn(cfg.Posts.MediaPerPost + 1)
+			for range numMedia {
+				mediaKey := fmt.Sprintf("posts/%d/feed_image/%s.jpg", postID, ulid.Make())
+				metadata := post.MediaMetadata{
+					Width:    1920,
+					Height:   1080,
+					Size:     int64(gofakeit.Number(100000, 5000000)),
+					FileName: gofakeit.UUID() + ".jpg",
+				}
+				metadataJSON, _ := json.Marshal(metadata)
+
+				_, err := mediaStmt.Exec(postID, mediaKey, "image", metadataJSON)
+				if err != nil {
+					log.Panicf("insert post_media for post %d failed: %v", postID, err)
+				}
+			}
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Panicf("seed posts commit failed: %v", err)
+		log.Panicf("commit posts failed: %v", err)
 	}
 
-	log.Printf("Seeded: %d Posts (%d per user)", len(userIDs)*postsPerUser, postsPerUser)
+	log.Printf("Seeded: %d Posts (with media)", len(postIDs))
+	return postIDs
 }
 
-// --- Internal Helpers ---
+func TruncatePosts(db *sqlx.DB) {
+	_, err := db.Exec(`TRUNCATE TABLE posts RESTART IDENTITY CASCADE;`)
+	if err != nil {
+		log.Panicf("cannot clean posts data: %v", err)
+	}
+}
 
 func preparePostStmt(tx *sqlx.Tx) *sqlx.Stmt {
 	stmt, err := tx.Preparex(`
-		INSERT INTO posts (user_id, content, visibility)
-		VALUES ($1, $2, $3)
-		RETURNING id
-	`)
+        INSERT INTO posts (user_id, content, visibility)
+        VALUES ($1, $2, $3)
+        RETURNING id
+    `)
 	if err != nil {
 		log.Panicf("prepare post stmt failed: %v", err)
 	}
 	return stmt
 }
 
-func prepareMediaStmt(tx *sqlx.Tx) *sqlx.Stmt {
+func preparePostMediaStmt(tx *sqlx.Tx) *sqlx.Stmt {
 	stmt, err := tx.Preparex(`
-		INSERT INTO post_media (post_id, media_key, media_type, metadata)
-		VALUES ($1, $2, $3, $4)
-	`)
+        INSERT INTO post_media (post_id, media_key, media_type, metadata)
+        VALUES ($1, $2, $3, $4)
+    `)
 	if err != nil {
-		log.Panicf("prepare media stmt failed: %v", err)
+		log.Panicf("prepare post_media stmt failed: %v", err)
 	}
 	return stmt
-}
-
-func execInsertPost(stmt *sqlx.Stmt, userID int64) int64 {
-	var postID int64
-	visibility := getRandVisibility()
-	content := gofakeit.Sentence(15)
-
-	if err := stmt.QueryRow(userID, content, visibility).Scan(&postID); err != nil {
-		log.Panicf("insert post failed: %v", err)
-	}
-	return postID
-}
-
-func seedMediaForPost(stmt *sqlx.Stmt, postID int64) {
-	if gofakeit.Number(1, 10) > 7 {
-		numMedia := gofakeit.Number(1, 4)
-		for range numMedia {
-			mType, ext := getRandMediaType()
-			meta := generateMeta(ext)
-
-			if _, err := stmt.Exec(postID, gofakeit.UUID(), mType, meta); err != nil {
-				log.Panicf("insert media failed: %v", err)
-			}
-		}
-	}
-}
-
-// --- Utilities ---
-
-func getRandVisibility() string {
-	if gofakeit.Number(1, 10) > 8 {
-		return "followers"
-	}
-	return "public"
-}
-
-func getRandMediaType() (string, string) {
-	if gofakeit.Number(1, 10) > 9 {
-		return "video/mp4", "mp4"
-	}
-	return "image/jpeg", "jpg"
-}
-
-func generateMeta(ext string) string {
-	return fmt.Sprintf(
-		`{"width": %d, "height": %d, "size": %d, "file_name": "%s"}`,
-		gofakeit.Number(800, 1920),
-		gofakeit.Number(600, 1080),
-		gofakeit.Number(100000, 5000000),
-		gofakeit.Word()+"."+ext,
-	)
 }

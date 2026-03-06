@@ -6,9 +6,12 @@ follows:
 
 posts:
   per_user: 50
+  media_per_post: 3
 
 comments:
   per_post: 25
+  media_per_comment: 1
 
 likes:
   per_post: 15
+  per_comment: 5

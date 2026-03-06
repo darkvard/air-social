@@ -14,13 +14,16 @@ type SeedConfig struct {
 		PerUser int `yaml:"per_user"`
 	}
 	Posts struct {
-		PerUser int `yaml:"per_user"`
+		PerUser      int `yaml:"per_user"`
+		MediaPerPost int `yaml:"media_per_post"`
 	}
 	Comments struct {
-		PerPost int `yaml:"per_post"`
+		PerPost         int `yaml:"per_post"`
+		MediaPerComment int `yaml:"media_per_comment"`
 	}
 	Likes struct {
-		PerPost int `yaml:"per_post"`
+		PerPost    int `yaml:"per_post"`
+		PerComment int `yaml:"per_comment"`
 	}
 }
 
