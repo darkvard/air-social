@@ -12,9 +12,10 @@ type PathIDParam struct {
 }
 
 type CreateRequest struct {
-	Content    string           `json:"content" binding:"required_without=Media"`
-	Visibility string           `json:"visibility" binding:"omitempty,oneof=public followers private"`
-	Media      []MediaItemInput `json:"media" binding:"omitempty,max=10,dive"`
+	OriginalPostID *int64           `json:"original_post_id" binding:"omitempty,gt=0"`
+	Content        string           `json:"content" binding:"required_without=Media"`
+	Visibility     string           `json:"visibility" binding:"omitempty,oneof=public followers private"`
+	Media          []MediaItemInput `json:"media" binding:"omitempty,max=10,dive"`
 }
 
 type MediaItemInput struct {

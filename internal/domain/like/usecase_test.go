@@ -53,7 +53,7 @@ func (s *LikeUseCaseSuite) TestLikePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					InsertPostLike(mock.Anything, postID, userID).
-					Return(false, assert.AnError).
+					Return(false, int64(0), assert.AnError).
 					Once()
 			},
 			wantErr: pkg.ErrInternal,
@@ -68,7 +68,7 @@ func (s *LikeUseCaseSuite) TestLikePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					InsertPostLike(mock.Anything, postID, userID).
-					Return(false, pkg.ErrInvalidData).
+					Return(false, int64(0), pkg.ErrInvalidData).
 					Once()
 			},
 			wantErr: pkg.ErrInvalidData,
@@ -83,7 +83,7 @@ func (s *LikeUseCaseSuite) TestLikePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					InsertPostLike(mock.Anything, postID, userID).
-					Return(true, nil).
+					Return(true, int64(999), nil).
 					Once()
 
 				deps.event.EXPECT().
@@ -103,7 +103,7 @@ func (s *LikeUseCaseSuite) TestLikePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					InsertPostLike(mock.Anything, postID, userID).
-					Return(false, nil).
+					Return(false, int64(0), nil).
 					Once()
 			},
 			wantErr: nil,
@@ -259,7 +259,7 @@ func (s *LikeUseCaseSuite) TestLikeComment() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					InsertCommentLike(mock.Anything, commentID, userID).
-					Return(false, assert.AnError).
+					Return(false, int64(0), assert.AnError).
 					Once()
 			},
 			wantErr: pkg.ErrInternal,
@@ -274,7 +274,7 @@ func (s *LikeUseCaseSuite) TestLikeComment() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					InsertCommentLike(mock.Anything, commentID, userID).
-					Return(false, pkg.ErrInvalidData).
+					Return(false, int64(0), pkg.ErrInvalidData).
 					Once()
 			},
 			wantErr: pkg.ErrInvalidData,
@@ -289,7 +289,7 @@ func (s *LikeUseCaseSuite) TestLikeComment() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					InsertCommentLike(mock.Anything, commentID, userID).
-					Return(true, nil).
+					Return(true, int64(999), nil).
 					Once()
 
 				deps.event.EXPECT().
@@ -309,7 +309,7 @@ func (s *LikeUseCaseSuite) TestLikeComment() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					InsertCommentLike(mock.Anything, commentID, userID).
-					Return(false, nil).
+					Return(false, int64(0), nil).
 					Once()
 			},
 			wantErr: nil,

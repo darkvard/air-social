@@ -2,8 +2,6 @@ package like
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"air-social/internal/domain/common"
 	"air-social/pkg"
@@ -37,18 +35,61 @@ func NewUsecase(deps Deps) UseCase {
 }
 
 func (u *usecase) LikePost(ctx context.Context, postID, userID int64) error {
-	inserted, err := u.repo.InsertPostLike(ctx, postID, userID)
+	inserted, ownerID, err := u.repo.InsertPostLike(ctx, postID, userID)
 	if err != nil {
-		if errors.Is(err, pkg.ErrInvalidData) {
+		switch err {
+		case pkg.ErrNotFound:
+			return nil
+		case pkg.ErrInvalidData:
 			return pkg.NewError(err, "post not found")
+		default:
+			return pkg.OrInternalError(err)
 		}
-		return pkg.OrInternalError(err)
 	}
 
 	if inserted {
-		// todo push notification & update stats
-		_ = u.event.Publish(ctx, common.Event{})
+		_ = u.addLikePostEvent(ctx, true, postID, userID, ownerID)
 	}
+	return nil
+}
+
+func (u *usecase) UnlikePost(ctx context.Context, postID, userID int64) error {
+	err := u.repo.DeletePostLike(ctx, postID, userID)
+	if err != nil {
+		return pkg.NewError(err, "delete post like failed")
+	}
+
+	_ = u.addLikePostEvent(ctx, false, postID, userID, -1)
+	return nil
+}
+
+func (u *usecase) LikeComment(ctx context.Context, commentID, userID int64) error {
+	inserted, ownerID, err := u.repo.InsertCommentLike(ctx, commentID, userID)
+	if err != nil {
+		switch err {
+		case pkg.ErrNotFound:
+			return nil
+		case pkg.ErrInvalidData:
+			return pkg.NewError(err, "comment not found")
+		default:
+			return pkg.OrInternalError(err)
+		}
+	}
+
+	if inserted {
+		_ = u.addLikeCommentEvent(ctx, true, commentID, userID, ownerID)
+	}
+
+	return nil
+}
+
+func (u *usecase) UnlikeComment(ctx context.Context, commentID, userID int64) error {
+	err := u.repo.DeleteCommentLike(ctx, commentID, userID)
+	if err != nil {
+		return pkg.NewError(err, "delete comment like failed")
+	}
+
+	_ = u.addLikeCommentEvent(ctx, false, commentID, userID, -1)
 
 	return nil
 }
@@ -95,43 +136,27 @@ func (u *usecase) IsCommentLiked(ctx context.Context, commentIDs []int64, userID
 	return result, nil
 }
 
-func (u *usecase) UnlikePost(ctx context.Context, postID, userID int64) error {
-	err := u.repo.DeletePostLike(ctx, postID, userID)
-	if err != nil {
-		return fmt.Errorf("delete post like failed: %w", err)
+// todo thieu owner
+func (u *usecase) addLikePostEvent(ctx context.Context, isLike bool, postID, userID, ownerID int64) error {
+	typ := common.EventPostLike
+	data := common.LikeEventPayload{
+		TargetID: postID,
+		ActorID:  userID,
+		OwnerID:  ownerID,
+		IsLiked:  isLike,
+		Typ:      typ,
 	}
-
-	// todo update stats
-	_ = u.event.Publish(ctx, common.Event{})
-
-	return nil
+	return u.event.Publish(ctx, common.NewEvent(typ, data))
 }
 
-func (u *usecase) LikeComment(ctx context.Context, commentID, userID int64) error {
-	inserted, err := u.repo.InsertCommentLike(ctx, commentID, userID)
-	if err != nil {
-		if errors.Is(err, pkg.ErrInvalidData) {
-			return pkg.NewError(err, "comment not found")
-		}
-		return pkg.OrInternalError(err)
+func (u *usecase) addLikeCommentEvent(ctx context.Context, isLike bool, commentID, userID, ownerID int64) error {
+	typ := common.EventCommentLike
+	data := common.LikeEventPayload{
+		TargetID: commentID,
+		ActorID:  userID,
+		OwnerID:  ownerID,
+		IsLiked:  isLike,
+		Typ:      typ,
 	}
-
-	if inserted {
-		// todo push notification & update stats
-		_ = u.event.Publish(ctx, common.Event{})
-	}
-
-	return nil
-}
-
-func (u *usecase) UnlikeComment(ctx context.Context, commentID, userID int64) error {
-	err := u.repo.DeleteCommentLike(ctx, commentID, userID)
-	if err != nil {
-		return fmt.Errorf("delete comment like failed: %w", err)
-	}
-
-	// todo update stats
-	_ = u.event.Publish(ctx, common.Event{})
-
-	return nil
+	return u.event.Publish(ctx, common.NewEvent(typ, data))
 }

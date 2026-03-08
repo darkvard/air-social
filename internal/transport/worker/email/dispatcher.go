@@ -32,8 +32,8 @@ func (d *Dispatcher) Dispatch(ctx context.Context, event common.Event) error {
 }
 
 func (d *Dispatcher) registerHandlers() {
-	d.handlers[common.EventVerify] = d.makeEmailHandler(templates.VerifyEmailPath)
-	d.handlers[common.EventResetPassword] = d.makeEmailHandler(templates.ResetPasswordPath)
+	d.handlers[common.EventEmailVerify] = d.makeEmailHandler(templates.VerifyEmailPath)
+	d.handlers[common.EventEmailResetPassword] = d.makeEmailHandler(templates.ResetPasswordPath)
 }
 
 func (d *Dispatcher) makeEmailHandler(templateFile string) common.EventHandler {

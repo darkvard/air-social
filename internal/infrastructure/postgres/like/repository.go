@@ -2,6 +2,8 @@ package like
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/jmoiron/sqlx"
 
@@ -16,23 +18,27 @@ func NewRepository(db *sqlx.DB) *repository {
 	return &repository{db: db}
 }
 
-func (r *repository) InsertPostLike(ctx context.Context, postID, userID int64) (bool, error) {
+func (r *repository) InsertPostLike(ctx context.Context, postID, userID int64) (bool, int64, error) {
 	query := `
-		INSERT INTO post_likes (post_id, user_id) 
-		VALUES ($1, $2) 
-		ON CONFLICT (post_id, user_id) DO NOTHING
-	`
-	res, err := r.db.ExecContext(ctx, query, postID, userID)
-	if err != nil {
-		return false, pkg.MapPostgresError(err)
-	}
+        WITH inserted_like AS (
+            INSERT INTO post_likes (post_id, user_id) 
+            VALUES ($1, $2) 
+            ON CONFLICT (post_id, user_id) DO NOTHING
+            RETURNING post_id
+        )
+        SELECT p.user_id as owner_id
+        FROM posts p
+        INNER JOIN inserted_like il ON p.id = il.post_id;
+    `
 
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return false, pkg.MapPostgresError(err)
+	var ownerID int64
+	if err := r.db.QueryRowContext(ctx, query, postID, userID).Scan(&ownerID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+            return false, 0, nil
+        }
+		return false, 0, pkg.MapPostgresError(err)
 	}
-
-	return affected == 1, nil
+	return true, ownerID, nil
 }
 
 func (r *repository) DeletePostLike(ctx context.Context, postID, userID int64) error {
@@ -44,23 +50,27 @@ func (r *repository) DeletePostLike(ctx context.Context, postID, userID int64) e
 	return err
 }
 
-func (r *repository) InsertCommentLike(ctx context.Context, commentID, userID int64) (bool, error) {
+func (r *repository) InsertCommentLike(ctx context.Context, commentID, userID int64) (bool, int64, error) {
 	query := `
-		INSERT INTO comment_likes (comment_id, user_id) 
-		VALUES ($1, $2) 
-		ON CONFLICT (comment_id, user_id) DO NOTHING
+		WITH inserted_like AS (
+			INSERT INTO comment_likes (comment_id, user_id) 
+			VALUES ($1, $2) 
+			ON CONFLICT (comment_id, user_id) DO NOTHING
+			RETURNING comment_id
+		)
+		SELECT c.user_id as owner_id
+		FROM comments c
+		INNER JOIN inserted_like il ON c.id = il.comment_id;
 	`
-	res, err := r.db.ExecContext(ctx, query, commentID, userID)
-	if err != nil {
-		return false, pkg.MapPostgresError(err)
-	}
 
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return false, pkg.MapPostgresError(err)
+	var ownerID int64
+	if err := r.db.QueryRowContext(ctx, query, commentID, userID).Scan(&ownerID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+            return false, 0, nil
+        }
+		return false, 0, pkg.MapPostgresError(err)
 	}
-
-	return affected == 1, nil
+	return true, ownerID, nil
 }
 
 func (r *repository) DeleteCommentLike(ctx context.Context, commentID, userID int64) error {

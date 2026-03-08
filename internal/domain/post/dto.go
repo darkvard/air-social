@@ -3,10 +3,11 @@ package post
 import "air-social/internal/domain/common"
 
 type CreateParams struct {
-	UserID     int64
-	Content    string
-	Visibility Visibility
-	Media      []MediaParams
+	OriginalPostID *int64
+	UserID         int64
+	Content        string
+	Visibility     Visibility
+	Media          []MediaParams
 }
 
 type MediaParams struct {

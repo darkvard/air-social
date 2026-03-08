@@ -24,17 +24,20 @@ type MediaVerifier interface {
 type Deps struct {
 	PostRepo      Repository
 	MediaVerifier MediaVerifier
+	Event         common.EventPublisher
 }
 
 type usecase struct {
 	postRepo      Repository
 	mediaVerifier MediaVerifier
+	event         common.EventPublisher
 }
 
 func NewUseCase(deps Deps) *usecase {
 	return &usecase{
 		postRepo:      deps.PostRepo,
 		mediaVerifier: deps.MediaVerifier,
+		event:         deps.Event,
 	}
 }
 
@@ -47,6 +50,7 @@ func (u *usecase) GetPostDetail(ctx context.Context, postID, viewerID int64) (*P
 		return nil, pkg.OrInternalError(err)
 	}
 
+	// todo: them usecase moi cho stat
 	// todo map isLiked, count.....
 
 	return post, nil
@@ -54,15 +58,15 @@ func (u *usecase) GetPostDetail(ctx context.Context, postID, viewerID int64) (*P
 
 func (u *usecase) CreatePost(ctx context.Context, params CreateParams) (*Post, error) {
 	if strings.TrimSpace(params.Content) == "" && len(params.Media) == 0 {
-		return nil, pkg.ErrInvalidData
+		return nil, pkg.NewError(pkg.ErrInvalidData, "content or media is required")
 	}
 
 	post := &Post{
-		UserID:     params.UserID,
-		Content:    params.Content,
-		Visibility: params.Visibility,
+		OriginalPostID: params.OriginalPostID,
+		UserID:         params.UserID,
+		Content:        params.Content,
+		Visibility:     params.Visibility,
 	}
-
 	if len(params.Media) > 0 {
 		media, err := u.validateMedia(ctx, params.Media)
 		if err != nil {
@@ -75,8 +79,16 @@ func (u *usecase) CreatePost(ctx context.Context, params CreateParams) (*Post, e
 	}
 
 	if err := u.postRepo.Create(ctx, post); err != nil {
+		if errors.Is(err, pkg.ErrInvalidData) {
+			return nil, pkg.NewError(pkg.ErrInvalidData, "original post not found")
+		}
 		return nil, err
 	}
+
+	if post.OriginalPostID != nil {
+		_ = u.addShareEvent(ctx, *post, true)
+	}
+
 	return post, nil
 }
 
@@ -111,10 +123,15 @@ func (u *usecase) UpdatePost(ctx context.Context, params UpdateParams) (*Post, e
 	return post, nil
 }
 
+// DeletePost deletes a post by ID.
+// If the post was a share, it publishes an EventPostShare (isShared=false).
 func (u *usecase) DeletePost(ctx context.Context, postID, userID int64) error {
-	_, err := u.getPostOwner(ctx, postID, userID)
+	post, err := u.getPostOwner(ctx, postID, userID)
 	if err != nil {
 		return err
+	}
+	if post.OriginalPostID != nil {
+		_ = u.addShareEvent(ctx, *post, false)
 	}
 	return pkg.OrInternalError(u.postRepo.Delete(ctx, postID))
 }
@@ -166,4 +183,14 @@ func (u *usecase) getPostOwner(ctx context.Context, postID, viewerID int64) (*Po
 		return nil, pkg.ErrForbidden
 	}
 	return post, nil
+}
+
+func (u *usecase) addShareEvent(ctx context.Context, post Post, isShare bool) error {
+	data := common.ShareEventPayload{
+		OriginalPostID: *post.OriginalPostID,
+		NewPostID:      post.ID,
+		ActorID:        post.UserID,
+		IsShared:       isShare,
+	}
+	return u.event.Publish(ctx, common.NewEvent(common.EventPostShare, data))
 }

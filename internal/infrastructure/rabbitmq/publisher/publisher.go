@@ -17,8 +17,13 @@ import (
 // eventRoutingMap is the single source of truth that maps
 // domain-level event types to infrastructure routing keys.
 var eventRoutingMap = map[common.EventType]string{
-	common.EventVerify:        config.EmailVerifyQueueConfig.RoutingKey,
-	common.EventResetPassword: config.EmailResetPasswordQueueConfig.RoutingKey,
+	common.EventEmailVerify:        config.EmailVerifyQueueConfig.RoutingKey,
+	common.EventEmailResetPassword: config.EmailResetPasswordQueueConfig.RoutingKey,
+	common.EventPostLike:           config.SocialPostLikeQueueConfig.RoutingKey,
+	common.EventPostShare:          config.SocialPostShareQueueConfig.RoutingKey,
+	common.EventCommentLike:        config.SocialCommentLikeQueueConfig.RoutingKey,
+	common.EventCommentCreated:     config.SocialCommentCreatedQueueConfig.RoutingKey,
+	common.EventCommentDeleted:     config.SocialCommentDeletedQueueConfig.RoutingKey,
 }
 
 // pubChannel wraps an AMQP channel together with its confirm

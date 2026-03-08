@@ -11,6 +11,7 @@ import (
 	"air-social/internal/domain/comment"
 	commentmocks "air-social/internal/domain/comment/mocks"
 	"air-social/internal/domain/common"
+	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/follow"
 	"air-social/internal/domain/post"
 	"air-social/pkg"
@@ -78,6 +79,7 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		postFetcher   *commentmocks.MockPostFetcher
 		followChecker *commentmocks.MockFollowChecker
 		mediaVerifier *commentmocks.MockMediaVerifier
+		event         *commonmocks.MockEventPublisher
 	}
 
 	tests := []struct {
@@ -109,6 +111,11 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 						return c.PostID == postID && c.UserID == userID && c.ParentID == nil
 					})).
 					Return(nil).Once()
+
+				deps.event.EXPECT().
+					Publish(mock.Anything, mock.AnythingOfType("common.Event")).
+					Return(nil).
+					Once()
 			},
 			want: &comment.Comment{
 				PostID:  postID,
@@ -144,6 +151,11 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 						return c.ParentID != nil && *c.ParentID == parentID
 					})).
 					Return(nil).Once()
+
+				deps.event.EXPECT().
+					Publish(mock.Anything, mock.AnythingOfType("common.Event")).
+					Return(nil).
+					Once()
 			},
 			want: &comment.Comment{
 				PostID:   postID,
@@ -293,12 +305,14 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 			mockPostFetcher := commentmocks.NewMockPostFetcher(s.T())
 			mockFollowChecker := commentmocks.NewMockFollowChecker(s.T())
 			mockMediaVerifier := commentmocks.NewMockMediaVerifier(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 
 			deps := testDeps{
 				repo:          mockRepo,
 				postFetcher:   mockPostFetcher,
 				followChecker: mockFollowChecker,
 				mediaVerifier: mockMediaVerifier,
+				event:         mockEvent,
 			}
 
 			uc := comment.NewUseCase(comment.Deps{
@@ -306,6 +320,7 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 				PostFetcher:   mockPostFetcher,
 				FollowChecker: mockFollowChecker,
 				MediaVerifier: mockMediaVerifier,
+				Event:         mockEvent,
 			})
 
 			if tc.setupMock != nil {
@@ -351,12 +366,13 @@ func (s *commentUseCaseSuite) TestDeleteComment() {
 	}
 
 	type testDeps struct {
-		repo *commentmocks.MockRepository
+		repo  *commentmocks.MockRepository
+		event *commonmocks.MockEventPublisher
 	}
 
 	tests := []struct {
-		name      string
-		args      struct {
+		name string
+		args struct {
 			ctx       context.Context
 			commentID int64
 			userID    int64
@@ -379,6 +395,11 @@ func (s *commentUseCaseSuite) TestDeleteComment() {
 				deps.repo.EXPECT().
 					Delete(mock.Anything, commentID).
 					Return(nil).Once()
+
+				deps.event.EXPECT().
+					Publish(mock.Anything, mock.AnythingOfType("common.Event")).
+					Return(nil).
+					Once()
 			},
 			wantErr: nil,
 		},
@@ -447,13 +468,16 @@ func (s *commentUseCaseSuite) TestDeleteComment() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := commentmocks.NewMockRepository(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 
 			deps := testDeps{
-				repo: mockRepo,
+				repo:  mockRepo,
+				event: mockEvent,
 			}
 
 			uc := comment.NewUseCase(comment.Deps{
 				CommentRepo: mockRepo,
+				Event:       mockEvent,
 			})
 
 			if tc.setupMock != nil {
@@ -473,13 +497,13 @@ func (s *commentUseCaseSuite) TestDeleteComment() {
 
 func (s *commentUseCaseSuite) TestUpdateComment() {
 	var (
-		commentID   int64 = 1
-		userID      int64 = 10
-		otherUserID int64 = 99
-		oldContent        = "Old content"
-		newContent        = "New content"
-		oldMedia          = []comment.Media{{MediaKey: "old.jpg", MediaType: "image"}}
-		newMediaParam     = []comment.Media{{MediaKey: "new.jpg", MediaType: "image"}}
+		commentID     int64 = 1
+		userID        int64 = 10
+		otherUserID   int64 = 99
+		oldContent          = "Old content"
+		newContent          = "New content"
+		oldMedia            = []comment.Media{{MediaKey: "old.jpg", MediaType: "image"}}
+		newMediaParam       = []comment.Media{{MediaKey: "new.jpg", MediaType: "image"}}
 	)
 
 	type testDeps struct {
@@ -628,6 +652,7 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := commentmocks.NewMockRepository(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 			mockPostFetcher := commentmocks.NewMockPostFetcher(s.T())
 			mockFollowChecker := commentmocks.NewMockFollowChecker(s.T())
 			mockMediaVerifier := commentmocks.NewMockMediaVerifier(s.T())
@@ -642,6 +667,7 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 				PostFetcher:   mockPostFetcher,
 				FollowChecker: mockFollowChecker,
 				MediaVerifier: mockMediaVerifier,
+				Event:         mockEvent,
 			})
 
 			if tc.setupMock != nil {
@@ -690,8 +716,8 @@ func (s *commentUseCaseSuite) TestGetComments() {
 	}
 
 	tests := []struct {
-		name      string
-		args      struct {
+		name string
+		args struct {
 			ctx    context.Context
 			postID int64
 			params comment.GetCursorParams
@@ -739,10 +765,12 @@ func (s *commentUseCaseSuite) TestGetComments() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := commentmocks.NewMockRepository(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 			mockLike := commentmocks.NewMockLikeChecker(s.T())
 			deps := testDeps{repo: mockRepo, like: mockLike}
 			uc := comment.NewUseCase(comment.Deps{
 				CommentRepo: mockRepo,
+				Event:       mockEvent,
 				LikeChecker: mockLike,
 			})
 
@@ -786,8 +814,9 @@ func (s *commentUseCaseSuite) TestGetReplies() {
 
 	s.Run("success", func() {
 		mockRepo := commentmocks.NewMockRepository(s.T())
+		mockEvent := commonmocks.NewMockEventPublisher(s.T())
 		mockLike := commentmocks.NewMockLikeChecker(s.T())
-		uc := comment.NewUseCase(comment.Deps{CommentRepo: mockRepo, LikeChecker: mockLike})
+		uc := comment.NewUseCase(comment.Deps{CommentRepo: mockRepo, Event: mockEvent, LikeChecker: mockLike})
 
 		mockRepo.EXPECT().
 			GetReplies(mock.Anything, parentID, mock.Anything).
@@ -804,7 +833,8 @@ func (s *commentUseCaseSuite) TestGetReplies() {
 
 	s.Run("repo_error", func() {
 		mockRepo := commentmocks.NewMockRepository(s.T())
-		uc := comment.NewUseCase(comment.Deps{CommentRepo: mockRepo})
+		mockEvent := commonmocks.NewMockEventPublisher(s.T())
+		uc := comment.NewUseCase(comment.Deps{CommentRepo: mockRepo, Event: mockEvent})
 
 		mockRepo.EXPECT().
 			GetReplies(mock.Anything, parentID, mock.Anything).

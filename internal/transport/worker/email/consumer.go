@@ -48,9 +48,9 @@ func NewConsumer(deps Deps, event common.EventType) *Consumer {
 	var queueCfg config.QueueConfig
 
 	switch event {
-	case common.EventVerify:
+	case common.EventEmailVerify:
 		queueCfg = config.EmailVerifyQueueConfig
-	case common.EventResetPassword:
+	case common.EventEmailResetPassword:
 		queueCfg = config.EmailResetPasswordQueueConfig
 	default:
 		pkg.Log().Error("consumer: invalid event type")
@@ -111,7 +111,6 @@ func (c *Consumer) Stop() error {
 }
 
 func (c *Consumer) handleMessage(ctx context.Context, msg amqp.Delivery) {
-	pkg.Log().Infof("Received message:", msg.RoutingKey, "message id", msg.MessageId)
 	var event common.Event
 	if err := json.Unmarshal(msg.Body, &event); err != nil {
 		msg.Nack(false, false) // drop malformed messages

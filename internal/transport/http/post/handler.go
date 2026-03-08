@@ -50,9 +50,10 @@ func (h Handler) CreatePost(c *gin.Context) {
 	}
 
 	params := post.CreateParams{
-		UserID:     claims.UserID,
-		Content:    req.Content,
-		Visibility: post.Visibility(req.Visibility),
+		OriginalPostID: req.OriginalPostID,
+		UserID:         claims.UserID,
+		Content:        req.Content,
+		Visibility:     post.Visibility(req.Visibility),
 	}
 
 	if len(req.Media) > 0 {

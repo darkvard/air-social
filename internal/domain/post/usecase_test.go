@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"air-social/internal/domain/common"
+	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/post"
 	postmocks "air-social/internal/domain/post/mocks"
 	"air-social/pkg"
@@ -92,6 +93,7 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 		s.Run(tc.name, func() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 
 			deps := testDeps{
 				repo: mockRepo,
@@ -100,6 +102,7 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 			uc := post.NewUseCase(post.Deps{
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
+				Event:         mockEvent,
 			})
 
 			if tc.setupMock != nil {
@@ -121,8 +124,9 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 
 func (s *postUseCaseSuite) TestCreatePost() {
 	var (
-		userID  = int64(1)
-		content = "Hello World"
+		userID         = int64(1)
+		content        = "Hello World"
+		originalPostID = int64(999)
 	)
 
 	mediaParams := []post.MediaParams{
@@ -132,6 +136,7 @@ func (s *postUseCaseSuite) TestCreatePost() {
 	type testDeps struct {
 		repo     *postmocks.MockRepository
 		verifier *postmocks.MockMediaVerifier
+		event    *commonmocks.MockEventPublisher
 	}
 
 	type args struct {
@@ -256,21 +261,54 @@ func (s *postUseCaseSuite) TestCreatePost() {
 			},
 			wantErr: nil,
 		},
+		{
+			name: "success_share_post",
+			args: args{
+				ctx: context.Background(),
+				params: post.CreateParams{
+					UserID:         userID,
+					Content:        content,
+					OriginalPostID: &originalPostID,
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					Create(mock.Anything, mock.MatchedBy(func(p *post.Post) bool {
+						return p.UserID == userID && p.OriginalPostID != nil && *p.OriginalPostID == originalPostID
+					})).
+					Return(nil).
+					Once()
+
+				deps.event.EXPECT().
+					Publish(mock.Anything, mock.AnythingOfType("common.Event")).
+					Return(nil).
+					Once()
+			},
+			want: &post.Post{
+				UserID:         userID,
+				Content:        content,
+				OriginalPostID: &originalPostID,
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 
 			deps := testDeps{
 				repo:     mockRepo,
 				verifier: mockVerifier,
+				event:    mockEvent,
 			}
 
 			uc := post.NewUseCase(post.Deps{
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
+				Event:         mockEvent,
 			})
 
 			if tc.setupMock != nil {
@@ -311,6 +349,7 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 	type testDeps struct {
 		repo     *postmocks.MockRepository
 		verifier *postmocks.MockMediaVerifier
+		event    *commonmocks.MockEventPublisher
 	}
 
 	type args struct {
@@ -530,15 +569,18 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 		s.Run(tc.name, func() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 
 			deps := testDeps{
 				repo:     mockRepo,
 				verifier: mockVerifier,
+				event:    mockEvent,
 			}
 
 			uc := post.NewUseCase(post.Deps{
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
+				Event:         mockEvent,
 			})
 
 			if tc.setupMock != nil {
@@ -577,13 +619,21 @@ func (s *postUseCaseSuite) TestDeletePost() {
 		otherUserID = int64(99)
 	)
 
+	originalPostID := int64(888)
+
 	existingPost := &post.Post{
 		ID:     postID,
 		UserID: userID,
 	}
+	sharedPost := &post.Post{
+		ID:             postID,
+		UserID:         userID,
+		OriginalPostID: &originalPostID,
+	}
 
 	type testDeps struct {
-		repo *postmocks.MockRepository
+		repo  *postmocks.MockRepository
+		event *commonmocks.MockEventPublisher
 	}
 
 	type args struct {
@@ -652,20 +702,44 @@ func (s *postUseCaseSuite) TestDeletePost() {
 			},
 			wantErr: nil,
 		},
+		{
+			name: "success_shared_post",
+			args: args{ctx: context.Background(), postID: postID, userID: userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetByID(mock.Anything, postID).
+					Return(sharedPost, nil).
+					Once()
+
+				deps.repo.EXPECT().
+					Delete(mock.Anything, postID).
+					Return(nil).
+					Once()
+
+				deps.event.EXPECT().
+					Publish(mock.Anything, mock.AnythingOfType("common.Event")).
+					Return(nil).
+					Once()
+			},
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 
 			deps := testDeps{
-				repo: mockRepo,
+				repo:  mockRepo,
+				event: mockEvent,
 			}
 
 			uc := post.NewUseCase(post.Deps{
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
+				Event:         mockEvent,
 			})
 
 			if tc.setupMock != nil {
@@ -747,6 +821,7 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 		s.Run(tc.name, func() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 
 			deps := testDeps{
 				repo: mockRepo,
@@ -755,6 +830,7 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 			uc := post.NewUseCase(post.Deps{
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
+				Event:         mockEvent,
 			})
 
 			if tc.setupMock != nil {

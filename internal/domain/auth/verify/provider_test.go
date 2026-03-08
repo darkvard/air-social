@@ -73,7 +73,7 @@ func (s *verifyProviderSuite) TestSendVerification() {
 				deps.event.EXPECT().
 					Publish(mock.Anything, mock.MatchedBy(func(e common.Event) bool {
 						payload, ok := e.Data.(common.EmailEventPayload)
-						return ok && payload.Email == email && payload.Link == link && e.Typ == common.EventVerify
+						return ok && payload.Email == email && payload.Link == link && e.Typ == common.EventEmailVerify
 					})).
 					Return(nil).Once()
 			},
@@ -269,7 +269,7 @@ func (s *verifyProviderSuite) TestSendPasswordReset() {
 				deps.event.EXPECT().
 					Publish(mock.Anything, mock.MatchedBy(func(e common.Event) bool {
 						payload, ok := e.Data.(common.EmailEventPayload)
-						return ok && payload.Email == email && payload.Link == link && e.Typ == common.EventResetPassword
+						return ok && payload.Email == email && payload.Link == link && e.Typ == common.EventEmailResetPassword
 					})).
 					Return(nil).Once()
 			},
@@ -472,5 +472,3 @@ func (s *verifyProviderSuite) TestValidateResetPasswordToken() {
 		})
 	}
 }
-
- 

@@ -124,6 +124,7 @@ func getPostUseCase(deps UseCaseDeps, mediaVerifier post.MediaVerifier) post.Use
 		post.Deps{
 			PostRepo:      deps.Repo.Post,
 			MediaVerifier: mediaVerifier,
+			Event:         deps.Adapter.EventPub,
 		},
 	)
 }
@@ -141,6 +142,7 @@ func getCommentUseCase(
 		FollowChecker: followFetcher,
 		MediaVerifier: mediaVerifier,
 		LikeChecker:   likeChecker,
+		Event:         deps.Adapter.EventPub,
 	})
 }
 

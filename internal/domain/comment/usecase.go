@@ -44,6 +44,7 @@ type Deps struct {
 	FollowChecker FollowChecker
 	MediaVerifier MediaVerifier
 	LikeChecker   LikeChecker
+	Event         common.EventPublisher
 }
 
 type usecase struct {
@@ -52,6 +53,7 @@ type usecase struct {
 	followChecker FollowChecker
 	mediaVerifier MediaVerifier
 	likeChecker   LikeChecker
+	event         common.EventPublisher
 }
 
 func NewUseCase(deps Deps) *usecase {
@@ -61,8 +63,11 @@ func NewUseCase(deps Deps) *usecase {
 		followChecker: deps.FollowChecker,
 		mediaVerifier: deps.MediaVerifier,
 		likeChecker:   deps.LikeChecker,
+		event:         deps.Event,
 	}
 }
+
+// todo: them usecase moi cho stat sau nay
 
 func (u *usecase) GetComments(ctx context.Context, postID int64, params GetCursorParams) (common.CursorPaginatedResult[Comment, int64], error) {
 	params.Query.NormalizePagination()
@@ -118,6 +123,8 @@ func (u *usecase) DeleteComment(ctx context.Context, commentID int64, userID int
 	if err := u.commentRepo.Delete(ctx, comment.ID); err != nil {
 		return pkg.OrInternalError(err)
 	}
+
+	_ = u.addCommentEvent(ctx, userID, *comment, common.EventCommentDeleted)
 	return nil
 }
 
@@ -180,6 +187,9 @@ func (u *usecase) CreateComment(ctx context.Context, params CreateParams) (*Comm
 	if err := u.commentRepo.Create(ctx, comment); err != nil {
 		return nil, pkg.OrInternalError(err)
 	}
+
+	_ = u.addCommentEvent(ctx, params.UserID, *comment, common.EventCommentCreated)
+
 	return comment, nil
 }
 
@@ -272,4 +282,16 @@ func (u *usecase) mapIsLikedForComments(ctx context.Context, userID int64, comme
 	}
 
 	return nil
+}
+
+func (u *usecase) addCommentEvent(ctx context.Context, actorID int64, comment Comment, typ common.EventType) error {
+	data := common.CommentEventPayload{
+		PostID:    comment.PostID,
+		CommentID: comment.ID,
+		ParentID:  comment.ParentID,
+		ActorID:   actorID,
+		OwnerID:   comment.UserID,
+		Typ:       typ,
+	}
+	return u.event.Publish(ctx, common.NewEvent(typ, data))
 }

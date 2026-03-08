@@ -16,6 +16,41 @@ const (
 	resetPasswordQueueDeadRouting = resetPasswordRouting + deadExt
 )
 
+const (
+	postLikeRouting          = "social.post.like"
+	postLikeQueue            = "social_post_like_queue"
+	postLikeQueueDead        = postLikeQueue + deadExt
+	postLikeQueueDeadRouting = postLikeRouting + deadExt
+)
+
+const (
+	postShareRouting          = "social.post.share"
+	postShareQueue            = "social_post_share_queue"
+	postShareQueueDead        = postShareQueue + deadExt
+	postShareQueueDeadRouting = postShareRouting + deadExt
+)
+
+const (
+	commentLikeRouting          = "social.comment.like"
+	commentLikeQueue            = "social_comment_like_queue"
+	commentLikeQueueDead        = commentLikeQueue + deadExt
+	commentLikeQueueDeadRouting = commentLikeRouting + deadExt
+)
+
+const (
+	commentCreatedRouting          = "social.comment.created"
+	commentCreatedQueue            = "social_comment_created_queue"
+	commentCreatedQueueDead        = commentCreatedQueue + deadExt
+	commentCreatedQueueDeadRouting = commentCreatedRouting + deadExt
+)
+
+const (
+	commentDeletedRouting          = "social.comment.deleted"
+	commentDeletedQueue            = "social_comment_deleted_queue"
+	commentDeletedQueueDead        = commentDeletedQueue + deadExt
+	commentDeletedQueueDeadRouting = commentDeletedRouting + deadExt
+)
+
 type ExchangeConfig struct {
 	Name string
 	Type string
@@ -48,4 +83,44 @@ var EmailResetPasswordQueueConfig = QueueConfig{
 	DeadLetterExchange:   TopicEventsExchange.Name,
 	DeadLetterQueue:      resetPasswordQueueDead,
 	DeadLetterRoutingKey: resetPasswordQueueDeadRouting,
+}
+
+var SocialPostLikeQueueConfig = QueueConfig{
+	Queue:                postLikeQueue,
+	RoutingKey:           postLikeRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      postLikeQueueDead,
+	DeadLetterRoutingKey: postLikeQueueDeadRouting,
+}
+
+var SocialPostShareQueueConfig = QueueConfig{
+	Queue:                postShareQueue,
+	RoutingKey:           postShareRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      postShareQueueDead,
+	DeadLetterRoutingKey: postShareQueueDeadRouting,
+}
+
+var SocialCommentLikeQueueConfig = QueueConfig{
+	Queue:                commentLikeQueue,
+	RoutingKey:           commentLikeRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      commentLikeQueueDead,
+	DeadLetterRoutingKey: commentLikeQueueDeadRouting,
+}
+
+var SocialCommentCreatedQueueConfig = QueueConfig{
+	Queue:                commentCreatedQueue,
+	RoutingKey:           commentCreatedRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      commentCreatedQueueDead,
+	DeadLetterRoutingKey: commentCreatedQueueDeadRouting,
+}
+
+var SocialCommentDeletedQueueConfig = QueueConfig{
+	Queue:                commentDeletedQueue,
+	RoutingKey:           commentDeletedRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      commentDeletedQueueDead,
+	DeadLetterRoutingKey: commentDeletedQueueDeadRouting,
 }

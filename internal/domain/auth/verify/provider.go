@@ -59,14 +59,8 @@ func (p *provider) SendVerification(ctx context.Context, email string, username 
 		Link:   p.link.VerifyEmail(id),
 		Expiry: pkg.FormatTTLHuman(verificationTTL),
 	}
-	event := common.Event{
-		ID:        id,
-		Typ:       common.EventVerify,
-		Timestamp: pkg.TimeNowUTC(),
-		Data:      payload,
-	}
 
-	return p.event.Publish(ctx, event)
+	return p.event.Publish(ctx, common.NewEvent(common.EventEmailVerify, payload))
 }
 
 func (p *provider) SendPasswordReset(ctx context.Context, email string, username string) error {
@@ -82,14 +76,8 @@ func (p *provider) SendPasswordReset(ctx context.Context, email string, username
 		Link:   p.link.ResetPassword(id),
 		Expiry: pkg.FormatTTLHuman(resetPasswordTTL),
 	}
-	event := common.Event{
-		ID:        id,
-		Typ:       common.EventResetPassword,
-		Timestamp: pkg.TimeNowUTC(),
-		Data:      payload,
-	}
 
-	return p.event.Publish(ctx, event)
+	return p.event.Publish(ctx, common.NewEvent(common.EventEmailResetPassword, payload))
 }
 
 func (p *provider) VerifyVerification(ctx context.Context, token string) (string, error) {

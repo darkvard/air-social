@@ -134,8 +134,8 @@ func (r *repository) GetUserPosts(ctx context.Context, params post.GetCursorPara
 
 func (r *repository) insertPost(ctx context.Context, tx *sqlx.Tx, post *post.Post) error {
 	query := `
-		INSERT INTO posts (user_id, content, visibility)
-		VALUES ($1, $2, $3)
+		INSERT INTO posts (user_id, content, visibility, original_post_id)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
 	`
 
@@ -143,6 +143,7 @@ func (r *repository) insertPost(ctx context.Context, tx *sqlx.Tx, post *post.Pos
 		post.UserID,
 		post.Content,
 		string(post.Visibility),
+		post.OriginalPostID,
 	).Scan(
 		&post.ID,
 		&post.CreatedAt,

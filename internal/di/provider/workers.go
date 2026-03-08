@@ -13,7 +13,7 @@ func NewWorkers(infra *Infrastructure, adapter Adapter) *worker.Manager {
 		Dispatcher: email.NewDispatcher(adapter.Mailer),
 	}
 	return worker.NewManager(
-		email.NewConsumer(deps, common.EventVerify),
-		email.NewConsumer(deps, common.EventResetPassword),
+		email.NewConsumer(deps, common.EventEmailVerify),
+		email.NewConsumer(deps, common.EventEmailResetPassword),
 	)
 }

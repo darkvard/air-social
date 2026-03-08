@@ -312,7 +312,7 @@ func (_c *MockRepository_GetPostLiked_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // InsertCommentLike provides a mock function for the type MockRepository
-func (_mock *MockRepository) InsertCommentLike(ctx context.Context, commentID int64, userID int64) (bool, error) {
+func (_mock *MockRepository) InsertCommentLike(ctx context.Context, commentID int64, userID int64) (bool, int64, error) {
 	ret := _mock.Called(ctx, commentID, userID)
 
 	if len(ret) == 0 {
@@ -320,8 +320,9 @@ func (_mock *MockRepository) InsertCommentLike(ctx context.Context, commentID in
 	}
 
 	var r0 bool
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (bool, error)); ok {
+	var r1 int64
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (bool, int64, error)); ok {
 		return returnFunc(ctx, commentID, userID)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) bool); ok {
@@ -329,12 +330,17 @@ func (_mock *MockRepository) InsertCommentLike(ctx context.Context, commentID in
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) int64); ok {
 		r1 = returnFunc(ctx, commentID, userID)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(int64)
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(context.Context, int64, int64) error); ok {
+		r2 = returnFunc(ctx, commentID, userID)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
 }
 
 // MockRepository_InsertCommentLike_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertCommentLike'
@@ -373,18 +379,18 @@ func (_c *MockRepository_InsertCommentLike_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockRepository_InsertCommentLike_Call) Return(b bool, err error) *MockRepository_InsertCommentLike_Call {
-	_c.Call.Return(b, err)
+func (_c *MockRepository_InsertCommentLike_Call) Return(b bool, n int64, err error) *MockRepository_InsertCommentLike_Call {
+	_c.Call.Return(b, n, err)
 	return _c
 }
 
-func (_c *MockRepository_InsertCommentLike_Call) RunAndReturn(run func(ctx context.Context, commentID int64, userID int64) (bool, error)) *MockRepository_InsertCommentLike_Call {
+func (_c *MockRepository_InsertCommentLike_Call) RunAndReturn(run func(ctx context.Context, commentID int64, userID int64) (bool, int64, error)) *MockRepository_InsertCommentLike_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // InsertPostLike provides a mock function for the type MockRepository
-func (_mock *MockRepository) InsertPostLike(ctx context.Context, postID int64, userID int64) (bool, error) {
+func (_mock *MockRepository) InsertPostLike(ctx context.Context, postID int64, userID int64) (bool, int64, error) {
 	ret := _mock.Called(ctx, postID, userID)
 
 	if len(ret) == 0 {
@@ -392,8 +398,9 @@ func (_mock *MockRepository) InsertPostLike(ctx context.Context, postID int64, u
 	}
 
 	var r0 bool
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (bool, error)); ok {
+	var r1 int64
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (bool, int64, error)); ok {
 		return returnFunc(ctx, postID, userID)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) bool); ok {
@@ -401,12 +408,17 @@ func (_mock *MockRepository) InsertPostLike(ctx context.Context, postID int64, u
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) int64); ok {
 		r1 = returnFunc(ctx, postID, userID)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(int64)
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(context.Context, int64, int64) error); ok {
+		r2 = returnFunc(ctx, postID, userID)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
 }
 
 // MockRepository_InsertPostLike_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertPostLike'
@@ -445,12 +457,12 @@ func (_c *MockRepository_InsertPostLike_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *MockRepository_InsertPostLike_Call) Return(b bool, err error) *MockRepository_InsertPostLike_Call {
-	_c.Call.Return(b, err)
+func (_c *MockRepository_InsertPostLike_Call) Return(b bool, n int64, err error) *MockRepository_InsertPostLike_Call {
+	_c.Call.Return(b, n, err)
 	return _c
 }
 
-func (_c *MockRepository_InsertPostLike_Call) RunAndReturn(run func(ctx context.Context, postID int64, userID int64) (bool, error)) *MockRepository_InsertPostLike_Call {
+func (_c *MockRepository_InsertPostLike_Call) RunAndReturn(run func(ctx context.Context, postID int64, userID int64) (bool, int64, error)) *MockRepository_InsertPostLike_Call {
 	_c.Call.Return(run)
 	return _c
 }
