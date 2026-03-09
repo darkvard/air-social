@@ -10,5 +10,5 @@ func NewWorkerGroup(deps consumer.Deps) *consumer.Group {
 		config.EmailVerifyQueueConfig,
 		config.EmailResetPasswordQueueConfig,
 	}
-	return consumer.NewGroup(deps, queues, "email")
+	return consumer.NewGroup(deps, queues, consumer.Domain("email"))
 }

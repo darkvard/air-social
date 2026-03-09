@@ -19,7 +19,7 @@ func NewWorkers(infra *Infrastructure, adapter Adapter) *worker.Manager {
 	statsWorker := stats.NewWorkerGroup(consumer.Deps{
 		Conn:       infra.Rabbit,
 		Cache:      adapter.Cache,
-		Dispatcher: stats.NewDispatcher(adapter.Cache),
+		Dispatcher: stats.NewDispatcher(nil),		// todo inject
 	})
 
 	return worker.NewManager(emailWorker, statsWorker)

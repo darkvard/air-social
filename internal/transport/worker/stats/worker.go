@@ -14,5 +14,5 @@ func NewWorkerGroup(deps consumer.Deps) *consumer.Group {
 		config.SocialCommentLikeQueueConfig,
 	}
 
-	return consumer.NewGroup(deps, queues, "stats")
+	return consumer.NewGroup(deps, queues, consumer.Domain("stats"))
 }

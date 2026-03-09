@@ -1,12 +1,12 @@
-package post
+package stats
 
 import (
 	"time"
 
-	"air-social/internal/domain/post"
+	"air-social/internal/domain/stats"
 )
 
-type StatTable struct {
+type PostTable struct {
 	PostID        int64     `db:"post_id"`
 	LikesCount    int32     `db:"likes_count"`
 	CommentsCount int32     `db:"comments_count"`
@@ -14,8 +14,8 @@ type StatTable struct {
 	UpdatedAt     time.Time `db:"updated_at"`
 }
 
-func (m *StatTable) ToDomain() *post.Stat {
-	return &post.Stat{
+func (m *PostTable) ToDomain() *stats.PostStats {
+	return &stats.PostStats{
 		PostID:        m.PostID,
 		LikesCount:    m.LikesCount,
 		CommentsCount: m.CommentsCount,
@@ -24,11 +24,11 @@ func (m *StatTable) ToDomain() *post.Stat {
 	}
 }
 
-func FromDomainStat(d *post.Stat) *StatTable {
+func FromDomainPostStat(d *stats.PostStats) *PostTable {
 	if d == nil {
 		return nil
 	}
-	return &StatTable{
+	return &PostTable{
 		PostID:        d.PostID,
 		LikesCount:    d.LikesCount,
 		CommentsCount: d.CommentsCount,

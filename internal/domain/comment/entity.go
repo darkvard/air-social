@@ -2,6 +2,8 @@ package comment
 
 import (
 	"time"
+
+	"air-social/internal/domain/stats"
 )
 
 type Comment struct {
@@ -16,7 +18,7 @@ type Comment struct {
 	UpdatedAt time.Time
 	DeletedAt *time.Time
 
-	Stat    Stat
+	Stat    stats.CommentStats
 	IsLiked *bool
 	Author  *Author
 }
@@ -28,13 +30,6 @@ func (c Comment) GetCursor() int64 {
 type Media struct {
 	MediaKey  string
 	MediaType string
-}
-
-type Stat struct {
-	CommentID    int64
-	LikesCount   int32
-	RepliesCount int32
-	UpdatedAt    time.Time
 }
 
 type Author struct {

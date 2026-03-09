@@ -12,13 +12,13 @@ type Group struct {
 	consumers []*Consumer
 }
 
-func NewGroup(deps Deps, queues []config.QueueConfig, domain string) *Group {
+func NewGroup(deps Deps, queues []config.QueueConfig, domain Domain) *Group {
 	items := make([]*Consumer, len(queues))
 
 	for i, qCfg := range queues {
 		d := deps
 		d.QueueCfg = qCfg
-		d.Domain = Domain(domain)
+		d.Domain = domain
 		items[i] = NewConsumer(d)
 	}
 

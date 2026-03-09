@@ -2,6 +2,8 @@ package post
 
 import (
 	"time"
+
+	"air-social/internal/domain/stats"
 )
 
 const (
@@ -24,7 +26,7 @@ type Post struct {
 	OriginalPostID *int64
 
 	Media   []Media
-	Stat    Stat
+	Stat    stats.PostStats
 	IsLiked *bool
 	Author  *Author
 }
@@ -38,14 +40,6 @@ type Author struct {
 	FullName   string
 	Avatar     string
 	IsVerified bool
-}
-
-type Stat struct {
-	PostID        int64
-	LikesCount    int32
-	CommentsCount int32
-	SharesCount   int32
-	UpdatedAt     time.Time
 }
 
 type Media struct {
