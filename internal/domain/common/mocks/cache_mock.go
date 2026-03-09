@@ -158,6 +158,224 @@ func (_c *MockCache_Get_Call) RunAndReturn(run func(ctx context.Context, key str
 	return _c
 }
 
+// HDel provides a mock function for the type MockCache
+func (_mock *MockCache) HDel(ctx context.Context, key string, fields ...string) error {
+	var tmpRet mock.Arguments
+	if len(fields) > 0 {
+		tmpRet = _mock.Called(ctx, key, fields)
+	} else {
+		tmpRet = _mock.Called(ctx, key)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for HDel")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...string) error); ok {
+		r0 = returnFunc(ctx, key, fields...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockCache_HDel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HDel'
+type MockCache_HDel_Call struct {
+	*mock.Call
+}
+
+// HDel is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - fields ...string
+func (_e *MockCache_Expecter) HDel(ctx interface{}, key interface{}, fields ...interface{}) *MockCache_HDel_Call {
+	return &MockCache_HDel_Call{Call: _e.mock.On("HDel",
+		append([]interface{}{ctx, key}, fields...)...)}
+}
+
+func (_c *MockCache_HDel_Call) Run(run func(ctx context.Context, key string, fields ...string)) *MockCache_HDel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		var variadicArgs []string
+		if len(args) > 2 {
+			variadicArgs = args[2].([]string)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_HDel_Call) Return(err error) *MockCache_HDel_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockCache_HDel_Call) RunAndReturn(run func(ctx context.Context, key string, fields ...string) error) *MockCache_HDel_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HGetAll provides a mock function for the type MockCache
+func (_mock *MockCache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	ret := _mock.Called(ctx, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HGetAll")
+	}
+
+	var r0 map[string]string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (map[string]string, error)); ok {
+		return returnFunc(ctx, key)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) map[string]string); ok {
+		r0 = returnFunc(ctx, key)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, key)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCache_HGetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HGetAll'
+type MockCache_HGetAll_Call struct {
+	*mock.Call
+}
+
+// HGetAll is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+func (_e *MockCache_Expecter) HGetAll(ctx interface{}, key interface{}) *MockCache_HGetAll_Call {
+	return &MockCache_HGetAll_Call{Call: _e.mock.On("HGetAll", ctx, key)}
+}
+
+func (_c *MockCache_HGetAll_Call) Run(run func(ctx context.Context, key string)) *MockCache_HGetAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_HGetAll_Call) Return(stringToString map[string]string, err error) *MockCache_HGetAll_Call {
+	_c.Call.Return(stringToString, err)
+	return _c
+}
+
+func (_c *MockCache_HGetAll_Call) RunAndReturn(run func(ctx context.Context, key string) (map[string]string, error)) *MockCache_HGetAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HIncrBy provides a mock function for the type MockCache
+func (_mock *MockCache) HIncrBy(ctx context.Context, key string, field string, incr int64) (int64, error) {
+	ret := _mock.Called(ctx, key, field, incr)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HIncrBy")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, int64) (int64, error)); ok {
+		return returnFunc(ctx, key, field, incr)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, int64) int64); ok {
+		r0 = returnFunc(ctx, key, field, incr)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, int64) error); ok {
+		r1 = returnFunc(ctx, key, field, incr)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCache_HIncrBy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HIncrBy'
+type MockCache_HIncrBy_Call struct {
+	*mock.Call
+}
+
+// HIncrBy is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - field string
+//   - incr int64
+func (_e *MockCache_Expecter) HIncrBy(ctx interface{}, key interface{}, field interface{}, incr interface{}) *MockCache_HIncrBy_Call {
+	return &MockCache_HIncrBy_Call{Call: _e.mock.On("HIncrBy", ctx, key, field, incr)}
+}
+
+func (_c *MockCache_HIncrBy_Call) Run(run func(ctx context.Context, key string, field string, incr int64)) *MockCache_HIncrBy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 int64
+		if args[3] != nil {
+			arg3 = args[3].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_HIncrBy_Call) Return(n int64, err error) *MockCache_HIncrBy_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockCache_HIncrBy_Call) RunAndReturn(run func(ctx context.Context, key string, field string, incr int64) (int64, error)) *MockCache_HIncrBy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // IsExist provides a mock function for the type MockCache
 func (_mock *MockCache) IsExist(ctx context.Context, key string) (bool, error) {
 	ret := _mock.Called(ctx, key)

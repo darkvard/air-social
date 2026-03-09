@@ -61,3 +61,15 @@ func (r *cache) IsExist(ctx context.Context, key string) (bool, error) {
 	}
 	return n == 1, nil
 }
+
+func (r *cache) HIncrBy(ctx context.Context, key, field string, incr int64) (int64, error) {
+	return r.client.HIncrBy(ctx, key, field, incr).Result()
+}
+
+func (r *cache) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	return r.client.HGetAll(ctx, key).Result()
+}
+
+func (r *cache) HDel(ctx context.Context, key string, fields ...string) error {
+	return r.client.HDel(ctx, key, fields...).Err()
+}

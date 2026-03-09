@@ -52,15 +52,17 @@ func (q CursorQueryParams) ToDomain(userID int64) post.GetCursorParams {
 }
 
 type CreateResponse struct {
-	ID         int64               `json:"id"`
-	Content    string              `json:"content"`
-	Visibility string              `json:"visibility"`
-	CreatedAt  time.Time           `json:"created_at"`
-	Media      []MediaItemResponse `json:"media"`
+	ID             int64               `json:"id"`
+	OriginalPostID *int64              `json:"original_post_id,omitempty"`
+	Content        string              `json:"content"`
+	Visibility     string              `json:"visibility"`
+	CreatedAt      time.Time           `json:"created_at"`
+	Media          []MediaItemResponse `json:"media"`
 }
 
 type PostResponse struct {
-	ID            int64               `json:"id"`
+	ID             int64  `json:"id"`
+	OriginalPostID *int64 `json:"original_post_id,omitempty"`
 	Content       string              `json:"content"`
 	Visibility    string              `json:"visibility"`
 	LikesCount    int32               `json:"likes_count"`

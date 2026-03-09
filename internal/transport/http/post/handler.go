@@ -257,11 +257,12 @@ func (h Handler) toMediaParams(req MediaItemInput) post.MediaParams {
 
 func (h Handler) toCreateResponse(post *post.Post) CreateResponse {
 	return CreateResponse{
-		ID:         post.ID,
-		Content:    post.Content,
-		Visibility: string(post.Visibility),
-		CreatedAt:  post.CreatedAt,
-		Media:      h.toMediaItemResponse(post.Media),
+		ID:             post.ID,
+		OriginalPostID: post.OriginalPostID,
+		Content:        post.Content,
+		Visibility:     string(post.Visibility),
+		CreatedAt:      post.CreatedAt,
+		Media:          h.toMediaItemResponse(post.Media),
 	}
 }
 
@@ -305,17 +306,18 @@ func (h Handler) toPostResponse(post *post.Post) PostResponse {
 	}
 
 	return PostResponse{
-		ID:            post.ID,
-		Content:       post.Content,
-		Visibility:    string(post.Visibility),
-		LikesCount:    post.Stat.LikesCount,
-		CommentsCount: post.Stat.CommentsCount,
-		SharesCount:   post.Stat.SharesCount,
-		CreatedAt:     post.CreatedAt,
-		UpdatedAt:     post.UpdatedAt,
-		Media:         h.toMediaItemResponse(post.Media),
-		User:          author,
-		IsLiked:       viewerLiked,
+		ID:             post.ID,
+		OriginalPostID: post.OriginalPostID,
+		Content:        post.Content,
+		Visibility:     string(post.Visibility),
+		LikesCount:     post.Stat.LikesCount,
+		CommentsCount:  post.Stat.CommentsCount,
+		SharesCount:    post.Stat.SharesCount,
+		CreatedAt:      post.CreatedAt,
+		UpdatedAt:      post.UpdatedAt,
+		Media:          h.toMediaItemResponse(post.Media),
+		User:           author,
+		IsLiked:        viewerLiked,
 	}
 }
 

@@ -12,6 +12,10 @@ type Cache interface {
 	SetNX(ctx context.Context, key string, val any, ttl time.Duration) (bool, error)
 	Delete(ctx context.Context, key string) error
 	IsExist(ctx context.Context, key string) (bool, error)
+
+	HIncrBy(ctx context.Context, key, field string, incr int64) (int64, error)
+	HGetAll(ctx context.Context, key string) (map[string]string, error)
+	HDel(ctx context.Context, key string, fields ...string) error
 }
 
 // <system>:<feature>:<state>:<id>
