@@ -9,6 +9,7 @@ import (
 	"air-social/internal/domain/like"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/post"
+	"air-social/internal/domain/stats"
 	"air-social/internal/domain/user"
 	userusecase "air-social/internal/domain/user/usecase"
 	"air-social/internal/infrastructure/minio"
@@ -26,6 +27,7 @@ type UseCase struct {
 	Post    post.UseCase
 	Like    like.UseCase
 	Comment comment.UseCase
+	Stats   stats.UseCase
 }
 
 type UseCaseDeps struct {
@@ -45,6 +47,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	postUC := getPostUseCase(deps, mediaUC)
 	likeUC := getLikeUseCase(deps)
 	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC)
+	statsUC := getStatsUseCase(deps)
 
 	return UseCase{
 		Health:  healthUC,
@@ -55,6 +58,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 		Post:    postUC,
 		Like:    likeUC,
 		Comment: commentUC,
+		Stats:   statsUC,
 	}
 }
 
@@ -151,6 +155,15 @@ func getLikeUseCase(deps UseCaseDeps) like.UseCase {
 		like.Deps{
 			Repo:  deps.Repo.Like,
 			Event: deps.Adapter.EventPub,
+		},
+	)
+}
+
+func getStatsUseCase(deps UseCaseDeps) stats.UseCase {
+	return stats.NewUseCase(
+		stats.Deps{
+			Repo:  deps.Repo.Stats,
+			Cache: deps.Prov.Cache,
 		},
 	)
 }

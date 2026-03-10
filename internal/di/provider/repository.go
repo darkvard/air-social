@@ -6,6 +6,7 @@ import (
 	followdomain "air-social/internal/domain/follow"
 	likedomain "air-social/internal/domain/like"
 	postdomain "air-social/internal/domain/post"
+	statsdomain "air-social/internal/domain/stats"
 	userdomain "air-social/internal/domain/user"
 	commentinfra "air-social/internal/infrastructure/postgres/comment"
 	followinfra "air-social/internal/infrastructure/postgres/follow"
@@ -13,6 +14,7 @@ import (
 	postinfra "air-social/internal/infrastructure/postgres/post"
 	tokeninfra "air-social/internal/infrastructure/postgres/token"
 	userinfra "air-social/internal/infrastructure/postgres/user"
+	statsinfra "air-social/internal/infrastructure/postgres/stats"
 )
 
 type Repository struct {
@@ -22,6 +24,7 @@ type Repository struct {
 	Post    postdomain.Repository
 	Like    likedomain.Repository
 	Comment commentdomain.Repository
+	Stats   statsdomain.Repository
 }
 
 func NewRepository(infra *Infrastructure) Repository {
@@ -32,5 +35,6 @@ func NewRepository(infra *Infrastructure) Repository {
 		Post:    postinfra.NewRepository(infra.DB),
 		Like:    likeinfra.NewRepository(infra.DB),
 		Comment: commentinfra.NewRepository(infra.DB),
+		Stats:   statsinfra.NewRepository(infra.DB),
 	}
 }

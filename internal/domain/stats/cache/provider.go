@@ -44,7 +44,7 @@ func (p *provider) GetStatsHash(ctx context.Context, state string) (map[int64]in
 	for k, v := range dataStr {
 		id, err1 := strconv.ParseInt(k, 10, 64)
 		val, err2 := strconv.ParseInt(v, 10, 64)
-		if err1 == nil && err2 == nil {
+		if err1 == nil && err2 == nil && val != 0 {
 			result[id] = val
 		}
 	}
@@ -57,12 +57,14 @@ func (p *provider) ClearSyncedFields(ctx context.Context, state string, syncData
 		return nil
 	}
 
-	fields := make([]string, 0, len(syncData))
-	for id := range syncData {
-		fields = append(fields, strconv.FormatInt(id, 10))
+	key := getKey(state)
+	for id, val := range syncData {
+		// Decrement the synced value instead of deleting to avoid race conditions.
+		// If new events came in during sync, they will remain as the difference.
+		field := strconv.FormatInt(id, 10)
+		_, _ = p.cache.HIncrBy(ctx, key, field, -val)
 	}
-
-	return p.cache.HDel(ctx, getKey(state), fields...)
+	return nil
 }
 
 func (p *provider) UpdateStatsHash(ctx context.Context, state string, id int64, incr int64) error {

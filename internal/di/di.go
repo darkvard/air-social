@@ -47,7 +47,7 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 	middleware := middleware.NewManager(cfg.Server, prov.Token)
 	server := server.NewServer(cfg, prov, handler, middleware)
 
-	workers := provider.NewWorkers(infra, adapter)
+	workers := provider.NewWorkers(infra, adapter, prov, usecase)
 
 	return &Container{
 		Server: server,

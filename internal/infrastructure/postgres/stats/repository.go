@@ -25,6 +25,10 @@ type repository struct {
 	db *sqlx.DB
 }
 
+func NewRepository(db *sqlx.DB) stats.Repository {
+	return &repository{db: db}
+}
+
 func (r *repository) BulkUpsertPostStats(ctx context.Context, params stats.PostParams) error {
 	if len(params.IDs) == 0 {
 		return nil

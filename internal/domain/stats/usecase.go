@@ -140,7 +140,6 @@ func (u *usecase) clearMultipleCaches(states []string, maps []map[int64]int64) {
 	wg.Add(len(states))
 
 	for i := range states {
-		i := i // Capture
 		go func() {
 			defer wg.Done()
 			_ = u.cache.ClearSyncedFields(context.Background(), states[i], maps[i])

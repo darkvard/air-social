@@ -24,7 +24,7 @@ func NewSyncer(uc domainStats.UseCase, interval time.Duration) *Syncer {
 	}
 }
 
-func (s *Syncer) Start(ctx context.Context, wg *sync.WaitGroup) {
+func (s *Syncer) Start(ctx context.Context, wg *sync.WaitGroup) error {
 	wg.Go(func() {
 		for {
 			select {
@@ -34,19 +34,20 @@ func (s *Syncer) Start(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			case <-s.ticker.C:
 				syncCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-				
+
 				if err := s.usecase.SyncPostStats(syncCtx); err != nil {
 					pkg.Log().Error("failed to sync post stats", err)
 				}
-				
+
 				if err := s.usecase.SyncCommentStats(syncCtx); err != nil {
 					pkg.Log().Error("failed to sync comment stats", err)
 				}
-				
+
 				cancel()
 			}
 		}
 	})
+	return nil
 }
 
 func (s *Syncer) Stop() error {
