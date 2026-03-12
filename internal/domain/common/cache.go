@@ -15,7 +15,10 @@ type Cache interface {
 
 	HIncrBy(ctx context.Context, key, field string, incr int64) (int64, error)
 	HGetAll(ctx context.Context, key string) (map[string]string, error)
+	HMGet(ctx context.Context, key string, fields ...string) ([]string, error)
 	HDel(ctx context.Context, key string, fields ...string) error
+
+	Eval(ctx context.Context, script string, keys []string, args ...any) (any, error)
 }
 
 // <system>:<feature>:<state>:<id>

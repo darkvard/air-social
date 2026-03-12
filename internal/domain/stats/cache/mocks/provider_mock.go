@@ -168,6 +168,80 @@ func (_c *MockProvider_GetStatsHash_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// GetStatsOffsets provides a mock function for the type MockProvider
+func (_mock *MockProvider) GetStatsOffsets(ctx context.Context, state string, ids []int64) (map[int64]int64, error) {
+	ret := _mock.Called(ctx, state, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStatsOffsets")
+	}
+
+	var r0 map[int64]int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []int64) (map[int64]int64, error)); ok {
+		return returnFunc(ctx, state, ids)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []int64) map[int64]int64); ok {
+		r0 = returnFunc(ctx, state, ids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int64]int64)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []int64) error); ok {
+		r1 = returnFunc(ctx, state, ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockProvider_GetStatsOffsets_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStatsOffsets'
+type MockProvider_GetStatsOffsets_Call struct {
+	*mock.Call
+}
+
+// GetStatsOffsets is a helper method to define mock.On call
+//   - ctx context.Context
+//   - state string
+//   - ids []int64
+func (_e *MockProvider_Expecter) GetStatsOffsets(ctx interface{}, state interface{}, ids interface{}) *MockProvider_GetStatsOffsets_Call {
+	return &MockProvider_GetStatsOffsets_Call{Call: _e.mock.On("GetStatsOffsets", ctx, state, ids)}
+}
+
+func (_c *MockProvider_GetStatsOffsets_Call) Run(run func(ctx context.Context, state string, ids []int64)) *MockProvider_GetStatsOffsets_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []int64
+		if args[2] != nil {
+			arg2 = args[2].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProvider_GetStatsOffsets_Call) Return(int64ToInt64 map[int64]int64, err error) *MockProvider_GetStatsOffsets_Call {
+	_c.Call.Return(int64ToInt64, err)
+	return _c
+}
+
+func (_c *MockProvider_GetStatsOffsets_Call) RunAndReturn(run func(ctx context.Context, state string, ids []int64) (map[int64]int64, error)) *MockProvider_GetStatsOffsets_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateStatsHash provides a mock function for the type MockProvider
 func (_mock *MockProvider) UpdateStatsHash(ctx context.Context, state string, id int64, incr int64) error {
 	ret := _mock.Called(ctx, state, id, incr)

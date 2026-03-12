@@ -151,3 +151,139 @@ func (_c *MockRepository_BulkUpsertPostStats_Call) RunAndReturn(run func(ctx con
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetCommentsStats provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCommentsStats(ctx context.Context, commentIDs []int64) ([]stats.CommentStats, error) {
+	ret := _mock.Called(ctx, commentIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCommentsStats")
+	}
+
+	var r0 []stats.CommentStats
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) ([]stats.CommentStats, error)); ok {
+		return returnFunc(ctx, commentIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) []stats.CommentStats); ok {
+		r0 = returnFunc(ctx, commentIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]stats.CommentStats)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []int64) error); ok {
+		r1 = returnFunc(ctx, commentIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetCommentsStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentsStats'
+type MockRepository_GetCommentsStats_Call struct {
+	*mock.Call
+}
+
+// GetCommentsStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - commentIDs []int64
+func (_e *MockRepository_Expecter) GetCommentsStats(ctx interface{}, commentIDs interface{}) *MockRepository_GetCommentsStats_Call {
+	return &MockRepository_GetCommentsStats_Call{Call: _e.mock.On("GetCommentsStats", ctx, commentIDs)}
+}
+
+func (_c *MockRepository_GetCommentsStats_Call) Run(run func(ctx context.Context, commentIDs []int64)) *MockRepository_GetCommentsStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCommentsStats_Call) Return(commentStatss []stats.CommentStats, err error) *MockRepository_GetCommentsStats_Call {
+	_c.Call.Return(commentStatss, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCommentsStats_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64) ([]stats.CommentStats, error)) *MockRepository_GetCommentsStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPostsStats provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetPostsStats(ctx context.Context, postIDs []int64) ([]stats.PostStats, error) {
+	ret := _mock.Called(ctx, postIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPostsStats")
+	}
+
+	var r0 []stats.PostStats
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) ([]stats.PostStats, error)); ok {
+		return returnFunc(ctx, postIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) []stats.PostStats); ok {
+		r0 = returnFunc(ctx, postIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]stats.PostStats)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []int64) error); ok {
+		r1 = returnFunc(ctx, postIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetPostsStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostsStats'
+type MockRepository_GetPostsStats_Call struct {
+	*mock.Call
+}
+
+// GetPostsStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - postIDs []int64
+func (_e *MockRepository_Expecter) GetPostsStats(ctx interface{}, postIDs interface{}) *MockRepository_GetPostsStats_Call {
+	return &MockRepository_GetPostsStats_Call{Call: _e.mock.On("GetPostsStats", ctx, postIDs)}
+}
+
+func (_c *MockRepository_GetPostsStats_Call) Run(run func(ctx context.Context, postIDs []int64)) *MockRepository_GetPostsStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetPostsStats_Call) Return(postStatss []stats.PostStats, err error) *MockRepository_GetPostsStats_Call {
+	_c.Call.Return(postStatss, err)
+	return _c
+}
+
+func (_c *MockRepository_GetPostsStats_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64) ([]stats.PostStats, error)) *MockRepository_GetPostsStats_Call {
+	_c.Call.Return(run)
+	return _c
+}

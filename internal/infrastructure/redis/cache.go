@@ -70,6 +70,31 @@ func (r *cache) HGetAll(ctx context.Context, key string) (map[string]string, err
 	return r.client.HGetAll(ctx, key).Result()
 }
 
+func (r *cache) HMGet(ctx context.Context, key string, fields ...string) ([]string, error) {
+	res, err := r.client.HMGet(ctx, key, fields...).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]string, len(res))
+	for i, v := range res {
+		if v == nil {
+			continue
+		}
+
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("redis: unexpected type %T", v)
+		}
+		out[i] = s
+	}
+	return out, nil
+}
+
 func (r *cache) HDel(ctx context.Context, key string, fields ...string) error {
 	return r.client.HDel(ctx, key, fields...).Err()
+}
+
+func (r *cache) Eval(ctx context.Context, script string, keys []string, args ...any) (any, error) {
+	return r.client.Eval(ctx, script, keys, args).Result()
 }

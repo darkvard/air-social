@@ -13,6 +13,8 @@ import (
 type UseCase interface {
 	SyncPostStats(ctx context.Context) error
 	SyncCommentStats(ctx context.Context) error
+	GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]PostStats, error)
+	GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]CommentStats, error)
 }
 
 type Deps struct {
@@ -25,7 +27,7 @@ type usecase struct {
 	cache cache.Provider
 }
 
-func NewUseCase(deps Deps) UseCase {
+func NewUseCase(deps Deps) *usecase {
 	return &usecase{repo: deps.Repo, cache: deps.Cache}
 }
 
@@ -98,6 +100,127 @@ func (u *usecase) SyncCommentStats(ctx context.Context) error {
 	return nil
 }
 
+// GetPostsRealtimeStats fetches base stats from PostgreSQL and merges them with live offsets from Redis.
+//
+// Architecture / Concept:
+// - Database (Base): Contains persistent data but may be delayed (up to time.s) due to the background syncer.
+// - Redis (Delta): Contains the most recent, unsynced interactions (+/- offsets).
+//
+// Solution:
+// - Fetch both Base and Delta concurrently using errgroup to minimize latency.
+// - Merge Data: Final Count = GREATEST(0, Base_DB + Offset_Redis).
+func (u *usecase) GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]PostStats, error) {
+	if len(postIDs) == 0 {
+		return nil, nil
+	}
+
+	var dbStats []PostStats
+	var cacheOffsets []map[int64]int64
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// get from db
+	g.Go(func() error {
+		var err error
+		dbStats, err = u.repo.GetPostsStats(gCtx, postIDs)
+		return err
+	})
+
+	// get from cache
+	g.Go(func() error {
+		var err error
+		states := []string{cache.StatePostLikes, cache.StatePostComments, cache.StatePostShares}
+		cacheOffsets, err = u.fetchMultipleOffsets(gCtx, states, postIDs)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, pkg.NewError(err, "failed to fetch realtime post stats")
+	}
+
+	// merge
+	result := make(map[int64]PostStats, len(postIDs))
+	for _, st := range dbStats {
+		result[st.PostID] = st
+	}
+
+	for _, id := range postIDs {
+		st, exists := result[id]
+		if !exists {
+			st = PostStats{PostID: id}
+		}
+
+		// [0]=Likes, [1]=Comments, [2]=Shares
+		likes := max(st.LikesCount+int32(cacheOffsets[0][id]), 0)
+		comments := max(st.CommentsCount+int32(cacheOffsets[1][id]), 0)
+		shares := max(st.SharesCount+int32(cacheOffsets[2][id]), 0)
+
+		st.LikesCount = likes
+		st.CommentsCount = comments
+		st.SharesCount = shares
+
+		result[id] = st
+	}
+
+	return result, nil
+}
+
+// GetCommentsRealtimeStats fetches base stats from PostgreSQL and merges them with live offsets from Redis.
+// It follows the exact same Base + Delta aggregation strategy as Posts.
+func (u *usecase) GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]CommentStats, error) {
+	if len(commentIDs) == 0 {
+		return nil, nil
+	}
+
+	var dbStats []CommentStats
+	var cacheOffsets []map[int64]int64
+
+	g, gCtx := errgroup.WithContext(ctx)
+
+	// get from db
+	g.Go(func() error {
+		var err error
+		dbStats, err = u.repo.GetCommentsStats(gCtx, commentIDs)
+		return err
+	})
+
+	// get from cache
+	g.Go(func() error {
+		var err error
+		states := []string{cache.StateCommentLikes, cache.StateCommentReplies}
+		cacheOffsets, err = u.fetchMultipleOffsets(gCtx, states, commentIDs)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, pkg.NewError(err, "failed to fetch realtime comment stats")
+	}
+
+	// merge
+	result := make(map[int64]CommentStats, len(commentIDs))
+	for _, st := range dbStats {
+		result[st.CommentID] = st
+	}
+
+	for _, id := range commentIDs {
+		st, exists := result[id]
+		if !exists {
+			st = CommentStats{CommentID: id}
+		}
+
+		// [0]=Likes, [1]=Replies
+		likes := max(st.LikesCount+int32(cacheOffsets[0][id]), 0)
+		replies := max(st.RepliesCount+int32(cacheOffsets[1][id]), 0)
+
+		st.LikesCount = likes
+		st.RepliesCount = replies
+
+		result[id] = st
+	}
+
+	return result, nil
+}
+
 func (u *usecase) fetchMultipleHashes(ctx context.Context, states ...string) ([]map[int64]int64, error) {
 	results := make([]map[int64]int64, len(states))
 	g, gCtx := errgroup.WithContext(ctx)
@@ -146,4 +269,27 @@ func (u *usecase) clearMultipleCaches(states []string, maps []map[int64]int64) {
 		}()
 	}
 	wg.Wait()
+}
+
+func (u *usecase) fetchMultipleOffsets(ctx context.Context, states []string, ids []int64) ([]map[int64]int64, error) {
+	results := make([]map[int64]int64, len(states))
+	g, gCtx := errgroup.WithContext(ctx)
+
+	for i, state := range states {
+		g.Go(func()  error {
+			offsets, err := u.cache.GetStatsOffsets(gCtx, state, ids)
+			if err != nil {
+				return err
+			}
+
+			if offsets == nil {
+				offsets = make(map[int64]int64)
+			}
+
+			results[i] = offsets
+			return nil
+		})
+	}
+
+	return results, g.Wait()
 }

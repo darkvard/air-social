@@ -27,7 +27,7 @@ type usecase struct {
 	event common.EventPublisher
 }
 
-func NewUsecase(deps Deps) UseCase {
+func NewUsecase(deps Deps) *usecase {
 	return &usecase{
 		repo:  deps.Repo,
 		event: deps.Event,

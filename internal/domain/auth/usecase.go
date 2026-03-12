@@ -42,7 +42,7 @@ type usecase struct {
 	cache          common.Cache
 }
 
-func NewUseCase(deps Deps) UseCase {
+func NewUseCase(deps Deps) *usecase {
 	return &usecase{
 		tokenRepo:      deps.TokenRepo,
 		tokenProvider:  deps.TokenProvider,

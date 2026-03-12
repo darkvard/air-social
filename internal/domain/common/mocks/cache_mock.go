@@ -95,6 +95,95 @@ func (_c *MockCache_Delete_Call) RunAndReturn(run func(ctx context.Context, key 
 	return _c
 }
 
+// Eval provides a mock function for the type MockCache
+func (_mock *MockCache) Eval(ctx context.Context, script string, keys []string, args ...any) (any, error) {
+	var tmpRet mock.Arguments
+	if len(args) > 0 {
+		tmpRet = _mock.Called(ctx, script, keys, args)
+	} else {
+		tmpRet = _mock.Called(ctx, script, keys)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for Eval")
+	}
+
+	var r0 any
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, ...any) (any, error)); ok {
+		return returnFunc(ctx, script, keys, args...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, ...any) any); ok {
+		r0 = returnFunc(ctx, script, keys, args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(any)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []string, ...any) error); ok {
+		r1 = returnFunc(ctx, script, keys, args...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCache_Eval_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Eval'
+type MockCache_Eval_Call struct {
+	*mock.Call
+}
+
+// Eval is a helper method to define mock.On call
+//   - ctx context.Context
+//   - script string
+//   - keys []string
+//   - args ...any
+func (_e *MockCache_Expecter) Eval(ctx interface{}, script interface{}, keys interface{}, args ...interface{}) *MockCache_Eval_Call {
+	return &MockCache_Eval_Call{Call: _e.mock.On("Eval",
+		append([]interface{}{ctx, script, keys}, args...)...)}
+}
+
+func (_c *MockCache_Eval_Call) Run(run func(ctx context.Context, script string, keys []string, args ...any)) *MockCache_Eval_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		var arg3 []any
+		var variadicArgs []any
+		if len(args) > 3 {
+			variadicArgs = args[3].([]any)
+		}
+		arg3 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3...,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_Eval_Call) Return(v any, err error) *MockCache_Eval_Call {
+	_c.Call.Return(v, err)
+	return _c
+}
+
+func (_c *MockCache_Eval_Call) RunAndReturn(run func(ctx context.Context, script string, keys []string, args ...any) (any, error)) *MockCache_Eval_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function for the type MockCache
 func (_mock *MockCache) Get(ctx context.Context, key string, dst any) error {
 	ret := _mock.Called(ctx, key, dst)
@@ -372,6 +461,89 @@ func (_c *MockCache_HIncrBy_Call) Return(n int64, err error) *MockCache_HIncrBy_
 }
 
 func (_c *MockCache_HIncrBy_Call) RunAndReturn(run func(ctx context.Context, key string, field string, incr int64) (int64, error)) *MockCache_HIncrBy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HMGet provides a mock function for the type MockCache
+func (_mock *MockCache) HMGet(ctx context.Context, key string, fields ...string) ([]string, error) {
+	var tmpRet mock.Arguments
+	if len(fields) > 0 {
+		tmpRet = _mock.Called(ctx, key, fields)
+	} else {
+		tmpRet = _mock.Called(ctx, key)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for HMGet")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...string) ([]string, error)); ok {
+		return returnFunc(ctx, key, fields...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...string) []string); ok {
+		r0 = returnFunc(ctx, key, fields...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...string) error); ok {
+		r1 = returnFunc(ctx, key, fields...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCache_HMGet_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HMGet'
+type MockCache_HMGet_Call struct {
+	*mock.Call
+}
+
+// HMGet is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - fields ...string
+func (_e *MockCache_Expecter) HMGet(ctx interface{}, key interface{}, fields ...interface{}) *MockCache_HMGet_Call {
+	return &MockCache_HMGet_Call{Call: _e.mock.On("HMGet",
+		append([]interface{}{ctx, key}, fields...)...)}
+}
+
+func (_c *MockCache_HMGet_Call) Run(run func(ctx context.Context, key string, fields ...string)) *MockCache_HMGet_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		var variadicArgs []string
+		if len(args) > 2 {
+			variadicArgs = args[2].([]string)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_HMGet_Call) Return(strings []string, err error) *MockCache_HMGet_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockCache_HMGet_Call) RunAndReturn(run func(ctx context.Context, key string, fields ...string) ([]string, error)) *MockCache_HMGet_Call {
 	_c.Call.Return(run)
 	return _c
 }

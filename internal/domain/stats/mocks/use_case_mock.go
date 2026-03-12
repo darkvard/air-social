@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	"air-social/internal/domain/stats"
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
@@ -35,6 +36,142 @@ type MockUseCase_Expecter struct {
 
 func (_m *MockUseCase) EXPECT() *MockUseCase_Expecter {
 	return &MockUseCase_Expecter{mock: &_m.Mock}
+}
+
+// GetCommentsRealtimeStats provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error) {
+	ret := _mock.Called(ctx, commentIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCommentsRealtimeStats")
+	}
+
+	var r0 map[int64]stats.CommentStats
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) (map[int64]stats.CommentStats, error)); ok {
+		return returnFunc(ctx, commentIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) map[int64]stats.CommentStats); ok {
+		r0 = returnFunc(ctx, commentIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int64]stats.CommentStats)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []int64) error); ok {
+		r1 = returnFunc(ctx, commentIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUseCase_GetCommentsRealtimeStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentsRealtimeStats'
+type MockUseCase_GetCommentsRealtimeStats_Call struct {
+	*mock.Call
+}
+
+// GetCommentsRealtimeStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - commentIDs []int64
+func (_e *MockUseCase_Expecter) GetCommentsRealtimeStats(ctx interface{}, commentIDs interface{}) *MockUseCase_GetCommentsRealtimeStats_Call {
+	return &MockUseCase_GetCommentsRealtimeStats_Call{Call: _e.mock.On("GetCommentsRealtimeStats", ctx, commentIDs)}
+}
+
+func (_c *MockUseCase_GetCommentsRealtimeStats_Call) Run(run func(ctx context.Context, commentIDs []int64)) *MockUseCase_GetCommentsRealtimeStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_GetCommentsRealtimeStats_Call) Return(int64ToCommentStats map[int64]stats.CommentStats, err error) *MockUseCase_GetCommentsRealtimeStats_Call {
+	_c.Call.Return(int64ToCommentStats, err)
+	return _c
+}
+
+func (_c *MockUseCase_GetCommentsRealtimeStats_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error)) *MockUseCase_GetCommentsRealtimeStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPostsRealtimeStats provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error) {
+	ret := _mock.Called(ctx, postIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPostsRealtimeStats")
+	}
+
+	var r0 map[int64]stats.PostStats
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) (map[int64]stats.PostStats, error)); ok {
+		return returnFunc(ctx, postIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) map[int64]stats.PostStats); ok {
+		r0 = returnFunc(ctx, postIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int64]stats.PostStats)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []int64) error); ok {
+		r1 = returnFunc(ctx, postIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUseCase_GetPostsRealtimeStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostsRealtimeStats'
+type MockUseCase_GetPostsRealtimeStats_Call struct {
+	*mock.Call
+}
+
+// GetPostsRealtimeStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - postIDs []int64
+func (_e *MockUseCase_Expecter) GetPostsRealtimeStats(ctx interface{}, postIDs interface{}) *MockUseCase_GetPostsRealtimeStats_Call {
+	return &MockUseCase_GetPostsRealtimeStats_Call{Call: _e.mock.On("GetPostsRealtimeStats", ctx, postIDs)}
+}
+
+func (_c *MockUseCase_GetPostsRealtimeStats_Call) Run(run func(ctx context.Context, postIDs []int64)) *MockUseCase_GetPostsRealtimeStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_GetPostsRealtimeStats_Call) Return(int64ToPostStats map[int64]stats.PostStats, err error) *MockUseCase_GetPostsRealtimeStats_Call {
+	_c.Call.Return(int64ToPostStats, err)
+	return _c
+}
+
+func (_c *MockUseCase_GetPostsRealtimeStats_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error)) *MockUseCase_GetPostsRealtimeStats_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // SyncCommentStats provides a mock function for the type MockUseCase
