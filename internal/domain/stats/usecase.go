@@ -10,6 +10,13 @@ import (
 	"air-social/pkg"
 )
 
+// UseCase implements "Write-Behind Caching" & "Base + Delta" architecture to prevent DB Write Storms.
+//
+// Logic:
+// 1. Write: User actions (Like/Comment/Share) push events to RabbitMQ instead of DB.
+// 2. Cache: Workers process events and update delta counters (+/-) in Redis.
+// 3. Read: Fetch DB (Base) + Redis (Delta) concurrently -> Final count = max(0, Base + Delta).
+// 4. Sync: Cronjob runs every 10s to Bulk Upsert Redis deltas to PostgreSQL, then subtracts synced values via Lua.
 type UseCase interface {
 	SyncPostStats(ctx context.Context) error
 	SyncCommentStats(ctx context.Context) error
@@ -276,7 +283,7 @@ func (u *usecase) fetchMultipleOffsets(ctx context.Context, states []string, ids
 	g, gCtx := errgroup.WithContext(ctx)
 
 	for i, state := range states {
-		g.Go(func()  error {
+		g.Go(func() error {
 			offsets, err := u.cache.GetStatsOffsets(gCtx, state, ids)
 			if err != nil {
 				return err

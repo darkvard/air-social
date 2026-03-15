@@ -14,6 +14,7 @@ import (
 	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/follow"
 	"air-social/internal/domain/post"
+	"air-social/internal/domain/stats"
 	"air-social/pkg"
 )
 
@@ -83,19 +84,28 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 	}
 
 	tests := []struct {
-		name      string
-		args      comment.CreateParams
+		name string
+		args struct {
+			ctx    context.Context
+			params comment.CreateParams
+		}
 		setupMock func(deps testDeps)
 		want      *comment.Comment
 		wantErr   error
 	}{
 		{
 			name: "success_root_comment",
-			args: comment.CreateParams{
-				PostID:  postID,
-				UserID:  userID,
-				Content: content,
-				Media:   mediaItems,
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx: context.Background(),
+				params: comment.CreateParams{
+					PostID:  postID,
+					UserID:  userID,
+					Content: content,
+					Media:   mediaItems,
+				},
 			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
@@ -127,11 +137,17 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "success_reply",
-			args: comment.CreateParams{
-				PostID:   postID,
-				UserID:   userID,
-				Content:  content,
-				ParentID: &parentID,
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx: context.Background(),
+				params: comment.CreateParams{
+					PostID:   postID,
+					UserID:   userID,
+					Content:  content,
+					ParentID: &parentID,
+				},
 			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
@@ -167,11 +183,17 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "fail_reply_to_sub_comment",
-			args: comment.CreateParams{
-				PostID:   postID,
-				UserID:   userID,
-				Content:  content,
-				ParentID: &parentID,
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx: context.Background(),
+				params: comment.CreateParams{
+					PostID:   postID,
+					UserID:   userID,
+					Content:  content,
+					ParentID: &parentID,
+				},
 			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
@@ -187,7 +209,13 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "post_fetch_error",
-			args: comment.CreateParams{PostID: postID, UserID: userID},
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.CreateParams{PostID: postID, UserID: userID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
 					GetPostDetail(mock.Anything, postID, userID).
@@ -198,7 +226,13 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "post_not_found_nil",
-			args: comment.CreateParams{PostID: postID, UserID: userID},
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.CreateParams{PostID: postID, UserID: userID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
 					GetPostDetail(mock.Anything, postID, userID).
@@ -209,7 +243,13 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "private_post_forbidden",
-			args: comment.CreateParams{PostID: postID, UserID: userID},
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.CreateParams{PostID: postID, UserID: userID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
 					GetPostDetail(mock.Anything, postID, userID).
@@ -220,7 +260,13 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "followers_post_not_following",
-			args: comment.CreateParams{PostID: postID, UserID: userID},
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.CreateParams{PostID: postID, UserID: userID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
 					GetPostDetail(mock.Anything, postID, userID).
@@ -235,7 +281,13 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "parent_comment_wrong_post",
-			args: comment.CreateParams{PostID: postID, UserID: userID, ParentID: &parentID},
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.CreateParams{PostID: postID, UserID: userID, ParentID: &parentID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
 					GetPostDetail(mock.Anything, postID, userID).
@@ -250,7 +302,13 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "parent_comment_not_found",
-			args: comment.CreateParams{PostID: postID, UserID: userID, ParentID: &parentID},
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.CreateParams{PostID: postID, UserID: userID, ParentID: &parentID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
 					GetPostDetail(mock.Anything, postID, userID).
@@ -265,7 +323,13 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "media_verification_failed",
-			args: comment.CreateParams{PostID: postID, UserID: userID, Media: mediaItems},
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.CreateParams{PostID: postID, UserID: userID, Media: mediaItems},
+			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
 					GetPostDetail(mock.Anything, postID, userID).
@@ -280,7 +344,13 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 		},
 		{
 			name: "repo_create_error",
-			args: comment.CreateParams{PostID: postID, UserID: userID},
+			args: struct {
+				ctx    context.Context
+				params comment.CreateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.CreateParams{PostID: postID, UserID: userID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.postFetcher.EXPECT().
 					GetPostDetail(mock.Anything, postID, userID).
@@ -306,6 +376,8 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 			mockFollowChecker := commentmocks.NewMockFollowChecker(s.T())
 			mockMediaVerifier := commentmocks.NewMockMediaVerifier(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockLike := commentmocks.NewMockLikeChecker(s.T())
+			mockStats := commentmocks.NewMockStatsFetcher(s.T())
 
 			deps := testDeps{
 				repo:          mockRepo,
@@ -321,13 +393,15 @@ func (s *commentUseCaseSuite) TestCreateComment() {
 				FollowChecker: mockFollowChecker,
 				MediaVerifier: mockMediaVerifier,
 				Event:         mockEvent,
+				LikeChecker:   mockLike,
+				StatsFetcher:  mockStats,
 			})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
 			}
 
-			got, err := uc.CreateComment(context.Background(), tc.args)
+			got, err := uc.CreateComment(tc.args.ctx, tc.args.params)
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
@@ -469,6 +543,11 @@ func (s *commentUseCaseSuite) TestDeleteComment() {
 		s.Run(tc.name, func() {
 			mockRepo := commentmocks.NewMockRepository(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockPostFetcher := commentmocks.NewMockPostFetcher(s.T())
+			mockFollowChecker := commentmocks.NewMockFollowChecker(s.T())
+			mockMediaVerifier := commentmocks.NewMockMediaVerifier(s.T())
+			mockLike := commentmocks.NewMockLikeChecker(s.T())
+			mockStats := commentmocks.NewMockStatsFetcher(s.T())
 
 			deps := testDeps{
 				repo:  mockRepo,
@@ -476,8 +555,13 @@ func (s *commentUseCaseSuite) TestDeleteComment() {
 			}
 
 			uc := comment.NewUseCase(comment.Deps{
-				CommentRepo: mockRepo,
-				Event:       mockEvent,
+				CommentRepo:   mockRepo,
+				PostFetcher:   mockPostFetcher,
+				FollowChecker: mockFollowChecker,
+				MediaVerifier: mockMediaVerifier,
+				LikeChecker:   mockLike,
+				StatsFetcher:  mockStats,
+				Event:         mockEvent,
 			})
 
 			if tc.setupMock != nil {
@@ -512,15 +596,24 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 	}
 
 	tests := []struct {
-		name      string
-		args      comment.UpdateParams
+		name string
+		args struct {
+			ctx    context.Context
+			params comment.UpdateParams
+		}
 		setupMock func(deps testDeps)
 		want      *comment.Comment
 		wantErr   error
 	}{
 		{
 			name: "fail_comment_not_found",
-			args: comment.UpdateParams{CommentID: commentID, UserID: userID},
+			args: struct {
+				ctx    context.Context
+				params comment.UpdateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.UpdateParams{CommentID: commentID, UserID: userID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, commentID).
@@ -530,7 +623,13 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 		},
 		{
 			name: "fail_forbidden",
-			args: comment.UpdateParams{CommentID: commentID, UserID: otherUserID},
+			args: struct {
+				ctx    context.Context
+				params comment.UpdateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.UpdateParams{CommentID: commentID, UserID: otherUserID},
+			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, commentID).
@@ -540,7 +639,13 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 		},
 		{
 			name: "fail_media_verification",
-			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: newMediaParam},
+			args: struct {
+				ctx    context.Context
+				params comment.UpdateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: newMediaParam},
+			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, commentID).
@@ -553,7 +658,13 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 		},
 		{
 			name: "fail_repo_update_error",
-			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Content: &newContent},
+			args: struct {
+				ctx    context.Context
+				params comment.UpdateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.UpdateParams{CommentID: commentID, UserID: userID, Content: &newContent},
+			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, commentID).
@@ -566,7 +677,13 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 		},
 		{
 			name: "success_update_content_only",
-			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Content: &newContent},
+			args: struct {
+				ctx    context.Context
+				params comment.UpdateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.UpdateParams{CommentID: commentID, UserID: userID, Content: &newContent},
+			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, commentID).
@@ -591,7 +708,13 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 		},
 		{
 			name: "success_update_media_only",
-			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: newMediaParam},
+			args: struct {
+				ctx    context.Context
+				params comment.UpdateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: newMediaParam},
+			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, commentID).
@@ -620,7 +743,13 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 		},
 		{
 			name: "success_clear_media",
-			args: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: []comment.Media{}},
+			args: struct {
+				ctx    context.Context
+				params comment.UpdateParams
+			}{
+				ctx:    context.Background(),
+				params: comment.UpdateParams{CommentID: commentID, UserID: userID, Media: []comment.Media{}},
+			},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, commentID).
@@ -656,6 +785,8 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 			mockPostFetcher := commentmocks.NewMockPostFetcher(s.T())
 			mockFollowChecker := commentmocks.NewMockFollowChecker(s.T())
 			mockMediaVerifier := commentmocks.NewMockMediaVerifier(s.T())
+			mockLike := commentmocks.NewMockLikeChecker(s.T())
+			mockStats := commentmocks.NewMockStatsFetcher(s.T())
 
 			deps := testDeps{
 				repo:          mockRepo,
@@ -668,13 +799,15 @@ func (s *commentUseCaseSuite) TestUpdateComment() {
 				FollowChecker: mockFollowChecker,
 				MediaVerifier: mockMediaVerifier,
 				Event:         mockEvent,
+				LikeChecker:   mockLike,
+				StatsFetcher:  mockStats,
 			})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
 			}
 
-			got, err := uc.UpdateComment(context.Background(), tc.args)
+			got, err := uc.UpdateComment(tc.args.ctx, tc.args.params)
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
@@ -711,8 +844,9 @@ func (s *commentUseCaseSuite) TestGetComments() {
 	}
 
 	type testDeps struct {
-		repo *commentmocks.MockRepository
-		like *commentmocks.MockLikeChecker
+		repo  *commentmocks.MockRepository
+		like  *commentmocks.MockLikeChecker
+		stats *commentmocks.MockStatsFetcher
 	}
 
 	tests := []struct {
@@ -738,6 +872,13 @@ func (s *commentUseCaseSuite) TestGetComments() {
 					GetComments(mock.Anything, postID, mock.Anything).
 					Return(comments, nil).Once()
 
+				deps.stats.EXPECT().
+					GetCommentsRealtimeStats(mock.Anything, []int64{1, 2}).
+					Return(map[int64]stats.CommentStats{
+						1: {CommentID: 1, LikesCount: 5, RepliesCount: 2},
+					}, nil).
+					Once()
+
 				deps.like.EXPECT().
 					IsCommentLiked(mock.Anything, []int64{1, 2}, userID).
 					Return(map[int64]bool{1: true, 2: false}, nil).Once()
@@ -760,6 +901,21 @@ func (s *commentUseCaseSuite) TestGetComments() {
 			wantLen: 0,
 			wantErr: pkg.ErrInternal,
 		},
+		{
+			name: "not_found",
+			args: struct {
+				ctx    context.Context
+				postID int64
+				params comment.GetCursorParams
+			}{context.Background(), postID, params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetComments(mock.Anything, postID, mock.Anything).
+					Return(nil, pkg.ErrNotFound).Once()
+			},
+			wantLen: 0,
+			wantErr: nil,
+		},
 	}
 
 	for _, tc := range tests {
@@ -767,11 +923,24 @@ func (s *commentUseCaseSuite) TestGetComments() {
 			mockRepo := commentmocks.NewMockRepository(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 			mockLike := commentmocks.NewMockLikeChecker(s.T())
-			deps := testDeps{repo: mockRepo, like: mockLike}
+			mockStats := commentmocks.NewMockStatsFetcher(s.T())
+			mockPost := commentmocks.NewMockPostFetcher(s.T())
+			mockFollow := commentmocks.NewMockFollowChecker(s.T())
+			mockMedia := commentmocks.NewMockMediaVerifier(s.T())
+
+			deps := testDeps{
+				repo:  mockRepo,
+				like:  mockLike,
+				stats: mockStats,
+			}
 			uc := comment.NewUseCase(comment.Deps{
-				CommentRepo: mockRepo,
-				Event:       mockEvent,
-				LikeChecker: mockLike,
+				CommentRepo:   mockRepo,
+				LikeChecker:   mockLike,
+				StatsFetcher:  mockStats,
+				Event:         mockEvent,
+				PostFetcher:   mockPost,
+				FollowChecker: mockFollow,
+				MediaVerifier: mockMedia,
 			})
 
 			if tc.setupMock != nil {
@@ -786,9 +955,9 @@ func (s *commentUseCaseSuite) TestGetComments() {
 				s.NoError(err)
 				s.Len(got.Data, tc.wantLen)
 				if tc.wantLen > 0 {
-					// Verify IsLiked mapping from mock
 					s.NotNil(got.Data[0].IsLiked)
 					s.True(*got.Data[0].IsLiked)
+					s.Equal(int32(5), got.Data[0].Stat.LikesCount)
 				}
 			}
 		})
@@ -812,35 +981,125 @@ func (s *commentUseCaseSuite) TestGetReplies() {
 		{ID: 51, ParentID: &parentID, Content: "r1"},
 	}
 
-	s.Run("success", func() {
-		mockRepo := commentmocks.NewMockRepository(s.T())
-		mockEvent := commonmocks.NewMockEventPublisher(s.T())
-		mockLike := commentmocks.NewMockLikeChecker(s.T())
-		uc := comment.NewUseCase(comment.Deps{CommentRepo: mockRepo, Event: mockEvent, LikeChecker: mockLike})
+	type testDeps struct {
+		repo  *commentmocks.MockRepository
+		like  *commentmocks.MockLikeChecker
+		stats *commentmocks.MockStatsFetcher
+	}
 
-		mockRepo.EXPECT().
-			GetReplies(mock.Anything, parentID, mock.Anything).
-			Return(replies, nil).Once()
+	tests := []struct {
+		name string
+		args struct {
+			ctx      context.Context
+			parentID int64
+			params   comment.GetCursorParams
+		}
+		setupMock func(deps testDeps)
+		wantLen   int
+		wantErr   error
+	}{
+		{
+			name: "success",
+			args: struct {
+				ctx      context.Context
+				parentID int64
+				params   comment.GetCursorParams
+			}{context.Background(), parentID, params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetReplies(mock.Anything, parentID, mock.Anything).
+					Return(replies, nil).Once()
 
-		mockLike.EXPECT().
-			IsCommentLiked(mock.Anything, []int64{51}, userID).
-			Return(map[int64]bool{51: false}, nil).Once()
+				deps.stats.EXPECT().
+					GetCommentsRealtimeStats(mock.Anything, []int64{51}).
+					Return(map[int64]stats.CommentStats{
+						51: {CommentID: 51, LikesCount: 10},
+					}, nil).
+					Once()
 
-		got, err := uc.GetReplies(context.Background(), parentID, params)
-		s.NoError(err)
-		s.Len(got.Data, 1)
-	})
+				deps.like.EXPECT().
+					IsCommentLiked(mock.Anything, []int64{51}, userID).
+					Return(map[int64]bool{51: false}, nil).Once()
+			},
+			wantLen: 1,
+			wantErr: nil,
+		},
+		{
+			name: "repo_error",
+			args: struct {
+				ctx      context.Context
+				parentID int64
+				params   comment.GetCursorParams
+			}{context.Background(), parentID, params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetReplies(mock.Anything, parentID, mock.Anything).
+					Return(nil, assert.AnError).Once()
+			},
+			wantLen: 0,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "not_found",
+			args: struct {
+				ctx      context.Context
+				parentID int64
+				params   comment.GetCursorParams
+			}{context.Background(), parentID, params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetReplies(mock.Anything, parentID, mock.Anything).
+					Return(nil, pkg.ErrNotFound).Once()
+			},
+			wantLen: 0,
+			wantErr: nil,
+		},
+	}
 
-	s.Run("repo_error", func() {
-		mockRepo := commentmocks.NewMockRepository(s.T())
-		mockEvent := commonmocks.NewMockEventPublisher(s.T())
-		uc := comment.NewUseCase(comment.Deps{CommentRepo: mockRepo, Event: mockEvent})
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := commentmocks.NewMockRepository(s.T())
+			mockLike := commentmocks.NewMockLikeChecker(s.T())
+			mockStats := commentmocks.NewMockStatsFetcher(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockPost := commentmocks.NewMockPostFetcher(s.T())
+			mockFollow := commentmocks.NewMockFollowChecker(s.T())
+			mockMedia := commentmocks.NewMockMediaVerifier(s.T())
 
-		mockRepo.EXPECT().
-			GetReplies(mock.Anything, parentID, mock.Anything).
-			Return(nil, assert.AnError).Once()
+			deps := testDeps{
+				repo:  mockRepo,
+				like:  mockLike,
+				stats: mockStats,
+			}
 
-		_, err := uc.GetReplies(context.Background(), parentID, params)
-		s.ErrorIs(err, pkg.ErrInternal)
-	})
+			uc := comment.NewUseCase(comment.Deps{
+				CommentRepo:   mockRepo,
+				LikeChecker:   mockLike,
+				StatsFetcher:  mockStats,
+				Event:         mockEvent,
+				PostFetcher:   mockPost,
+				FollowChecker: mockFollow,
+				MediaVerifier: mockMedia,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.GetReplies(tc.args.ctx, tc.args.parentID, tc.args.params)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Empty(got.Data)
+			} else {
+				s.NoError(err)
+				s.Len(got.Data, tc.wantLen)
+				if tc.wantLen > 0 {
+					s.NotNil(got.Data[0].IsLiked)
+					s.False(*got.Data[0].IsLiked)
+					s.Equal(int32(10), got.Data[0].Stat.LikesCount)
+				}
+			}
+		})
+	}
 }

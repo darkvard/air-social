@@ -433,3 +433,247 @@ func (s *LikeUseCaseSuite) TestUnlikeComment() {
 		})
 	}
 }
+
+func (s *LikeUseCaseSuite) TestIsPostLiked() {
+	var (
+		userID  int64 = 1
+		postIDs       = []int64{10, 20, 30}
+	)
+
+	type testDeps struct {
+		repo *likemocks.MockRepository
+	}
+
+	tests := []struct {
+		name      string
+		args      struct {
+			ctx     context.Context
+			postIDs []int64
+			userID  int64
+		}
+		setupMock func(deps testDeps)
+		want      map[int64]bool
+		wantErr   error
+	}{
+		{
+			name: "success",
+			args: struct {
+				ctx     context.Context
+				postIDs []int64
+				userID  int64
+			}{context.Background(), postIDs, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetPostLiked(mock.Anything, postIDs, userID).
+					Return([]int64{10, 30}, nil).
+					Once()
+			},
+			want: map[int64]bool{
+				10: true,
+				20: false,
+				30: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repo_error",
+			args: struct {
+				ctx     context.Context
+				postIDs []int64
+				userID  int64
+			}{context.Background(), postIDs, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetPostLiked(mock.Anything, postIDs, userID).
+					Return(nil, assert.AnError).
+					Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "success_no_liked_posts",
+			args: struct {
+				ctx     context.Context
+				postIDs []int64
+				userID  int64
+			}{context.Background(), postIDs, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetPostLiked(mock.Anything, postIDs, userID).
+					Return([]int64{}, nil).
+					Once()
+			},
+			want: map[int64]bool{
+				10: false,
+				20: false,
+				30: false,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success_empty_input_ids",
+			args: struct {
+				ctx     context.Context
+				postIDs []int64
+				userID  int64
+			}{context.Background(), []int64{}, userID},
+			setupMock: func(deps testDeps) {
+			},
+			want:    map[int64]bool{},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := likemocks.NewMockRepository(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+
+			deps := testDeps{
+				repo: mockRepo,
+			}
+
+			uc := like.NewUsecase(like.Deps{
+				Repo:  mockRepo,
+				Event: mockEvent,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.IsPostLiked(tc.args.ctx, tc.args.postIDs, tc.args.userID)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Nil(got)
+			} else {
+				s.NoError(err)
+				s.Equal(tc.want, got)
+			}
+		})
+	}
+}
+
+func (s *LikeUseCaseSuite) TestIsCommentLiked() {
+	var (
+		userID     int64 = 1
+		commentIDs       = []int64{101, 102, 103}
+	)
+
+	type testDeps struct {
+		repo *likemocks.MockRepository
+	}
+
+	tests := []struct {
+		name      string
+		args      struct {
+			ctx        context.Context
+			commentIDs []int64
+			userID     int64
+		}
+		setupMock func(deps testDeps)
+		want      map[int64]bool
+		wantErr   error
+	}{
+		{
+			name: "success",
+			args: struct {
+				ctx        context.Context
+				commentIDs []int64
+				userID     int64
+			}{context.Background(), commentIDs, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetCommentLiked(mock.Anything, commentIDs, userID).
+					Return([]int64{102}, nil).
+					Once()
+			},
+			want: map[int64]bool{
+				101: false,
+				102: true,
+				103: false,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repo_error",
+			args: struct {
+				ctx        context.Context
+				commentIDs []int64
+				userID     int64
+			}{context.Background(), commentIDs, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetCommentLiked(mock.Anything, commentIDs, userID).
+					Return(nil, assert.AnError).
+					Once()
+			},
+			want:    nil,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "success_no_liked_comments",
+			args: struct {
+				ctx        context.Context
+				commentIDs []int64
+				userID     int64
+			}{context.Background(), commentIDs, userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetCommentLiked(mock.Anything, commentIDs, userID).
+					Return([]int64{}, nil).
+					Once()
+			},
+			want: map[int64]bool{
+				101: false,
+				102: false,
+				103: false,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "success_empty_input_ids",
+			args: struct {
+				ctx        context.Context
+				commentIDs []int64
+				userID     int64
+			}{context.Background(), []int64{}, userID},
+			setupMock: func(deps testDeps) {
+			},
+			want:    map[int64]bool{},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := likemocks.NewMockRepository(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+
+			deps := testDeps{
+				repo: mockRepo,
+			}
+
+			uc := like.NewUsecase(like.Deps{
+				Repo:  mockRepo,
+				Event: mockEvent,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.IsCommentLiked(tc.args.ctx, tc.args.commentIDs, tc.args.userID)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Nil(got)
+			} else {
+				s.NoError(err)
+				s.Equal(tc.want, got)
+			}
+		})
+	}
+}

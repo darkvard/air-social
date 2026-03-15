@@ -5,7 +5,10 @@ import (
 	"errors"
 	"strings"
 
+	"golang.org/x/sync/errgroup"
+
 	"air-social/internal/domain/common"
+	"air-social/internal/domain/stats"
 	"air-social/pkg"
 )
 
@@ -21,15 +24,27 @@ type MediaVerifier interface {
 	VerifyMedia(ctx context.Context, keys []string) error
 }
 
+type StatsFetcher interface {
+	GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error)
+}
+
+type LikeChecker interface {
+	IsPostLiked(ctx context.Context, postIDs []int64, userID int64) (map[int64]bool, error)
+}
+
 type Deps struct {
 	PostRepo      Repository
 	MediaVerifier MediaVerifier
+	StatsFetcher  StatsFetcher
+	LikeChecker   LikeChecker
 	Event         common.EventPublisher
 }
 
 type usecase struct {
 	postRepo      Repository
 	mediaVerifier MediaVerifier
+	likeChecker   LikeChecker
+	statsFetcher  StatsFetcher
 	event         common.EventPublisher
 }
 
@@ -37,6 +52,8 @@ func NewUseCase(deps Deps) *usecase {
 	return &usecase{
 		postRepo:      deps.PostRepo,
 		mediaVerifier: deps.MediaVerifier,
+		statsFetcher:  deps.StatsFetcher,
+		likeChecker:   deps.LikeChecker,
 		event:         deps.Event,
 	}
 }
@@ -50,8 +67,7 @@ func (u *usecase) GetPostDetail(ctx context.Context, postID, viewerID int64) (*P
 		return nil, pkg.OrInternalError(err)
 	}
 
-	// todo: them usecase moi cho stat
-	// todo map isLiked, count.....
+	u.mapPostMetadata(ctx, []*Post{post}, viewerID)
 
 	return post, nil
 }
@@ -146,7 +162,11 @@ func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (com
 		return empty, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
 
-	// todo map isLiked, count.....
+	postsPtr := make([]*Post, len(posts))
+    for i := range posts {
+        postsPtr[i] = &posts[i] 
+    }
+	u.mapPostMetadata(ctx, postsPtr, params.UserID)
 
 	result := common.NewCursorPaginatedResult(posts, params.Query.Limit)
 	return result, nil
@@ -193,4 +213,63 @@ func (u *usecase) addShareEvent(ctx context.Context, post Post, isShare bool) er
 		IsShared:       isShare,
 	}
 	return u.event.Publish(ctx, common.NewEvent(common.EventPostShare, data))
+}
+
+func (u *usecase) mapPostMetadata(ctx context.Context, posts []*Post, viewerID int64) {
+	size := len(posts)
+	if size == 0 {
+		return
+	}
+
+	ids := make([]int64, size)
+	for i, p := range posts {
+		ids[i] = p.ID
+	}
+
+	statsMap, likedMap := u.fetchStatsAndLikes(ctx, ids, viewerID)
+
+	for _, p := range posts {
+		if statsMap != nil {
+			if st, ok := statsMap[p.ID]; ok {
+				p.Stat.LikesCount = st.LikesCount
+				p.Stat.CommentsCount = st.CommentsCount
+				p.Stat.SharesCount = st.SharesCount
+			}
+		}
+		if likedMap != nil {
+			b := likedMap[p.ID]
+			p.IsLiked = &b
+		}
+	}
+}
+
+func (u *usecase) fetchStatsAndLikes(ctx context.Context, ids []int64, viewerID int64) (map[int64]stats.PostStats, map[int64]bool) {
+	var statsMap map[int64]stats.PostStats
+	var likedMap map[int64]bool
+
+	var g errgroup.Group
+
+	g.Go(func() error {
+		res, err := u.statsFetcher.GetPostsRealtimeStats(ctx, ids)
+		if err != nil {
+			pkg.Log().Error("failed to fetch post stats, skipping", err)
+			return nil
+		}
+		statsMap = res
+		return nil
+	})
+
+	g.Go(func() error {
+		res, err := u.likeChecker.IsPostLiked(ctx, ids, viewerID)
+		if err != nil {
+			pkg.Log().Error("failed to fetch isLiked status, skipping", err)
+			return nil
+		}
+		likedMap = res
+		return nil
+	})
+
+	_ = g.Wait()
+
+	return statsMap, likedMap
 }

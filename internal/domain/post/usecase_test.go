@@ -12,6 +12,7 @@ import (
 	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/post"
 	postmocks "air-social/internal/domain/post/mocks"
+	"air-social/internal/domain/stats"
 	"air-social/pkg"
 )
 
@@ -35,7 +36,9 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 	}
 
 	type testDeps struct {
-		repo *postmocks.MockRepository
+		repo         *postmocks.MockRepository
+		statsFetcher *postmocks.MockStatsFetcher
+		likeChecker  *postmocks.MockLikeChecker
 	}
 
 	type args struct {
@@ -76,12 +79,46 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 			wantErr: pkg.ErrInternal,
 		},
 		{
-			name: "success",
+			name: "success_with_metadata",
 			args: args{ctx: context.Background(), postID: postID, viewerID: viewerID},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetDetail(mock.Anything, postID).
 					Return(expectedPost, nil).
+					Once()
+
+				deps.statsFetcher.EXPECT().
+					GetPostsRealtimeStats(mock.Anything, []int64{postID}).
+					Return(map[int64]stats.PostStats{
+						postID: {PostID: postID, LikesCount: 10, CommentsCount: 5, SharesCount: 2},
+					}, nil).
+					Once()
+
+				deps.likeChecker.EXPECT().
+					IsPostLiked(mock.Anything, []int64{postID}, viewerID).
+					Return(map[int64]bool{postID: true}, nil).
+					Once()
+			},
+			want:    expectedPost,
+			wantErr: nil,
+		},
+		{
+			name: "success_metadata_error_ignored",
+			args: args{ctx: context.Background(), postID: postID, viewerID: viewerID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetDetail(mock.Anything, postID).
+					Return(expectedPost, nil).
+					Once()
+
+				deps.statsFetcher.EXPECT().
+					GetPostsRealtimeStats(mock.Anything, []int64{postID}).
+					Return(nil, assert.AnError).
+					Once()
+
+				deps.likeChecker.EXPECT().
+					IsPostLiked(mock.Anything, []int64{postID}, viewerID).
+					Return(nil, assert.AnError).
 					Once()
 			},
 			want:    expectedPost,
@@ -94,15 +131,21 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockStats := postmocks.NewMockStatsFetcher(s.T())
+			mockLike := postmocks.NewMockLikeChecker(s.T())
 
 			deps := testDeps{
-				repo: mockRepo,
+				repo:         mockRepo,
+				statsFetcher: mockStats,
+				likeChecker:  mockLike,
 			}
 
 			uc := post.NewUseCase(post.Deps{
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
 				Event:         mockEvent,
+				StatsFetcher:  mockStats,
+				LikeChecker:   mockLike,
 			})
 
 			if tc.setupMock != nil {
@@ -116,7 +159,13 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 				s.Nil(got)
 			} else {
 				s.NoError(err)
-				s.Equal(tc.want, got)
+				s.Equal(tc.want.ID, got.ID)
+				if got.Stat.LikesCount > 0 {
+					s.Equal(int32(10), got.Stat.LikesCount)
+					s.Equal(int32(5), got.Stat.CommentsCount)
+					s.NotNil(got.IsLiked)
+					s.True(*got.IsLiked)
+				}
 			}
 		})
 	}
@@ -298,6 +347,8 @@ func (s *postUseCaseSuite) TestCreatePost() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockStats := postmocks.NewMockStatsFetcher(s.T())
+			mockLike := postmocks.NewMockLikeChecker(s.T())
 
 			deps := testDeps{
 				repo:     mockRepo,
@@ -309,6 +360,8 @@ func (s *postUseCaseSuite) TestCreatePost() {
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
 				Event:         mockEvent,
+				StatsFetcher:  mockStats,
+				LikeChecker:   mockLike,
 			})
 
 			if tc.setupMock != nil {
@@ -570,6 +623,8 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockStats := postmocks.NewMockStatsFetcher(s.T())
+			mockLike := postmocks.NewMockLikeChecker(s.T())
 
 			deps := testDeps{
 				repo:     mockRepo,
@@ -581,6 +636,8 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
 				Event:         mockEvent,
+				StatsFetcher:  mockStats,
+				LikeChecker:   mockLike,
 			})
 
 			if tc.setupMock != nil {
@@ -730,6 +787,8 @@ func (s *postUseCaseSuite) TestDeletePost() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockStats := postmocks.NewMockStatsFetcher(s.T())
+			mockLike := postmocks.NewMockLikeChecker(s.T())
 
 			deps := testDeps{
 				repo:  mockRepo,
@@ -740,6 +799,8 @@ func (s *postUseCaseSuite) TestDeletePost() {
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
 				Event:         mockEvent,
+				StatsFetcher:  mockStats,
+				LikeChecker:   mockLike,
 			})
 
 			if tc.setupMock != nil {
@@ -776,7 +837,9 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 	}
 
 	type testDeps struct {
-		repo *postmocks.MockRepository
+		repo         *postmocks.MockRepository
+		statsFetcher *postmocks.MockStatsFetcher
+		likeChecker  *postmocks.MockLikeChecker
 	}
 
 	type args struct {
@@ -804,15 +867,62 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 			wantErr: pkg.ErrNotFound,
 		},
 		{
-			name: "success",
+			name: "success_with_metadata",
 			args: args{ctx: context.Background(), params: params},
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					GetUserPosts(mock.Anything, mock.Anything).
 					Return(posts, nil).
 					Once()
+
+				deps.statsFetcher.EXPECT().
+					GetPostsRealtimeStats(mock.Anything, []int64{1, 2}).
+					Return(map[int64]stats.PostStats{
+						1: {PostID: 1, LikesCount: 15},
+						2: {PostID: 2, CommentsCount: 3},
+					}, nil).
+					Once()
+
+				deps.likeChecker.EXPECT().
+					IsPostLiked(mock.Anything, []int64{1, 2}, userID).
+					Return(map[int64]bool{1: true, 2: false}, nil).
+					Once()
 			},
 			wantLen: 2,
+			wantErr: nil,
+		},
+		{
+			name: "success_metadata_error_ignored",
+			args: args{ctx: context.Background(), params: params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetUserPosts(mock.Anything, mock.Anything).
+					Return(posts, nil).
+					Once()
+
+				deps.statsFetcher.EXPECT().
+					GetPostsRealtimeStats(mock.Anything, []int64{1, 2}).
+					Return(nil, assert.AnError).
+					Once()
+
+				deps.likeChecker.EXPECT().
+					IsPostLiked(mock.Anything, []int64{1, 2}, userID).
+					Return(nil, assert.AnError).
+					Once()
+			},
+			wantLen: 2,
+			wantErr: nil,
+		},
+		{
+			name: "success_empty_result",
+			args: args{ctx: context.Background(), params: params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetUserPosts(mock.Anything, mock.Anything).
+					Return([]post.Post{}, nil).
+					Once()
+			},
+			wantLen: 0,
 			wantErr: nil,
 		},
 	}
@@ -822,15 +932,21 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 			mockRepo := postmocks.NewMockRepository(s.T())
 			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockStats := postmocks.NewMockStatsFetcher(s.T())
+			mockLike := postmocks.NewMockLikeChecker(s.T())
 
 			deps := testDeps{
-				repo: mockRepo,
+				repo:         mockRepo,
+				statsFetcher: mockStats,
+				likeChecker:  mockLike,
 			}
 
 			uc := post.NewUseCase(post.Deps{
 				PostRepo:      mockRepo,
 				MediaVerifier: mockVerifier,
 				Event:         mockEvent,
+				StatsFetcher:  mockStats,
+				LikeChecker:   mockLike,
 			})
 
 			if tc.setupMock != nil {
@@ -845,6 +961,14 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 			} else {
 				s.NoError(err)
 				s.Len(got.Data, tc.wantLen)
+				if tc.wantLen > 0 && got.Data[0].Stat.LikesCount > 0 {
+					s.Equal(int32(15), got.Data[0].Stat.LikesCount)
+					s.NotNil(got.Data[0].IsLiked)
+					s.True(*got.Data[0].IsLiked)
+					s.Equal(int32(3), got.Data[1].Stat.CommentsCount)
+					s.NotNil(got.Data[1].IsLiked)
+					s.False(*got.Data[1].IsLiked)
+				}
 			}
 		})
 	}

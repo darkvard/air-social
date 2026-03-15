@@ -136,7 +136,6 @@ func (u *usecase) IsCommentLiked(ctx context.Context, commentIDs []int64, userID
 	return result, nil
 }
 
-// todo thieu owner
 func (u *usecase) addLikePostEvent(ctx context.Context, isLike bool, postID, userID, ownerID int64) error {
 	typ := common.EventPostLike
 	data := common.LikeEventPayload{

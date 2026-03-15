@@ -44,10 +44,10 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	userUC := getUserUseCase(deps, mediaUC)
 	authUC := getAuthUseCase(deps, userUC.Fetch, userUC.Account)
 	followUC := getFollowUseCase(deps, userUC.Fetch)
-	postUC := getPostUseCase(deps, mediaUC)
 	likeUC := getLikeUseCase(deps)
-	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC)
 	statsUC := getStatsUseCase(deps)
+	postUC := getPostUseCase(deps, mediaUC, statsUC, likeUC)
+	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC, statsUC)
 
 	return UseCase{
 		Health:  healthUC,
@@ -123,11 +123,13 @@ func getFollowUseCase(deps UseCaseDeps, fetcher follow.UserFetcher) follow.UseCa
 	)
 }
 
-func getPostUseCase(deps UseCaseDeps, mediaVerifier post.MediaVerifier) post.UseCase {
+func getPostUseCase(deps UseCaseDeps, mediaVerifier post.MediaVerifier, statsFetcher post.StatsFetcher, likeChecker post.LikeChecker) post.UseCase {
 	return post.NewUseCase(
 		post.Deps{
 			PostRepo:      deps.Repo.Post,
 			MediaVerifier: mediaVerifier,
+			StatsFetcher:  statsFetcher,
+			LikeChecker:   likeChecker,
 			Event:         deps.Adapter.EventPub,
 		},
 	)
@@ -139,6 +141,7 @@ func getCommentUseCase(
 	followFetcher comment.FollowChecker,
 	mediaVerifier comment.MediaVerifier,
 	likeChecker comment.LikeChecker,
+	statsFetcher comment.StatsFetcher,
 ) comment.UseCase {
 	return comment.NewUseCase(comment.Deps{
 		CommentRepo:   deps.Repo.Comment,
@@ -146,6 +149,7 @@ func getCommentUseCase(
 		FollowChecker: followFetcher,
 		MediaVerifier: mediaVerifier,
 		LikeChecker:   likeChecker,
+		StatsFetcher:  statsFetcher,
 		Event:         deps.Adapter.EventPub,
 	})
 }

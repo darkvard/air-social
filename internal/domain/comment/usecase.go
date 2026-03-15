@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"golang.org/x/sync/errgroup"
+
 	"air-social/internal/domain/common"
 	"air-social/internal/domain/follow"
 	"air-social/internal/domain/post"
+	"air-social/internal/domain/stats"
 	"air-social/pkg"
 )
 
@@ -24,6 +27,9 @@ type UseCase interface {
 
 type LikeChecker interface {
 	IsCommentLiked(ctx context.Context, commentIDs []int64, userID int64) (map[int64]bool, error)
+}
+type StatsFetcher interface {
+	GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error)
 }
 
 type PostFetcher interface {
@@ -44,6 +50,7 @@ type Deps struct {
 	FollowChecker FollowChecker
 	MediaVerifier MediaVerifier
 	LikeChecker   LikeChecker
+	StatsFetcher  StatsFetcher
 	Event         common.EventPublisher
 }
 
@@ -53,6 +60,7 @@ type usecase struct {
 	followChecker FollowChecker
 	mediaVerifier MediaVerifier
 	likeChecker   LikeChecker
+	statsFetcher  StatsFetcher
 	event         common.EventPublisher
 }
 
@@ -63,16 +71,16 @@ func NewUseCase(deps Deps) *usecase {
 		followChecker: deps.FollowChecker,
 		mediaVerifier: deps.MediaVerifier,
 		likeChecker:   deps.LikeChecker,
+		statsFetcher:  deps.StatsFetcher,
 		event:         deps.Event,
 	}
 }
 
-// todo: them usecase moi cho stat sau nay
-
 func (u *usecase) GetComments(ctx context.Context, postID int64, params GetCursorParams) (common.CursorPaginatedResult[Comment, int64], error) {
+	var empty common.CursorPaginatedResult[Comment, int64]
 	params.Query.NormalizePagination()
 
-	var empty common.CursorPaginatedResult[Comment, int64]
+	// fetch comments from db
 	comments, err := u.commentRepo.GetComments(ctx, postID, params)
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
@@ -81,17 +89,21 @@ func (u *usecase) GetComments(ctx context.Context, postID int64, params GetCurso
 		return empty, pkg.OrInternalError(err)
 	}
 
-	if err := u.mapIsLikedForComments(ctx, params.UserID, comments); err != nil {
-		return empty, pkg.OrInternalError(err)
+	// fetch stats & isLiked from cache and db
+	commentsPtr := make([]*Comment, len(comments))
+	for i := range comments {
+		commentsPtr[i] = &comments[i]
 	}
+	u.mapCommentMetadata(ctx, commentsPtr, params.UserID)
 
 	return common.NewCursorPaginatedResult(comments, params.Query.Limit), nil
 }
 
 func (u *usecase) GetReplies(ctx context.Context, parentID int64, params GetCursorParams) (common.CursorPaginatedResult[Comment, int64], error) {
+	var empty common.CursorPaginatedResult[Comment, int64]
 	params.Query.NormalizePagination()
 
-	var empty common.CursorPaginatedResult[Comment, int64]
+	// fetch comments from db
 	comments, err := u.commentRepo.GetReplies(ctx, parentID, params)
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
@@ -100,9 +112,12 @@ func (u *usecase) GetReplies(ctx context.Context, parentID int64, params GetCurs
 		return empty, pkg.OrInternalError(err)
 	}
 
-	if err := u.mapIsLikedForComments(ctx, params.UserID, comments); err != nil {
-		return empty, pkg.OrInternalError(err)
+	// fetch stats & isLiked from cache and db
+	commentsPtr := make([]*Comment, len(comments))
+	for i := range comments {
+		commentsPtr[i] = &comments[i]
 	}
+	u.mapCommentMetadata(ctx, commentsPtr, params.UserID)
 
 	return common.NewCursorPaginatedResult(comments, params.Query.Limit), nil
 }
@@ -260,30 +275,6 @@ func (u *usecase) validateMedia(ctx context.Context, params []Media) ([]Media, e
 	return params, nil
 }
 
-func (u *usecase) mapIsLikedForComments(ctx context.Context, userID int64, comments []Comment) error {
-	if len(comments) == 0 {
-		return nil
-	}
-
-	commentIDs := make([]int64, len(comments))
-	for i, c := range comments {
-		commentIDs[i] = c.ID
-	}
-
-	likedMap, err := u.likeChecker.IsCommentLiked(ctx, commentIDs, userID)
-	if err != nil {
-		return err
-	}
-
-	for i := range comments {
-		if isLiked, ok := likedMap[comments[i].ID]; ok {
-			comments[i].IsLiked = &isLiked
-		}
-	}
-
-	return nil
-}
-
 func (u *usecase) addCommentEvent(ctx context.Context, actorID int64, comment Comment, typ common.EventType) error {
 	data := common.CommentEventPayload{
 		PostID:    comment.PostID,
@@ -294,4 +285,62 @@ func (u *usecase) addCommentEvent(ctx context.Context, actorID int64, comment Co
 		Typ:       typ,
 	}
 	return u.event.Publish(ctx, common.NewEvent(typ, data))
+}
+
+func (u *usecase) mapCommentMetadata(ctx context.Context, comments []*Comment, viewerID int64) {
+	size := len(comments)
+	if size == 0 {
+		return
+	}
+
+	ids := make([]int64, size)
+	for i, c := range comments {
+		ids[i] = c.ID
+	}
+
+	statsMap, likedMap := u.fetchStatsAndLikes(ctx, ids, viewerID)
+
+	for _, c := range comments {
+		if statsMap != nil {
+			if st, ok := statsMap[c.ID]; ok {
+				c.Stat.LikesCount = st.LikesCount
+				c.Stat.RepliesCount = st.RepliesCount
+			}
+		}
+		if likedMap != nil {
+			b := likedMap[c.ID]
+			c.IsLiked = &b
+		}
+	}
+}
+
+func (u *usecase) fetchStatsAndLikes(ctx context.Context, ids []int64, viewerID int64) (map[int64]stats.CommentStats, map[int64]bool) {
+	var statsMap map[int64]stats.CommentStats
+	var likedMap map[int64]bool
+
+	var g errgroup.Group
+
+	g.Go(func() error {
+		res, err := u.statsFetcher.GetCommentsRealtimeStats(ctx, ids)
+		if err != nil {
+			pkg.Log().Error("failed to fetch comment stats, skipping", err)
+			return nil
+		}
+		statsMap = res
+		return nil
+	})
+
+	g.Go(func() error {
+		res, err := u.likeChecker.IsCommentLiked(ctx, ids, viewerID)
+		if err != nil {
+			pkg.Log().Error("failed to fetch comment isLiked status, skipping", err)
+			return nil
+		}
+		likedMap = res
+		return nil
+	})
+
+	_ = g.Wait()
+
+	return statsMap, likedMap
 }
