@@ -16,12 +16,16 @@ import (
 // 1. Write: User actions (Like/Comment/Share) push events to RabbitMQ instead of DB.
 // 2. Cache: Workers process events and update delta counters (+/-) in Redis.
 // 3. Read: Fetch DB (Base) + Redis (Delta) concurrently -> Final count = max(0, Base + Delta).
-// 4. Sync: Cronjob runs every 10s to Bulk Upsert Redis deltas to PostgreSQL, then subtracts synced values via Lua.
+// 4. Sync: Cronjob runs every ...s to Bulk Upsert Redis deltas to PostgreSQL, then subtracts synced values via Lua.
 type UseCase interface {
 	SyncPostStats(ctx context.Context) error
 	SyncCommentStats(ctx context.Context) error
-	GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]PostStats, error)
-	GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]CommentStats, error)
+
+	GetPostsStats(ctx context.Context, postIDs []int64) (map[int64]PostStats, error)
+	GetCommentsStats(ctx context.Context, commentIDs []int64) (map[int64]CommentStats, error)
+
+	ReconcilePostStats(ctx context.Context, postIDs []int64) error
+	ReconcileCommentStats(ctx context.Context, commentIDs []int64) error
 }
 
 type Deps struct {
@@ -67,6 +71,9 @@ func (u *usecase) SyncPostStats(ctx context.Context) error {
 	}
 
 	if err := u.repo.BulkUpsertPostStats(ctx, params); err != nil {
+		go func(ids []int64) {
+			_ = u.ReconcilePostStats(context.Background(), ids)
+		}(uniqueIDs)
 		return pkg.OrInternalError(err)
 	}
 
@@ -100,6 +107,9 @@ func (u *usecase) SyncCommentStats(ctx context.Context) error {
 	}
 
 	if err := u.repo.BulkUpsertCommentStats(ctx, params); err != nil {
+		go func(ids []int64) {
+			_ = u.ReconcileCommentStats(context.Background(), ids)
+		}(uniqueIDs)
 		return pkg.OrInternalError(err)
 	}
 
@@ -107,7 +117,25 @@ func (u *usecase) SyncCommentStats(ctx context.Context) error {
 	return nil
 }
 
-// GetPostsRealtimeStats fetches base stats from PostgreSQL and merges them with live offsets from Redis.
+// ReconcilePostStats acts as an automatic fallback when the primary sync flow fails (e.g., Redis down, bulk upsert error).
+// It directly executes SQL queries to recalculate post stats from the source of truth tables and overwrites the DB to ensure data integrity.
+func (u *usecase) ReconcilePostStats(ctx context.Context, postIDs []int64) error {
+	if err := u.repo.ReconcilePostStats(ctx, postIDs); err != nil {
+		return pkg.NewError(err, "failed to reconcile post stats")
+	}
+	return nil
+}
+
+// ReconcileCommentStats acts as an automatic fallback when the primary sync flow fails (e.g., Redis down, bulk upsert error).
+// It directly executes SQL queries to recalculate comment stats from the source of truth tables and overwrites the DB to ensure data integrity.
+func (u *usecase) ReconcileCommentStats(ctx context.Context, commentIDs []int64) error {
+	if err := u.repo.ReconcileCommentStats(ctx, commentIDs); err != nil {
+		return pkg.NewError(err, "failed to reconcile comment stats")
+	}
+	return nil
+}
+
+// GetPostsStats fetches base stats from PostgreSQL and merges them with live offsets from Redis.
 //
 // Architecture / Concept:
 // - Database (Base): Contains persistent data but may be delayed (up to time.s) due to the background syncer.
@@ -116,7 +144,7 @@ func (u *usecase) SyncCommentStats(ctx context.Context) error {
 // Solution:
 // - Fetch both Base and Delta concurrently using errgroup to minimize latency.
 // - Merge Data: Final Count = GREATEST(0, Base_DB + Offset_Redis).
-func (u *usecase) GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]PostStats, error) {
+func (u *usecase) GetPostsStats(ctx context.Context, postIDs []int64) (map[int64]PostStats, error) {
 	if len(postIDs) == 0 {
 		return nil, nil
 	}
@@ -142,7 +170,7 @@ func (u *usecase) GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (m
 	})
 
 	if err := g.Wait(); err != nil {
-		return nil, pkg.NewError(err, "failed to fetch realtime post stats")
+		return nil, pkg.NewError(err, "failed to fetch post stats")
 	}
 
 	// merge
@@ -172,9 +200,9 @@ func (u *usecase) GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (m
 	return result, nil
 }
 
-// GetCommentsRealtimeStats fetches base stats from PostgreSQL and merges them with live offsets from Redis.
+// GetCommentsStats fetches base stats from PostgreSQL and merges them with live offsets from Redis.
 // It follows the exact same Base + Delta aggregation strategy as Posts.
-func (u *usecase) GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]CommentStats, error) {
+func (u *usecase) GetCommentsStats(ctx context.Context, commentIDs []int64) (map[int64]CommentStats, error) {
 	if len(commentIDs) == 0 {
 		return nil, nil
 	}
@@ -200,7 +228,7 @@ func (u *usecase) GetCommentsRealtimeStats(ctx context.Context, commentIDs []int
 	})
 
 	if err := g.Wait(); err != nil {
-		return nil, pkg.NewError(err, "failed to fetch realtime comment stats")
+		return nil, pkg.NewError(err, "failed to fetch comment stats")
 	}
 
 	// merge

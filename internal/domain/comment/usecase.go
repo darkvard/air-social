@@ -29,7 +29,7 @@ type LikeChecker interface {
 	IsCommentLiked(ctx context.Context, commentIDs []int64, userID int64) (map[int64]bool, error)
 }
 type StatsFetcher interface {
-	GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error)
+	GetCommentsStats(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error)
 }
 
 type PostFetcher interface {
@@ -321,7 +321,7 @@ func (u *usecase) fetchStatsAndLikes(ctx context.Context, ids []int64, viewerID 
 	var g errgroup.Group
 
 	g.Go(func() error {
-		res, err := u.statsFetcher.GetCommentsRealtimeStats(ctx, ids)
+		res, err := u.statsFetcher.GetCommentsStats(ctx, ids)
 		if err != nil {
 			pkg.Log().Error("failed to fetch comment stats, skipping", err)
 			return nil

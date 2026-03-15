@@ -61,18 +61,18 @@ type CreateResponse struct {
 }
 
 type PostResponse struct {
-	ID             int64  `json:"id"`
-	OriginalPostID *int64 `json:"original_post_id,omitempty"`
-	Content       string              `json:"content"`
-	Visibility    string              `json:"visibility"`
-	LikesCount    int32               `json:"likes_count"`
-	CommentsCount int32               `json:"comments_count"`
-	SharesCount   int32               `json:"shares_count"`
-	CreatedAt     time.Time           `json:"created_at"`
-	UpdatedAt     time.Time           `json:"updated_at"`
-	Media         []MediaItemResponse `json:"media"`
-	IsLiked       *bool               `json:"is_liked,omitempty"`
-	User          *UserResponse       `json:"author,omitempty"`
+	ID             int64               `json:"id"`
+	OriginalPostID *int64              `json:"original_post_id,omitempty"`
+	Content        string              `json:"content"`
+	Visibility     string              `json:"visibility"`
+	LikesCount     int32               `json:"likes_count"`
+	CommentsCount  int32               `json:"comments_count"`
+	SharesCount    int32               `json:"shares_count"`
+	CreatedAt      time.Time           `json:"created_at"`
+	UpdatedAt      time.Time           `json:"updated_at"`
+	Media          []MediaItemResponse `json:"media"`
+	IsLiked        *bool               `json:"is_liked,omitempty"`
+	User           *UserResponse       `json:"author,omitempty"`
 }
 
 type MediaItemResponse struct {

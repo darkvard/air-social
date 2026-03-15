@@ -38,12 +38,12 @@ func (_m *MockStatsFetcher) EXPECT() *MockStatsFetcher_Expecter {
 	return &MockStatsFetcher_Expecter{mock: &_m.Mock}
 }
 
-// GetCommentsRealtimeStats provides a mock function for the type MockStatsFetcher
-func (_mock *MockStatsFetcher) GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error) {
+// GetCommentsStats provides a mock function for the type MockStatsFetcher
+func (_mock *MockStatsFetcher) GetCommentsStats(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error) {
 	ret := _mock.Called(ctx, commentIDs)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetCommentsRealtimeStats")
+		panic("no return value specified for GetCommentsStats")
 	}
 
 	var r0 map[int64]stats.CommentStats
@@ -66,19 +66,19 @@ func (_mock *MockStatsFetcher) GetCommentsRealtimeStats(ctx context.Context, com
 	return r0, r1
 }
 
-// MockStatsFetcher_GetCommentsRealtimeStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentsRealtimeStats'
-type MockStatsFetcher_GetCommentsRealtimeStats_Call struct {
+// MockStatsFetcher_GetCommentsStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentsStats'
+type MockStatsFetcher_GetCommentsStats_Call struct {
 	*mock.Call
 }
 
-// GetCommentsRealtimeStats is a helper method to define mock.On call
+// GetCommentsStats is a helper method to define mock.On call
 //   - ctx context.Context
 //   - commentIDs []int64
-func (_e *MockStatsFetcher_Expecter) GetCommentsRealtimeStats(ctx interface{}, commentIDs interface{}) *MockStatsFetcher_GetCommentsRealtimeStats_Call {
-	return &MockStatsFetcher_GetCommentsRealtimeStats_Call{Call: _e.mock.On("GetCommentsRealtimeStats", ctx, commentIDs)}
+func (_e *MockStatsFetcher_Expecter) GetCommentsStats(ctx interface{}, commentIDs interface{}) *MockStatsFetcher_GetCommentsStats_Call {
+	return &MockStatsFetcher_GetCommentsStats_Call{Call: _e.mock.On("GetCommentsStats", ctx, commentIDs)}
 }
 
-func (_c *MockStatsFetcher_GetCommentsRealtimeStats_Call) Run(run func(ctx context.Context, commentIDs []int64)) *MockStatsFetcher_GetCommentsRealtimeStats_Call {
+func (_c *MockStatsFetcher_GetCommentsStats_Call) Run(run func(ctx context.Context, commentIDs []int64)) *MockStatsFetcher_GetCommentsStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -96,12 +96,12 @@ func (_c *MockStatsFetcher_GetCommentsRealtimeStats_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockStatsFetcher_GetCommentsRealtimeStats_Call) Return(int64ToCommentStats map[int64]stats.CommentStats, err error) *MockStatsFetcher_GetCommentsRealtimeStats_Call {
+func (_c *MockStatsFetcher_GetCommentsStats_Call) Return(int64ToCommentStats map[int64]stats.CommentStats, err error) *MockStatsFetcher_GetCommentsStats_Call {
 	_c.Call.Return(int64ToCommentStats, err)
 	return _c
 }
 
-func (_c *MockStatsFetcher_GetCommentsRealtimeStats_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error)) *MockStatsFetcher_GetCommentsRealtimeStats_Call {
+func (_c *MockStatsFetcher_GetCommentsStats_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error)) *MockStatsFetcher_GetCommentsStats_Call {
 	_c.Call.Return(run)
 	return _c
 }

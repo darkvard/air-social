@@ -120,6 +120,8 @@ func (s *StatsUseCaseSuite) TestSyncPostStats() {
 				deps.repo.EXPECT().
 					BulkUpsertPostStats(mock.Anything, mock.AnythingOfType("stats.PostParams")).
 					Return(assert.AnError).Once()
+				deps.repo.EXPECT().
+					ReconcilePostStats(mock.Anything, mock.Anything).Return(nil).Maybe()
 			},
 			wantErr: pkg.ErrInternal,
 		},
@@ -216,6 +218,22 @@ func (s *StatsUseCaseSuite) TestSyncCommentStats() {
 			},
 			wantErr: assert.AnError,
 		},
+		{
+			name: "Error on bulk upsert",
+			setupMock: func(deps testDeps) {
+				likes := map[int64]int64{1: 10}
+				deps.cache.EXPECT().
+					GetStatsHash(mock.Anything, mock.Anything).
+					Return(likes, nil).Times(2)
+
+				deps.repo.EXPECT().
+					BulkUpsertCommentStats(mock.Anything, mock.AnythingOfType("stats.CommentParams")).
+					Return(assert.AnError).Once()
+				deps.repo.EXPECT().
+					ReconcileCommentStats(mock.Anything, mock.Anything).Return(nil).Maybe()
+			},
+			wantErr: pkg.ErrInternal,
+		},
 	}
 
 	for _, tt := range tests {
@@ -244,7 +262,129 @@ func (s *StatsUseCaseSuite) TestSyncCommentStats() {
 	}
 }
 
-func (s *StatsUseCaseSuite) TestGetPostsRealtimeStats() {
+func (s *StatsUseCaseSuite) TestReconcilePostStats() {
+	type testDeps struct {
+		repo  *statmocks.MockRepository
+		cache *cachemocks.MockProvider
+	}
+
+	tests := []struct {
+		name      string
+		args      []int64
+		setupMock func(deps testDeps, ids []int64)
+		wantErr   error
+	}{
+		{
+			name: "Success",
+			args: []int64{1, 2},
+			setupMock: func(deps testDeps, ids []int64) {
+				deps.repo.EXPECT().ReconcilePostStats(mock.Anything, ids).Return(nil).Once()
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Error",
+			args: []int64{1, 2},
+			setupMock: func(deps testDeps, ids []int64) {
+				deps.repo.EXPECT().ReconcilePostStats(mock.Anything, ids).Return(assert.AnError).Once()
+			},
+			wantErr: assert.AnError,
+		},
+		{
+			name: "Empty IDs",
+			args: []int64{},
+			setupMock: func(deps testDeps, ids []int64) {
+				// Should return early, no repo call
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			mockRepo := statmocks.NewMockRepository(s.T())
+			mockCache := cachemocks.NewMockProvider(s.T())
+			deps := testDeps{repo: mockRepo, cache: mockCache}
+			tt.setupMock(deps, tt.args)
+
+			uc := stats.NewUseCase(stats.Deps{
+				Repo:  mockRepo,
+				Cache: mockCache,
+			})
+
+			err := uc.ReconcilePostStats(context.Background(), tt.args)
+
+			if tt.wantErr != nil {
+				s.Error(err)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}
+
+func (s *StatsUseCaseSuite) TestReconcileCommentStats() {
+	type testDeps struct {
+		repo  *statmocks.MockRepository
+		cache *cachemocks.MockProvider
+	}
+
+	tests := []struct {
+		name      string
+		args      []int64
+		setupMock func(deps testDeps, ids []int64)
+		wantErr   error
+	}{
+		{
+			name: "Success",
+			args: []int64{1, 2},
+			setupMock: func(deps testDeps, ids []int64) {
+				deps.repo.EXPECT().ReconcileCommentStats(mock.Anything, ids).Return(nil).Once()
+			},
+			wantErr: nil,
+		},
+		{
+			name: "Error",
+			args: []int64{1, 2},
+			setupMock: func(deps testDeps, ids []int64) {
+				deps.repo.EXPECT().ReconcileCommentStats(mock.Anything, ids).Return(assert.AnError).Once()
+			},
+			wantErr: assert.AnError,
+		},
+		{
+			name: "Empty IDs",
+			args: []int64{},
+			setupMock: func(deps testDeps, ids []int64) {
+				// Should return early, no repo call
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			mockRepo := statmocks.NewMockRepository(s.T())
+			mockCache := cachemocks.NewMockProvider(s.T())
+			deps := testDeps{repo: mockRepo, cache: mockCache}
+			tt.setupMock(deps, tt.args)
+
+			uc := stats.NewUseCase(stats.Deps{
+				Repo:  mockRepo,
+				Cache: mockCache,
+			})
+
+			err := uc.ReconcileCommentStats(context.Background(), tt.args)
+
+			if tt.wantErr != nil {
+				s.Error(err)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}
+
+func (s *StatsUseCaseSuite) TestGetPostsStats() {
 	type testDeps struct {
 		repo  *statmocks.MockRepository
 		cache *cachemocks.MockProvider
@@ -360,7 +500,7 @@ func (s *StatsUseCaseSuite) TestGetPostsRealtimeStats() {
 				Cache: mockCache,
 			})
 
-			got, err := uc.GetPostsRealtimeStats(context.Background(), tt.args)
+			got, err := uc.GetPostsStats(context.Background(), tt.args)
 
 			if tt.wantErr != nil {
 				s.ErrorIs(err, tt.wantErr)
@@ -375,7 +515,7 @@ func (s *StatsUseCaseSuite) TestGetPostsRealtimeStats() {
 	}
 }
 
-func (s *StatsUseCaseSuite) TestGetCommentsRealtimeStats() {
+func (s *StatsUseCaseSuite) TestGetCommentsStats() {
 	type testDeps struct {
 		repo  *statmocks.MockRepository
 		cache *cachemocks.MockProvider
@@ -453,7 +593,7 @@ func (s *StatsUseCaseSuite) TestGetCommentsRealtimeStats() {
 				Cache: mockCache,
 			})
 
-			got, err := uc.GetCommentsRealtimeStats(context.Background(), tt.args)
+			got, err := uc.GetCommentsStats(context.Background(), tt.args)
 
 			if tt.wantErr != nil {
 				s.ErrorIs(err, tt.wantErr)

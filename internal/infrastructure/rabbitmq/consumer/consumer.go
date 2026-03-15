@@ -107,6 +107,8 @@ func (c *Consumer) Stop() error {
 }
 
 func (c *Consumer) handleMessage(ctx context.Context, msg amqp.Delivery) {
+	pkg.Log().Infof("Worker [%s]: Received message %s", c.domain, msg.MessageId)
+
 	var event common.Event
 	if err := json.Unmarshal(msg.Body, &event); err != nil {
 		msg.Nack(false, false) // drop malformed messages
@@ -122,6 +124,7 @@ func (c *Consumer) handleMessage(ctx context.Context, msg amqp.Delivery) {
 		return
 	}
 	if !ok {
+		pkg.Log().Infof("Worker [%s]: Message %s is already processing or done. Skipping.", c.domain, msg.MessageId)
 		msg.Ack(false) //skip if already being handled or finished
 		return
 	}
@@ -134,6 +137,7 @@ func (c *Consumer) handleMessage(ctx context.Context, msg amqp.Delivery) {
 
 	// DONE: set long processedExpiry (24h) to prevent duplicates permanently
 	c.cache.Set(ctx, processedKey, done, processedExpiry)
+	pkg.Log().Infof("Worker [%s]: Successfully processed message %s", c.domain, msg.MessageId)
 	msg.Ack(false)
 }
 
@@ -151,6 +155,7 @@ func (c *Consumer) handleFailure(ctx context.Context, msg amqp.Delivery, err err
 	if retryCount < defaultMaxRetry {
 		// track retry attempts in cache
 		_ = c.cache.Set(ctx, retryKey, retryCount+1, 1*time.Hour)
+		pkg.Log().Warnf("Worker [%s]: Message %s failed (attempt %d). Requeueing...", c.domain, msg.MessageId, retryCount+1)
 		// unlock: delete processedKey so the next retry can pass the SetNX check
 		_ = c.cache.Delete(ctx, c.getProcessedKey(msg.MessageId))
 		msg.Nack(false, true)
@@ -158,6 +163,7 @@ func (c *Consumer) handleFailure(ctx context.Context, msg amqp.Delivery, err err
 	}
 
 	// max retries reached: drop the message to avoid infinite loop
+	pkg.Log().Errorf("Worker [%s]: Message %s failed permanently after max retries.", c.domain, msg.MessageId)
 	msg.Nack(false, false)
 }
 

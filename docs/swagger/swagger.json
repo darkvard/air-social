@@ -2080,6 +2080,9 @@
                 "is_liked": {
                     "type": "boolean"
                 },
+                "likes_count": {
+                    "type": "integer"
+                },
                 "media": {
                     "type": "array",
                     "items": {
@@ -2087,6 +2090,9 @@
                     }
                 },
                 "parent_id": {
+                    "type": "integer"
+                },
+                "replies_count": {
                     "type": "integer"
                 }
             }
@@ -2331,6 +2337,9 @@
                         "$ref": "#/definitions/internal_transport_http_post.MediaItemInput"
                     }
                 },
+                "original_post_id": {
+                    "type": "integer"
+                },
                 "visibility": {
                     "type": "string",
                     "enum": [
@@ -2358,6 +2367,9 @@
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_post.MediaItemResponse"
                     }
+                },
+                "original_post_id": {
+                    "type": "integer"
                 },
                 "visibility": {
                     "type": "string"
@@ -2486,6 +2498,9 @@
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_post.MediaItemResponse"
                     }
+                },
+                "original_post_id": {
+                    "type": "integer"
                 },
                 "shares_count": {
                     "type": "integer"

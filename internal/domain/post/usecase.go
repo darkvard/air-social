@@ -25,7 +25,7 @@ type MediaVerifier interface {
 }
 
 type StatsFetcher interface {
-	GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error)
+	GetPostsStats(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error)
 }
 
 type LikeChecker interface {
@@ -163,9 +163,9 @@ func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (com
 	}
 
 	postsPtr := make([]*Post, len(posts))
-    for i := range posts {
-        postsPtr[i] = &posts[i] 
-    }
+	for i := range posts {
+		postsPtr[i] = &posts[i]
+	}
 	u.mapPostMetadata(ctx, postsPtr, params.UserID)
 
 	result := common.NewCursorPaginatedResult(posts, params.Query.Limit)
@@ -250,7 +250,7 @@ func (u *usecase) fetchStatsAndLikes(ctx context.Context, ids []int64, viewerID 
 	var g errgroup.Group
 
 	g.Go(func() error {
-		res, err := u.statsFetcher.GetPostsRealtimeStats(ctx, ids)
+		res, err := u.statsFetcher.GetPostsStats(ctx, ids)
 		if err != nil {
 			pkg.Log().Error("failed to fetch post stats, skipping", err)
 			return nil

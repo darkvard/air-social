@@ -142,3 +142,59 @@ func (r *repository) GetCommentsStats(ctx context.Context, commentIDs []int64) (
 	}
 	return result, nil
 }
+
+func (r *repository) ReconcilePostStats(ctx context.Context, postIDs []int64) error {
+	if len(postIDs) == 0 {
+		return nil
+	}
+	query := `
+		INSERT INTO post_stats (post_id, likes_count, comments_count, shares_count)
+		SELECT 
+			p.id,
+			COALESCE(l.likes, 0),
+			COALESCE(c.comments, 0),
+			COALESCE(s.shares, 0)
+		FROM posts p
+		LEFT JOIN (SELECT post_id, COUNT(*) as likes FROM post_likes WHERE post_id = ANY($1::bigint[]) GROUP BY post_id) l ON p.id = l.post_id
+		LEFT JOIN (SELECT post_id, COUNT(*) as comments FROM comments WHERE post_id = ANY($1::bigint[]) AND deleted_at IS NULL GROUP BY post_id) c ON p.id = c.post_id
+		LEFT JOIN (SELECT original_post_id, COUNT(*) as shares FROM posts WHERE original_post_id = ANY($1::bigint[]) AND original_post_id IS NOT NULL AND deleted_at IS NULL GROUP BY original_post_id) s ON p.id = s.original_post_id
+		WHERE p.id = ANY($1::bigint[]) AND p.deleted_at IS NULL
+		
+		ON CONFLICT (post_id) DO UPDATE SET
+			likes_count = EXCLUDED.likes_count,
+			comments_count = EXCLUDED.comments_count,
+			shares_count = EXCLUDED.shares_count,
+			updated_at = NOW()
+		WHERE post_stats.likes_count IS DISTINCT FROM EXCLUDED.likes_count
+		   OR post_stats.comments_count IS DISTINCT FROM EXCLUDED.comments_count
+		   OR post_stats.shares_count IS DISTINCT FROM EXCLUDED.shares_count;
+	`
+	_, err := r.db.ExecContext(ctx, query, postIDs)
+	return pkg.MapPostgresError(err)
+}
+
+func (r *repository) ReconcileCommentStats(ctx context.Context, commentIDs []int64) error {
+	if len(commentIDs) == 0 {
+		return nil
+	}
+	query := `
+		INSERT INTO comment_stats (comment_id, likes_count, replies_count)
+		SELECT 
+			c.id,
+			COALESCE(l.likes, 0),
+			COALESCE(r.replies, 0)
+		FROM comments c
+		LEFT JOIN (SELECT comment_id, COUNT(*) as likes FROM comment_likes WHERE comment_id = ANY($1::bigint[]) GROUP BY comment_id) l ON c.id = l.comment_id
+		LEFT JOIN (SELECT parent_id, COUNT(*) as replies FROM comments WHERE parent_id = ANY($1::bigint[]) AND parent_id IS NOT NULL AND deleted_at IS NULL GROUP BY parent_id) r ON c.id = r.parent_id
+		WHERE c.id = ANY($1::bigint[]) AND c.deleted_at IS NULL
+		
+		ON CONFLICT (comment_id) DO UPDATE SET
+			likes_count = EXCLUDED.likes_count,
+			replies_count = EXCLUDED.replies_count,
+			updated_at = NOW()
+		WHERE comment_stats.likes_count IS DISTINCT FROM EXCLUDED.likes_count
+		   OR comment_stats.replies_count IS DISTINCT FROM EXCLUDED.replies_count;
+	`
+	_, err := r.db.ExecContext(ctx, query, commentIDs)
+	return pkg.MapPostgresError(err)
+}

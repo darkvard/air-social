@@ -264,13 +264,15 @@ func (h Handler) toCommentResponse(c *comment.Comment) CommentResponse {
 	}
 
 	return CommentResponse{
-		ID:        c.ID,
-		Content:   c.Content,
-		ParentID:  c.ParentID,
-		CreatedAt: c.CreatedAt,
-		Media:     h.toMediaItemResponse(c.Media),
-		IsLiked:   c.IsLiked,
-		User:      author,
+		ID:           c.ID,
+		Content:      c.Content,
+		ParentID:     c.ParentID,
+		LikesCount:   c.Stat.LikesCount,
+		RepliesCount: c.Stat.RepliesCount,
+		CreatedAt:    c.CreatedAt,
+		Media:        h.toMediaItemResponse(c.Media),
+		IsLiked:      c.IsLiked,
+		User:         author,
 	}
 }
 

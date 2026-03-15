@@ -88,7 +88,7 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 					Once()
 
 				deps.statsFetcher.EXPECT().
-					GetPostsRealtimeStats(mock.Anything, []int64{postID}).
+					GetPostsStats(mock.Anything, []int64{postID}).
 					Return(map[int64]stats.PostStats{
 						postID: {PostID: postID, LikesCount: 10, CommentsCount: 5, SharesCount: 2},
 					}, nil).
@@ -112,7 +112,7 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 					Once()
 
 				deps.statsFetcher.EXPECT().
-					GetPostsRealtimeStats(mock.Anything, []int64{postID}).
+					GetPostsStats(mock.Anything, []int64{postID}).
 					Return(nil, assert.AnError).
 					Once()
 
@@ -876,7 +876,7 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 					Once()
 
 				deps.statsFetcher.EXPECT().
-					GetPostsRealtimeStats(mock.Anything, []int64{1, 2}).
+					GetPostsStats(mock.Anything, []int64{1, 2}).
 					Return(map[int64]stats.PostStats{
 						1: {PostID: 1, LikesCount: 15},
 						2: {PostID: 2, CommentsCount: 3},
@@ -901,7 +901,7 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 					Once()
 
 				deps.statsFetcher.EXPECT().
-					GetPostsRealtimeStats(mock.Anything, []int64{1, 2}).
+					GetPostsStats(mock.Anything, []int64{1, 2}).
 					Return(nil, assert.AnError).
 					Once()
 

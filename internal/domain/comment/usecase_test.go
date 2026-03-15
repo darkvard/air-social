@@ -873,7 +873,7 @@ func (s *commentUseCaseSuite) TestGetComments() {
 					Return(comments, nil).Once()
 
 				deps.stats.EXPECT().
-					GetCommentsRealtimeStats(mock.Anything, []int64{1, 2}).
+					GetCommentsStats(mock.Anything, []int64{1, 2}).
 					Return(map[int64]stats.CommentStats{
 						1: {CommentID: 1, LikesCount: 5, RepliesCount: 2},
 					}, nil).
@@ -1011,7 +1011,7 @@ func (s *commentUseCaseSuite) TestGetReplies() {
 					Return(replies, nil).Once()
 
 				deps.stats.EXPECT().
-					GetCommentsRealtimeStats(mock.Anything, []int64{51}).
+					GetCommentsStats(mock.Anything, []int64{51}).
 					Return(map[int64]stats.CommentStats{
 						51: {CommentID: 51, LikesCount: 10},
 					}, nil).

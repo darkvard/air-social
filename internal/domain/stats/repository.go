@@ -10,4 +10,8 @@ type Repository interface {
 	GetPostsStats(ctx context.Context, postIDs []int64) ([]PostStats, error)
 
 	GetCommentsStats(ctx context.Context, commentIDs []int64) ([]CommentStats, error)
+
+	ReconcilePostStats(ctx context.Context, postIDs []int64) error
+
+	ReconcileCommentStats(ctx context.Context, commentIDs []int64) error
 }

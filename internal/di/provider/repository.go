@@ -12,9 +12,9 @@ import (
 	followinfra "air-social/internal/infrastructure/postgres/follow"
 	likeinfra "air-social/internal/infrastructure/postgres/like"
 	postinfra "air-social/internal/infrastructure/postgres/post"
+	statsinfra "air-social/internal/infrastructure/postgres/stats"
 	tokeninfra "air-social/internal/infrastructure/postgres/token"
 	userinfra "air-social/internal/infrastructure/postgres/user"
-	statsinfra "air-social/internal/infrastructure/postgres/stats"
 )
 
 type Repository struct {

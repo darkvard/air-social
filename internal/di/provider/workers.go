@@ -25,7 +25,7 @@ func NewWorkers(infra *Infrastructure, adapter Adapter, prov Provider, usecase U
 	})
 
 	// 3. Stats Syncer
-	statsSyncer := stats.NewSyncer(usecase.Stats, 10*time.Second)
+	statsSyncer := stats.NewSyncer(usecase.Stats, 1*time.Minute)
 
 	return worker.NewManager(emailWorker, statsWorker, statsSyncer)
 }

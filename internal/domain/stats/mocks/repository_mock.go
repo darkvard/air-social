@@ -287,3 +287,117 @@ func (_c *MockRepository_GetPostsStats_Call) RunAndReturn(run func(ctx context.C
 	_c.Call.Return(run)
 	return _c
 }
+
+// ReconcileCommentStats provides a mock function for the type MockRepository
+func (_mock *MockRepository) ReconcileCommentStats(ctx context.Context, commentIDs []int64) error {
+	ret := _mock.Called(ctx, commentIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReconcileCommentStats")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) error); ok {
+		r0 = returnFunc(ctx, commentIDs)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_ReconcileCommentStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReconcileCommentStats'
+type MockRepository_ReconcileCommentStats_Call struct {
+	*mock.Call
+}
+
+// ReconcileCommentStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - commentIDs []int64
+func (_e *MockRepository_Expecter) ReconcileCommentStats(ctx interface{}, commentIDs interface{}) *MockRepository_ReconcileCommentStats_Call {
+	return &MockRepository_ReconcileCommentStats_Call{Call: _e.mock.On("ReconcileCommentStats", ctx, commentIDs)}
+}
+
+func (_c *MockRepository_ReconcileCommentStats_Call) Run(run func(ctx context.Context, commentIDs []int64)) *MockRepository_ReconcileCommentStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_ReconcileCommentStats_Call) Return(err error) *MockRepository_ReconcileCommentStats_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_ReconcileCommentStats_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64) error) *MockRepository_ReconcileCommentStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReconcilePostStats provides a mock function for the type MockRepository
+func (_mock *MockRepository) ReconcilePostStats(ctx context.Context, postIDs []int64) error {
+	ret := _mock.Called(ctx, postIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReconcilePostStats")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) error); ok {
+		r0 = returnFunc(ctx, postIDs)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockRepository_ReconcilePostStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReconcilePostStats'
+type MockRepository_ReconcilePostStats_Call struct {
+	*mock.Call
+}
+
+// ReconcilePostStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - postIDs []int64
+func (_e *MockRepository_Expecter) ReconcilePostStats(ctx interface{}, postIDs interface{}) *MockRepository_ReconcilePostStats_Call {
+	return &MockRepository_ReconcilePostStats_Call{Call: _e.mock.On("ReconcilePostStats", ctx, postIDs)}
+}
+
+func (_c *MockRepository_ReconcilePostStats_Call) Run(run func(ctx context.Context, postIDs []int64)) *MockRepository_ReconcilePostStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_ReconcilePostStats_Call) Return(err error) *MockRepository_ReconcilePostStats_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockRepository_ReconcilePostStats_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64) error) *MockRepository_ReconcilePostStats_Call {
+	_c.Call.Return(run)
+	return _c
+}

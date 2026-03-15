@@ -2086,6 +2086,9 @@ const docTemplate = `{
                 "is_liked": {
                     "type": "boolean"
                 },
+                "likes_count": {
+                    "type": "integer"
+                },
                 "media": {
                     "type": "array",
                     "items": {
@@ -2093,6 +2096,9 @@ const docTemplate = `{
                     }
                 },
                 "parent_id": {
+                    "type": "integer"
+                },
+                "replies_count": {
                     "type": "integer"
                 }
             }
@@ -2337,6 +2343,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/internal_transport_http_post.MediaItemInput"
                     }
                 },
+                "original_post_id": {
+                    "type": "integer"
+                },
                 "visibility": {
                     "type": "string",
                     "enum": [
@@ -2364,6 +2373,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_post.MediaItemResponse"
                     }
+                },
+                "original_post_id": {
+                    "type": "integer"
                 },
                 "visibility": {
                     "type": "string"
@@ -2492,6 +2504,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_post.MediaItemResponse"
                     }
+                },
+                "original_post_id": {
+                    "type": "integer"
                 },
                 "shares_count": {
                     "type": "integer"

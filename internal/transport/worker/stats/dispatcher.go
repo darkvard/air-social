@@ -57,18 +57,23 @@ func (d *Dispatcher) handlePostLike(ctx context.Context, p common.LikeEventPaylo
 	return d.cache.UpdateStatsHash(ctx, cache.StatePostLikes, p.TargetID, incr)
 }
 
-func (d *Dispatcher) handleCommentCreated(ctx context.Context, p common.CommentEventPayload) error {
-	if p.ParentID == nil {
-		return d.cache.UpdateStatsHash(ctx, cache.StatePostComments, p.PostID, 1)
+func (d *Dispatcher) handleCommentCreated(ctx context.Context, c common.CommentEventPayload) error {
+	if c.IsReply() {
+		if err := d.cache.UpdateStatsHash(ctx, cache.StateCommentReplies, *c.ParentID, 1); err != nil {
+			return err
+		}
 	}
-	return d.cache.UpdateStatsHash(ctx, cache.StateCommentReplies, *p.ParentID, 1)
+
+	return d.cache.UpdateStatsHash(ctx, cache.StatePostComments, c.PostID, 1)
 }
 
-func (d *Dispatcher) handleCommentDeleted(ctx context.Context, p common.CommentEventPayload) error {
-	if p.ParentID == nil {
-		return d.cache.UpdateStatsHash(ctx, cache.StatePostComments, p.PostID, -1)
+func (d *Dispatcher) handleCommentDeleted(ctx context.Context, c common.CommentEventPayload) error {
+	if c.IsReply() {
+		if err := d.cache.UpdateStatsHash(ctx, cache.StateCommentReplies, *c.ParentID, -1); err != nil {
+			return err
+		}
 	}
-	return d.cache.UpdateStatsHash(ctx, cache.StateCommentReplies, *p.ParentID, -1)
+	return d.cache.UpdateStatsHash(ctx, cache.StatePostComments, c.PostID, -1)
 }
 
 func (d *Dispatcher) handlePostShare(ctx context.Context, p common.ShareEventPayload) error {

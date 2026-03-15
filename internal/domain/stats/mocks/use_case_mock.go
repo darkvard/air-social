@@ -38,12 +38,12 @@ func (_m *MockUseCase) EXPECT() *MockUseCase_Expecter {
 	return &MockUseCase_Expecter{mock: &_m.Mock}
 }
 
-// GetCommentsRealtimeStats provides a mock function for the type MockUseCase
-func (_mock *MockUseCase) GetCommentsRealtimeStats(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error) {
+// GetCommentsStats provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetCommentsStats(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error) {
 	ret := _mock.Called(ctx, commentIDs)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetCommentsRealtimeStats")
+		panic("no return value specified for GetCommentsStats")
 	}
 
 	var r0 map[int64]stats.CommentStats
@@ -66,19 +66,19 @@ func (_mock *MockUseCase) GetCommentsRealtimeStats(ctx context.Context, commentI
 	return r0, r1
 }
 
-// MockUseCase_GetCommentsRealtimeStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentsRealtimeStats'
-type MockUseCase_GetCommentsRealtimeStats_Call struct {
+// MockUseCase_GetCommentsStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentsStats'
+type MockUseCase_GetCommentsStats_Call struct {
 	*mock.Call
 }
 
-// GetCommentsRealtimeStats is a helper method to define mock.On call
+// GetCommentsStats is a helper method to define mock.On call
 //   - ctx context.Context
 //   - commentIDs []int64
-func (_e *MockUseCase_Expecter) GetCommentsRealtimeStats(ctx interface{}, commentIDs interface{}) *MockUseCase_GetCommentsRealtimeStats_Call {
-	return &MockUseCase_GetCommentsRealtimeStats_Call{Call: _e.mock.On("GetCommentsRealtimeStats", ctx, commentIDs)}
+func (_e *MockUseCase_Expecter) GetCommentsStats(ctx interface{}, commentIDs interface{}) *MockUseCase_GetCommentsStats_Call {
+	return &MockUseCase_GetCommentsStats_Call{Call: _e.mock.On("GetCommentsStats", ctx, commentIDs)}
 }
 
-func (_c *MockUseCase_GetCommentsRealtimeStats_Call) Run(run func(ctx context.Context, commentIDs []int64)) *MockUseCase_GetCommentsRealtimeStats_Call {
+func (_c *MockUseCase_GetCommentsStats_Call) Run(run func(ctx context.Context, commentIDs []int64)) *MockUseCase_GetCommentsStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -96,22 +96,22 @@ func (_c *MockUseCase_GetCommentsRealtimeStats_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockUseCase_GetCommentsRealtimeStats_Call) Return(int64ToCommentStats map[int64]stats.CommentStats, err error) *MockUseCase_GetCommentsRealtimeStats_Call {
+func (_c *MockUseCase_GetCommentsStats_Call) Return(int64ToCommentStats map[int64]stats.CommentStats, err error) *MockUseCase_GetCommentsStats_Call {
 	_c.Call.Return(int64ToCommentStats, err)
 	return _c
 }
 
-func (_c *MockUseCase_GetCommentsRealtimeStats_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error)) *MockUseCase_GetCommentsRealtimeStats_Call {
+func (_c *MockUseCase_GetCommentsStats_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64) (map[int64]stats.CommentStats, error)) *MockUseCase_GetCommentsStats_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetPostsRealtimeStats provides a mock function for the type MockUseCase
-func (_mock *MockUseCase) GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error) {
+// GetPostsStats provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetPostsStats(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error) {
 	ret := _mock.Called(ctx, postIDs)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetPostsRealtimeStats")
+		panic("no return value specified for GetPostsStats")
 	}
 
 	var r0 map[int64]stats.PostStats
@@ -134,19 +134,19 @@ func (_mock *MockUseCase) GetPostsRealtimeStats(ctx context.Context, postIDs []i
 	return r0, r1
 }
 
-// MockUseCase_GetPostsRealtimeStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostsRealtimeStats'
-type MockUseCase_GetPostsRealtimeStats_Call struct {
+// MockUseCase_GetPostsStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostsStats'
+type MockUseCase_GetPostsStats_Call struct {
 	*mock.Call
 }
 
-// GetPostsRealtimeStats is a helper method to define mock.On call
+// GetPostsStats is a helper method to define mock.On call
 //   - ctx context.Context
 //   - postIDs []int64
-func (_e *MockUseCase_Expecter) GetPostsRealtimeStats(ctx interface{}, postIDs interface{}) *MockUseCase_GetPostsRealtimeStats_Call {
-	return &MockUseCase_GetPostsRealtimeStats_Call{Call: _e.mock.On("GetPostsRealtimeStats", ctx, postIDs)}
+func (_e *MockUseCase_Expecter) GetPostsStats(ctx interface{}, postIDs interface{}) *MockUseCase_GetPostsStats_Call {
+	return &MockUseCase_GetPostsStats_Call{Call: _e.mock.On("GetPostsStats", ctx, postIDs)}
 }
 
-func (_c *MockUseCase_GetPostsRealtimeStats_Call) Run(run func(ctx context.Context, postIDs []int64)) *MockUseCase_GetPostsRealtimeStats_Call {
+func (_c *MockUseCase_GetPostsStats_Call) Run(run func(ctx context.Context, postIDs []int64)) *MockUseCase_GetPostsStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -164,12 +164,126 @@ func (_c *MockUseCase_GetPostsRealtimeStats_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockUseCase_GetPostsRealtimeStats_Call) Return(int64ToPostStats map[int64]stats.PostStats, err error) *MockUseCase_GetPostsRealtimeStats_Call {
+func (_c *MockUseCase_GetPostsStats_Call) Return(int64ToPostStats map[int64]stats.PostStats, err error) *MockUseCase_GetPostsStats_Call {
 	_c.Call.Return(int64ToPostStats, err)
 	return _c
 }
 
-func (_c *MockUseCase_GetPostsRealtimeStats_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error)) *MockUseCase_GetPostsRealtimeStats_Call {
+func (_c *MockUseCase_GetPostsStats_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error)) *MockUseCase_GetPostsStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReconcileCommentStats provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) ReconcileCommentStats(ctx context.Context, commentIDs []int64) error {
+	ret := _mock.Called(ctx, commentIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReconcileCommentStats")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) error); ok {
+		r0 = returnFunc(ctx, commentIDs)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUseCase_ReconcileCommentStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReconcileCommentStats'
+type MockUseCase_ReconcileCommentStats_Call struct {
+	*mock.Call
+}
+
+// ReconcileCommentStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - commentIDs []int64
+func (_e *MockUseCase_Expecter) ReconcileCommentStats(ctx interface{}, commentIDs interface{}) *MockUseCase_ReconcileCommentStats_Call {
+	return &MockUseCase_ReconcileCommentStats_Call{Call: _e.mock.On("ReconcileCommentStats", ctx, commentIDs)}
+}
+
+func (_c *MockUseCase_ReconcileCommentStats_Call) Run(run func(ctx context.Context, commentIDs []int64)) *MockUseCase_ReconcileCommentStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_ReconcileCommentStats_Call) Return(err error) *MockUseCase_ReconcileCommentStats_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUseCase_ReconcileCommentStats_Call) RunAndReturn(run func(ctx context.Context, commentIDs []int64) error) *MockUseCase_ReconcileCommentStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReconcilePostStats provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) ReconcilePostStats(ctx context.Context, postIDs []int64) error {
+	ret := _mock.Called(ctx, postIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReconcilePostStats")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64) error); ok {
+		r0 = returnFunc(ctx, postIDs)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUseCase_ReconcilePostStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReconcilePostStats'
+type MockUseCase_ReconcilePostStats_Call struct {
+	*mock.Call
+}
+
+// ReconcilePostStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - postIDs []int64
+func (_e *MockUseCase_Expecter) ReconcilePostStats(ctx interface{}, postIDs interface{}) *MockUseCase_ReconcilePostStats_Call {
+	return &MockUseCase_ReconcilePostStats_Call{Call: _e.mock.On("ReconcilePostStats", ctx, postIDs)}
+}
+
+func (_c *MockUseCase_ReconcilePostStats_Call) Run(run func(ctx context.Context, postIDs []int64)) *MockUseCase_ReconcilePostStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_ReconcilePostStats_Call) Return(err error) *MockUseCase_ReconcilePostStats_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockUseCase_ReconcilePostStats_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64) error) *MockUseCase_ReconcilePostStats_Call {
 	_c.Call.Return(run)
 	return _c
 }

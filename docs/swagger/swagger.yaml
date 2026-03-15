@@ -167,11 +167,15 @@ definitions:
         type: integer
       is_liked:
         type: boolean
+      likes_count:
+        type: integer
       media:
         items:
           $ref: '#/definitions/internal_transport_http_comment.MediaItemResponse'
         type: array
       parent_id:
+        type: integer
+      replies_count:
         type: integer
     type: object
   internal_transport_http_comment.CreateRequest:
@@ -335,6 +339,8 @@ definitions:
           $ref: '#/definitions/internal_transport_http_post.MediaItemInput'
         maxItems: 10
         type: array
+      original_post_id:
+        type: integer
       visibility:
         enum:
         - public
@@ -354,6 +360,8 @@ definitions:
         items:
           $ref: '#/definitions/internal_transport_http_post.MediaItemResponse'
         type: array
+      original_post_id:
+        type: integer
       visibility:
         type: string
     type: object
@@ -441,6 +449,8 @@ definitions:
         items:
           $ref: '#/definitions/internal_transport_http_post.MediaItemResponse'
         type: array
+      original_post_id:
+        type: integer
       shares_count:
         type: integer
       updated_at:

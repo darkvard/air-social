@@ -60,13 +60,15 @@ type MetaCursor struct {
 }
 
 type CommentResponse struct {
-	ID        int64               `json:"id"`
-	Content   string              `json:"content"`
-	ParentID  *int64              `json:"parent_id,omitempty"`
-	CreatedAt time.Time           `json:"created_at"`
-	Media     []MediaItemResponse `json:"media,omitempty"`
-	User      *UserResponse       `json:"author,omitempty"`
-	IsLiked   *bool               `json:"is_liked"`
+	ID           int64               `json:"id"`
+	Content      string              `json:"content"`
+	ParentID     *int64              `json:"parent_id,omitempty"`
+	LikesCount   int32               `json:"likes_count"`
+	RepliesCount int32               `json:"replies_count"`
+	CreatedAt    time.Time           `json:"created_at"`
+	Media        []MediaItemResponse `json:"media,omitempty"`
+	IsLiked      *bool               `json:"is_liked,omitempty"`
+	User         *UserResponse       `json:"author,omitempty"`
 }
 
 type UserResponse struct {

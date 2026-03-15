@@ -3,8 +3,8 @@ package stats
 import "time"
 
 const (
-	SystemName          = "social"
-	FeatureStats        = "stats"
+	SystemName   = "social"
+	FeatureStats = "stats"
 )
 
 type PostStats struct {

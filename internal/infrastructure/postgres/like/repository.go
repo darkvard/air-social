@@ -34,8 +34,8 @@ func (r *repository) InsertPostLike(ctx context.Context, postID, userID int64) (
 	var ownerID int64
 	if err := r.db.QueryRowContext(ctx, query, postID, userID).Scan(&ownerID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-            return false, 0, nil
-        }
+			return false, 0, nil
+		}
 		return false, 0, pkg.MapPostgresError(err)
 	}
 	return true, ownerID, nil
@@ -66,8 +66,8 @@ func (r *repository) InsertCommentLike(ctx context.Context, commentID, userID in
 	var ownerID int64
 	if err := r.db.QueryRowContext(ctx, query, commentID, userID).Scan(&ownerID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-            return false, 0, nil
-        }
+			return false, 0, nil
+		}
 		return false, 0, pkg.MapPostgresError(err)
 	}
 	return true, ownerID, nil

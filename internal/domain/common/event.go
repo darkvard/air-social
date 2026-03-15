@@ -75,7 +75,7 @@ type LikeEventPayload struct {
 	ActorID  int64     `json:"actor_id"`
 	OwnerID  int64     `json:"owner_id"`
 	IsLiked  bool      `json:"is_liked"`
-	Typ      EventType `json:"type"` 
+	Typ      EventType `json:"type"`
 }
 
 type CommentEventPayload struct {
@@ -85,6 +85,11 @@ type CommentEventPayload struct {
 	ActorID   int64     `json:"actor_id"`
 	OwnerID   int64     `json:"owner_id"`
 	Typ       EventType `json:"type"`
+}
+
+func (c CommentEventPayload) IsReply() bool {
+	original := c.ParentID
+	return original != nil && *original > 0
 }
 
 type ShareEventPayload struct {

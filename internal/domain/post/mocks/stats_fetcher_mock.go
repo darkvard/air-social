@@ -38,12 +38,12 @@ func (_m *MockStatsFetcher) EXPECT() *MockStatsFetcher_Expecter {
 	return &MockStatsFetcher_Expecter{mock: &_m.Mock}
 }
 
-// GetPostsRealtimeStats provides a mock function for the type MockStatsFetcher
-func (_mock *MockStatsFetcher) GetPostsRealtimeStats(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error) {
+// GetPostsStats provides a mock function for the type MockStatsFetcher
+func (_mock *MockStatsFetcher) GetPostsStats(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error) {
 	ret := _mock.Called(ctx, postIDs)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetPostsRealtimeStats")
+		panic("no return value specified for GetPostsStats")
 	}
 
 	var r0 map[int64]stats.PostStats
@@ -66,19 +66,19 @@ func (_mock *MockStatsFetcher) GetPostsRealtimeStats(ctx context.Context, postID
 	return r0, r1
 }
 
-// MockStatsFetcher_GetPostsRealtimeStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostsRealtimeStats'
-type MockStatsFetcher_GetPostsRealtimeStats_Call struct {
+// MockStatsFetcher_GetPostsStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostsStats'
+type MockStatsFetcher_GetPostsStats_Call struct {
 	*mock.Call
 }
 
-// GetPostsRealtimeStats is a helper method to define mock.On call
+// GetPostsStats is a helper method to define mock.On call
 //   - ctx context.Context
 //   - postIDs []int64
-func (_e *MockStatsFetcher_Expecter) GetPostsRealtimeStats(ctx interface{}, postIDs interface{}) *MockStatsFetcher_GetPostsRealtimeStats_Call {
-	return &MockStatsFetcher_GetPostsRealtimeStats_Call{Call: _e.mock.On("GetPostsRealtimeStats", ctx, postIDs)}
+func (_e *MockStatsFetcher_Expecter) GetPostsStats(ctx interface{}, postIDs interface{}) *MockStatsFetcher_GetPostsStats_Call {
+	return &MockStatsFetcher_GetPostsStats_Call{Call: _e.mock.On("GetPostsStats", ctx, postIDs)}
 }
 
-func (_c *MockStatsFetcher_GetPostsRealtimeStats_Call) Run(run func(ctx context.Context, postIDs []int64)) *MockStatsFetcher_GetPostsRealtimeStats_Call {
+func (_c *MockStatsFetcher_GetPostsStats_Call) Run(run func(ctx context.Context, postIDs []int64)) *MockStatsFetcher_GetPostsStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -96,12 +96,12 @@ func (_c *MockStatsFetcher_GetPostsRealtimeStats_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockStatsFetcher_GetPostsRealtimeStats_Call) Return(int64ToPostStats map[int64]stats.PostStats, err error) *MockStatsFetcher_GetPostsRealtimeStats_Call {
+func (_c *MockStatsFetcher_GetPostsStats_Call) Return(int64ToPostStats map[int64]stats.PostStats, err error) *MockStatsFetcher_GetPostsStats_Call {
 	_c.Call.Return(int64ToPostStats, err)
 	return _c
 }
 
-func (_c *MockStatsFetcher_GetPostsRealtimeStats_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error)) *MockStatsFetcher_GetPostsRealtimeStats_Call {
+func (_c *MockStatsFetcher_GetPostsStats_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64) (map[int64]stats.PostStats, error)) *MockStatsFetcher_GetPostsStats_Call {
 	_c.Call.Return(run)
 	return _c
 }
