@@ -18,6 +18,7 @@ type UseCase interface {
 	UpdatePost(ctx context.Context, params UpdateParams) (*Post, error)
 	DeletePost(ctx context.Context, postID int64, userID int64) error
 	GetUserPosts(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Post, int64], error)
+	GetPostSharers(ctx context.Context, params GetSharersParams) (common.CursorPaginatedResult[Sharer, int64], error)
 }
 
 type MediaVerifier interface {
@@ -139,8 +140,6 @@ func (u *usecase) UpdatePost(ctx context.Context, params UpdateParams) (*Post, e
 	return post, nil
 }
 
-// DeletePost deletes a post by ID.
-// If the post was a share, it publishes an EventPostShare (isShared=false).
 func (u *usecase) DeletePost(ctx context.Context, postID, userID int64) error {
 	post, err := u.getPostOwner(ctx, postID, userID)
 	if err != nil {
@@ -153,9 +152,8 @@ func (u *usecase) DeletePost(ctx context.Context, postID, userID int64) error {
 }
 
 func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Post, int64], error) {
-	params.Query.NormalizePagination()
-
 	var empty common.CursorPaginatedResult[Post, int64]
+	params.Query.NormalizePagination()
 
 	posts, err := u.postRepo.GetUserPosts(ctx, params)
 	if err != nil {
@@ -169,6 +167,19 @@ func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (com
 	u.mapPostMetadata(ctx, postsPtr, params.UserID)
 
 	result := common.NewCursorPaginatedResult(posts, params.Query.Limit)
+	return result, nil
+}
+
+func (u *usecase) GetPostSharers(ctx context.Context, params GetSharersParams) (common.CursorPaginatedResult[Sharer, int64], error) {
+	var empty common.CursorPaginatedResult[Sharer, int64]
+	params.Query.NormalizePagination()
+
+	sharers, err := u.postRepo.GetPostSharers(ctx, params)
+	if err != nil {
+		return empty, pkg.OrInternalError(err, pkg.ErrNotFound)
+	}
+
+	result := common.NewCursorPaginatedResult(sharers, params.Query.Limit)
 	return result, nil
 }
 

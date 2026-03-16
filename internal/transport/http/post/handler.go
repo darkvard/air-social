@@ -335,3 +335,65 @@ func (h Handler) toPostListResponse(result common.CursorPaginatedResult[post.Pos
 		},
 	}
 }
+
+// GetPostSharers godoc
+//
+//	@Summary		Get users who shared a post
+//	@Description	Get a list of users who shared a specific post using cursor-based pagination.
+//	@Tags			Post
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int		true	"Post ID"
+//	@Param			cursor	query		int		false	"Cursor for pagination (last share post ID)"
+//	@Param			limit	query		int		false	"Number of items to return"
+//	@Param			sort	query		string	false	"Sort order"	Enums(latest, oldest)
+//	@Success		200		{object}	CursorPaginatedResponse[SharerResponse]
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/posts/{id}/shares [get]
+func (h Handler) GetPostSharers(c *gin.Context) {
+	var path PathIDParam
+	if err := c.ShouldBindUri(&path); err != nil {
+		pkg.BadRequest(c, "invalid post id")
+		return
+	}
+
+	var req CursorQueryParams
+	if err := c.ShouldBindQuery(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	result, err := h.usecase.GetPostSharers(c.Request.Context(), req.ToGetSharersParams(path.ID))
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, h.toSharerListResponse(result))
+}
+
+func (h Handler) toSharerResponse(s post.Sharer) SharerResponse {
+	return SharerResponse{
+		ID:         s.UserID,
+		FullName:   s.FullName,
+		Avatar:     h.provider.PublicFile(s.Avatar),
+		IsVerified: s.IsVerified,
+	}
+}
+
+func (h Handler) toSharerListResponse(result common.CursorPaginatedResult[post.Sharer, int64]) CursorPaginatedResponse[SharerResponse] {
+	data := make([]SharerResponse, len(result.Data))
+	for i, v := range result.Data {
+		data[i] = h.toSharerResponse(v)
+	}
+
+	return CursorPaginatedResponse[SharerResponse]{
+		Data: data,
+		Meta: MetaCursor{
+			NextCursor:  result.NextCursor,
+			HasNextPage: result.HasNextPage,
+		},
+	}
+}

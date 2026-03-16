@@ -11,4 +11,5 @@ type Repository interface {
 	GetByID(ctx context.Context, postID int64) (*Post, error)
 	GetDetail(ctx context.Context, postID int64) (*Post, error)
 	GetUserPosts(ctx context.Context, params GetCursorParams) ([]Post, error)
+	GetPostSharers(ctx context.Context, params GetSharersParams) ([]Sharer, error)
 }

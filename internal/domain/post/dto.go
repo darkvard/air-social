@@ -46,3 +46,8 @@ func (p MediaParams) ToDomain() Media {
 		},
 	}
 }
+
+type GetSharersParams struct {
+	PostID int64
+	Query  common.CursorQueryParams[int64]
+}

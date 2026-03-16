@@ -58,3 +58,15 @@ type MediaMetadata struct {
 	Size     int64
 	FileName string
 }
+
+type Sharer struct {
+	ShareID    int64 // This is the Post ID of the share, used for cursor
+	UserID     int64
+	FullName   string
+	Avatar     string
+	IsVerified bool
+}
+
+func (s Sharer) GetCursor() int64 {
+	return s.ShareID
+}

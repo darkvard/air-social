@@ -24,3 +24,21 @@ func (m *PostDetailRow) ToDomain() *post.Post {
 	}
 	return domain
 }
+
+type SharerRow struct {
+	ShareID    int64  `db:"share_id"`
+	UserID     int64  `db:"user_id"`
+	FullName   string `db:"full_name"`
+	Avatar     string `db:"avatar"`
+	IsVerified bool   `db:"is_verified"`
+}
+
+func (r *SharerRow) ToDomain() *post.Sharer {
+	return &post.Sharer{
+		ShareID:    r.ShareID,
+		UserID:     r.UserID,
+		FullName:   r.FullName,
+		Avatar:     r.Avatar,
+		IsVerified: r.IsVerified,
+	}
+}

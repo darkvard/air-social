@@ -101,3 +101,21 @@ type MetaCursor struct {
 	NextCursor  int64 `json:"next_cursor"`
 	HasNextPage bool  `json:"has_next_page"`
 }
+
+type SharerResponse struct {
+	ID         int64  `json:"id"` // user_id
+	FullName   string `json:"full_name"`
+	Avatar     string `json:"avatar"`
+	IsVerified bool   `json:"is_verified"`
+}
+
+func (q CursorQueryParams) ToGetSharersParams(postID int64) post.GetSharersParams {
+	return post.GetSharersParams{
+		PostID: postID,
+		Query: common.CursorQueryParams[int64]{
+			Cursor: q.Cursor,
+			Limit:  q.Limit,
+			Sort:   q.Sort,
+		},
+	}
+}

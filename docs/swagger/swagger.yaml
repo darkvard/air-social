@@ -401,6 +401,15 @@ definitions:
       meta:
         $ref: '#/definitions/internal_transport_http_post.MetaCursor'
     type: object
+  internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_SharerResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/internal_transport_http_post.SharerResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/internal_transport_http_post.MetaCursor'
+    type: object
   internal_transport_http_post.MediaItemInput:
     properties:
       duration:
@@ -484,6 +493,18 @@ definitions:
         type: string
       visibility:
         type: string
+    type: object
+  internal_transport_http_post.SharerResponse:
+    properties:
+      avatar:
+        type: string
+      full_name:
+        type: string
+      id:
+        description: user_id
+        type: integer
+      is_verified:
+        type: boolean
     type: object
   internal_transport_http_post.UpdateRequest:
     properties:
@@ -1529,6 +1550,53 @@ paths:
       summary: Like a post
       tags:
       - Like
+  /posts/{id}/shares:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users who shared a specific post using cursor-based
+        pagination.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Cursor for pagination (last share post ID)
+        in: query
+        name: cursor
+        type: integer
+      - description: Number of items to return
+        in: query
+        name: limit
+        type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_SharerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get users who shared a post
+      tags:
+      - Post
   /users/{id}/follow:
     delete:
       consumes:

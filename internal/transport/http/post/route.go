@@ -11,6 +11,7 @@ func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 	{
 		post.GET("/:id", h.GetPost)
 		post.DELETE("/:id", h.DeletePost)
+		post.GET("/:id/shares", h.GetPostSharers)
 
 		json := post.Group("").Use(m.JSONOnly)
 		{

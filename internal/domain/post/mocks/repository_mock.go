@@ -288,6 +288,74 @@ func (_c *MockRepository_GetDetail_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// GetPostSharers provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetPostSharers(ctx context.Context, params post.GetSharersParams) ([]post.Sharer, error) {
+	ret := _mock.Called(ctx, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPostSharers")
+	}
+
+	var r0 []post.Sharer
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, post.GetSharersParams) ([]post.Sharer, error)); ok {
+		return returnFunc(ctx, params)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, post.GetSharersParams) []post.Sharer); ok {
+		r0 = returnFunc(ctx, params)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]post.Sharer)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, post.GetSharersParams) error); ok {
+		r1 = returnFunc(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetPostSharers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostSharers'
+type MockRepository_GetPostSharers_Call struct {
+	*mock.Call
+}
+
+// GetPostSharers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params post.GetSharersParams
+func (_e *MockRepository_Expecter) GetPostSharers(ctx interface{}, params interface{}) *MockRepository_GetPostSharers_Call {
+	return &MockRepository_GetPostSharers_Call{Call: _e.mock.On("GetPostSharers", ctx, params)}
+}
+
+func (_c *MockRepository_GetPostSharers_Call) Run(run func(ctx context.Context, params post.GetSharersParams)) *MockRepository_GetPostSharers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 post.GetSharersParams
+		if args[1] != nil {
+			arg1 = args[1].(post.GetSharersParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetPostSharers_Call) Return(sharers []post.Sharer, err error) *MockRepository_GetPostSharers_Call {
+	_c.Call.Return(sharers, err)
+	return _c
+}
+
+func (_c *MockRepository_GetPostSharers_Call) RunAndReturn(run func(ctx context.Context, params post.GetSharersParams) ([]post.Sharer, error)) *MockRepository_GetPostSharers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserPosts provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetUserPosts(ctx context.Context, params post.GetCursorParams) ([]post.Post, error) {
 	ret := _mock.Called(ctx, params)

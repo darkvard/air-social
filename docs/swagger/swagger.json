@@ -1389,6 +1389,77 @@
                 }
             }
         },
+        "/posts/{id}/shares": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of users who shared a specific post using cursor-based pagination.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Get users who shared a post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cursor for pagination (last share post ID)",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to return",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_SharerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "security": [
@@ -2570,6 +2641,20 @@
                 }
             }
         },
+        "internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_SharerResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_post.SharerResponse"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/internal_transport_http_post.MetaCursor"
+                }
+            }
+        },
         "internal_transport_http_post.MediaItemInput": {
             "type": "object",
             "required": [
@@ -2690,6 +2775,24 @@
                 },
                 "visibility": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_post.SharerResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "user_id",
+                    "type": "integer"
+                },
+                "is_verified": {
+                    "type": "boolean"
                 }
             }
         },

@@ -244,6 +244,72 @@ func (_c *MockUseCase_GetPostDetail_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// GetPostSharers provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetPostSharers(ctx context.Context, params post.GetSharersParams) (common.CursorPaginatedResult[post.Sharer, int64], error) {
+	ret := _mock.Called(ctx, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPostSharers")
+	}
+
+	var r0 common.CursorPaginatedResult[post.Sharer, int64]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, post.GetSharersParams) (common.CursorPaginatedResult[post.Sharer, int64], error)); ok {
+		return returnFunc(ctx, params)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, post.GetSharersParams) common.CursorPaginatedResult[post.Sharer, int64]); ok {
+		r0 = returnFunc(ctx, params)
+	} else {
+		r0 = ret.Get(0).(common.CursorPaginatedResult[post.Sharer, int64])
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, post.GetSharersParams) error); ok {
+		r1 = returnFunc(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUseCase_GetPostSharers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostSharers'
+type MockUseCase_GetPostSharers_Call struct {
+	*mock.Call
+}
+
+// GetPostSharers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params post.GetSharersParams
+func (_e *MockUseCase_Expecter) GetPostSharers(ctx interface{}, params interface{}) *MockUseCase_GetPostSharers_Call {
+	return &MockUseCase_GetPostSharers_Call{Call: _e.mock.On("GetPostSharers", ctx, params)}
+}
+
+func (_c *MockUseCase_GetPostSharers_Call) Run(run func(ctx context.Context, params post.GetSharersParams)) *MockUseCase_GetPostSharers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 post.GetSharersParams
+		if args[1] != nil {
+			arg1 = args[1].(post.GetSharersParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_GetPostSharers_Call) Return(cursorPaginatedResult common.CursorPaginatedResult[post.Sharer, int64], err error) *MockUseCase_GetPostSharers_Call {
+	_c.Call.Return(cursorPaginatedResult, err)
+	return _c
+}
+
+func (_c *MockUseCase_GetPostSharers_Call) RunAndReturn(run func(ctx context.Context, params post.GetSharersParams) (common.CursorPaginatedResult[post.Sharer, int64], error)) *MockUseCase_GetPostSharers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserPosts provides a mock function for the type MockUseCase
 func (_mock *MockUseCase) GetUserPosts(ctx context.Context, params post.GetCursorParams) (common.CursorPaginatedResult[post.Post, int64], error) {
 	ret := _mock.Called(ctx, params)

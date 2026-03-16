@@ -973,3 +973,102 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 		})
 	}
 }
+
+func (s *postUseCaseSuite) TestGetPostSharers() {
+	var (
+		postID = int64(1)
+		limit  = 10
+	)
+
+	params := post.GetSharersParams{
+		PostID: postID,
+		Query: common.CursorQueryParams[int64]{
+			Limit: limit,
+		},
+	}
+
+	sharers := []post.Sharer{
+		{ShareID: 101, UserID: 2, FullName: "User Two"},
+		{ShareID: 102, UserID: 3, FullName: "User Three"},
+	}
+
+	type testDeps struct {
+		repo *postmocks.MockRepository
+	}
+
+	type args struct {
+		ctx    context.Context
+		params post.GetSharersParams
+	}
+
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(deps testDeps)
+		wantLen   int
+		wantErr   error
+	}{
+		{
+			name: "repo_error",
+			args: args{ctx: context.Background(), params: params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetPostSharers(mock.Anything, params).
+					Return(nil, pkg.ErrNotFound).
+					Once()
+			},
+			wantLen: 0,
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name: "success",
+			args: args{ctx: context.Background(), params: params},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetPostSharers(mock.Anything, params).
+					Return(sharers, nil).
+					Once()
+			},
+			wantLen: 2,
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := postmocks.NewMockRepository(s.T())
+			mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+			mockStats := postmocks.NewMockStatsFetcher(s.T())
+			mockLike := postmocks.NewMockLikeChecker(s.T())
+
+			deps := testDeps{repo: mockRepo}
+
+			uc := post.NewUseCase(post.Deps{
+				PostRepo:      mockRepo,
+				MediaVerifier: mockVerifier,
+				Event:         mockEvent,
+				StatsFetcher:  mockStats,
+				LikeChecker:   mockLike,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.GetPostSharers(tc.args.ctx, tc.args.params)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Empty(got.Data)
+			} else {
+				s.NoError(err)
+				s.Len(got.Data, tc.wantLen)
+				if tc.wantLen > 0 {
+					s.Equal(sharers[0].UserID, got.Data[0].UserID)
+					s.Equal(sharers[0].ShareID, got.Data[0].GetCursor())
+				}
+			}
+		})
+	}
+}

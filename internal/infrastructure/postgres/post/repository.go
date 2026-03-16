@@ -260,3 +260,45 @@ func (r *repository) getUserPostMedia(ctx context.Context, ids []int64) (map[int
 
 	return result, nil
 }
+
+func (r *repository) GetPostSharers(ctx context.Context, params post.GetSharersParams) ([]post.Sharer, error) {
+	var args []any
+	var builder strings.Builder
+	args = append(args, params.PostID)
+	argID := len(args) + 1
+
+	builder.WriteString(`
+		SELECT
+			p.id AS share_id,
+			p.user_id,
+			u.full_name,
+			u.avatar,
+			u.verified AS is_verified
+		FROM posts p
+		JOIN users u ON p.user_id = u.id
+		WHERE p.original_post_id = $1 AND p.deleted_at IS NULL
+	`)
+
+	if params.Query.Cursor > 0 {
+		// The cursor is the ID of the sharing post (p.id)
+		fmt.Fprintf(&builder, " AND p.id %s $%d", params.Query.GetCompareOperator(), argID)
+		args = append(args, params.Query.Cursor)
+		argID++
+	}
+
+	// Order by the cursor column
+	fmt.Fprintf(&builder, " ORDER BY p.id %s LIMIT $%d", params.Query.GetSortOrder(), argID)
+	args = append(args, params.Query.GetFetchLimit())
+
+	var rows []SharerRow
+	if err := r.db.SelectContext(ctx, &rows, builder.String(), args...); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+
+	result := make([]post.Sharer, len(rows))
+	for i := range rows {
+		result[i] = *rows[i].ToDomain()
+	}
+
+	return result, nil
+}

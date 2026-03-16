@@ -18,9 +18,10 @@ import (
 const postsBatchSize = 1000
 
 type postData struct {
-	UserID     int64
-	Content    string
-	Visibility string
+	UserID         int64
+	Content        string
+	Visibility     string
+	OriginalPostID *int64
 }
 
 type mediaData struct {
@@ -93,11 +94,65 @@ func SeedPosts(db *sqlx.DB, userIDs []int64, cfg config.SeedConfig) []int64 {
 		insertPostMediaBatch(tx, pendingMedia[i:end])
 	}
 
+	// 3. Prepare and Insert Shared Posts (Reposts)
+	log.Println("Seeding shared posts (reposts)...")
+	var pendingShares []postData
+	var sharedPostIDs []int64
+
+	if len(allPostIDs) > 0 && len(userIDs) > 1 {
+		// --- 3.1. Create Hot Shared Posts (Few posts, many shares) ---
+		numHotPosts := 5
+		if numHotPosts > len(allPostIDs) {
+			numHotPosts = len(allPostIDs)
+		}
+		for i := 0; i < numHotPosts; i++ {
+			hotOriginalID := allPostIDs[rand.Intn(len(allPostIDs))]
+			sharesForHotPost := 15 + rand.Intn(15) // 15 to 29 shares for this single post
+			for j := 0; j < sharesForHotPost; j++ {
+				sharerID := userIDs[rand.Intn(len(userIDs))]
+				shareContent := gofakeit.RandomString([]string{"Wow!", "Check this out!", "Great read.", "I agree with this.", "Interesting perspective.", ""})
+				pendingShares = append(pendingShares, postData{
+					UserID:         sharerID,
+					Content:        shareContent,
+					Visibility:     "public",
+					OriginalPostID: &hotOriginalID,
+				})
+			}
+		}
+
+		// --- 3.2. Create Normal Scattered Shares ---
+		numNormalShares := int(float32(len(allPostIDs)) * 0.1) // 10% scattered shares
+		for i := 0; i < numNormalShares; i++ {
+			originalID := allPostIDs[rand.Intn(len(allPostIDs))]
+			sharerID := userIDs[rand.Intn(len(userIDs))]
+			shareContent := gofakeit.RandomString([]string{"Wow!", "Check this out!", "Great read.", "I agree with this.", "Interesting perspective.", ""})
+			pendingShares = append(pendingShares, postData{
+				UserID:         sharerID,
+				Content:        shareContent,
+				Visibility:     "public",
+				OriginalPostID: &originalID,
+			})
+		}
+
+		// Batch Insert Shares
+		for i := 0; i < len(pendingShares); i += postsBatchSize {
+			end := i + postsBatchSize
+			if end > len(pendingShares) {
+				end = len(pendingShares)
+			}
+			batchIDs := insertPostsBatch(tx, pendingShares[i:end])
+			sharedPostIDs = append(sharedPostIDs, batchIDs...)
+		}
+	}
+
+	// Combine original posts and shared posts to return so they can receive comments/likes
+	allPostIDs = append(allPostIDs, sharedPostIDs...)
+
 	if err := tx.Commit(); err != nil {
 		log.Panicf("commit posts failed: %v", err)
 	}
 
-	log.Printf("Seeded: %d Posts (with media)", len(allPostIDs))
+	log.Printf("Seeded: %d Posts (%d original, %d shares)", len(allPostIDs), len(allPostIDs)-len(sharedPostIDs), len(sharedPostIDs))
 	return allPostIDs
 }
 
@@ -107,15 +162,15 @@ func insertPostsBatch(tx *sqlx.Tx, posts []postData) []int64 {
 	}
 
 	valueStrings := make([]string, 0, len(posts))
-	valueArgs := make([]interface{}, 0, len(posts)*3)
+	valueArgs := make([]interface{}, 0, len(posts)*4)
 
 	for i, p := range posts {
-		// $1, $2, $3 ... $4, $5, $6
-		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3))
-		valueArgs = append(valueArgs, p.UserID, p.Content, p.Visibility)
+		// $1, $2, $3, $4
+		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d, $%d)", i*4+1, i*4+2, i*4+3, i*4+4))
+		valueArgs = append(valueArgs, p.UserID, p.Content, p.Visibility, p.OriginalPostID)
 	}
 
-	stmt := fmt.Sprintf("INSERT INTO posts (user_id, content, visibility) VALUES %s RETURNING id", strings.Join(valueStrings, ","))
+	stmt := fmt.Sprintf("INSERT INTO posts (user_id, content, visibility, original_post_id) VALUES %s RETURNING id", strings.Join(valueStrings, ","))
 
 	rows, err := tx.Query(stmt, valueArgs...)
 	if err != nil {
