@@ -3,6 +3,7 @@ package post
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 
@@ -207,41 +208,35 @@ func (r *repository) getMedia(ctx context.Context, postID int64) ([]post.Media, 
 }
 
 func (r *repository) getUserPosts(ctx context.Context, params post.GetCursorParams) ([]post.Post, error) {
-	fetchLimit := params.Query.GetFetchLimit()
-
-	compareOp := params.Query.GetCompareOperator()
-	sortOrder := params.Query.GetSortOrder()
-
-	var query string
 	var args []any
+	var builder strings.Builder
+	args = append(args, params.UserID)
+	argID := len(args) + 1
+
+	builder.WriteString(`
+        SELECT * FROM posts
+        WHERE user_id = $1 AND deleted_at IS NULL
+    `)
+
 	if params.Query.Cursor > 0 {
-		query = fmt.Sprintf(`
-            SELECT * FROM posts 
-            WHERE user_id = $1 AND id %s $2 AND deleted_at IS NULL 
-            ORDER BY id %s 
-            LIMIT $3`, compareOp, sortOrder)
-		args = []any{params.UserID, params.Query.Cursor, fetchLimit}
-	} else {
-		query = fmt.Sprintf(`
-            SELECT * FROM posts 
-            WHERE user_id = $1 AND deleted_at IS NULL
-            ORDER BY id %s 
-            LIMIT $2`, sortOrder)
-		args = []any{params.UserID, fetchLimit}
+		fmt.Fprintf(&builder, " AND id %s $%d", params.Query.GetCompareOperator(), argID)
+		args = append(args, params.Query.Cursor)
+		argID++
 	}
+
+	fmt.Fprintf(&builder, " ORDER BY id %s LIMIT $%d", params.Query.GetSortOrder(), argID)
+	args = append(args, params.Query.GetFetchLimit())
 
 	var posts []PostTable
-	if err := r.db.SelectContext(ctx, &posts, query, args...); err != nil {
+	if err := r.db.SelectContext(ctx, &posts, builder.String(), args...); err != nil {
 		return nil, pkg.MapPostgresError(err)
 	}
-	if len(posts) == 0 {
-		return []post.Post{}, nil
-	}
 
-	var result = make([]post.Post, len(posts))
+	result := make([]post.Post, len(posts))
 	for i, v := range posts {
 		result[i] = *v.ToDomain()
 	}
+
 	return result, nil
 }
 

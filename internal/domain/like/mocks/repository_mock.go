@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	"air-social/internal/domain/like"
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
@@ -237,6 +238,74 @@ func (_c *MockRepository_GetCommentLiked_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// GetCommentLikers provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetCommentLikers(ctx context.Context, params like.GetCursorParams) ([]like.Liker, error) {
+	ret := _mock.Called(ctx, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCommentLikers")
+	}
+
+	var r0 []like.Liker
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, like.GetCursorParams) ([]like.Liker, error)); ok {
+		return returnFunc(ctx, params)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, like.GetCursorParams) []like.Liker); ok {
+		r0 = returnFunc(ctx, params)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]like.Liker)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, like.GetCursorParams) error); ok {
+		r1 = returnFunc(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetCommentLikers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentLikers'
+type MockRepository_GetCommentLikers_Call struct {
+	*mock.Call
+}
+
+// GetCommentLikers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params like.GetCursorParams
+func (_e *MockRepository_Expecter) GetCommentLikers(ctx interface{}, params interface{}) *MockRepository_GetCommentLikers_Call {
+	return &MockRepository_GetCommentLikers_Call{Call: _e.mock.On("GetCommentLikers", ctx, params)}
+}
+
+func (_c *MockRepository_GetCommentLikers_Call) Run(run func(ctx context.Context, params like.GetCursorParams)) *MockRepository_GetCommentLikers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 like.GetCursorParams
+		if args[1] != nil {
+			arg1 = args[1].(like.GetCursorParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetCommentLikers_Call) Return(likers []like.Liker, err error) *MockRepository_GetCommentLikers_Call {
+	_c.Call.Return(likers, err)
+	return _c
+}
+
+func (_c *MockRepository_GetCommentLikers_Call) RunAndReturn(run func(ctx context.Context, params like.GetCursorParams) ([]like.Liker, error)) *MockRepository_GetCommentLikers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetPostLiked provides a mock function for the type MockRepository
 func (_mock *MockRepository) GetPostLiked(ctx context.Context, postIDs []int64, userID int64) ([]int64, error) {
 	ret := _mock.Called(ctx, postIDs, userID)
@@ -307,6 +376,74 @@ func (_c *MockRepository_GetPostLiked_Call) Return(int64s []int64, err error) *M
 }
 
 func (_c *MockRepository_GetPostLiked_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64, userID int64) ([]int64, error)) *MockRepository_GetPostLiked_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPostLikers provides a mock function for the type MockRepository
+func (_mock *MockRepository) GetPostLikers(ctx context.Context, params like.GetCursorParams) ([]like.Liker, error) {
+	ret := _mock.Called(ctx, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPostLikers")
+	}
+
+	var r0 []like.Liker
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, like.GetCursorParams) ([]like.Liker, error)); ok {
+		return returnFunc(ctx, params)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, like.GetCursorParams) []like.Liker); ok {
+		r0 = returnFunc(ctx, params)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]like.Liker)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, like.GetCursorParams) error); ok {
+		r1 = returnFunc(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRepository_GetPostLikers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostLikers'
+type MockRepository_GetPostLikers_Call struct {
+	*mock.Call
+}
+
+// GetPostLikers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params like.GetCursorParams
+func (_e *MockRepository_Expecter) GetPostLikers(ctx interface{}, params interface{}) *MockRepository_GetPostLikers_Call {
+	return &MockRepository_GetPostLikers_Call{Call: _e.mock.On("GetPostLikers", ctx, params)}
+}
+
+func (_c *MockRepository_GetPostLikers_Call) Run(run func(ctx context.Context, params like.GetCursorParams)) *MockRepository_GetPostLikers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 like.GetCursorParams
+		if args[1] != nil {
+			arg1 = args[1].(like.GetCursorParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRepository_GetPostLikers_Call) Return(likers []like.Liker, err error) *MockRepository_GetPostLikers_Call {
+	_c.Call.Return(likers, err)
+	return _c
+}
+
+func (_c *MockRepository_GetPostLikers_Call) RunAndReturn(run func(ctx context.Context, params like.GetCursorParams) ([]like.Liker, error)) *MockRepository_GetPostLikers_Call {
 	_c.Call.Return(run)
 	return _c
 }

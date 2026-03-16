@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	"air-social/internal/domain/common"
 	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/like"
 	likemocks "air-social/internal/domain/like/mocks"
@@ -135,6 +136,205 @@ func (s *LikeUseCaseSuite) TestLikePost() {
 				s.ErrorIs(err, tc.wantErr)
 			} else {
 				s.NoError(err)
+			}
+		})
+	}
+}
+
+func (s *LikeUseCaseSuite) TestGetPostLikers() {
+	var (
+		targetID int64 = 100
+		limit    int   = 10
+	)
+
+	likers := []like.Liker{
+		{LikeID: 2, UserID: 1, FullName: "User 1"},
+		{LikeID: 1, UserID: 2, FullName: "User 2"},
+	}
+
+	type testDeps struct {
+		repo *likemocks.MockRepository
+	}
+
+	tests := []struct {
+		name      string
+		args      struct {
+			ctx    context.Context
+			params like.GetCursorParams
+		}
+		setupMock func(deps testDeps)
+		wantLen   int
+		wantErr   error
+	}{
+		{
+			name: "success",
+			args: struct {
+				ctx    context.Context
+				params like.GetCursorParams
+			}{
+				ctx: context.Background(),
+				params: like.GetCursorParams{
+					TargetID: targetID,
+					Query:    common.CursorQueryParams[int64]{Limit: limit},
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetPostLikers(mock.Anything, mock.AnythingOfType("like.GetCursorParams")).
+					Return(likers, nil).
+					Once()
+			},
+			wantLen: 2,
+			wantErr: nil,
+		},
+		{
+			name: "repo_error",
+			args: struct {
+				ctx    context.Context
+				params like.GetCursorParams
+			}{
+				ctx: context.Background(),
+				params: like.GetCursorParams{
+					TargetID: targetID,
+					Query:    common.CursorQueryParams[int64]{Limit: limit},
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetPostLikers(mock.Anything, mock.AnythingOfType("like.GetCursorParams")).
+					Return(nil, assert.AnError).
+					Once()
+			},
+			wantLen: 0,
+			wantErr: pkg.ErrInternal,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := likemocks.NewMockRepository(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+
+			deps := testDeps{
+				repo: mockRepo,
+			}
+
+			uc := like.NewUsecase(like.Deps{
+				Repo:  mockRepo,
+				Event: mockEvent,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.GetPostLikers(tc.args.ctx, tc.args.params)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Empty(got.Data)
+			} else {
+				s.NoError(err)
+				s.Len(got.Data, tc.wantLen)
+			}
+		})
+	}
+}
+
+func (s *LikeUseCaseSuite) TestGetCommentLikers() {
+	var (
+		targetID int64 = 200
+		limit    int   = 10
+	)
+
+	likers := []like.Liker{
+		{LikeID: 4, UserID: 3, FullName: "User 3"},
+	}
+
+	type testDeps struct {
+		repo *likemocks.MockRepository
+	}
+
+	tests := []struct {
+		name      string
+		args      struct {
+			ctx    context.Context
+			params like.GetCursorParams
+		}
+		setupMock func(deps testDeps)
+		wantLen   int
+		wantErr   error
+	}{
+		{
+			name: "success",
+			args: struct {
+				ctx    context.Context
+				params like.GetCursorParams
+			}{
+				ctx: context.Background(),
+				params: like.GetCursorParams{
+					TargetID: targetID,
+					Query:    common.CursorQueryParams[int64]{Limit: limit},
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetCommentLikers(mock.Anything, mock.AnythingOfType("like.GetCursorParams")).
+					Return(likers, nil).
+					Once()
+			},
+			wantLen: 1,
+			wantErr: nil,
+		},
+		{
+			name: "repo_error",
+			args: struct {
+				ctx    context.Context
+				params like.GetCursorParams
+			}{
+				ctx: context.Background(),
+				params: like.GetCursorParams{
+					TargetID: targetID,
+					Query:    common.CursorQueryParams[int64]{Limit: limit},
+				},
+			},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetCommentLikers(mock.Anything, mock.AnythingOfType("like.GetCursorParams")).
+					Return(nil, assert.AnError).
+					Once()
+			},
+			wantLen: 0,
+			wantErr: pkg.ErrInternal,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := likemocks.NewMockRepository(s.T())
+			mockEvent := commonmocks.NewMockEventPublisher(s.T())
+
+			deps := testDeps{
+				repo: mockRepo,
+			}
+
+			uc := like.NewUsecase(like.Deps{
+				Repo:  mockRepo,
+				Event: mockEvent,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.GetCommentLikers(tc.args.ctx, tc.args.params)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Empty(got.Data)
+			} else {
+				s.NoError(err)
+				s.Len(got.Data, tc.wantLen)
 			}
 		})
 	}

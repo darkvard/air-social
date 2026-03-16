@@ -120,6 +120,9 @@ func (u *usecase) SyncCommentStats(ctx context.Context) error {
 // ReconcilePostStats acts as an automatic fallback when the primary sync flow fails (e.g., Redis down, bulk upsert error).
 // It directly executes SQL queries to recalculate post stats from the source of truth tables and overwrites the DB to ensure data integrity.
 func (u *usecase) ReconcilePostStats(ctx context.Context, postIDs []int64) error {
+	if len(postIDs) == 0 {
+		return nil
+	}
 	if err := u.repo.ReconcilePostStats(ctx, postIDs); err != nil {
 		return pkg.NewError(err, "failed to reconcile post stats")
 	}
@@ -129,6 +132,9 @@ func (u *usecase) ReconcilePostStats(ctx context.Context, postIDs []int64) error
 // ReconcileCommentStats acts as an automatic fallback when the primary sync flow fails (e.g., Redis down, bulk upsert error).
 // It directly executes SQL queries to recalculate comment stats from the source of truth tables and overwrites the DB to ensure data integrity.
 func (u *usecase) ReconcileCommentStats(ctx context.Context, commentIDs []int64) error {
+	if len(commentIDs) == 0 {
+		return nil
+	}
 	if err := u.repo.ReconcileCommentStats(ctx, commentIDs); err != nil {
 		return pkg.NewError(err, "failed to reconcile comment stats")
 	}

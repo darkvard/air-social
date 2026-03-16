@@ -1,10 +1,10 @@
 CREATE TABLE
     IF NOT EXISTS comment_likes (
+        id BIGSERIAL PRIMARY KEY,
         comment_id BIGINT NOT NULL,
         user_id BIGINT NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW (),
-        PRIMARY KEY (comment_id, user_id),
-        
+        UNIQUE (comment_id, user_id),
         FOREIGN KEY (comment_id) REFERENCES comments (id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     );

@@ -4,9 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 
+	"air-social/internal/domain/like"
 	"air-social/pkg"
 )
 
@@ -112,4 +115,86 @@ func (r *repository) GetCommentLiked(ctx context.Context, commentIDs []int64, us
 	var likedIDs []int64
 	err = r.db.SelectContext(ctx, &likedIDs, query, args...)
 	return likedIDs, pkg.MapPostgresError(err)
+}
+
+func (r *repository) GetPostLikers(ctx context.Context, params like.GetCursorParams) ([]like.Liker, error) {
+	// JOIN: POST_ID (POST_LIKE) = USER_ID (USERS)
+
+	var args []any
+	var builder strings.Builder
+	args = append(args, params.TargetID)
+	argID := len(args) + 1
+
+	builder.WriteString(`
+		SELECT
+			p.id AS like_id,
+			p.user_id,
+			u.full_name, 
+			u.avatar, 
+			u.verified AS is_verified
+		FROM post_likes p
+		JOIN users u ON p.user_id = u.id
+		WHERE p.post_id = $1
+	`)
+
+	if params.Query.Cursor > 0 {
+		fmt.Fprintf(&builder, " AND p.id %s $%d", params.Query.GetCompareOperator(), argID)
+		args = append(args, params.Query.Cursor)
+		argID++
+	}
+
+	fmt.Fprintf(&builder, " ORDER BY p.id %s LIMIT $%d", params.Query.GetSortOrder(), argID)
+	args = append(args, params.Query.GetFetchLimit())
+
+	var rows []LikerRow
+	if err := r.db.SelectContext(ctx, &rows, builder.String(), args...); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+
+	result := make([]like.Liker, len(rows))
+	for i, v := range rows {
+		result[i] = *v.ToDomain()
+	}
+
+	return result, nil
+}
+
+func (r *repository) GetCommentLikers(ctx context.Context, params like.GetCursorParams) ([]like.Liker, error) {
+	var args []any
+	var builder strings.Builder
+	args = append(args, params.TargetID)
+	argID := len(args) + 1
+
+	builder.WriteString(`
+		SELECT
+			c.id AS like_id,
+			c.user_id,
+			u.full_name, 
+			u.avatar, 
+			u.verified AS is_verified
+		FROM comment_likes c
+		JOIN users u ON c.user_id = u.id
+		WHERE c.comment_id = $1
+	`)
+
+	if params.Query.Cursor > 0 {
+		fmt.Fprintf(&builder, " AND c.id %s $%d", params.Query.GetCompareOperator(), argID)
+		args = append(args, params.Query.Cursor)
+		argID++
+	}
+
+	fmt.Fprintf(&builder, " ORDER BY c.id %s LIMIT $%d", params.Query.GetSortOrder(), argID)
+	args = append(args, params.Query.GetFetchLimit())
+
+	var rows []LikerRow
+	if err := r.db.SelectContext(ctx, &rows, builder.String(), args...); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+
+	result := make([]like.Liker, len(rows))
+	for i, v := range rows {
+		result[i] = *v.ToDomain()
+	}
+
+	return result, nil
 }

@@ -32,6 +32,6 @@ func NewHandler(prov Provider, usecase UseCase) Handler {
 		Follow:  follow.NewHandler(link, usecase.Follow),
 		Post:    post.NewHandler(link, usecase.Post),
 		Comment: comment.NewHandler(link, usecase.Comment),
-		Like:    like.NewHandler(usecase.Like),
+		Like:    like.NewHandler(link, usecase.Like),
 	}
 }

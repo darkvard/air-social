@@ -5,6 +5,8 @@
 package mocks
 
 import (
+	"air-social/internal/domain/common"
+	"air-social/internal/domain/like"
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
@@ -35,6 +37,138 @@ type MockUseCase_Expecter struct {
 
 func (_m *MockUseCase) EXPECT() *MockUseCase_Expecter {
 	return &MockUseCase_Expecter{mock: &_m.Mock}
+}
+
+// GetCommentLikers provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetCommentLikers(ctx context.Context, params like.GetCursorParams) (common.CursorPaginatedResult[like.Liker, int64], error) {
+	ret := _mock.Called(ctx, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCommentLikers")
+	}
+
+	var r0 common.CursorPaginatedResult[like.Liker, int64]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, like.GetCursorParams) (common.CursorPaginatedResult[like.Liker, int64], error)); ok {
+		return returnFunc(ctx, params)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, like.GetCursorParams) common.CursorPaginatedResult[like.Liker, int64]); ok {
+		r0 = returnFunc(ctx, params)
+	} else {
+		r0 = ret.Get(0).(common.CursorPaginatedResult[like.Liker, int64])
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, like.GetCursorParams) error); ok {
+		r1 = returnFunc(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUseCase_GetCommentLikers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommentLikers'
+type MockUseCase_GetCommentLikers_Call struct {
+	*mock.Call
+}
+
+// GetCommentLikers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params like.GetCursorParams
+func (_e *MockUseCase_Expecter) GetCommentLikers(ctx interface{}, params interface{}) *MockUseCase_GetCommentLikers_Call {
+	return &MockUseCase_GetCommentLikers_Call{Call: _e.mock.On("GetCommentLikers", ctx, params)}
+}
+
+func (_c *MockUseCase_GetCommentLikers_Call) Run(run func(ctx context.Context, params like.GetCursorParams)) *MockUseCase_GetCommentLikers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 like.GetCursorParams
+		if args[1] != nil {
+			arg1 = args[1].(like.GetCursorParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_GetCommentLikers_Call) Return(cursorPaginatedResult common.CursorPaginatedResult[like.Liker, int64], err error) *MockUseCase_GetCommentLikers_Call {
+	_c.Call.Return(cursorPaginatedResult, err)
+	return _c
+}
+
+func (_c *MockUseCase_GetCommentLikers_Call) RunAndReturn(run func(ctx context.Context, params like.GetCursorParams) (common.CursorPaginatedResult[like.Liker, int64], error)) *MockUseCase_GetCommentLikers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPostLikers provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetPostLikers(ctx context.Context, params like.GetCursorParams) (common.CursorPaginatedResult[like.Liker, int64], error) {
+	ret := _mock.Called(ctx, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPostLikers")
+	}
+
+	var r0 common.CursorPaginatedResult[like.Liker, int64]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, like.GetCursorParams) (common.CursorPaginatedResult[like.Liker, int64], error)); ok {
+		return returnFunc(ctx, params)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, like.GetCursorParams) common.CursorPaginatedResult[like.Liker, int64]); ok {
+		r0 = returnFunc(ctx, params)
+	} else {
+		r0 = ret.Get(0).(common.CursorPaginatedResult[like.Liker, int64])
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, like.GetCursorParams) error); ok {
+		r1 = returnFunc(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUseCase_GetPostLikers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostLikers'
+type MockUseCase_GetPostLikers_Call struct {
+	*mock.Call
+}
+
+// GetPostLikers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params like.GetCursorParams
+func (_e *MockUseCase_Expecter) GetPostLikers(ctx interface{}, params interface{}) *MockUseCase_GetPostLikers_Call {
+	return &MockUseCase_GetPostLikers_Call{Call: _e.mock.On("GetPostLikers", ctx, params)}
+}
+
+func (_c *MockUseCase_GetPostLikers_Call) Run(run func(ctx context.Context, params like.GetCursorParams)) *MockUseCase_GetPostLikers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 like.GetCursorParams
+		if args[1] != nil {
+			arg1 = args[1].(like.GetCursorParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_GetPostLikers_Call) Return(cursorPaginatedResult common.CursorPaginatedResult[like.Liker, int64], err error) *MockUseCase_GetPostLikers_Call {
+	_c.Call.Return(cursorPaginatedResult, err)
+	return _c
+}
+
+func (_c *MockUseCase_GetPostLikers_Call) RunAndReturn(run func(ctx context.Context, params like.GetCursorParams) (common.CursorPaginatedResult[like.Liker, int64], error)) *MockUseCase_GetPostLikers_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // IsCommentLiked provides a mock function for the type MockUseCase

@@ -56,18 +56,21 @@ func seedData(db *sqlx.DB, cfg config.SeedConfig) {
 
 	// --- Parallel Branch 1: Social Graph (Follows) ---
 	// This branch only depends on users, so it can run in parallel with the content branch.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		modules.SeedFollows(db, userIDs, cfg.Follows.PerUser)
-	}()
+	})
 
 	// --- Sequential Branch 2: Content Graph ---
 	// This branch has its own internal sequential dependencies.
 	postIDs := modules.SeedPosts(db, userIDs, cfg)
 	commentIDs := modules.SeedComments(db, postIDs, userIDs, cfg)
+	// Likes depend on posts and comments
 	modules.SeedLikes(db, postIDs, commentIDs, userIDs, cfg)
 
 	// Wait for all parallel branches to complete
 	wg.Wait()
+
+	// --- Final Step: Calculate and seed aggregate stats ---
+	// This must run last, after all source data (likes, comments, shares) is created.
+	modules.SeedStats(db)
 }

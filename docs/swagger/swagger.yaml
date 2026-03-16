@@ -269,6 +269,33 @@ definitions:
       is_verified:
         type: boolean
     type: object
+  internal_transport_http_like.CursorPaginatedResponse-internal_transport_http_like_LikerResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/internal_transport_http_like.LikerResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/internal_transport_http_like.MetaCursor'
+    type: object
+  internal_transport_http_like.LikerResponse:
+    properties:
+      avatar:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      is_verified:
+        type: boolean
+    type: object
+  internal_transport_http_like.MetaCursor:
+    properties:
+      has_next_page:
+        type: boolean
+      next_cursor:
+        type: integer
+    type: object
   internal_transport_http_media.BulkPresignRequest:
     properties:
       files:
@@ -981,6 +1008,52 @@ paths:
       summary: Unlike a comment
       tags:
       - Like
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users who liked a specific comment using cursor-based
+        pagination.
+      parameters:
+      - description: Comment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Cursor for pagination (last like ID)
+        in: query
+        name: cursor
+        type: integer
+      - description: Number of items to return
+        in: query
+        name: limit
+        type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_like.CursorPaginatedResponse-internal_transport_http_like_LikerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get users who liked a comment
+      tags:
+      - Like
     post:
       consumes:
       - application/json
@@ -1376,6 +1449,52 @@ paths:
       security:
       - BearerAuth: []
       summary: Unlike a post
+      tags:
+      - Like
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users who liked a specific post using cursor-based
+        pagination.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Cursor for pagination (last like ID)
+        in: query
+        name: cursor
+        type: integer
+      - description: Number of items to return
+        in: query
+        name: limit
+        type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_like.CursorPaginatedResponse-internal_transport_http_like_LikerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get users who liked a post
       tags:
       - Like
     post:

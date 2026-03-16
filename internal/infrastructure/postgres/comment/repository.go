@@ -114,18 +114,18 @@ func (r *repository) fetchComments(ctx context.Context, params comment.GetCursor
             u.verified AS author_verified
         FROM comments c
         JOIN users u ON c.user_id = u.id
-        WHERE 
+        WHERE
     `)
-	builder.WriteString(baseCondition)
+	builder.WriteString(" " + baseCondition)
 	builder.WriteString(` AND c.deleted_at IS NULL`)
 
 	if params.Query.Cursor > 0 {
-		builder.WriteString(fmt.Sprintf(" AND c.id %s $%d", params.Query.GetCompareOperator(), argID))
+		fmt.Fprintf(&builder, " AND c.id %s $%d", params.Query.GetCompareOperator(), argID)
 		args = append(args, params.Query.Cursor)
 		argID++
 	}
 
-	builder.WriteString(fmt.Sprintf(" ORDER BY c.id %s LIMIT $%d", params.Query.GetSortOrder(), argID))
+	fmt.Fprintf(&builder, " ORDER BY c.id %s LIMIT $%d", params.Query.GetSortOrder(), argID)
 	args = append(args, params.Query.GetFetchLimit())
 
 	var rows []CommentRow

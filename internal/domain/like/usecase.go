@@ -15,6 +15,9 @@ type UseCase interface {
 
 	IsPostLiked(ctx context.Context, postIDs []int64, userID int64) (map[int64]bool, error)
 	IsCommentLiked(ctx context.Context, commentIDs []int64, userID int64) (map[int64]bool, error)
+
+	GetPostLikers(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Liker, int64], error)
+	GetCommentLikers(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Liker, int64], error)
 }
 
 type Deps struct {
@@ -134,6 +137,28 @@ func (u *usecase) IsCommentLiked(ctx context.Context, commentIDs []int64, userID
 	}
 
 	return result, nil
+}
+
+func (u *usecase) GetPostLikers(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Liker, int64], error) {
+	params.Query.NormalizePagination()
+
+	likers, err := u.repo.GetPostLikers(ctx, params)
+	if err != nil {
+		return common.CursorPaginatedResult[Liker, int64]{}, pkg.OrInternalError(err)
+	}
+
+	return common.NewCursorPaginatedResult(likers, params.Query.Limit), nil
+}
+
+func (u *usecase) GetCommentLikers(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Liker, int64], error) {
+	params.Query.NormalizePagination()
+
+	likers, err := u.repo.GetCommentLikers(ctx, params)
+	if err != nil {
+		return common.CursorPaginatedResult[Liker, int64]{}, pkg.OrInternalError(err)
+	}
+
+	return common.NewCursorPaginatedResult(likers, params.Query.Limit), nil
 }
 
 func (u *usecase) addLikePostEvent(ctx context.Context, isLike bool, postID, userID, ownerID int64) error {
