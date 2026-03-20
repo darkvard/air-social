@@ -337,6 +337,96 @@ func (s *followUseCaseSuite) TestGetFollowings() {
 	}
 }
 
+func (s *followUseCaseSuite) TestGetFollowerIDs() {
+	var (
+		userID int64 = 1
+	)
+
+	mockIDs := []int64{2, 3, 4}
+
+	type testDeps struct {
+		repo    *mocks.MockRepository
+		fetcher *mocks.MockUserFetcher
+	}
+
+	type args struct {
+		ctx    context.Context
+		userID int64
+	}
+
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(deps testDeps)
+		wantIDs   []int64
+		wantErr   error
+	}{
+		{
+			name: "repo_error",
+			args: args{ctx: context.Background(), userID: userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetFollowerIDs(mock.Anything, userID).
+					Return(nil, assert.AnError).Once()
+			},
+			wantIDs: nil,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "success",
+			args: args{ctx: context.Background(), userID: userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetFollowerIDs(mock.Anything, userID).
+					Return(mockIDs, nil).Once()
+			},
+			wantIDs: mockIDs,
+			wantErr: nil,
+		},
+		{
+			name: "success_no_followers",
+			args: args{ctx: context.Background(), userID: userID},
+			setupMock: func(deps testDeps) {
+				deps.repo.EXPECT().
+					GetFollowerIDs(mock.Anything, userID).
+					Return([]int64{}, nil).Once()
+			},
+			wantIDs: []int64{},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			mockRepo := mocks.NewMockRepository(s.T())
+			mockFetcher := mocks.NewMockUserFetcher(s.T())
+
+			deps := testDeps{
+				repo:    mockRepo,
+				fetcher: mockFetcher,
+			}
+			uc := follow.NewUseCase(follow.Deps{
+				FollowRepo:  mockRepo,
+				UserFetcher: mockFetcher,
+			})
+
+			if tc.setupMock != nil {
+				tc.setupMock(deps)
+			}
+
+			got, err := uc.GetFollowerIDs(tc.args.ctx, tc.args.userID)
+
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Nil(got)
+			} else {
+				s.NoError(err)
+				s.Equal(tc.wantIDs, got)
+			}
+		})
+	}
+}
+
 func (s *followUseCaseSuite) TestGetFollowers() {
 	var (
 		userID int64 = 1

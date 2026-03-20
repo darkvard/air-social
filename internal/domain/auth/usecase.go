@@ -30,7 +30,7 @@ type Deps struct {
 	VerifyProvider verify.Provider
 	UserFetch      user.FetchUseCase
 	UserAccount    user.AccountUseCase
-	Cache          common.Cache
+	Cache          common.BasicCache
 }
 
 type usecase struct {
@@ -39,7 +39,7 @@ type usecase struct {
 	verifyProvider verify.Provider
 	userFetch      user.FetchUseCase
 	userAccount    user.AccountUseCase
-	cache          common.Cache
+	cache          common.BasicCache
 }
 
 func NewUseCase(deps Deps) *usecase {

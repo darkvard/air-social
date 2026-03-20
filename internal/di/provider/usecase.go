@@ -4,6 +4,8 @@ import (
 	"air-social/internal/config"
 	"air-social/internal/domain/auth"
 	"air-social/internal/domain/comment"
+	"air-social/internal/domain/feed"
+	feedusecase "air-social/internal/domain/feed/usecase"
 	"air-social/internal/domain/follow"
 	"air-social/internal/domain/health"
 	"air-social/internal/domain/like"
@@ -28,6 +30,7 @@ type UseCase struct {
 	Like    like.UseCase
 	Comment comment.UseCase
 	Stats   stats.UseCase
+	Feed    feed.UseCase
 }
 
 type UseCaseDeps struct {
@@ -48,6 +51,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	statsUC := getStatsUseCase(deps)
 	postUC := getPostUseCase(deps, mediaUC, statsUC, likeUC)
 	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC, statsUC)
+	feedUC := getFeedUseCase(deps, followUC, postUC)
 
 	return UseCase{
 		Health:  healthUC,
@@ -59,6 +63,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 		Like:    likeUC,
 		Comment: commentUC,
 		Stats:   statsUC,
+		Feed:    feedUC,
 	}
 }
 
@@ -167,7 +172,20 @@ func getStatsUseCase(deps UseCaseDeps) stats.UseCase {
 	return stats.NewUseCase(
 		stats.Deps{
 			Repo:  deps.Repo.Stats,
-			Cache: deps.Prov.Cache,
+			Cache: deps.Prov.Stats,
 		},
 	)
+}
+
+func getFeedUseCase(deps UseCaseDeps, followFetcher feedusecase.FollowFetcher, postFetcher feedusecase.PostFetcher) feed.UseCase {
+	return feed.UseCase{
+		Command: feedusecase.NewCommandUseCase(feedusecase.CommandDeps{
+			CacheProvider: deps.Prov.Feed,
+			FollowFetcher: followFetcher,
+		}),
+		Query: feedusecase.NewQueryUseCase(feedusecase.QueryDeps{
+			CacheProvider: deps.Prov.Feed,
+			PostFetcher:   postFetcher,
+		}),
+	}
 }

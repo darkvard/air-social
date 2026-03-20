@@ -133,6 +133,54 @@ func (r *repository) GetUserPosts(ctx context.Context, params post.GetCursorPara
 	return posts, nil
 }
 
+func (r *repository) GetByIDs(ctx context.Context, ids []int64) ([]*post.Post, error) {
+	if len(ids) == 0 {
+		return []*post.Post{}, nil
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT
+			p.*,
+			u.id AS author_id,
+			u.full_name AS author_full_name,
+			u.avatar AS author_avatar,
+			u.verified AS author_verified
+		FROM posts p
+		JOIN users u ON p.user_id = u.id
+		WHERE p.id IN (?) AND p.deleted_at IS NULL
+	`, ids)
+	if err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+	query = r.db.Rebind(query)
+
+	var rows []PostDetailRow
+	if err := r.db.SelectContext(ctx, &rows, query, args...); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+
+	posts := make([]*post.Post, len(rows))
+	for i, v := range rows {
+		posts[i] = v.ToDomain()
+	}
+
+	if len(posts) == 0 {
+		return posts, nil
+	}
+
+	mediaMap, err := r.getUserPostMedia(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range posts {
+		if m, ok := mediaMap[p.ID]; ok {
+			p.Media = m
+		}
+	}
+
+	return posts, nil
+}
+
 func (r *repository) insertPost(ctx context.Context, tx *sqlx.Tx, post *post.Post) error {
 	query := `
 		INSERT INTO posts (user_id, content, visibility, original_post_id)

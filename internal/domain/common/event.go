@@ -16,8 +16,11 @@ const (
 )
 
 const (
-	EventPostLike       EventType = "social.post.like"
-	EventPostShare      EventType = "social.post.share"
+	EventPostCreated EventType = "social.post.created"
+	EventPostDeleted EventType = "social.post.deleted"
+	EventPostLike    EventType = "social.post.like"
+	EventPostShare   EventType = "social.post.share"
+
 	EventCommentLike    EventType = "social.comment.like"
 	EventCommentCreated EventType = "social.comment.created"
 	EventCommentDeleted EventType = "social.comment.deleted"
@@ -97,4 +100,10 @@ type ShareEventPayload struct {
 	NewPostID      int64 `json:"new_post_id"`
 	ActorID        int64 `json:"actor_id"`
 	IsShared       bool  `json:"is_shared"` // true ? create post (original_id != nil) : delete post (original_id != nil)
+}
+
+type PostFeedEventPayload struct {
+	PostID    int64 `json:"post_id"`
+	AuthorID  int64 `json:"author_id"`
+	Timestamp int64 `json:"timestamp"` // UnixMilli, used as score in Redis sorted set
 }

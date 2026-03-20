@@ -152,6 +152,15 @@ func (r *repository) GetRelationships(ctx context.Context, userID int64, targetI
 	return result, nil
 }
 
+func (r *repository) GetFollowerIDs(ctx context.Context, userID int64) ([]int64, error) {
+	query := `SELECT follower_id FROM follows WHERE followee_id = $1`
+	var ids []int64
+	if err := r.db.SelectContext(ctx, &ids, query, userID); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+	return ids, nil
+}
+
 func (r *repository) fetchFollows(ctx context.Context, query string, params follow.GetFollowsParams) ([]follow.FollowUser, int64, error) {
 	type row struct {
 		ID          int64  `db:"id"`

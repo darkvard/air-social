@@ -3,6 +3,7 @@ package provider
 import (
 	"air-social/internal/transport/http/auth"
 	"air-social/internal/transport/http/comment"
+	"air-social/internal/transport/http/feed"
 	"air-social/internal/transport/http/follow"
 	"air-social/internal/transport/http/health"
 	"air-social/internal/transport/http/like"
@@ -20,6 +21,7 @@ type Handler struct {
 	Post    post.Handler
 	Comment comment.Handler
 	Like    like.Handler
+	Feed    feed.Handler
 }
 
 func NewHandler(prov Provider, usecase UseCase) Handler {
@@ -33,5 +35,6 @@ func NewHandler(prov Provider, usecase UseCase) Handler {
 		Post:    post.NewHandler(link, usecase.Post),
 		Comment: comment.NewHandler(link, usecase.Comment),
 		Like:    like.NewHandler(link, usecase.Like),
+		Feed:    feed.NewHandler(link, usecase.Feed),
 	}
 }

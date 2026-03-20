@@ -15,7 +15,7 @@ type MediaConfirmer interface {
 
 type profileUseCase struct {
 	repo  user.Repository
-	cache common.Cache
+	cache common.BasicCache
 	media MediaConfirmer
 }
 

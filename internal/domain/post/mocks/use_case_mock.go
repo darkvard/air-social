@@ -310,6 +310,80 @@ func (_c *MockUseCase_GetPostSharers_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// GetPostsByIDs provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetPostsByIDs(ctx context.Context, postIDs []int64, viewerID int64) ([]*post.Post, error) {
+	ret := _mock.Called(ctx, postIDs, viewerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPostsByIDs")
+	}
+
+	var r0 []*post.Post
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64, int64) ([]*post.Post, error)); ok {
+		return returnFunc(ctx, postIDs, viewerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []int64, int64) []*post.Post); ok {
+		r0 = returnFunc(ctx, postIDs, viewerID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*post.Post)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []int64, int64) error); ok {
+		r1 = returnFunc(ctx, postIDs, viewerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUseCase_GetPostsByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPostsByIDs'
+type MockUseCase_GetPostsByIDs_Call struct {
+	*mock.Call
+}
+
+// GetPostsByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - postIDs []int64
+//   - viewerID int64
+func (_e *MockUseCase_Expecter) GetPostsByIDs(ctx interface{}, postIDs interface{}, viewerID interface{}) *MockUseCase_GetPostsByIDs_Call {
+	return &MockUseCase_GetPostsByIDs_Call{Call: _e.mock.On("GetPostsByIDs", ctx, postIDs, viewerID)}
+}
+
+func (_c *MockUseCase_GetPostsByIDs_Call) Run(run func(ctx context.Context, postIDs []int64, viewerID int64)) *MockUseCase_GetPostsByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []int64
+		if args[1] != nil {
+			arg1 = args[1].([]int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_GetPostsByIDs_Call) Return(posts []*post.Post, err error) *MockUseCase_GetPostsByIDs_Call {
+	_c.Call.Return(posts, err)
+	return _c
+}
+
+func (_c *MockUseCase_GetPostsByIDs_Call) RunAndReturn(run func(ctx context.Context, postIDs []int64, viewerID int64) ([]*post.Post, error)) *MockUseCase_GetPostsByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserPosts provides a mock function for the type MockUseCase
 func (_mock *MockUseCase) GetUserPosts(ctx context.Context, params post.GetCursorParams) (common.CursorPaginatedResult[post.Post, int64], error) {
 	ret := _mock.Called(ctx, params)

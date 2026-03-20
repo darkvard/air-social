@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	"air-social/internal/domain/common"
 	"context"
 	"time"
 
@@ -614,6 +615,52 @@ func (_c *MockCache_IsExist_Call) RunAndReturn(run func(ctx context.Context, key
 	return _c
 }
 
+// Pipeline provides a mock function for the type MockCache
+func (_mock *MockCache) Pipeline() common.CacheBatch {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Pipeline")
+	}
+
+	var r0 common.CacheBatch
+	if returnFunc, ok := ret.Get(0).(func() common.CacheBatch); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(common.CacheBatch)
+		}
+	}
+	return r0
+}
+
+// MockCache_Pipeline_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Pipeline'
+type MockCache_Pipeline_Call struct {
+	*mock.Call
+}
+
+// Pipeline is a helper method to define mock.On call
+func (_e *MockCache_Expecter) Pipeline() *MockCache_Pipeline_Call {
+	return &MockCache_Pipeline_Call{Call: _e.mock.On("Pipeline")}
+}
+
+func (_c *MockCache_Pipeline_Call) Run(run func()) *MockCache_Pipeline_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockCache_Pipeline_Call) Return(cacheBatch common.CacheBatch) *MockCache_Pipeline_Call {
+	_c.Call.Return(cacheBatch)
+	return _c
+}
+
+func (_c *MockCache_Pipeline_Call) RunAndReturn(run func() common.CacheBatch) *MockCache_Pipeline_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Set provides a mock function for the type MockCache
 func (_mock *MockCache) Set(ctx context.Context, key string, val any, ttl time.Duration) error {
 	ret := _mock.Called(ctx, key, val, ttl)
@@ -757,6 +804,388 @@ func (_c *MockCache_SetNX_Call) Return(b bool, err error) *MockCache_SetNX_Call 
 }
 
 func (_c *MockCache_SetNX_Call) RunAndReturn(run func(ctx context.Context, key string, val any, ttl time.Duration) (bool, error)) *MockCache_SetNX_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ZAdd provides a mock function for the type MockCache
+func (_mock *MockCache) ZAdd(ctx context.Context, key string, score float64, member any) error {
+	ret := _mock.Called(ctx, key, score, member)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ZAdd")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, float64, any) error); ok {
+		r0 = returnFunc(ctx, key, score, member)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockCache_ZAdd_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ZAdd'
+type MockCache_ZAdd_Call struct {
+	*mock.Call
+}
+
+// ZAdd is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - score float64
+//   - member any
+func (_e *MockCache_Expecter) ZAdd(ctx interface{}, key interface{}, score interface{}, member interface{}) *MockCache_ZAdd_Call {
+	return &MockCache_ZAdd_Call{Call: _e.mock.On("ZAdd", ctx, key, score, member)}
+}
+
+func (_c *MockCache_ZAdd_Call) Run(run func(ctx context.Context, key string, score float64, member any)) *MockCache_ZAdd_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 float64
+		if args[2] != nil {
+			arg2 = args[2].(float64)
+		}
+		var arg3 any
+		if args[3] != nil {
+			arg3 = args[3].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_ZAdd_Call) Return(err error) *MockCache_ZAdd_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockCache_ZAdd_Call) RunAndReturn(run func(ctx context.Context, key string, score float64, member any) error) *MockCache_ZAdd_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ZRem provides a mock function for the type MockCache
+func (_mock *MockCache) ZRem(ctx context.Context, key string, members ...any) error {
+	var tmpRet mock.Arguments
+	if len(members) > 0 {
+		tmpRet = _mock.Called(ctx, key, members)
+	} else {
+		tmpRet = _mock.Called(ctx, key)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ZRem")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...any) error); ok {
+		r0 = returnFunc(ctx, key, members...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockCache_ZRem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ZRem'
+type MockCache_ZRem_Call struct {
+	*mock.Call
+}
+
+// ZRem is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - members ...any
+func (_e *MockCache_Expecter) ZRem(ctx interface{}, key interface{}, members ...interface{}) *MockCache_ZRem_Call {
+	return &MockCache_ZRem_Call{Call: _e.mock.On("ZRem",
+		append([]interface{}{ctx, key}, members...)...)}
+}
+
+func (_c *MockCache_ZRem_Call) Run(run func(ctx context.Context, key string, members ...any)) *MockCache_ZRem_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []any
+		var variadicArgs []any
+		if len(args) > 2 {
+			variadicArgs = args[2].([]any)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_ZRem_Call) Return(err error) *MockCache_ZRem_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockCache_ZRem_Call) RunAndReturn(run func(ctx context.Context, key string, members ...any) error) *MockCache_ZRem_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ZRemRangeByRank provides a mock function for the type MockCache
+func (_mock *MockCache) ZRemRangeByRank(ctx context.Context, key string, start int64, stop int64) error {
+	ret := _mock.Called(ctx, key, start, stop)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ZRemRangeByRank")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64, int64) error); ok {
+		r0 = returnFunc(ctx, key, start, stop)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockCache_ZRemRangeByRank_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ZRemRangeByRank'
+type MockCache_ZRemRangeByRank_Call struct {
+	*mock.Call
+}
+
+// ZRemRangeByRank is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - start int64
+//   - stop int64
+func (_e *MockCache_Expecter) ZRemRangeByRank(ctx interface{}, key interface{}, start interface{}, stop interface{}) *MockCache_ZRemRangeByRank_Call {
+	return &MockCache_ZRemRangeByRank_Call{Call: _e.mock.On("ZRemRangeByRank", ctx, key, start, stop)}
+}
+
+func (_c *MockCache_ZRemRangeByRank_Call) Run(run func(ctx context.Context, key string, start int64, stop int64)) *MockCache_ZRemRangeByRank_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		var arg3 int64
+		if args[3] != nil {
+			arg3 = args[3].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_ZRemRangeByRank_Call) Return(err error) *MockCache_ZRemRangeByRank_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockCache_ZRemRangeByRank_Call) RunAndReturn(run func(ctx context.Context, key string, start int64, stop int64) error) *MockCache_ZRemRangeByRank_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ZRevRange provides a mock function for the type MockCache
+func (_mock *MockCache) ZRevRange(ctx context.Context, key string, start int64, stop int64) ([]string, error) {
+	ret := _mock.Called(ctx, key, start, stop)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ZRevRange")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64, int64) ([]string, error)); ok {
+		return returnFunc(ctx, key, start, stop)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64, int64) []string); ok {
+		r0 = returnFunc(ctx, key, start, stop)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int64, int64) error); ok {
+		r1 = returnFunc(ctx, key, start, stop)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCache_ZRevRange_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ZRevRange'
+type MockCache_ZRevRange_Call struct {
+	*mock.Call
+}
+
+// ZRevRange is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - start int64
+//   - stop int64
+func (_e *MockCache_Expecter) ZRevRange(ctx interface{}, key interface{}, start interface{}, stop interface{}) *MockCache_ZRevRange_Call {
+	return &MockCache_ZRevRange_Call{Call: _e.mock.On("ZRevRange", ctx, key, start, stop)}
+}
+
+func (_c *MockCache_ZRevRange_Call) Run(run func(ctx context.Context, key string, start int64, stop int64)) *MockCache_ZRevRange_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		var arg3 int64
+		if args[3] != nil {
+			arg3 = args[3].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_ZRevRange_Call) Return(strings []string, err error) *MockCache_ZRevRange_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockCache_ZRevRange_Call) RunAndReturn(run func(ctx context.Context, key string, start int64, stop int64) ([]string, error)) *MockCache_ZRevRange_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ZRevRangeByScore provides a mock function for the type MockCache
+func (_mock *MockCache) ZRevRangeByScore(ctx context.Context, key string, min string, max string, offset int64, count int64) ([]string, error) {
+	ret := _mock.Called(ctx, key, min, max, offset, count)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ZRevRangeByScore")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, int64, int64) ([]string, error)); ok {
+		return returnFunc(ctx, key, min, max, offset, count)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, int64, int64) []string); ok {
+		r0 = returnFunc(ctx, key, min, max, offset, count)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, int64, int64) error); ok {
+		r1 = returnFunc(ctx, key, min, max, offset, count)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCache_ZRevRangeByScore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ZRevRangeByScore'
+type MockCache_ZRevRangeByScore_Call struct {
+	*mock.Call
+}
+
+// ZRevRangeByScore is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key string
+//   - min string
+//   - max string
+//   - offset int64
+//   - count int64
+func (_e *MockCache_Expecter) ZRevRangeByScore(ctx interface{}, key interface{}, min interface{}, max interface{}, offset interface{}, count interface{}) *MockCache_ZRevRangeByScore_Call {
+	return &MockCache_ZRevRangeByScore_Call{Call: _e.mock.On("ZRevRangeByScore", ctx, key, min, max, offset, count)}
+}
+
+func (_c *MockCache_ZRevRangeByScore_Call) Run(run func(ctx context.Context, key string, min string, max string, offset int64, count int64)) *MockCache_ZRevRangeByScore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 int64
+		if args[4] != nil {
+			arg4 = args[4].(int64)
+		}
+		var arg5 int64
+		if args[5] != nil {
+			arg5 = args[5].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCache_ZRevRangeByScore_Call) Return(strings []string, err error) *MockCache_ZRevRangeByScore_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockCache_ZRevRangeByScore_Call) RunAndReturn(run func(ctx context.Context, key string, min string, max string, offset int64, count int64) ([]string, error)) *MockCache_ZRevRangeByScore_Call {
 	_c.Call.Return(run)
 	return _c
 }

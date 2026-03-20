@@ -16,4 +16,6 @@ type Repository interface {
 
 	GetRelationship(ctx context.Context, userID, targetID int64) (Relationship, error)
 	GetRelationships(ctx context.Context, userID int64, targetIDs []int64) (map[int64]Relationship, error)
+
+	GetFollowerIDs(ctx context.Context, userID int64) ([]int64, error)
 }

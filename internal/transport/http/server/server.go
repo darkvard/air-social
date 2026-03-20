@@ -14,6 +14,7 @@ import (
 	"air-social/internal/di/provider"
 	"air-social/internal/transport/http/auth"
 	"air-social/internal/transport/http/comment"
+	"air-social/internal/transport/http/feed"
 	"air-social/internal/transport/http/follow"
 	"air-social/internal/transport/http/health"
 	"air-social/internal/transport/http/like"
@@ -45,6 +46,7 @@ func NewServer(
 		post.RegisterRoute(group, h.Post, mw)
 		like.RegisterRoute(group, h.Like, mw)
 		comment.RegisterRoute(group, h.Comment, mw)
+		feed.RegisterRoute(group, h.Feed, mw)
 	}
 
 	return &http.Server{

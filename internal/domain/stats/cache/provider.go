@@ -29,10 +29,10 @@ type Provider interface {
 }
 
 type provider struct {
-	cache common.Cache
+	cache common.HashCache
 }
 
-func NewProvider(c common.Cache) *provider {
+func NewProvider(c common.HashCache) *provider {
 	return &provider{cache: c}
 }
 

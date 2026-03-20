@@ -19,6 +19,7 @@ type UseCase interface {
 	DeletePost(ctx context.Context, postID int64, userID int64) error
 	GetUserPosts(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Post, int64], error)
 	GetPostSharers(ctx context.Context, params GetSharersParams) (common.CursorPaginatedResult[Sharer, int64], error)
+	GetPostsByIDs(ctx context.Context, postIDs []int64, viewerID int64) ([]*Post, error)
 }
 
 type MediaVerifier interface {
@@ -105,6 +106,7 @@ func (u *usecase) CreatePost(ctx context.Context, params CreateParams) (*Post, e
 	if post.OriginalPostID != nil {
 		_ = u.addShareEvent(ctx, *post, true)
 	}
+	_ = u.addPostFeedEvent(ctx, post.ID, post.UserID, common.EventPostCreated, post.CreatedAt.UnixMilli())
 
 	return post, nil
 }
@@ -148,7 +150,11 @@ func (u *usecase) DeletePost(ctx context.Context, postID, userID int64) error {
 	if post.OriginalPostID != nil {
 		_ = u.addShareEvent(ctx, *post, false)
 	}
-	return pkg.OrInternalError(u.postRepo.Delete(ctx, postID))
+	if err := u.postRepo.Delete(ctx, postID); err != nil {
+		return pkg.OrInternalError(err)
+	}
+	_ = u.addPostFeedEvent(ctx, post.ID, post.UserID, common.EventPostDeleted, 0)
+	return nil
 }
 
 func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Post, int64], error) {
@@ -183,6 +189,20 @@ func (u *usecase) GetPostSharers(ctx context.Context, params GetSharersParams) (
 	return result, nil
 }
 
+func (u *usecase) GetPostsByIDs(ctx context.Context, postIDs []int64, viewerID int64) ([]*Post, error) {
+	if len(postIDs) == 0 {
+		return []*Post{}, nil
+	}
+
+	posts, err := u.postRepo.GetByIDs(ctx, postIDs)
+	if err != nil {
+		return nil, pkg.OrInternalError(err)
+	}
+
+	u.mapPostMetadata(ctx, posts, viewerID)
+	return posts, nil
+}
+
 func (u *usecase) validateMedia(ctx context.Context, params []MediaParams) ([]Media, error) {
 	size := len(params)
 
@@ -214,6 +234,11 @@ func (u *usecase) getPostOwner(ctx context.Context, postID, viewerID int64) (*Po
 		return nil, pkg.ErrForbidden
 	}
 	return post, nil
+}
+
+func (u *usecase) addPostFeedEvent(ctx context.Context, postID, authorID int64, typ common.EventType, timestamp int64) error {
+	data := common.PostFeedEventPayload{PostID: postID, AuthorID: authorID, Timestamp: timestamp}
+	return u.event.Publish(ctx, common.NewEvent(typ, data))
 }
 
 func (u *usecase) addShareEvent(ctx context.Context, post Post, isShare bool) error {

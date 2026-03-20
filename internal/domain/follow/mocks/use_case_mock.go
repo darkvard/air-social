@@ -102,6 +102,74 @@ func (_c *MockUseCase_Follow_Call) RunAndReturn(run func(ctx context.Context, fo
 	return _c
 }
 
+// GetFollowerIDs provides a mock function for the type MockUseCase
+func (_mock *MockUseCase) GetFollowerIDs(ctx context.Context, userID int64) ([]int64, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFollowerIDs")
+	}
+
+	var r0 []int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) ([]int64, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) []int64); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int64)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUseCase_GetFollowerIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFollowerIDs'
+type MockUseCase_GetFollowerIDs_Call struct {
+	*mock.Call
+}
+
+// GetFollowerIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID int64
+func (_e *MockUseCase_Expecter) GetFollowerIDs(ctx interface{}, userID interface{}) *MockUseCase_GetFollowerIDs_Call {
+	return &MockUseCase_GetFollowerIDs_Call{Call: _e.mock.On("GetFollowerIDs", ctx, userID)}
+}
+
+func (_c *MockUseCase_GetFollowerIDs_Call) Run(run func(ctx context.Context, userID int64)) *MockUseCase_GetFollowerIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUseCase_GetFollowerIDs_Call) Return(int64s []int64, err error) *MockUseCase_GetFollowerIDs_Call {
+	_c.Call.Return(int64s, err)
+	return _c
+}
+
+func (_c *MockUseCase_GetFollowerIDs_Call) RunAndReturn(run func(ctx context.Context, userID int64) ([]int64, error)) *MockUseCase_GetFollowerIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetFollowers provides a mock function for the type MockUseCase
 func (_mock *MockUseCase) GetFollowers(ctx context.Context, params follow.GetFollowsParams) (common.OffsetPaginatedResult[follow.FollowUser], error) {
 	ret := _mock.Called(ctx, params)

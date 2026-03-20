@@ -788,6 +788,60 @@ const docTemplate = `{
                 }
             }
         },
+        "/feed": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a cursor-paginated list of posts from users the authenticated user follows.\nPosts are ordered from newest to oldest based on their creation timestamp.\nOn the first request, omit the cursor (or set it to 0) to get the latest posts.\nTo paginate, pass the ` + "`" + `next_cursor` + "`" + ` from the previous response as the ` + "`" + `cursor` + "`" + ` param.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Get newsfeed",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Cursor for pagination (Unix millisecond timestamp of the last post in previous page). Omit or set 0 for first page.",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of posts to return (default: 20, max: 50)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_feed.NewsfeedResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "security": [
@@ -2110,6 +2164,104 @@ const docTemplate = `{
                 "FeatureAttachment"
             ]
         },
+        "air-social_internal_transport_http_post.MediaItemResponse": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "integer"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "media_type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
+        "air-social_internal_transport_http_post.PostResponse": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.UserResponse"
+                },
+                "comments_count": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_liked": {
+                    "type": "boolean"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_post.MediaItemResponse"
+                    }
+                },
+                "original_post_id": {
+                    "type": "integer"
+                },
+                "shares_count": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "air-social_internal_transport_http_shared.MetaCursor": {
+            "type": "object",
+            "properties": {
+                "has_next_page": {
+                    "type": "boolean"
+                },
+                "next_cursor": {
+                    "type": "integer"
+                }
+            }
+        },
+        "air-social_internal_transport_http_shared.UserResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "full_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_verified": {
+                    "type": "boolean"
+                }
+            }
+        },
         "internal_transport_http_auth.ForgotPasswordRequest": {
             "type": "object",
             "required": [
@@ -2345,7 +2497,7 @@ const docTemplate = `{
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/internal_transport_http_comment.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
                 }
             }
         },
@@ -2378,17 +2530,6 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
-                }
-            }
-        },
-        "internal_transport_http_comment.MetaCursor": {
-            "type": "object",
-            "properties": {
-                "has_next_page": {
-                    "type": "boolean"
-                },
-                "next_cursor": {
-                    "type": "integer"
                 }
             }
         },
@@ -2425,6 +2566,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_transport_http_feed.NewsfeedResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_post.PostResponse"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                }
+            }
+        },
         "internal_transport_http_follow.UserFollowResponse": {
             "type": "object",
             "properties": {
@@ -2458,7 +2613,7 @@ const docTemplate = `{
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/internal_transport_http_like.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
                 }
             }
         },
@@ -2476,17 +2631,6 @@ const docTemplate = `{
                 },
                 "is_verified": {
                     "type": "boolean"
-                }
-            }
-        },
-        "internal_transport_http_like.MetaCursor": {
-            "type": "object",
-            "properties": {
-                "has_next_page": {
-                    "type": "boolean"
-                },
-                "next_cursor": {
-                    "type": "integer"
                 }
             }
         },
@@ -2643,7 +2787,7 @@ const docTemplate = `{
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/internal_transport_http_post.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
                 }
             }
         },
@@ -2657,7 +2801,7 @@ const docTemplate = `{
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/internal_transport_http_post.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
                 }
             }
         },
@@ -2729,22 +2873,11 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_transport_http_post.MetaCursor": {
-            "type": "object",
-            "properties": {
-                "has_next_page": {
-                    "type": "boolean"
-                },
-                "next_cursor": {
-                    "type": "integer"
-                }
-            }
-        },
         "internal_transport_http_post.PostResponse": {
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/internal_transport_http_post.UserResponse"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.UserResponse"
                 },
                 "comments_count": {
                     "type": "integer"
@@ -2794,7 +2927,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "description": "user_id",
                     "type": "integer"
                 },
                 "is_verified": {
@@ -2822,23 +2954,6 @@ const docTemplate = `{
                         "followers",
                         "private"
                     ]
-                }
-            }
-        },
-        "internal_transport_http_post.UserResponse": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_verified": {
-                    "type": "boolean"
                 }
             }
         },

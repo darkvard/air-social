@@ -29,10 +29,10 @@ type Provider interface {
 
 type provider struct {
 	cfg   config.TokenConfig
-	cache common.Cache
+	cache common.BasicCache
 }
 
-func NewProvider(cfg config.TokenConfig, cache common.Cache) *provider {
+func NewProvider(cfg config.TokenConfig, cache common.BasicCache) *provider {
 	return &provider{
 		cfg:   cfg,
 		cache: cache,

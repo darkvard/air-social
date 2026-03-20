@@ -3,21 +3,12 @@ package like
 import (
 	"air-social/internal/domain/common"
 	"air-social/internal/domain/like"
+	"air-social/internal/transport/http/shared"
 )
 
-type PathIDParam struct {
-	ID int64 `uri:"id" binding:"required,gt=0"`
-}
-
-type MetaCursor struct {
-	NextCursor  int64 `json:"next_cursor"`
-	HasNextPage bool  `json:"has_next_page"`
-}
-
-type CursorPaginatedResponse[T any] struct {
-	Data []T        `json:"data"`
-	Meta MetaCursor `json:"meta"`
-}
+type PathIDParam = shared.PathIDParam
+type MetaCursor = shared.MetaCursor
+type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T]
 
 type LikerResponse struct {
 	ID         int64  `json:"id"`

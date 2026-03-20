@@ -5,11 +5,10 @@ import (
 
 	"air-social/internal/domain/comment"
 	"air-social/internal/domain/common"
+	"air-social/internal/transport/http/shared"
 )
 
-type PathIDParam struct {
-	ID int64 `uri:"id" binding:"required,gt=0"`
-}
+type PathIDParam = shared.PathIDParam
 
 type MediaItemInput struct {
 	MediaKey  string `json:"media_key" binding:"required"`
@@ -49,15 +48,8 @@ func (q CursorQueryParams) ToDomain(userID int64) comment.GetCursorParams {
 	}
 }
 
-type CursorPaginatedResponse[T any] struct {
-	Data []T        `json:"data"`
-	Meta MetaCursor `json:"meta"`
-}
-
-type MetaCursor struct {
-	NextCursor  int64 `json:"next_cursor"`
-	HasNextPage bool  `json:"has_next_page"`
-}
+type MetaCursor = shared.MetaCursor
+type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T]
 
 type CommentResponse struct {
 	ID           int64               `json:"id"`
@@ -71,9 +63,4 @@ type CommentResponse struct {
 	User         *UserResponse       `json:"author,omitempty"`
 }
 
-type UserResponse struct {
-	ID         int64  `json:"id"`
-	Fullname   string `json:"full_name"`
-	Avatar     string `json:"avatar"`
-	IsVerified bool   `json:"is_verified"`
-}
+type UserResponse = shared.UserResponse

@@ -15,6 +15,7 @@ type UseCase interface {
 	GetFollowings(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error)
 	GetFollowers(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error)
 	GetRelationship(ctx context.Context, userID, targetID int64) (Relationship, error)
+	GetFollowerIDs(ctx context.Context, userID int64) ([]int64, error)
 }
 
 type UserFetcher interface {
@@ -76,6 +77,11 @@ func (u *usecase) GetFollowers(ctx context.Context, params GetFollowsParams) (co
 
 func (u *usecase) GetRelationship(ctx context.Context, userID, targetID int64) (Relationship, error) {
 	return u.followRepo.GetRelationship(ctx, userID, targetID)
+}
+
+func (u *usecase) GetFollowerIDs(ctx context.Context, userID int64) ([]int64, error) {
+	ids, err := u.followRepo.GetFollowerIDs(ctx, userID)
+	return ids, pkg.OrInternalError(err)
 }
 
 func (u *usecase) validateFollow(ctx context.Context, followerID int64, followeeID int64) error {

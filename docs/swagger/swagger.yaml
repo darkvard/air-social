@@ -42,6 +42,70 @@ definitions:
     - FeatureFeedVideo
     - FeatureVoiceChat
     - FeatureAttachment
+  air-social_internal_transport_http_post.MediaItemResponse:
+    properties:
+      duration:
+        type: integer
+      file_name:
+        type: string
+      height:
+        type: integer
+      id:
+        type: integer
+      media_type:
+        type: string
+      url:
+        type: string
+      width:
+        type: integer
+    type: object
+  air-social_internal_transport_http_post.PostResponse:
+    properties:
+      author:
+        $ref: '#/definitions/air-social_internal_transport_http_shared.UserResponse'
+      comments_count:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_liked:
+        type: boolean
+      likes_count:
+        type: integer
+      media:
+        items:
+          $ref: '#/definitions/air-social_internal_transport_http_post.MediaItemResponse'
+        type: array
+      original_post_id:
+        type: integer
+      shares_count:
+        type: integer
+      updated_at:
+        type: string
+      visibility:
+        type: string
+    type: object
+  air-social_internal_transport_http_shared.MetaCursor:
+    properties:
+      has_next_page:
+        type: boolean
+      next_cursor:
+        type: integer
+    type: object
+  air-social_internal_transport_http_shared.UserResponse:
+    properties:
+      avatar:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      is_verified:
+        type: boolean
+    type: object
   internal_transport_http_auth.ForgotPasswordRequest:
     properties:
       email:
@@ -201,7 +265,7 @@ definitions:
           $ref: '#/definitions/internal_transport_http_comment.CommentResponse'
         type: array
       meta:
-        $ref: '#/definitions/internal_transport_http_comment.MetaCursor'
+        $ref: '#/definitions/air-social_internal_transport_http_shared.MetaCursor'
     type: object
   internal_transport_http_comment.MediaItemInput:
     properties:
@@ -225,13 +289,6 @@ definitions:
       url:
         type: string
     type: object
-  internal_transport_http_comment.MetaCursor:
-    properties:
-      has_next_page:
-        type: boolean
-      next_cursor:
-        type: integer
-    type: object
   internal_transport_http_comment.UpdateRequest:
     properties:
       content:
@@ -253,6 +310,15 @@ definitions:
         type: integer
       is_verified:
         type: boolean
+    type: object
+  internal_transport_http_feed.NewsfeedResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/air-social_internal_transport_http_post.PostResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/air-social_internal_transport_http_shared.MetaCursor'
     type: object
   internal_transport_http_follow.UserFollowResponse:
     properties:
@@ -276,7 +342,7 @@ definitions:
           $ref: '#/definitions/internal_transport_http_like.LikerResponse'
         type: array
       meta:
-        $ref: '#/definitions/internal_transport_http_like.MetaCursor'
+        $ref: '#/definitions/air-social_internal_transport_http_shared.MetaCursor'
     type: object
   internal_transport_http_like.LikerResponse:
     properties:
@@ -288,13 +354,6 @@ definitions:
         type: integer
       is_verified:
         type: boolean
-    type: object
-  internal_transport_http_like.MetaCursor:
-    properties:
-      has_next_page:
-        type: boolean
-      next_cursor:
-        type: integer
     type: object
   internal_transport_http_media.BulkPresignRequest:
     properties:
@@ -399,7 +458,7 @@ definitions:
           $ref: '#/definitions/internal_transport_http_post.PostResponse'
         type: array
       meta:
-        $ref: '#/definitions/internal_transport_http_post.MetaCursor'
+        $ref: '#/definitions/air-social_internal_transport_http_shared.MetaCursor'
     type: object
   internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_SharerResponse:
     properties:
@@ -408,7 +467,7 @@ definitions:
           $ref: '#/definitions/internal_transport_http_post.SharerResponse'
         type: array
       meta:
-        $ref: '#/definitions/internal_transport_http_post.MetaCursor'
+        $ref: '#/definitions/air-social_internal_transport_http_shared.MetaCursor'
     type: object
   internal_transport_http_post.MediaItemInput:
     properties:
@@ -458,17 +517,10 @@ definitions:
       width:
         type: integer
     type: object
-  internal_transport_http_post.MetaCursor:
-    properties:
-      has_next_page:
-        type: boolean
-      next_cursor:
-        type: integer
-    type: object
   internal_transport_http_post.PostResponse:
     properties:
       author:
-        $ref: '#/definitions/internal_transport_http_post.UserResponse'
+        $ref: '#/definitions/air-social_internal_transport_http_shared.UserResponse'
       comments_count:
         type: integer
       content:
@@ -501,7 +553,6 @@ definitions:
       full_name:
         type: string
       id:
-        description: user_id
         type: integer
       is_verified:
         type: boolean
@@ -521,17 +572,6 @@ definitions:
         - followers
         - private
         type: string
-    type: object
-  internal_transport_http_post.UserResponse:
-    properties:
-      avatar:
-        type: string
-      full_name:
-        type: string
-      id:
-        type: integer
-      is_verified:
-        type: boolean
     type: object
   internal_transport_http_user.ChangePasswordRequest:
     properties:
@@ -1154,6 +1194,45 @@ paths:
       summary: Get replies for a comment
       tags:
       - Comment
+  /feed:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Returns a cursor-paginated list of posts from users the authenticated user follows.
+        Posts are ordered from newest to oldest based on their creation timestamp.
+        On the first request, omit the cursor (or set it to 0) to get the latest posts.
+        To paginate, pass the `next_cursor` from the previous response as the `cursor` param.
+      parameters:
+      - description: Cursor for pagination (Unix millisecond timestamp of the last
+          post in previous page). Omit or set 0 for first page.
+        in: query
+        name: cursor
+        type: integer
+      - description: 'Number of posts to return (default: 20, max: 50)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_feed.NewsfeedResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get newsfeed
+      tags:
+      - Feed
   /health:
     get:
       description: Check the health status of the application components

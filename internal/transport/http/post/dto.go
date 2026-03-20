@@ -5,11 +5,11 @@ import (
 
 	"air-social/internal/domain/common"
 	"air-social/internal/domain/post"
+	"air-social/internal/transport/http/shared"
 )
 
-type PathIDParam struct {
-	ID int64 `uri:"id" binding:"required,gt=0"`
-}
+// PathIDParam is re-exported from shared for convenience within this package.
+type PathIDParam = shared.PathIDParam
 
 type CreateRequest struct {
 	OriginalPostID *int64           `json:"original_post_id" binding:"omitempty,gt=0"`
@@ -51,6 +51,17 @@ func (q CursorQueryParams) ToDomain(userID int64) post.GetCursorParams {
 	}
 }
 
+func (q CursorQueryParams) ToGetSharersParams(postID int64) post.GetSharersParams {
+	return post.GetSharersParams{
+		PostID: postID,
+		Query: common.CursorQueryParams[int64]{
+			Cursor: q.Cursor,
+			Limit:  q.Limit,
+			Sort:   q.Sort,
+		},
+	}
+}
+
 type CreateResponse struct {
 	ID             int64               `json:"id"`
 	OriginalPostID *int64              `json:"original_post_id,omitempty"`
@@ -61,18 +72,18 @@ type CreateResponse struct {
 }
 
 type PostResponse struct {
-	ID             int64               `json:"id"`
-	OriginalPostID *int64              `json:"original_post_id,omitempty"`
-	Content        string              `json:"content"`
-	Visibility     string              `json:"visibility"`
-	LikesCount     int32               `json:"likes_count"`
-	CommentsCount  int32               `json:"comments_count"`
-	SharesCount    int32               `json:"shares_count"`
-	CreatedAt      time.Time           `json:"created_at"`
-	UpdatedAt      time.Time           `json:"updated_at"`
-	Media          []MediaItemResponse `json:"media"`
-	IsLiked        *bool               `json:"is_liked,omitempty"`
-	User           *UserResponse       `json:"author,omitempty"`
+	ID             int64                `json:"id"`
+	OriginalPostID *int64               `json:"original_post_id,omitempty"`
+	Content        string               `json:"content"`
+	Visibility     string               `json:"visibility"`
+	LikesCount     int32                `json:"likes_count"`
+	CommentsCount  int32                `json:"comments_count"`
+	SharesCount    int32                `json:"shares_count"`
+	CreatedAt      time.Time            `json:"created_at"`
+	UpdatedAt      time.Time            `json:"updated_at"`
+	Media          []MediaItemResponse  `json:"media"`
+	IsLiked        *bool                `json:"is_liked,omitempty"`
+	User           *shared.UserResponse `json:"author,omitempty"`
 }
 
 type MediaItemResponse struct {
@@ -85,37 +96,18 @@ type MediaItemResponse struct {
 	FileName  string `json:"file_name,omitempty"`
 }
 
-type UserResponse struct {
-	ID         int64  `json:"id"`
-	Fullname   string `json:"full_name"`
-	Avatar     string `json:"avatar"`
-	IsVerified bool   `json:"is_verified"`
-}
-
-type CursorPaginatedResponse[T any] struct {
-	Data []T        `json:"data"`
-	Meta MetaCursor `json:"meta"`
-}
-
-type MetaCursor struct {
-	NextCursor  int64 `json:"next_cursor"`
-	HasNextPage bool  `json:"has_next_page"`
-}
-
 type SharerResponse struct {
-	ID         int64  `json:"id"` // user_id
+	ID         int64  `json:"id"`
 	FullName   string `json:"full_name"`
 	Avatar     string `json:"avatar"`
 	IsVerified bool   `json:"is_verified"`
 }
 
-func (q CursorQueryParams) ToGetSharersParams(postID int64) post.GetSharersParams {
-	return post.GetSharersParams{
-		PostID: postID,
-		Query: common.CursorQueryParams[int64]{
-			Cursor: q.Cursor,
-			Limit:  q.Limit,
-			Sort:   q.Sort,
-		},
-	}
-}
+// MetaCursor and CursorPaginatedResponse are type aliases to the shared package.
+// Using aliases (=) means all packages that already reference post.MetaCursor
+// or post.CursorPaginatedResponse continue to work without changes.
+type MetaCursor = shared.MetaCursor
+type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T]
+
+// UserResponse is the compact author summary, aliased from shared.
+type UserResponse = shared.UserResponse

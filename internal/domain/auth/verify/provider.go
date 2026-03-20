@@ -27,13 +27,13 @@ type Provider interface {
 }
 
 type Deps struct {
-	Cache common.Cache
+	Cache common.BasicCache
 	Event common.EventPublisher
 	Link  common.LinkProvider
 }
 
 type provider struct {
-	cache common.Cache
+	cache common.BasicCache
 	event common.EventPublisher
 	link  common.LinkProvider
 }

@@ -32,7 +32,7 @@ type Domain string
 
 type Deps struct {
 	Conn       *amqp.Connection
-	Cache      common.Cache
+	Cache      common.BasicCache
 	Dispatcher common.EventDispatcher
 	QueueCfg   config.QueueConfig
 	Domain     Domain
@@ -42,7 +42,7 @@ type Consumer struct {
 	conn        *amqp.Connection
 	ExchangeCfg config.ExchangeConfig
 	QueueCfg    config.QueueConfig
-	cache       common.Cache
+	cache       common.BasicCache
 	disp        common.EventDispatcher
 	domain      string
 

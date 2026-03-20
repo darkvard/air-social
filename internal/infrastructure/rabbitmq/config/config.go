@@ -51,6 +51,20 @@ const (
 	commentDeletedQueueDeadRouting = commentDeletedRouting + deadExt
 )
 
+const (
+	postCreatedRouting          = "social.post.created"
+	postCreatedQueue            = "social_post_created_queue"
+	postCreatedQueueDead        = postCreatedQueue + deadExt
+	postCreatedQueueDeadRouting = postCreatedRouting + deadExt
+)
+
+const (
+	postDeletedRouting          = "social.post.deleted"
+	postDeletedQueue            = "social_post_deleted_queue"
+	postDeletedQueueDead        = postDeletedQueue + deadExt
+	postDeletedQueueDeadRouting = postDeletedRouting + deadExt
+)
+
 type ExchangeConfig struct {
 	Name string
 	Type string
@@ -123,4 +137,20 @@ var SocialCommentDeletedQueueConfig = QueueConfig{
 	DeadLetterExchange:   TopicEventsExchange.Name,
 	DeadLetterQueue:      commentDeletedQueueDead,
 	DeadLetterRoutingKey: commentDeletedQueueDeadRouting,
+}
+
+var SocialPostCreatedQueueConfig = QueueConfig{
+	Queue:                postCreatedQueue,
+	RoutingKey:           postCreatedRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      postCreatedQueueDead,
+	DeadLetterRoutingKey: postCreatedQueueDeadRouting,
+}
+
+var SocialPostDeletedQueueConfig = QueueConfig{
+	Queue:                postDeletedQueue,
+	RoutingKey:           postDeletedRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      postDeletedQueueDead,
+	DeadLetterRoutingKey: postDeletedQueueDeadRouting,
 }
