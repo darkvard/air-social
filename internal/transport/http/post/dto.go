@@ -103,11 +103,56 @@ type SharerResponse struct {
 	IsVerified bool   `json:"is_verified"`
 }
 
-// MetaCursor and CursorPaginatedResponse are type aliases to the shared package.
-// Using aliases (=) means all packages that already reference post.MetaCursor
-// or post.CursorPaginatedResponse continue to work without changes.
 type MetaCursor = shared.MetaCursor
+
 type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T]
 
-// UserResponse is the compact author summary, aliased from shared.
 type UserResponse = shared.UserResponse
+
+// ToMediaItems maps domain media slice to MediaItemResponse slice.
+func ToMediaItems(media []post.Media, resolveURL func(string) string) []MediaItemResponse {
+	result := make([]MediaItemResponse, len(media))
+	for i, m := range media {
+		result[i] = MediaItemResponse{
+			ID:        m.ID,
+			URL:       resolveURL(m.MediaKey),
+			MediaType: m.MediaType,
+			Width:     m.Metadata.Width,
+			Height:    m.Metadata.Height,
+			Duration:  m.Metadata.Duration,
+			FileName:  m.Metadata.FileName,
+		}
+	}
+	return result
+}
+
+func ToPostResponse(p *post.Post, resolveURL func(string) string) PostResponse {
+	if p == nil {
+		return PostResponse{}
+	}
+
+	var author *UserResponse
+	if p.Author != nil {
+		author = &UserResponse{
+			ID:         p.Author.ID,
+			Fullname:   p.Author.FullName,
+			Avatar:     resolveURL(p.Author.Avatar),
+			IsVerified: p.Author.IsVerified,
+		}
+	}
+
+	return PostResponse{
+		ID:             p.ID,
+		OriginalPostID: p.OriginalPostID,
+		Content:        p.Content,
+		Visibility:     string(p.Visibility),
+		LikesCount:     p.Stat.LikesCount,
+		CommentsCount:  p.Stat.CommentsCount,
+		SharesCount:    p.Stat.SharesCount,
+		CreatedAt:      p.CreatedAt,
+		UpdatedAt:      p.UpdatedAt,
+		Media:          ToMediaItems(p.Media, resolveURL),
+		User:           author,
+		IsLiked:        p.IsLiked,
+	}
+}

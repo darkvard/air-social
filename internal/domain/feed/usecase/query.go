@@ -35,7 +35,6 @@ func (u *queryUseCase) GetNewsfeed(ctx context.Context, viewerID int64, params c
 	var empty common.CursorPaginatedResult[*post.Post, int64]
 
 	// Fetch limit+1 from Cache to detect whether a next page exists.
-	// Pattern mirrors other cursor-paginated queries in this codebase.
 	postIDs, err := u.cacheProvider.GetFeedPostIDs(ctx, viewerID, params.Cursor, params.GetFetchLimit())
 	if err != nil {
 		return empty, pkg.OrInternalError(err)
@@ -45,7 +44,7 @@ func (u *queryUseCase) GetNewsfeed(ctx context.Context, viewerID int64, params c
 		return empty, nil
 	}
 
-	// If we got back more than requested, a next page exists — trim the extra element.
+	// Trim to limit before DB fetch — the extra element was only needed to detect hasNextPage.
 	hasNextPage := len(postIDs) > params.Limit
 	if hasNextPage {
 		postIDs = postIDs[:params.Limit]
@@ -72,9 +71,8 @@ func (u *queryUseCase) GetNewsfeed(ctx context.Context, viewerID int64, params c
 		}
 	}
 
-	// Next cursor = CreatedAt (UnixMilli) of the last post in this page.
-	// This matches the score stored in Redis, so the next call filters correctly
-	// via ZREVRANGEBYSCORE ... (cursor exclusive.
+	// nextCursor = CreatedAt.UnixMilli() of the last post — must match the Redis score.
+	// Cannot use NewCursorPaginatedResult here: Post.GetCursor() returns ID, not timestamp.
 	var nextCursor int64
 	if hasNextPage && len(orderedPosts) > 0 {
 		nextCursor = orderedPosts[len(orderedPosts)-1].CreatedAt.UnixMilli()

@@ -267,58 +267,11 @@ func (h Handler) toCreateResponse(post *post.Post) CreateResponse {
 }
 
 func (h Handler) toMediaItemResponse(media []post.Media) []MediaItemResponse {
-	result := make([]MediaItemResponse, len(media))
-	if media == nil {
-		return result
-	}
-	for i, m := range media {
-		result[i] = MediaItemResponse{
-			ID:        m.ID,
-			URL:       h.provider.PublicFile(m.MediaKey),
-			MediaType: m.MediaType,
-			Width:     m.Metadata.Width,
-			Height:    m.Metadata.Height,
-			Duration:  m.Metadata.Duration,
-			FileName:  m.Metadata.FileName,
-		}
-	}
-	return result
+	return ToMediaItems(media, h.provider.PublicFile)
 }
 
-func (h Handler) toPostResponse(post *post.Post) PostResponse {
-	if post == nil {
-		return PostResponse{}
-	}
-
-	var author *UserResponse
-	if post.Author != nil {
-		author = &UserResponse{
-			ID:         post.Author.ID,
-			Fullname:   post.Author.FullName,
-			Avatar:     h.provider.PublicFile(post.Author.Avatar),
-			IsVerified: post.Author.IsVerified,
-		}
-	}
-
-	var viewerLiked *bool
-	if post.IsLiked != nil {
-		viewerLiked = post.IsLiked
-	}
-
-	return PostResponse{
-		ID:             post.ID,
-		OriginalPostID: post.OriginalPostID,
-		Content:        post.Content,
-		Visibility:     string(post.Visibility),
-		LikesCount:     post.Stat.LikesCount,
-		CommentsCount:  post.Stat.CommentsCount,
-		SharesCount:    post.Stat.SharesCount,
-		CreatedAt:      post.CreatedAt,
-		UpdatedAt:      post.UpdatedAt,
-		Media:          h.toMediaItemResponse(post.Media),
-		User:           author,
-		IsLiked:        viewerLiked,
-	}
+func (h Handler) toPostResponse(p *post.Post) PostResponse {
+	return ToPostResponse(p, h.provider.PublicFile)
 }
 
 func (h Handler) toPostListResponse(result common.CursorPaginatedResult[post.Post, int64]) CursorPaginatedResponse[PostResponse] {
