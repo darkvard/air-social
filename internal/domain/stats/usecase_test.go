@@ -41,13 +41,13 @@ func (s *StatsUseCaseSuite) TestSyncPostStats() {
 				shares := map[int64]int64{2: 1}
 
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "post_likes").
+					GetStatsHash(mock.Anything, "post:likes").
 					Return(likes, nil).Once()
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "post_comments").
+					GetStatsHash(mock.Anything, "post:comments").
 					Return(comments, nil).Once()
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "post_shares").
+					GetStatsHash(mock.Anything, "post:shares").
 					Return(shares, nil).Once()
 
 				deps.repo.EXPECT().
@@ -74,13 +74,13 @@ func (s *StatsUseCaseSuite) TestSyncPostStats() {
 					Return(nil).Once()
 
 				deps.cache.EXPECT().
-					ClearSyncedFields(mock.Anything, "post_likes", likes).
+					ClearSyncedFields(mock.Anything, "post:likes", likes).
 					Return(nil).Once()
 				deps.cache.EXPECT().
-					ClearSyncedFields(mock.Anything, "post_comments", comments).
+					ClearSyncedFields(mock.Anything, "post:comments", comments).
 					Return(nil).Once()
 				deps.cache.EXPECT().
-					ClearSyncedFields(mock.Anything, "post_shares", shares).
+					ClearSyncedFields(mock.Anything, "post:shares", shares).
 					Return(nil).Once()
 			},
 			wantErr: nil,
@@ -98,13 +98,13 @@ func (s *StatsUseCaseSuite) TestSyncPostStats() {
 			name: "Error fetching from cache",
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "post_likes").
+					GetStatsHash(mock.Anything, "post:likes").
 					Return(nil, assert.AnError).Once()
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "post_comments").
+					GetStatsHash(mock.Anything, "post:comments").
 					Return(map[int64]int64{}, nil).Maybe()
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "post_shares").
+					GetStatsHash(mock.Anything, "post:shares").
 					Return(map[int64]int64{}, nil).Maybe()
 			},
 			wantErr: assert.AnError,
@@ -171,10 +171,10 @@ func (s *StatsUseCaseSuite) TestSyncCommentStats() {
 				replies := map[int64]int64{1: 5, 3: 1}
 
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "comment_likes").
+					GetStatsHash(mock.Anything, "comment:likes").
 					Return(likes, nil).Once()
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "comment_replies").
+					GetStatsHash(mock.Anything, "comment:replies").
 					Return(replies, nil).Once()
 
 				deps.repo.EXPECT().
@@ -198,10 +198,10 @@ func (s *StatsUseCaseSuite) TestSyncCommentStats() {
 					Return(nil).Once()
 
 				deps.cache.EXPECT().
-					ClearSyncedFields(mock.Anything, "comment_likes", likes).
+					ClearSyncedFields(mock.Anything, "comment:likes", likes).
 					Return(nil).Once()
 				deps.cache.EXPECT().
-					ClearSyncedFields(mock.Anything, "comment_replies", replies).
+					ClearSyncedFields(mock.Anything, "comment:replies", replies).
 					Return(nil).Once()
 			},
 			wantErr: nil,
@@ -210,10 +210,10 @@ func (s *StatsUseCaseSuite) TestSyncCommentStats() {
 			name: "Error fetching from cache",
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "comment_likes").
+					GetStatsHash(mock.Anything, "comment:likes").
 					Return(nil, assert.AnError).Once()
 				deps.cache.EXPECT().
-					GetStatsHash(mock.Anything, "comment_replies").
+					GetStatsHash(mock.Anything, "comment:replies").
 					Return(map[int64]int64{}, nil).Maybe()
 			},
 			wantErr: assert.AnError,
@@ -415,13 +415,13 @@ func (s *StatsUseCaseSuite) TestGetPostsStats() {
 				commentsOffset := map[int64]int64{1: 2, 3: 5} // Post 3 is new, only in cache
 				sharesOffset := map[int64]int64{1: 1}
 				deps.cache.EXPECT().
-					GetStatsOffsets(mock.Anything, "post_likes", postIDs).
+					GetStatsOffsets(mock.Anything, "post:likes", postIDs).
 					Return(likesOffset, nil).Once()
 				deps.cache.EXPECT().
-					GetStatsOffsets(mock.Anything, "post_comments", postIDs).
+					GetStatsOffsets(mock.Anything, "post:comments", postIDs).
 					Return(commentsOffset, nil).Once()
 				deps.cache.EXPECT().
-					GetStatsOffsets(mock.Anything, "post_shares", postIDs).
+					GetStatsOffsets(mock.Anything, "post:shares", postIDs).
 					Return(sharesOffset, nil).Once()
 			},
 			want: map[int64]stats.PostStats{
@@ -477,7 +477,7 @@ func (s *StatsUseCaseSuite) TestGetPostsStats() {
 					GetPostsStats(mock.Anything, postIDs).
 					Return([]stats.PostStats{}, nil).Once()
 				deps.cache.EXPECT().
-					GetStatsOffsets(mock.Anything, "post_likes", postIDs).
+					GetStatsOffsets(mock.Anything, "post:likes", postIDs).
 					Return(nil, assert.AnError).Once()
 				deps.cache.EXPECT().
 					GetStatsOffsets(mock.Anything, mock.Anything, postIDs).
@@ -545,10 +545,10 @@ func (s *StatsUseCaseSuite) TestGetCommentsStats() {
 				likesOffset := map[int64]int64{1: 5, 2: -10}
 				repliesOffset := map[int64]int64{1: 2, 3: 5}
 				deps.cache.EXPECT().
-					GetStatsOffsets(mock.Anything, "comment_likes", commentIDs).
+					GetStatsOffsets(mock.Anything, "comment:likes", commentIDs).
 					Return(likesOffset, nil).Once()
 				deps.cache.EXPECT().
-					GetStatsOffsets(mock.Anything, "comment_replies", commentIDs).
+					GetStatsOffsets(mock.Anything, "comment:replies", commentIDs).
 					Return(repliesOffset, nil).Once()
 			},
 			want: map[int64]stats.CommentStats{

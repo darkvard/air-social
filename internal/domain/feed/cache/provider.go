@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	appcache "air-social/internal/cache"
 	"air-social/internal/domain/common"
 )
 
@@ -20,10 +21,10 @@ type Provider interface {
 }
 
 type provider struct {
-	cache common.SortedSetCache
+	cache appcache.SortedSetStore
 }
 
-func NewProvider(c common.SortedSetCache) *provider {
+func NewProvider(c appcache.SortedSetStore) *provider {
 	return &provider{cache: c}
 }
 
@@ -105,5 +106,5 @@ func (p *provider) GetFeedPostIDs(ctx context.Context, userID int64, cursor int6
 }
 
 func getFeedKey(userID int64) string {
-	return common.BuildCacheKey("social", "newsfeed", "user", userID)
+	return common.BuildCacheKey("feed", "newsfeed", userID)
 }

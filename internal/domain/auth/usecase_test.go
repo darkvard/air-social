@@ -95,7 +95,6 @@ func (s *authUseCaseSuite) TestRegister() {
 				TokenProvider:  nil, // Not used in Register
 				TokenRepo:      nil, // Not used in Register
 				UserFetch:      nil, // Not used in Register
-				Cache:          nil, // Not used in Register
 			})
 
 			if tc.setupMock != nil {

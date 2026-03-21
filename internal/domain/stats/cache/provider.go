@@ -4,20 +4,15 @@ import (
 	"context"
 	"strconv"
 
-	"air-social/internal/domain/common"
+	appcache "air-social/internal/cache"
 )
 
 const (
-	SystemName   = "social"
-	FeatureStats = "stats"
-)
-
-const (
-	StatePostLikes      = "post_likes"
-	StatePostShares     = "post_shares"
-	StatePostComments   = "post_comments"
-	StateCommentLikes   = "comment_likes"
-	StateCommentReplies = "comment_replies"
+	StatePostLikes      = "post:likes"
+	StatePostShares     = "post:shares"
+	StatePostComments   = "post:comments"
+	StateCommentLikes   = "comment:likes"
+	StateCommentReplies = "comment:replies"
 )
 
 type Provider interface {
@@ -29,10 +24,10 @@ type Provider interface {
 }
 
 type provider struct {
-	cache common.HashCache
+	cache appcache.HashStore
 }
 
-func NewProvider(c common.HashCache) *provider {
+func NewProvider(c appcache.HashStore) *provider {
 	return &provider{cache: c}
 }
 
@@ -118,6 +113,12 @@ func (p *provider) GetStatsOffsets(ctx context.Context, state string, ids []int6
 	return result, nil
 }
 
+// HashKey returns the Redis hash key for a given stat state.
+// Exported so callers can construct expected keys without duplicating logic.
+func HashKey(state string) string {
+	return "stats:" + state
+}
+
 func getKey(state string) string {
-	return common.BuildCacheKey(SystemName, FeatureStats, state, "")
+	return HashKey(state)
 }

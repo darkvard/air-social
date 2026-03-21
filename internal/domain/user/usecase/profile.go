@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"air-social/internal/domain/common"
+	appcache "air-social/internal/cache"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
@@ -15,7 +15,7 @@ type MediaConfirmer interface {
 
 type profileUseCase struct {
 	repo  user.Repository
-	cache common.BasicCache
+	cache appcache.TieredStore[*user.UserSummary]
 	media MediaConfirmer
 }
 

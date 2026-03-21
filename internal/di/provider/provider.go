@@ -20,7 +20,7 @@ type Provider struct {
 
 func NewProvider(cfg config.Config, adapter Adapter) Provider {
 	linkManager := newLinkManager(cfg)
-	tokenProvider := token.NewProvider(cfg.Token, adapter.Cache)
+	tokenProvider := token.NewProvider(cfg.Token, adapter.AuthCache)
 	verifyProvider := newVerifyProvider(adapter, linkManager.LinkProvider)
 	statsProvider := newStatsProvider(adapter)
 	feedCacheProvider := newFeedCacheProvider(adapter)
@@ -45,16 +45,16 @@ func newLinkManager(cfg config.Config) common.AppLinkManager {
 
 func newVerifyProvider(adapter Adapter, link common.LinkProvider) verify.Provider {
 	return verify.NewVerifyProvider(verify.Deps{
-		Cache: adapter.Cache,
+		Cache: adapter.AuthCache,
 		Event: adapter.EventPub,
 		Link:  link,
 	})
 }
 
 func newStatsProvider(adapter Adapter) statscache.Provider {
-	return statscache.NewProvider(adapter.Cache)
+	return statscache.NewProvider(adapter.HashStore)
 }
 
 func newFeedCacheProvider(adapter Adapter) feedcache.Provider {
-	return feedcache.NewProvider(adapter.Cache)
+	return feedcache.NewProvider(adapter.SortedSetStore)
 }

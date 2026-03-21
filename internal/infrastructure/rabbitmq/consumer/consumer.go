@@ -3,11 +3,13 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"sync"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
+	appcache "air-social/internal/cache"
 	"air-social/internal/domain/common"
 	"air-social/internal/infrastructure/rabbitmq/config"
 	"air-social/internal/infrastructure/rabbitmq/topology"
@@ -32,7 +34,7 @@ type Domain string
 
 type Deps struct {
 	Conn       *amqp.Connection
-	Cache      common.BasicCache
+	Cache      appcache.AtomicCache[string]
 	Dispatcher common.EventDispatcher
 	QueueCfg   config.QueueConfig
 	Domain     Domain
@@ -42,7 +44,7 @@ type Consumer struct {
 	conn        *amqp.Connection
 	ExchangeCfg config.ExchangeConfig
 	QueueCfg    config.QueueConfig
-	cache       common.BasicCache
+	cache       appcache.AtomicCache[string]
 	disp        common.EventDispatcher
 	domain      string
 
@@ -149,12 +151,12 @@ func (c *Consumer) handleFailure(ctx context.Context, msg amqp.Delivery, err err
 	}
 
 	retryKey := c.getRetryKey(msg.MessageId)
-	var retryCount int
-	_ = c.cache.Get(ctx, retryKey, &retryCount)
+	retryStr, _ := c.cache.Get(ctx, retryKey)
+	retryCount, _ := strconv.Atoi(retryStr)
 
 	if retryCount < defaultMaxRetry {
 		// track retry attempts in cache
-		_ = c.cache.Set(ctx, retryKey, retryCount+1, 1*time.Hour)
+		_ = c.cache.Set(ctx, retryKey, strconv.Itoa(retryCount+1), 1*time.Hour)
 		pkg.Log().Warnf("Worker [%s]: Message %s failed (attempt %d). Requeueing...", c.domain, msg.MessageId, retryCount+1)
 		// unlock: delete processedKey so the next retry can pass the SetNX check
 		_ = c.cache.Delete(ctx, c.getProcessedKey(msg.MessageId))

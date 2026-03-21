@@ -10,8 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	"air-social/internal/domain/common"
-	commonmocks "air-social/internal/domain/common/mocks"
+	cachemocks "air-social/internal/cache/mocks"
 	"air-social/internal/domain/stats/cache"
 )
 
@@ -25,7 +24,7 @@ func TestCacheProviderSuite(t *testing.T) {
 
 func (s *CacheProviderSuite) TestGetStatsHash() {
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockHashStore
 	}
 
 	tests := []struct {
@@ -39,7 +38,7 @@ func (s *CacheProviderSuite) TestGetStatsHash() {
 			name:  "Success",
 			state: cache.StatePostLikes,
 			setupMock: func(deps testDeps) {
-				key := common.BuildCacheKey(cache.SystemName, cache.FeatureStats, cache.StatePostLikes, "")
+				key := cache.HashKey(cache.StatePostLikes)
 				mockData := map[string]string{
 					"1": "10",
 					"2": "20",
@@ -60,7 +59,7 @@ func (s *CacheProviderSuite) TestGetStatsHash() {
 			name:  "Success with empty result from cache",
 			state: cache.StatePostLikes,
 			setupMock: func(deps testDeps) {
-				key := common.BuildCacheKey(cache.SystemName, cache.FeatureStats, cache.StatePostLikes, "")
+				key := cache.HashKey(cache.StatePostLikes)
 				deps.cache.EXPECT().
 					HGetAll(mock.Anything, key).
 					Return(map[string]string{}, nil).
@@ -73,7 +72,7 @@ func (s *CacheProviderSuite) TestGetStatsHash() {
 			name:  "Error from cache",
 			state: cache.StatePostLikes,
 			setupMock: func(deps testDeps) {
-				key := common.BuildCacheKey(cache.SystemName, cache.FeatureStats, cache.StatePostLikes, "")
+				key := cache.HashKey(cache.StatePostLikes)
 				deps.cache.EXPECT().
 					HGetAll(mock.Anything, key).
 					Return(nil, assert.AnError).
@@ -86,7 +85,7 @@ func (s *CacheProviderSuite) TestGetStatsHash() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := cachemocks.NewMockHashStore(s.T())
 			deps := testDeps{cache: mockCache}
 			tt.setupMock(deps)
 
@@ -106,7 +105,7 @@ func (s *CacheProviderSuite) TestGetStatsHash() {
 
 func (s *CacheProviderSuite) TestClearSyncedFields() {
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockHashStore
 	}
 
 	tests := []struct {
@@ -124,7 +123,7 @@ func (s *CacheProviderSuite) TestClearSyncedFields() {
 				2: 5,
 			},
 			setupMock: func(deps testDeps) {
-				key := common.BuildCacheKey(cache.SystemName, cache.FeatureStats, cache.StatePostLikes, "")
+				key := cache.HashKey(cache.StatePostLikes)
 				deps.cache.EXPECT().
 					Eval(mock.Anything, mock.AnythingOfType("string"), []string{key}, []interface{}{"1", int64(-10)}).
 					Return(nil, nil).
@@ -149,7 +148,7 @@ func (s *CacheProviderSuite) TestClearSyncedFields() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := cachemocks.NewMockHashStore(s.T())
 			deps := testDeps{cache: mockCache}
 			tt.setupMock(deps)
 
@@ -168,7 +167,7 @@ func (s *CacheProviderSuite) TestClearSyncedFields() {
 
 func (s *CacheProviderSuite) TestUpdateStatsHash() {
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockHashStore
 	}
 
 	type args struct {
@@ -187,7 +186,7 @@ func (s *CacheProviderSuite) TestUpdateStatsHash() {
 			name: "Success",
 			args: args{state: cache.StatePostLikes, id: 1, incr: 1},
 			setupMock: func(deps testDeps, a args) {
-				key := common.BuildCacheKey(cache.SystemName, cache.FeatureStats, a.state, "")
+				key := cache.HashKey(a.state)
 				field := strconv.FormatInt(a.id, 10)
 				deps.cache.EXPECT().
 					HIncrBy(mock.Anything, key, field, a.incr).
@@ -200,7 +199,7 @@ func (s *CacheProviderSuite) TestUpdateStatsHash() {
 			name: "Error from cache",
 			args: args{state: cache.StatePostLikes, id: 1, incr: 1},
 			setupMock: func(deps testDeps, a args) {
-				key := common.BuildCacheKey(cache.SystemName, cache.FeatureStats, a.state, "")
+				key := cache.HashKey(a.state)
 				field := strconv.FormatInt(a.id, 10)
 				deps.cache.EXPECT().
 					HIncrBy(mock.Anything, key, field, a.incr).
@@ -213,7 +212,7 @@ func (s *CacheProviderSuite) TestUpdateStatsHash() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := cachemocks.NewMockHashStore(s.T())
 			deps := testDeps{cache: mockCache}
 			tt.setupMock(deps, tt.args)
 
@@ -232,7 +231,7 @@ func (s *CacheProviderSuite) TestUpdateStatsHash() {
 
 func (s *CacheProviderSuite) TestGetStatsOffsets() {
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockHashStore
 	}
 
 	type args struct {
@@ -251,7 +250,7 @@ func (s *CacheProviderSuite) TestGetStatsOffsets() {
 			name: "Success",
 			args: args{state: cache.StatePostLikes, ids: []int64{1, 2, 3, 4}},
 			setupMock: func(deps testDeps, a args) {
-				key := common.BuildCacheKey(cache.SystemName, cache.FeatureStats, a.state, "")
+				key := cache.HashKey(a.state)
 				retVals := []string{"10", "-5", "", "not-an-int"}
 				deps.cache.EXPECT().
 					HMGet(mock.Anything, key, []string{"1", "2", "3", "4"}).
@@ -277,7 +276,7 @@ func (s *CacheProviderSuite) TestGetStatsOffsets() {
 			name: "Error from cache",
 			args: args{state: cache.StatePostLikes, ids: []int64{1}},
 			setupMock: func(deps testDeps, a args) {
-				key := common.BuildCacheKey(cache.SystemName, cache.FeatureStats, a.state, "")
+				key := cache.HashKey(a.state)
 				deps.cache.EXPECT().
 					HMGet(mock.Anything, key, []string{"1"}).
 					Return(nil, assert.AnError).
@@ -290,7 +289,7 @@ func (s *CacheProviderSuite) TestGetStatsOffsets() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := cachemocks.NewMockHashStore(s.T())
 			deps := testDeps{cache: mockCache}
 			tt.setupMock(deps, tt.args)
 

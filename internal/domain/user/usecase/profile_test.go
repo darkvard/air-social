@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	cachemocks "air-social/internal/cache/mocks"
 	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/user"
@@ -48,7 +49,7 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockCache[*user.UserSummary]
 	}
 
 	type args struct {
@@ -151,7 +152,7 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache, userCache := newTestCache(s.T())
 			mockMedia := mediamocks.NewMockUseCase(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
@@ -162,7 +163,7 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 
 			uc := usecase.NewProfileUseCase(usecase.Deps{
 				Repo:  mockRepo,
-				Cache: mockCache,
+				Cache: userCache,
 				Media: mockMedia,
 				Link:  mockLink,
 			})
@@ -209,7 +210,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockCache[*user.UserSummary]
 		media *usecasemocks.MockMediaConfirmer
 		link  *commonmocks.MockLinkProvider
 	}
@@ -343,7 +344,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache, userCache := newTestCache(s.T())
 			mockMedia := usecasemocks.NewMockMediaConfirmer(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
@@ -353,7 +354,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 				media: mockMedia,
 				link:  mockLink,
 			}
-			uc := usecase.NewProfileUseCase(usecase.Deps{Repo: mockRepo, Cache: mockCache, Media: mockMedia, Link: mockLink})
+			uc := usecase.NewProfileUseCase(usecase.Deps{Repo: mockRepo, Cache: userCache, Media: mockMedia, Link: mockLink})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -394,7 +395,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockCache[*user.UserSummary]
 		media *mediamocks.MockUseCase
 	}
 
@@ -487,7 +488,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache, userCache := newTestCache(s.T())
 			mockMedia := mediamocks.NewMockUseCase(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
@@ -499,7 +500,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 
 			uc := usecase.NewProfileUseCase(usecase.Deps{
 				Repo:  mockRepo,
-				Cache: mockCache,
+				Cache: userCache,
 				Media: mockMedia,
 				Link:  mockLink,
 			})

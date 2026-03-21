@@ -3,15 +3,21 @@ package usecase_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	appcache "air-social/internal/cache"
 	feedcachemocks "air-social/internal/domain/feed/cache/mocks"
 	"air-social/internal/domain/feed/usecase"
 	feedmocks "air-social/internal/domain/feed/usecase/mocks"
 )
+
+func newTestFollowerCache() appcache.TieredStore[[]int64] {
+	return appcache.NewTieredCache(appcache.NewMemCache[[]int64](10, time.Minute), nil, time.Minute, 0)
+}
 
 type commandUseCaseSuite struct {
 	suite.Suite
@@ -120,6 +126,7 @@ func (s *commandUseCaseSuite) TestDistributePost() {
 			uc := usecase.NewCommandUseCase(usecase.CommandDeps{
 				CacheProvider: mockCache,
 				FollowFetcher: mockFollow,
+				FollowerCache: newTestFollowerCache(),
 			})
 
 			if tc.setupMock != nil {
@@ -219,6 +226,7 @@ func (s *commandUseCaseSuite) TestRevokePost() {
 			uc := usecase.NewCommandUseCase(usecase.CommandDeps{
 				CacheProvider: mockCache,
 				FollowFetcher: mockFollow,
+				FollowerCache: newTestFollowerCache(),
 			})
 
 			if tc.setupMock != nil {

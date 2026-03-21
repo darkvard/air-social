@@ -14,14 +14,14 @@ func NewWorkers(infra *Infrastructure, adapter Adapter, prov Provider, usecase U
 	// 1. Email Worker
 	emailWorker := email.NewWorkerGroup(consumer.Deps{
 		Conn:       infra.Rabbit,
-		Cache:      adapter.Cache,
+		Cache:      adapter.AuthCache,
 		Dispatcher: email.NewDispatcher(adapter.Mailer),
 	})
 
 	// 2. Stats Worker
 	statsWorker := stats.NewWorkerGroup(consumer.Deps{
 		Conn:       infra.Rabbit,
-		Cache:      adapter.Cache,
+		Cache:      adapter.AuthCache,
 		Dispatcher: stats.NewDispatcher(prov.Stats),
 	})
 
@@ -31,7 +31,7 @@ func NewWorkers(infra *Infrastructure, adapter Adapter, prov Provider, usecase U
 	// 4. Feed Worker
 	feedWorker := feed.NewWorkerGroup(consumer.Deps{
 		Conn:       infra.Rabbit,
-		Cache:      adapter.Cache,
+		Cache:      adapter.AuthCache,
 		Dispatcher: feed.NewDispatcher(usecase.Feed),
 	})
 

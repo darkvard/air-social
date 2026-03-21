@@ -6,14 +6,14 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"air-social/internal/domain/common"
+	appcache "air-social/internal/cache"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
 
 type accountUseCase struct {
 	repo  user.Repository
-	cache common.BasicCache
+	cache appcache.TieredStore[*user.UserSummary]
 }
 
 func NewAccountUseCase(d Deps) *accountUseCase {

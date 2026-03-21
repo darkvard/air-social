@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"air-social/internal/cache"
 	"air-social/internal/domain/common"
 	"air-social/pkg"
 )
@@ -27,13 +28,13 @@ type Provider interface {
 }
 
 type Deps struct {
-	Cache common.BasicCache
+	Cache cache.AtomicCache[string]
 	Event common.EventPublisher
 	Link  common.LinkProvider
 }
 
 type provider struct {
-	cache common.BasicCache
+	cache cache.AtomicCache[string]
 	event common.EventPublisher
 	link  common.LinkProvider
 }
@@ -81,19 +82,11 @@ func (p *provider) SendPasswordReset(ctx context.Context, email string, username
 }
 
 func (p *provider) VerifyVerification(ctx context.Context, token string) (string, error) {
-	var email string
-	if err := p.cache.Get(ctx, getVerifyKey(token), &email); err != nil {
-		return "", err
-	}
-	return email, nil
+	return p.cache.Get(ctx, getVerifyKey(token))
 }
 
 func (p *provider) VerifyPasswordReset(ctx context.Context, token string) (string, error) {
-	var email string
-	if err := p.cache.Get(ctx, getResetKey(token), &email); err != nil {
-		return "", err
-	}
-	return email, nil
+	return p.cache.Get(ctx, getResetKey(token))
 }
 
 func (p *provider) InvalidatePasswordReset(ctx context.Context, token string) error {
@@ -101,7 +94,7 @@ func (p *provider) InvalidatePasswordReset(ctx context.Context, token string) er
 }
 
 func (p *provider) ValidateResetPasswordToken(ctx context.Context, token string) bool {
-	exists, err := p.cache.IsExist(ctx, getResetKey(token))
+	exists, err := p.cache.Exists(ctx, getResetKey(token))
 	if err != nil {
 		return false
 	}
@@ -109,9 +102,9 @@ func (p *provider) ValidateResetPasswordToken(ctx context.Context, token string)
 }
 
 func getVerifyKey(token string) string {
-	return common.BuildCacheKey("worker", "email", "verify", token)
+	return common.BuildCacheKey("auth", "email", "verify", token)
 }
 
 func getResetKey(token string) string {
-	return common.BuildCacheKey("worker", "email", "reset", token)
+	return common.BuildCacheKey("auth", "email", "reset", token)
 }

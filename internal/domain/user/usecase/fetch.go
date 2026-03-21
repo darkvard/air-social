@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	appcache "air-social/internal/cache"
 	"air-social/internal/domain/common"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
@@ -10,7 +11,7 @@ import (
 
 type fetchUseCase struct {
 	repo  user.Repository
-	cache common.BasicCache
+	cache appcache.TieredStore[*user.UserSummary]
 	link  common.LinkProvider
 }
 
@@ -23,37 +24,31 @@ func NewFetchUseCase(d Deps) *fetchUseCase {
 }
 
 func (u *fetchUseCase) GetByID(ctx context.Context, id int64) (*user.User, error) {
-	user, err := u.repo.GetByID(ctx, id)
+	usr, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
-	return user, nil
+	_ = u.cache.Set(ctx, GetKey(id), u.toUserSummary(usr))
+	return usr, nil
 }
 
 func (u *fetchUseCase) GetByEmail(ctx context.Context, email string) (*user.User, error) {
-	user, err := u.repo.GetByEmail(ctx, email)
+	usr, err := u.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
-	return user, nil
-
+	_ = u.cache.Set(ctx, GetKey(usr.ID), u.toUserSummary(usr))
+	return usr, nil
 }
 
 func (u *fetchUseCase) GetSummary(ctx context.Context, id int64) (*user.UserSummary, error) {
-	cached, err := getUserCache(ctx, u.cache, id)
-	if err == nil && cached != nil {
-		return cached, nil
-	}
-
-	user, err := u.repo.GetByID(ctx, id)
-	if err != nil {
-		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
-	}
-
-	summary := u.toUserSummary(user)
-	_ = setUserCache(ctx, u.cache, summary)
-
-	return summary, nil
+	return getUserCache(ctx, u.cache, id, func(ctx context.Context) (*user.UserSummary, error) {
+		d, err := u.repo.GetByID(ctx, id)
+		if err != nil {
+			return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
+		}
+		return u.toUserSummary(d), nil
+	})
 }
 
 func (u *fetchUseCase) toUserSummary(d *user.User) *user.UserSummary {

@@ -9,9 +9,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	"air-social/internal/cache"
+	cachemocks "air-social/internal/cache/mocks"
 	"air-social/internal/config"
 	"air-social/internal/domain/auth/token"
-	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/pkg"
 )
 
@@ -34,8 +35,15 @@ func (s *tokenProviderSuite) SetupSuite() {
 	}
 }
 
+func newMockAuthCache(t interface {
+	mock.TestingT
+	Cleanup(func())
+}) *cachemocks.MockAtomicCache[string] {
+	return cachemocks.NewMockAtomicCache[string](t)
+}
+
 func (s *tokenProviderSuite) TestGenerateAccessToken() {
-	mockCache := commonmocks.NewMockCache(s.T())
+	mockCache := newMockAuthCache(s.T())
 	p := token.NewProvider(s.cfg, mockCache)
 
 	res, err := p.GenerateAccessToken(1, "device-1")
@@ -46,10 +54,9 @@ func (s *tokenProviderSuite) TestGenerateAccessToken() {
 }
 
 func (s *tokenProviderSuite) TestVerifyAccessToken() {
-	mockCache := commonmocks.NewMockCache(s.T())
+	mockCache := newMockAuthCache(s.T())
 	p := token.NewProvider(s.cfg, mockCache)
 
-	// Generate valid token
 	res, _ := p.GenerateAccessToken(1, "device-1")
 
 	claims, access, err := p.VerifyAccessToken(res.Token)
@@ -61,7 +68,7 @@ func (s *tokenProviderSuite) TestVerifyAccessToken() {
 }
 
 func (s *tokenProviderSuite) TestVerifyAccessToken_Invalid() {
-	mockCache := commonmocks.NewMockCache(s.T())
+	mockCache := newMockAuthCache(s.T())
 	p := token.NewProvider(s.cfg, mockCache)
 
 	_, _, err := p.VerifyAccessToken("invalid.token.string")
@@ -72,7 +79,7 @@ func (s *tokenProviderSuite) TestIsBlacklisted() {
 	tokenStr := "access-token"
 
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockAtomicCache[string]
 	}
 
 	tests := []struct {
@@ -84,7 +91,7 @@ func (s *tokenProviderSuite) TestIsBlacklisted() {
 			name: "blacklisted",
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					IsExist(mock.Anything, mock.Anything).
+					Exists(mock.Anything, mock.Anything).
 					Return(true, nil).Once()
 			},
 			want: true,
@@ -93,7 +100,7 @@ func (s *tokenProviderSuite) TestIsBlacklisted() {
 			name: "not_blacklisted",
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					IsExist(mock.Anything, mock.Anything).
+					Exists(mock.Anything, mock.Anything).
 					Return(false, nil).Once()
 			},
 			want: false,
@@ -102,7 +109,7 @@ func (s *tokenProviderSuite) TestIsBlacklisted() {
 			name: "cache_error",
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					IsExist(mock.Anything, mock.Anything).
+					Exists(mock.Anything, mock.Anything).
 					Return(false, assert.AnError).Once()
 			},
 			want: false,
@@ -111,7 +118,7 @@ func (s *tokenProviderSuite) TestIsBlacklisted() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := newMockAuthCache(s.T())
 			p := token.NewProvider(s.cfg, mockCache)
 
 			if tc.setupMock != nil {
@@ -125,7 +132,7 @@ func (s *tokenProviderSuite) TestIsBlacklisted() {
 }
 
 func (s *tokenProviderSuite) TestAddToBlacklist() {
-	mockCache := commonmocks.NewMockCache(s.T())
+	mockCache := newMockAuthCache(s.T())
 	p := token.NewProvider(s.cfg, mockCache)
 
 	tokenStr := "token"
@@ -139,7 +146,8 @@ func (s *tokenProviderSuite) TestAddToBlacklist() {
 }
 
 func (s *tokenProviderSuite) TestVerifyRefreshToken() {
-	mockCache := commonmocks.NewMockCache(s.T())
+	mockCache := newMockAuthCache(s.T())
+	_ = cache.AtomicCache[string](mockCache) // compile-time interface check
 	p := token.NewProvider(s.cfg, mockCache)
 
 	// Valid

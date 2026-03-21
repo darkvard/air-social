@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
 
-	commonmocks "air-social/internal/domain/common/mocks"
+	cachemocks "air-social/internal/cache/mocks"
 	"air-social/internal/domain/user"
 	usermocks "air-social/internal/domain/user/mocks"
 	"air-social/internal/domain/user/usecase"
@@ -45,7 +45,7 @@ func (s *accountUseCaseSuite) TestVerifyEmail() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockCache[*user.UserSummary]
 	}
 
 	type args struct {
@@ -106,10 +106,10 @@ func (s *accountUseCaseSuite) TestVerifyEmail() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache, userCache := newTestCache(s.T())
 
 			deps := testDeps{repo: mockRepo, cache: mockCache}
-			uc := usecase.NewAccountUseCase(usecase.Deps{Repo: mockRepo, Cache: mockCache})
+			uc := usecase.NewAccountUseCase(usecase.Deps{Repo: mockRepo, Cache: userCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -135,7 +135,7 @@ func (s *accountUseCaseSuite) TestCreateUser() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockCache[*user.UserSummary]
 	}
 
 	type args struct {
@@ -189,10 +189,10 @@ func (s *accountUseCaseSuite) TestCreateUser() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache, userCache := newTestCache(s.T())
 
 			deps := testDeps{repo: mockRepo, cache: mockCache}
-			uc := usecase.NewAccountUseCase(usecase.Deps{Repo: mockRepo, Cache: mockCache})
+			uc := usecase.NewAccountUseCase(usecase.Deps{Repo: mockRepo, Cache: userCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -228,7 +228,7 @@ func (s *accountUseCaseSuite) TestChangePassword() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockCache[*user.UserSummary]
 	}
 
 	type args struct {
@@ -317,10 +317,10 @@ func (s *accountUseCaseSuite) TestChangePassword() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache, userCache := newTestCache(s.T())
 
 			deps := testDeps{repo: mockRepo, cache: mockCache}
-			uc := usecase.NewAccountUseCase(usecase.Deps{Repo: mockRepo, Cache: mockCache})
+			uc := usecase.NewAccountUseCase(usecase.Deps{Repo: mockRepo, Cache: userCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -352,7 +352,7 @@ func (s *accountUseCaseSuite) TestAuthenticate() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockCache[*user.UserSummary]
 	}
 
 	type args struct {
@@ -424,10 +424,10 @@ func (s *accountUseCaseSuite) TestAuthenticate() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache, userCache := newTestCache(s.T())
 
 			deps := testDeps{repo: mockRepo, cache: mockCache}
-			uc := usecase.NewAccountUseCase(usecase.Deps{Repo: mockRepo, Cache: mockCache})
+			uc := usecase.NewAccountUseCase(usecase.Deps{Repo: mockRepo, Cache: userCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)

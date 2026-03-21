@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
+	"air-social/internal/cache"
 	"air-social/internal/config"
 	"air-social/internal/domain/common"
 	"air-social/pkg"
@@ -29,10 +30,10 @@ type Provider interface {
 
 type provider struct {
 	cfg   config.TokenConfig
-	cache common.BasicCache
+	cache cache.AtomicCache[string]
 }
 
-func NewProvider(cfg config.TokenConfig, cache common.BasicCache) *provider {
+func NewProvider(cfg config.TokenConfig, cache cache.AtomicCache[string]) *provider {
 	return &provider{
 		cfg:   cfg,
 		cache: cache,
@@ -134,7 +135,7 @@ func (p *provider) VerifyRefreshToken(token RefreshToken) (bool, error) {
 }
 
 func (p *provider) IsBlacklisted(ctx context.Context, accessToken string) bool {
-	exists, err := p.cache.IsExist(ctx, getBlacklistTokenKey(accessToken))
+	exists, err := p.cache.Exists(ctx, getBlacklistTokenKey(accessToken))
 	if err != nil {
 		return false
 	}
@@ -150,5 +151,5 @@ func (p *provider) AddToBlacklist(ctx context.Context, accessToken string, expir
 }
 
 func getBlacklistTokenKey(token string) string {
-	return common.BuildCacheKey("user", "blacklist", "access_token", token)
+	return common.BuildCacheKey("auth", "blacklist", token)
 }

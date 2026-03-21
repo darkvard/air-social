@@ -1,6 +1,9 @@
 package provider
 
 import (
+	"time"
+
+	"air-social/internal/cache"
 	"air-social/internal/config"
 	"air-social/internal/domain/auth"
 	"air-social/internal/domain/comment"
@@ -46,12 +49,17 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	mediaUC := getMediaUseCase(deps)
 	userUC := getUserUseCase(deps, mediaUC)
 	authUC := getAuthUseCase(deps, userUC.Fetch, userUC.Account)
-	followUC := getFollowUseCase(deps, userUC.Fetch)
+
+	l1 := cache.NewMemCache[[]int64](1000, 2*time.Minute)
+	l2 := redis.NewRedisStore[[]int64](deps.Infra.Redis)
+	followerCache := cache.NewTieredCache(l1, l2, 2*time.Minute, 5*time.Minute)
+
+	followUC := getFollowUseCase(deps, userUC.Fetch, followerCache)
 	likeUC := getLikeUseCase(deps)
 	statsUC := getStatsUseCase(deps)
 	postUC := getPostUseCase(deps, mediaUC, statsUC, likeUC)
 	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC, statsUC)
-	feedUC := getFeedUseCase(deps, followUC, postUC)
+	feedUC := getFeedUseCase(deps, followUC, postUC, followerCache)
 
 	return UseCase{
 		Health:  healthUC,
@@ -93,9 +101,13 @@ func getMediaUseCase(deps UseCaseDeps) media.UseCase {
 }
 
 func getUserUseCase(deps UseCaseDeps, confirmer userusecase.MediaConfirmer) user.UseCase {
+	l1 := cache.NewMemCache[*user.UserSummary](500, 5*time.Minute)
+	l2 := redis.NewRedisStore[*user.UserSummary](deps.Infra.Redis)
+	userCache := cache.NewTieredCache(l1, l2, 5*time.Minute, 12*time.Hour)
+
 	d := userusecase.Deps{
 		Repo:  deps.Repo.User,
-		Cache: deps.Adapter.Cache,
+		Cache: userCache,
 		Link:  deps.Prov.Link.LinkProvider,
 		Media: confirmer,
 	}
@@ -114,16 +126,16 @@ func getAuthUseCase(deps UseCaseDeps, userFetch user.FetchUseCase, userAccount u
 			VerifyProvider: deps.Prov.Verify,
 			UserFetch:      userFetch,
 			UserAccount:    userAccount,
-			Cache:          deps.Adapter.Cache,
 		},
 	)
 }
 
-func getFollowUseCase(deps UseCaseDeps, fetcher follow.UserFetcher) follow.UseCase {
+func getFollowUseCase(deps UseCaseDeps, fetcher follow.UserFetcher, cacheInvalidator follow.CacheInvalidator) follow.UseCase {
 	return follow.NewUseCase(
 		follow.Deps{
-			FollowRepo:  deps.Repo.Follow,
-			UserFetcher: fetcher,
+			FollowRepo:       deps.Repo.Follow,
+			UserFetcher:      fetcher,
+			CacheInvalidator: cacheInvalidator,
 		},
 	)
 }
@@ -177,11 +189,12 @@ func getStatsUseCase(deps UseCaseDeps) stats.UseCase {
 	)
 }
 
-func getFeedUseCase(deps UseCaseDeps, followFetcher feedusecase.FollowFetcher, postFetcher feedusecase.PostFetcher) feed.UseCase {
+func getFeedUseCase(deps UseCaseDeps, followFetcher feedusecase.FollowFetcher, postFetcher feedusecase.PostFetcher, followerCache cache.TieredStore[[]int64]) feed.UseCase {
 	return feed.UseCase{
 		Command: feedusecase.NewCommandUseCase(feedusecase.CommandDeps{
 			CacheProvider: deps.Prov.Feed,
 			FollowFetcher: followFetcher,
+			FollowerCache: followerCache,
 		}),
 		Query: feedusecase.NewQueryUseCase(feedusecase.QueryDeps{
 			CacheProvider: deps.Prov.Feed,

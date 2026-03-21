@@ -31,6 +31,12 @@ func Auth(provider token.Provider) gin.HandlerFunc {
 			return
 		}
 
+		if provider.IsBlacklisted(c.Request.Context(), jwtToken) {
+			pkg.Unauthorized(c, "token has been revoked")
+			c.Abort()
+			return
+		}
+
 		c.Set(claimsKey, claims)
 		c.Set(accessKey, access)
 		c.Next()

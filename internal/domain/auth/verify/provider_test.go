@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	cachemocks "air-social/internal/cache/mocks"
 	"air-social/internal/domain/auth/verify"
 	"air-social/internal/domain/common"
 	commonmocks "air-social/internal/domain/common/mocks"
@@ -23,6 +24,13 @@ func TestVerifyProviderSuite(t *testing.T) {
 	suite.Run(t, new(verifyProviderSuite))
 }
 
+func newMockAuthCache(t interface {
+	mock.TestingT
+	Cleanup(func())
+}) *cachemocks.MockAtomicCache[string] {
+	return cachemocks.NewMockAtomicCache[string](t)
+}
+
 func (s *verifyProviderSuite) TestSendVerification() {
 	var (
 		email    = "test@example.com"
@@ -31,7 +39,7 @@ func (s *verifyProviderSuite) TestSendVerification() {
 	)
 
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockAtomicCache[string]
 		event *commonmocks.MockEventPublisher
 		link  *commonmocks.MockLinkProvider
 	}
@@ -83,15 +91,11 @@ func (s *verifyProviderSuite) TestSendVerification() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := newMockAuthCache(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
-			deps := testDeps{
-				cache: mockCache,
-				event: mockEvent,
-				link:  mockLink,
-			}
+			deps := testDeps{cache: mockCache, event: mockEvent, link: mockLink}
 			p := verify.NewVerifyProvider(verify.Deps{
 				Cache: mockCache,
 				Event: mockEvent,
@@ -120,9 +124,7 @@ func (s *verifyProviderSuite) TestVerifyVerification() {
 	)
 
 	type testDeps struct {
-		cache *commonmocks.MockCache
-		event *commonmocks.MockEventPublisher
-		link  *commonmocks.MockLinkProvider
+		cache *cachemocks.MockAtomicCache[string]
 	}
 
 	type args struct {
@@ -146,43 +148,30 @@ func (s *verifyProviderSuite) TestVerifyVerification() {
 			args: args{ctx: context.Background(), token: token},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					Get(mock.Anything, mock.Anything, mock.Anything).
-					Return(pkg.ErrNotFound).Once()
+					Get(mock.Anything, mock.Anything).
+					Return("", pkg.ErrNotFound).Once()
 			},
-			want: want{
-				email: "",
-				err:   pkg.ErrNotFound,
-			},
+			want: want{email: "", err: pkg.ErrNotFound},
 		},
 		{
 			name: "success",
 			args: args{ctx: context.Background(), token: token},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					Get(mock.Anything, mock.Anything, mock.Anything).
-					Run(func(_ context.Context, _ string, dest interface{}) {
-						*dest.(*string) = email
-					}).
-					Return(nil).Once()
+					Get(mock.Anything, mock.Anything).
+					Return(email, nil).Once()
 			},
-			want: want{
-				email: email,
-				err:   nil,
-			},
+			want: want{email: email, err: nil},
 		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := newMockAuthCache(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
-			deps := testDeps{
-				cache: mockCache,
-				event: mockEvent,
-				link:  mockLink,
-			}
+			deps := testDeps{cache: mockCache}
 			p := verify.NewVerifyProvider(verify.Deps{
 				Cache: mockCache,
 				Event: mockEvent,
@@ -207,7 +196,7 @@ func (s *verifyProviderSuite) TestVerifyVerification() {
 }
 
 func (s *verifyProviderSuite) TestInvalidatePasswordReset() {
-	mockCache := commonmocks.NewMockCache(s.T())
+	mockCache := newMockAuthCache(s.T())
 	p := verify.NewVerifyProvider(verify.Deps{Cache: mockCache})
 
 	token := "token"
@@ -227,7 +216,7 @@ func (s *verifyProviderSuite) TestSendPasswordReset() {
 	)
 
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockAtomicCache[string]
 		event *commonmocks.MockEventPublisher
 		link  *commonmocks.MockLinkProvider
 	}
@@ -279,15 +268,11 @@ func (s *verifyProviderSuite) TestSendPasswordReset() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := newMockAuthCache(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
-			deps := testDeps{
-				cache: mockCache,
-				event: mockEvent,
-				link:  mockLink,
-			}
+			deps := testDeps{cache: mockCache, event: mockEvent, link: mockLink}
 			p := verify.NewVerifyProvider(verify.Deps{
 				Cache: mockCache,
 				Event: mockEvent,
@@ -316,7 +301,7 @@ func (s *verifyProviderSuite) TestVerifyPasswordReset() {
 	)
 
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockAtomicCache[string]
 	}
 
 	type args struct {
@@ -340,41 +325,30 @@ func (s *verifyProviderSuite) TestVerifyPasswordReset() {
 			args: args{ctx: context.Background(), token: token},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					Get(mock.Anything, mock.Anything, mock.Anything).
-					Return(pkg.ErrNotFound).Once()
+					Get(mock.Anything, mock.Anything).
+					Return("", pkg.ErrNotFound).Once()
 			},
-			want: want{
-				email: "",
-				err:   pkg.ErrNotFound,
-			},
+			want: want{email: "", err: pkg.ErrNotFound},
 		},
 		{
 			name: "success",
 			args: args{ctx: context.Background(), token: token},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					Get(mock.Anything, mock.Anything, mock.Anything).
-					Run(func(_ context.Context, _ string, dest interface{}) {
-						*dest.(*string) = email
-					}).
-					Return(nil).Once()
+					Get(mock.Anything, mock.Anything).
+					Return(email, nil).Once()
 			},
-			want: want{
-				email: email,
-				err:   nil,
-			},
+			want: want{email: email, err: nil},
 		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := newMockAuthCache(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
-			deps := testDeps{
-				cache: mockCache,
-			}
+			deps := testDeps{cache: mockCache}
 			p := verify.NewVerifyProvider(verify.Deps{
 				Cache: mockCache,
 				Event: mockEvent,
@@ -402,7 +376,7 @@ func (s *verifyProviderSuite) TestValidateResetPasswordToken() {
 	var token = "valid-token"
 
 	type testDeps struct {
-		cache *commonmocks.MockCache
+		cache *cachemocks.MockAtomicCache[string]
 	}
 
 	type args struct {
@@ -421,7 +395,7 @@ func (s *verifyProviderSuite) TestValidateResetPasswordToken() {
 			args: args{ctx: context.Background(), token: token},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					IsExist(mock.Anything, mock.Anything).
+					Exists(mock.Anything, mock.Anything).
 					Return(true, nil).Once()
 			},
 			want: true,
@@ -431,7 +405,7 @@ func (s *verifyProviderSuite) TestValidateResetPasswordToken() {
 			args: args{ctx: context.Background(), token: token},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					IsExist(mock.Anything, mock.Anything).
+					Exists(mock.Anything, mock.Anything).
 					Return(false, nil).Once()
 			},
 			want: false,
@@ -441,7 +415,7 @@ func (s *verifyProviderSuite) TestValidateResetPasswordToken() {
 			args: args{ctx: context.Background(), token: token},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					IsExist(mock.Anything, mock.Anything).
+					Exists(mock.Anything, mock.Anything).
 					Return(false, assert.AnError).Once()
 			},
 			want: false,
@@ -450,13 +424,11 @@ func (s *verifyProviderSuite) TestValidateResetPasswordToken() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := commonmocks.NewMockCache(s.T())
+			mockCache := newMockAuthCache(s.T())
 			mockEvent := commonmocks.NewMockEventPublisher(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
-			deps := testDeps{
-				cache: mockCache,
-			}
+			deps := testDeps{cache: mockCache}
 			p := verify.NewVerifyProvider(verify.Deps{
 				Cache: mockCache,
 				Event: mockEvent,

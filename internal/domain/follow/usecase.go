@@ -22,20 +22,27 @@ type UserFetcher interface {
 	GetSummary(ctx context.Context, id int64) (*user.UserSummary, error)
 }
 
+type CacheInvalidator interface {
+	Invalidate(ctx context.Context, key string) error
+}
+
 type Deps struct {
-	FollowRepo  Repository
-	UserFetcher UserFetcher
+	FollowRepo       Repository
+	UserFetcher      UserFetcher
+	CacheInvalidator CacheInvalidator
 }
 
 type usecase struct {
-	followRepo  Repository
-	userFetcher UserFetcher
+	followRepo       Repository
+	userFetcher      UserFetcher
+	cacheInvalidator CacheInvalidator
 }
 
 func NewUseCase(deps Deps) *usecase {
 	return &usecase{
-		followRepo:  deps.FollowRepo,
-		userFetcher: deps.UserFetcher,
+		followRepo:       deps.FollowRepo,
+		userFetcher:      deps.UserFetcher,
+		cacheInvalidator: deps.CacheInvalidator,
 	}
 }
 
@@ -43,14 +50,26 @@ func (u *usecase) Follow(ctx context.Context, followerID int64, followeeID int64
 	if err := u.validateFollow(ctx, followerID, followeeID); err != nil {
 		return err
 	}
-	return pkg.OrInternalError(u.followRepo.Create(ctx, followerID, followeeID))
+	if err := pkg.OrInternalError(u.followRepo.Create(ctx, followerID, followeeID)); err != nil {
+		return err
+	}
+	if u.cacheInvalidator != nil {
+		_ = u.cacheInvalidator.Invalidate(ctx, common.BuildCacheKey("follow", "followers", followeeID))
+	}
+	return nil
 }
 
 func (u *usecase) Unfollow(ctx context.Context, followerID int64, followeeID int64) error {
 	if err := u.validateFollow(ctx, followerID, followeeID); err != nil {
 		return err
 	}
-	return pkg.OrInternalError(u.followRepo.Delete(ctx, followerID, followeeID))
+	if err := pkg.OrInternalError(u.followRepo.Delete(ctx, followerID, followeeID)); err != nil {
+		return err
+	}
+	if u.cacheInvalidator != nil {
+		_ = u.cacheInvalidator.Invalidate(ctx, common.BuildCacheKey("follow", "followers", followeeID))
+	}
+	return nil
 }
 
 func (u *usecase) GetFollowings(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error) {
