@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"air-social/internal/domain/feed/cache"
-	"air-social/pkg"
 )
 
 type FollowFetcher interface {
@@ -31,7 +30,6 @@ func NewCommandUseCase(deps CommandDeps) *commandUseCase {
 func (u *commandUseCase) DistributePost(ctx context.Context, postID int64, authorID int64, timestamp int64) error {
 	followerIDs, err := u.followFetcher.GetFollowerIDs(ctx, authorID)
 	if err != nil {
-		pkg.Log().Error("failed to fetch followers for feed distribution", err)
 		return err
 	}
 
@@ -39,7 +37,6 @@ func (u *commandUseCase) DistributePost(ctx context.Context, postID int64, autho
 
 	err = u.cacheProvider.PushPostToFeeds(ctx, followerIDs, postID, float64(timestamp))
 	if err != nil {
-		pkg.Log().Error("failed to push post to feeds", err)
 		return err
 	}
 

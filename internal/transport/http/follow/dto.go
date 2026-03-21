@@ -1,6 +1,8 @@
 package follow
 
-import "air-social/internal/domain/common"
+import (
+	"air-social/internal/domain/common"
+)
 
 type PathIDParam struct {
 	ID int64 `uri:"id" binding:"required,gt=0"`
@@ -27,4 +29,22 @@ type UserFollowResponse struct {
 	IsVerified  bool   `json:"is_verified"`
 	IsFollowing bool   `json:"is_following"`
 	IsFollower  bool   `json:"is_follower"`
+}
+
+type FollowListResponse struct {
+	Data       []UserFollowResponse `json:"data"`
+	Total      int64                `json:"total"`
+	Page       int                  `json:"page"`
+	Limit      int                  `json:"limit"`
+	TotalPages int                  `json:"total_pages"`
+}
+
+func toFollowListResponse(result common.OffsetPaginatedResult[UserFollowResponse]) FollowListResponse {
+	return FollowListResponse{
+		Data:       result.Data,
+		Total:      result.Total,
+		Page:       result.Page,
+		Limit:      result.Limit,
+		TotalPages: result.TotalPages,
+	}
 }

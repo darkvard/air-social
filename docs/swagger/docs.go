@@ -1787,8 +1787,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created"
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -1930,7 +1930,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse"
+                            "$ref": "#/definitions/internal_transport_http_follow.FollowListResponse"
                         }
                     },
                     "400": {
@@ -2011,7 +2011,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse"
+                            "$ref": "#/definitions/internal_transport_http_follow.FollowListResponse"
                         }
                     },
                     "400": {
@@ -2108,30 +2108,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "air-social_internal_domain_common.OffsetPaginatedResult-internal_transport_http_follow_UserFollowResponse": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_transport_http_follow.UserFollowResponse"
-                    }
-                },
-                "limit": {
-                    "type": "integer"
-                },
-                "page": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer",
-                    "format": "int64"
-                },
-                "totalPages": {
-                    "type": "integer"
-                }
-            }
-        },
         "air-social_internal_domain_media.UploadDomain": {
             "type": "string",
             "enum": [
@@ -2577,6 +2553,29 @@ const docTemplate = `{
                 },
                 "meta": {
                     "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                }
+            }
+        },
+        "internal_transport_http_follow.FollowListResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_follow.UserFollowResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
                 }
             }
         },

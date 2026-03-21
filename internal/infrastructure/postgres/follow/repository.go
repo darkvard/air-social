@@ -172,8 +172,6 @@ func (r *repository) fetchFollows(ctx context.Context, query string, params foll
 		TotalCount  int64  `db:"total_count"`
 	}
 
-	pkg.Log().Infow("fetchFollows", "query", query, "sort", params.Paging.Sort, "limit", params.Paging.Limit, "offset", params.Paging.GetOffset())
-
 	var rows []row
 	err := r.db.SelectContext(ctx, &rows, query,
 		params.ViewerID,

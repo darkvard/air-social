@@ -30,7 +30,7 @@ func NewHandler(provider common.LinkProvider, usecase follow.UseCase) Handler {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			id	path		int	true	"User ID"
-//	@Success		201	{object}	nil
+//	@Success		204	{object}	nil
 //	@Failure		400	{object}	pkg.Response
 //	@Failure		401	{object}	pkg.Response
 //	@Failure		404	{object}	pkg.Response
@@ -53,7 +53,7 @@ func (h Handler) Follow(c *gin.Context) {
 		pkg.HandleServiceError(c, err)
 		return
 	}
-	pkg.Created(c, nil)
+	pkg.NoContent(c)
 }
 
 // Unfollow godoc
@@ -103,7 +103,7 @@ func (h Handler) Unfollow(c *gin.Context) {
 //	@Param			page	query		int		false	"Page number"		default(1)
 //	@Param			limit	query		int		false	"Items per page"	default(10)
 //	@Param			sort	query		string	false	"Sort order"		Enums(latest, oldest, name_asc, name_desc)
-//	@Success		200		{object}	common.OffsetPaginatedResult[UserFollowResponse]
+//	@Success		200		{object}	FollowListResponse
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -121,12 +121,12 @@ func (h Handler) GetFollowers(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, common.NewOffsetPaginatedResult(
+	pkg.Success(c, toFollowListResponse(common.NewOffsetPaginatedResult(
 		h.toUserFollowResponse(result.Data),
 		result.Total,
 		result.Page,
 		result.Limit,
-	))
+	)))
 }
 
 // GetFollowings godoc
@@ -141,7 +141,7 @@ func (h Handler) GetFollowers(c *gin.Context) {
 //	@Param			page	query		int		false	"Page number"		default(1)
 //	@Param			limit	query		int		false	"Items per page"	default(10)
 //	@Param			sort	query		string	false	"Sort order"		Enums(latest, oldest, name_asc, name_desc)
-//	@Success		200		{object}	common.OffsetPaginatedResult[UserFollowResponse]
+//	@Success		200		{object}	FollowListResponse
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -159,12 +159,12 @@ func (h Handler) GetFollowings(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, common.NewOffsetPaginatedResult(
+	pkg.Success(c, toFollowListResponse(common.NewOffsetPaginatedResult(
 		h.toUserFollowResponse(result.Data),
 		result.Total,
 		result.Page,
 		result.Limit,
-	))
+	)))
 }
 
 func (h Handler) toUserFollowResponse(user []follow.FollowUser) []UserFollowResponse {
