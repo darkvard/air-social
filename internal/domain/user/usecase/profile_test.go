@@ -8,14 +8,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	cachemocks "air-social/internal/cache/mocks"
 	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/user"
 	mediamocks "air-social/internal/domain/media/mocks"
 	usermocks "air-social/internal/domain/user/mocks"
 	"air-social/internal/domain/user/usecase"
-	usecasemocks "air-social/internal/domain/user/usecase/mocks"
 	"air-social/pkg"
 )
 
@@ -49,7 +47,7 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *cachemocks.MockCache[*user.UserSummary]
+		cache *usermocks.MockCache
 	}
 
 	type args struct {
@@ -94,7 +92,7 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 					Return(nil).Once()
 
 				deps.cache.EXPECT().
-					Delete(mock.Anything, mock.Anything).
+					Invalidate(mock.Anything, mock.Anything).
 					Return(nil).Once()
 			},
 			want: &user.User{
@@ -152,7 +150,7 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache, userCache := newTestCache(s.T())
+			mockCache := usermocks.NewMockCache(s.T())
 			mockMedia := mediamocks.NewMockUseCase(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
@@ -161,9 +159,9 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 				cache: mockCache,
 			}
 
-			uc := usecase.NewProfileUseCase(usecase.Deps{
+			uc := usecase.NewProfileUseCase(user.Deps{
 				Repo:  mockRepo,
-				Cache: userCache,
+				Cache: mockCache,
 				Media: mockMedia,
 				Link:  mockLink,
 			})
@@ -210,8 +208,8 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *cachemocks.MockCache[*user.UserSummary]
-		media *usecasemocks.MockMediaConfirmer
+		cache *usermocks.MockCache
+		media *usermocks.MockMediaConfirmer
 		link  *commonmocks.MockLinkProvider
 	}
 
@@ -295,7 +293,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 					Return(nil).Once()
 
 				deps.cache.EXPECT().
-					Delete(mock.Anything, usecase.GetKey(userID)).
+					Invalidate(mock.Anything, userID).
 					Return(nil).Once()
 
 				deps.repo.EXPECT().
@@ -322,7 +320,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 					Return(nil).Once()
 
 				deps.cache.EXPECT().
-					Delete(mock.Anything, usecase.GetKey(userID)).
+					Invalidate(mock.Anything, userID).
 					Return(nil).Once()
 
 				deps.repo.EXPECT().
@@ -331,7 +329,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 
 				// This is a duplicate mock call in the original code, I'll keep it but it should be reviewed.
 				// deps.cache.EXPECT().
-				// 	Delete(mock.Anything, usecase.GetKey(userID)).
+				// 	Invalidate(mock.Anything, userID).
 				// 	Return(nil).Once()
 			},
 			want: want{
@@ -344,8 +342,8 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache, userCache := newTestCache(s.T())
-			mockMedia := usecasemocks.NewMockMediaConfirmer(s.T())
+			mockCache := usermocks.NewMockCache(s.T())
+			mockMedia := usermocks.NewMockMediaConfirmer(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
@@ -354,7 +352,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 				media: mockMedia,
 				link:  mockLink,
 			}
-			uc := usecase.NewProfileUseCase(usecase.Deps{Repo: mockRepo, Cache: userCache, Media: mockMedia, Link: mockLink})
+			uc := usecase.NewProfileUseCase(user.Deps{Repo: mockRepo, Cache: mockCache, Media: mockMedia, Link: mockLink})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -395,7 +393,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *cachemocks.MockCache[*user.UserSummary]
+		cache *usermocks.MockCache
 		media *mediamocks.MockUseCase
 	}
 
@@ -424,7 +422,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 					Return(nil).Once()
 
 				deps.cache.EXPECT().
-					Delete(mock.Anything, mock.Anything).
+					Invalidate(mock.Anything, mock.Anything).
 					Return(nil).Once()
 
 				deps.repo.EXPECT().
@@ -473,7 +471,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 					Return(nil).Once()
 
 				deps.cache.EXPECT().
-					Delete(mock.Anything, mock.Anything).
+					Invalidate(mock.Anything, mock.Anything).
 					Return(nil).Once()
 
 				deps.repo.EXPECT().
@@ -488,7 +486,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache, userCache := newTestCache(s.T())
+			mockCache := usermocks.NewMockCache(s.T())
 			mockMedia := mediamocks.NewMockUseCase(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
@@ -498,9 +496,9 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 				media: mockMedia,
 			}
 
-			uc := usecase.NewProfileUseCase(usecase.Deps{
+			uc := usecase.NewProfileUseCase(user.Deps{
 				Repo:  mockRepo,
-				Cache: userCache,
+				Cache: mockCache,
 				Media: mockMedia,
 				Link:  mockLink,
 			})

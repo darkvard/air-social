@@ -9,7 +9,7 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	appcache "air-social/internal/cache"
+	"air-social/internal/cache"
 	"air-social/internal/domain/common"
 	"air-social/internal/infrastructure/rabbitmq/config"
 	"air-social/internal/infrastructure/rabbitmq/topology"
@@ -34,7 +34,7 @@ type Domain string
 
 type Deps struct {
 	Conn       *amqp.Connection
-	Cache      appcache.AtomicCache[string]
+	Cache      cache.AtomicCache[string]
 	Dispatcher common.EventDispatcher
 	QueueCfg   config.QueueConfig
 	Domain     Domain
@@ -44,7 +44,7 @@ type Consumer struct {
 	conn        *amqp.Connection
 	ExchangeCfg config.ExchangeConfig
 	QueueCfg    config.QueueConfig
-	cache       appcache.AtomicCache[string]
+	cache       cache.AtomicCache[string]
 	disp        common.EventDispatcher
 	domain      string
 

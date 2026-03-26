@@ -3,23 +3,18 @@ package usecase
 import (
 	"context"
 
-	appcache "air-social/internal/cache"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
 
-type MediaConfirmer interface {
-	ConfirmUpload(ctx context.Context, params []media.ConfirmParams) ([]string, error)
-}
-
 type profileUseCase struct {
 	repo  user.Repository
-	cache appcache.TieredStore[*user.UserSummary]
-	media MediaConfirmer
+	cache user.Cache
+	media user.MediaConfirmer
 }
 
-func NewProfileUseCase(d Deps) *profileUseCase {
+func NewProfileUseCase(d user.Deps) *profileUseCase {
 	return &profileUseCase{
 		repo:  d.Repo,
 		cache: d.Cache,
@@ -53,7 +48,7 @@ func (u *profileUseCase) UpdateProfile(ctx context.Context, params user.UpdatePa
 	if err := u.repo.UpdateProfile(ctx, user); err != nil {
 		return empty, pkg.OrInternalError(err)
 	}
-	_ = clearUserCache(ctx, u.cache, user.ID)
+	_ = u.cache.Invalidate(ctx, user.ID)
 
 	return user, nil
 }
@@ -102,6 +97,6 @@ func (u *profileUseCase) updateImageUrl(
 		return pkg.OrInternalError(err)
 	}
 
-	_ = clearUserCache(ctx, u.cache, params.EntityID)
+	_ = u.cache.Invalidate(ctx, params.EntityID)
 	return nil
 }

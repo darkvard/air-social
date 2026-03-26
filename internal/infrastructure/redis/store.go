@@ -8,7 +8,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	appcache "air-social/internal/cache"
+	"air-social/internal/cache"
 )
 
 // RedisStore is a generic L2 cache backed by Redis String keys with JSON encoding.
@@ -23,13 +23,13 @@ func NewRedisStore[V any](client *redis.Client) *RedisStore[V] {
 }
 
 // Get decodes the JSON value stored at the key into V.
-// Returns appcache.ErrCacheMiss if the key does not exist or has expired.
+// Returns cache.ErrCacheMiss if the key does not exist or has expired.
 func (s *RedisStore[V]) Get(ctx context.Context, key string) (V, error) {
 	var zero V
 	data, err := s.client.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return zero, appcache.ErrCacheMiss
+			return zero, cache.ErrCacheMiss
 		}
 		return zero, err
 	}

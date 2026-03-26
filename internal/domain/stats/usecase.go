@@ -6,7 +6,6 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"air-social/internal/domain/stats/cache"
 	"air-social/pkg"
 )
 
@@ -30,12 +29,12 @@ type UseCase interface {
 
 type Deps struct {
 	Repo  Repository
-	Cache cache.Provider
+	Cache Cache
 }
 
 type usecase struct {
 	repo  Repository
-	cache cache.Provider
+	cache Cache
 }
 
 func NewUseCase(deps Deps) *usecase {
@@ -45,7 +44,7 @@ func NewUseCase(deps Deps) *usecase {
 // SyncPostStats executes the Write-Behind sync flow for posts.
 // Concept: Concurrent Fetch -> Deduplicate IDs -> Assemble Batch -> Bulk Upsert
 func (u *usecase) SyncPostStats(ctx context.Context) error {
-	states := []string{cache.StatePostLikes, cache.StatePostComments, cache.StatePostShares}
+	states := []string{StatePostLikes, StatePostComments, StatePostShares}
 	maps, err := u.fetchMultipleHashes(ctx, states...)
 	if err != nil {
 		return pkg.NewError(err, "failed to fetch post stats from cache")
@@ -83,7 +82,7 @@ func (u *usecase) SyncPostStats(ctx context.Context) error {
 
 // SyncCommentStats executes the Write-Behind sync flow for comments.
 func (u *usecase) SyncCommentStats(ctx context.Context) error {
-	states := []string{cache.StateCommentLikes, cache.StateCommentReplies}
+	states := []string{StateCommentLikes, StateCommentReplies}
 	maps, err := u.fetchMultipleHashes(ctx, states...)
 	if err != nil {
 		return pkg.NewError(err, "failed to fetch comment stats from cache")
@@ -170,7 +169,7 @@ func (u *usecase) GetPostsStats(ctx context.Context, postIDs []int64) (map[int64
 	// get from cache
 	g.Go(func() error {
 		var err error
-		states := []string{cache.StatePostLikes, cache.StatePostComments, cache.StatePostShares}
+		states := []string{StatePostLikes, StatePostComments, StatePostShares}
 		cacheOffsets, err = u.fetchMultipleOffsets(gCtx, states, postIDs)
 		return err
 	})
@@ -228,7 +227,7 @@ func (u *usecase) GetCommentsStats(ctx context.Context, commentIDs []int64) (map
 	// get from cache
 	g.Go(func() error {
 		var err error
-		states := []string{cache.StateCommentLikes, cache.StateCommentReplies}
+		states := []string{StateCommentLikes, StateCommentReplies}
 		cacheOffsets, err = u.fetchMultipleOffsets(gCtx, states, commentIDs)
 		return err
 	})

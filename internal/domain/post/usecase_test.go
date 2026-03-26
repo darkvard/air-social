@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
+	appcache "air-social/internal/cache"
 	"air-social/internal/domain/common"
 	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/post"
@@ -15,6 +16,12 @@ import (
 	"air-social/internal/domain/stats"
 	"air-social/pkg"
 )
+
+// newTestPostCache returns a passthrough Cache for tests that don't focus on
+// cache behavior. Both L1 and L2 are nil so GetOrLoad always calls the loader; Set/Invalidate are no-ops.
+func newTestPostCache() post.Cache {
+	return post.NewCache(appcache.NewTieredCache[post.Post](nil, nil, 0, 0))
+}
 
 type postUseCaseSuite struct {
 	suite.Suite
@@ -146,6 +153,7 @@ func (s *postUseCaseSuite) TestGetPostDetail() {
 				Event:         mockEvent,
 				StatsFetcher:  mockStats,
 				LikeChecker:   mockLike,
+				PostCache:     newTestPostCache(),
 			})
 
 			if tc.setupMock != nil {
@@ -372,6 +380,7 @@ func (s *postUseCaseSuite) TestCreatePost() {
 				Event:         mockEvent,
 				StatsFetcher:  mockStats,
 				LikeChecker:   mockLike,
+				PostCache:     newTestPostCache(),
 			})
 
 			if tc.setupMock != nil {
@@ -648,6 +657,7 @@ func (s *postUseCaseSuite) TestUpdatePost() {
 				Event:         mockEvent,
 				StatsFetcher:  mockStats,
 				LikeChecker:   mockLike,
+				PostCache:     newTestPostCache(),
 			})
 
 			if tc.setupMock != nil {
@@ -816,6 +826,7 @@ func (s *postUseCaseSuite) TestDeletePost() {
 				Event:         mockEvent,
 				StatsFetcher:  mockStats,
 				LikeChecker:   mockLike,
+				PostCache:     newTestPostCache(),
 			})
 
 			if tc.setupMock != nil {
@@ -962,6 +973,7 @@ func (s *postUseCaseSuite) TestGetUserPosts() {
 				Event:         mockEvent,
 				StatsFetcher:  mockStats,
 				LikeChecker:   mockLike,
+				PostCache:     newTestPostCache(),
 			})
 
 			if tc.setupMock != nil {
@@ -1102,6 +1114,7 @@ func (s *postUseCaseSuite) TestGetPostsByIDs() {
 				Event:         mockEvent,
 				StatsFetcher:  mockStats,
 				LikeChecker:   mockLike,
+				PostCache:     newTestPostCache(),
 			})
 
 			if tc.setupMock != nil {
@@ -1205,6 +1218,7 @@ func (s *postUseCaseSuite) TestGetPostSharers() {
 				Event:         mockEvent,
 				StatsFetcher:  mockStats,
 				LikeChecker:   mockLike,
+				PostCache:     newTestPostCache(),
 			})
 
 			if tc.setupMock != nil {
@@ -1226,4 +1240,243 @@ func (s *postUseCaseSuite) TestGetPostSharers() {
 			}
 		})
 	}
+}
+
+// --- Cache behavior tests ---
+
+// TestGetPostDetail_CacheHit verifies that when PostCore is cached, repo.GetDetail is NOT called,
+// but mapPostMetadata (stats + isLiked) still runs.
+func (s *postUseCaseSuite) TestGetPostDetail_CacheHit() {
+	var (
+		postID   = int64(1)
+		viewerID = int64(2)
+	)
+
+	cachedPost := post.Post{
+		ID:     postID,
+		UserID: int64(3),
+	}
+
+	mockRepo := postmocks.NewMockRepository(s.T())
+	mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+	mockEvent := commonmocks.NewMockEventPublisher(s.T())
+	mockStats := postmocks.NewMockStatsFetcher(s.T())
+	mockLike := postmocks.NewMockLikeChecker(s.T())
+	mockCache := postmocks.NewMockCache(s.T())
+
+	// Cache hit — loader must NOT be called, so repo.GetDetail has no expectation.
+	mockCache.EXPECT().
+		Get(mock.Anything, int64(1), mock.Anything).
+		Return(&cachedPost, nil).
+		Once()
+
+	mockStats.EXPECT().
+		GetPostsStats(mock.Anything, []int64{postID}).
+		Return(map[int64]stats.PostStats{postID: {LikesCount: 7}}, nil).
+		Once()
+
+	mockLike.EXPECT().
+		IsPostLiked(mock.Anything, []int64{postID}, viewerID).
+		Return(map[int64]bool{postID: true}, nil).
+		Once()
+
+	uc := post.NewUseCase(post.Deps{
+		PostRepo:      mockRepo,
+		MediaVerifier: mockVerifier,
+		Event:         mockEvent,
+		StatsFetcher:  mockStats,
+		LikeChecker:   mockLike,
+		PostCache:     mockCache,
+	})
+
+	got, err := uc.GetPostDetail(context.Background(), postID, viewerID)
+
+	s.NoError(err)
+	s.Equal(postID, got.ID)
+	// Stats and likes are filled even on cache hit.
+	s.Equal(int32(7), got.Stat.LikesCount)
+	s.NotNil(got.IsLiked)
+	s.True(*got.IsLiked)
+}
+
+// TestGetPostsByIDs_CacheHit verifies that all IDs served from cache means no DB call.
+func (s *postUseCaseSuite) TestGetPostsByIDs_CacheHit() {
+	var viewerID = int64(1)
+
+	cachedPost10 := post.Post{ID: 10, UserID: 2}
+	cachedPost20 := post.Post{ID: 20, UserID: 3}
+
+	mockRepo := postmocks.NewMockRepository(s.T())
+	mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+	mockEvent := commonmocks.NewMockEventPublisher(s.T())
+	mockStats := postmocks.NewMockStatsFetcher(s.T())
+	mockLike := postmocks.NewMockLikeChecker(s.T())
+	mockCache := postmocks.NewMockCache(s.T())
+
+	// Both IDs hit cache — repo.GetByIDs must NOT be called.
+	mockCache.EXPECT().
+		GetBatch(mock.Anything, []int64{10, 20}, mock.Anything).
+		Return([]*post.Post{&cachedPost10, &cachedPost20}, nil).Once()
+
+	mockStats.EXPECT().
+		GetPostsStats(mock.Anything, mock.Anything).
+		Return(map[int64]stats.PostStats{}, nil).Once()
+	mockLike.EXPECT().
+		IsPostLiked(mock.Anything, mock.Anything, viewerID).
+		Return(map[int64]bool{}, nil).Once()
+
+	uc := post.NewUseCase(post.Deps{
+		PostRepo:      mockRepo,
+		MediaVerifier: mockVerifier,
+		Event:         mockEvent,
+		StatsFetcher:  mockStats,
+		LikeChecker:   mockLike,
+		PostCache:     mockCache,
+	})
+
+	got, err := uc.GetPostsByIDs(context.Background(), []int64{10, 20}, viewerID)
+
+	s.NoError(err)
+	s.Len(got, 2)
+}
+
+// TestGetPostsByIDs_PartialCacheMiss verifies that only missed IDs go to DB,
+// and results from both cache and DB are correctly merged.
+func (s *postUseCaseSuite) TestGetPostsByIDs_PartialCacheMiss() {
+	var viewerID = int64(1)
+
+	cachedPost10 := post.Post{ID: 10, UserID: 2}
+	dbPost20 := &post.Post{ID: 20, UserID: 3}
+
+	mockRepo := postmocks.NewMockRepository(s.T())
+	mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+	mockEvent := commonmocks.NewMockEventPublisher(s.T())
+	mockStats := postmocks.NewMockStatsFetcher(s.T())
+	mockLike := postmocks.NewMockLikeChecker(s.T())
+	mockCache := postmocks.NewMockCache(s.T())
+
+	// GetBatch: ID 10 from cache, ID 20 from DB via batchLoader.
+	mockCache.EXPECT().
+		GetBatch(mock.Anything, []int64{10, 20}, mock.Anything).
+		RunAndReturn(func(ctx context.Context, ids []int64, batchLoader func(context.Context, []int64) ([]*post.Post, error)) ([]*post.Post, error) {
+			dbPosts, err := batchLoader(ctx, []int64{20})
+			if err != nil {
+				return nil, err
+			}
+			return append([]*post.Post{&cachedPost10}, dbPosts...), nil
+		}).Once()
+
+	// DB called only for the missed ID.
+	mockRepo.EXPECT().
+		GetByIDs(mock.Anything, []int64{20}).
+		Return([]*post.Post{dbPost20}, nil).Once()
+
+	mockStats.EXPECT().
+		GetPostsStats(mock.Anything, mock.Anything).
+		Return(map[int64]stats.PostStats{}, nil).Once()
+	mockLike.EXPECT().
+		IsPostLiked(mock.Anything, mock.Anything, viewerID).
+		Return(map[int64]bool{}, nil).Once()
+
+	uc := post.NewUseCase(post.Deps{
+		PostRepo:      mockRepo,
+		MediaVerifier: mockVerifier,
+		Event:         mockEvent,
+		StatsFetcher:  mockStats,
+		LikeChecker:   mockLike,
+		PostCache:     mockCache,
+	})
+
+	got, err := uc.GetPostsByIDs(context.Background(), []int64{10, 20}, viewerID)
+
+	s.NoError(err)
+	s.Len(got, 2)
+}
+
+// TestUpdatePost_CacheInvalidation verifies cache is cleared after a successful update.
+func (s *postUseCaseSuite) TestUpdatePost_CacheInvalidation() {
+	var (
+		postID  = int64(1)
+		userID  = int64(10)
+		content = "New content"
+	)
+
+	mockRepo := postmocks.NewMockRepository(s.T())
+	mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+	mockEvent := commonmocks.NewMockEventPublisher(s.T())
+	mockStats := postmocks.NewMockStatsFetcher(s.T())
+	mockLike := postmocks.NewMockLikeChecker(s.T())
+	mockCache := postmocks.NewMockCache(s.T())
+
+	mockRepo.EXPECT().
+		GetByID(mock.Anything, postID).
+		Return(&post.Post{ID: postID, UserID: userID, Content: "Old"}, nil).Once()
+	mockRepo.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		Return(nil).Once()
+
+	// Cache must be invalidated after successful update.
+	mockCache.EXPECT().
+		Invalidate(mock.Anything, postID).
+		Return(nil).Once()
+
+	uc := post.NewUseCase(post.Deps{
+		PostRepo:      mockRepo,
+		MediaVerifier: mockVerifier,
+		Event:         mockEvent,
+		StatsFetcher:  mockStats,
+		LikeChecker:   mockLike,
+		PostCache:     mockCache,
+	})
+
+	_, err := uc.UpdatePost(context.Background(), post.UpdateParams{
+		PostID:  postID,
+		UserID:  userID,
+		Content: &content,
+	})
+
+	s.NoError(err)
+}
+
+// TestDeletePost_CacheInvalidation verifies cache is cleared after a successful delete.
+func (s *postUseCaseSuite) TestDeletePost_CacheInvalidation() {
+	var (
+		postID = int64(1)
+		userID = int64(10)
+	)
+
+	mockRepo := postmocks.NewMockRepository(s.T())
+	mockVerifier := postmocks.NewMockMediaVerifier(s.T())
+	mockEvent := commonmocks.NewMockEventPublisher(s.T())
+	mockStats := postmocks.NewMockStatsFetcher(s.T())
+	mockLike := postmocks.NewMockLikeChecker(s.T())
+	mockCache := postmocks.NewMockCache(s.T())
+
+	mockRepo.EXPECT().
+		GetByID(mock.Anything, postID).
+		Return(&post.Post{ID: postID, UserID: userID}, nil).Once()
+	mockRepo.EXPECT().
+		Delete(mock.Anything, postID).
+		Return(nil).Once()
+	mockEvent.EXPECT().
+		Publish(mock.Anything, mock.AnythingOfType("common.Event")).
+		Return(nil).Once()
+
+	// Cache must be invalidated after successful delete.
+	mockCache.EXPECT().
+		Invalidate(mock.Anything, postID).
+		Return(nil).Once()
+
+	uc := post.NewUseCase(post.Deps{
+		PostRepo:      mockRepo,
+		MediaVerifier: mockVerifier,
+		Event:         mockEvent,
+		StatsFetcher:  mockStats,
+		LikeChecker:   mockLike,
+		PostCache:     mockCache,
+	})
+
+	err := uc.DeletePost(context.Background(), postID, userID)
+
+	s.NoError(err)
 }

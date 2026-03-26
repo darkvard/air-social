@@ -5,16 +5,16 @@ import (
 	"fmt"
 
 	"air-social/internal/domain/common"
-	"air-social/internal/domain/stats/cache"
+	"air-social/internal/domain/stats"
 	"air-social/pkg"
 )
 
 type Dispatcher struct {
-	cache    cache.Provider
+	cache    stats.Cache
 	handlers map[common.EventType]common.EventHandler
 }
 
-func NewDispatcher(cache cache.Provider) *Dispatcher {
+func NewDispatcher(cache stats.Cache) *Dispatcher {
 	disp := &Dispatcher{
 		cache:    cache,
 		handlers: make(map[common.EventType]common.EventHandler),
@@ -54,26 +54,26 @@ func (d *Dispatcher) handlePostLike(ctx context.Context, p common.LikeEventPaylo
 	if p.IsLiked {
 		incr = 1
 	}
-	return d.cache.UpdateStatsHash(ctx, cache.StatePostLikes, p.TargetID, incr)
+	return d.cache.UpdateStatsHash(ctx, stats.StatePostLikes, p.TargetID, incr)
 }
 
 func (d *Dispatcher) handleCommentCreated(ctx context.Context, c common.CommentEventPayload) error {
 	if c.IsReply() {
-		if err := d.cache.UpdateStatsHash(ctx, cache.StateCommentReplies, *c.ParentID, 1); err != nil {
+		if err := d.cache.UpdateStatsHash(ctx, stats.StateCommentReplies, *c.ParentID, 1); err != nil {
 			return err
 		}
 	}
 
-	return d.cache.UpdateStatsHash(ctx, cache.StatePostComments, c.PostID, 1)
+	return d.cache.UpdateStatsHash(ctx, stats.StatePostComments, c.PostID, 1)
 }
 
 func (d *Dispatcher) handleCommentDeleted(ctx context.Context, c common.CommentEventPayload) error {
 	if c.IsReply() {
-		if err := d.cache.UpdateStatsHash(ctx, cache.StateCommentReplies, *c.ParentID, -1); err != nil {
+		if err := d.cache.UpdateStatsHash(ctx, stats.StateCommentReplies, *c.ParentID, -1); err != nil {
 			return err
 		}
 	}
-	return d.cache.UpdateStatsHash(ctx, cache.StatePostComments, c.PostID, -1)
+	return d.cache.UpdateStatsHash(ctx, stats.StatePostComments, c.PostID, -1)
 }
 
 func (d *Dispatcher) handlePostShare(ctx context.Context, p common.ShareEventPayload) error {
@@ -81,7 +81,7 @@ func (d *Dispatcher) handlePostShare(ctx context.Context, p common.ShareEventPay
 	if p.IsShared {
 		incr = 1
 	}
-	return d.cache.UpdateStatsHash(ctx, cache.StatePostShares, p.OriginalPostID, incr)
+	return d.cache.UpdateStatsHash(ctx, stats.StatePostShares, p.OriginalPostID, incr)
 }
 
 func (d *Dispatcher) handleCommentLike(ctx context.Context, p common.LikeEventPayload) error {
@@ -89,5 +89,5 @@ func (d *Dispatcher) handleCommentLike(ctx context.Context, p common.LikeEventPa
 	if p.IsLiked {
 		incr = 1
 	}
-	return d.cache.UpdateStatsHash(ctx, cache.StateCommentLikes, p.TargetID, incr)
+	return d.cache.UpdateStatsHash(ctx, stats.StateCommentLikes, p.TargetID, incr)
 }

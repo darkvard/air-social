@@ -28,15 +28,20 @@ type Provider interface {
 	AddToBlacklist(ctx context.Context, accessToken string, expiresAt time.Time)
 }
 
+type Deps struct {
+	Config config.TokenConfig
+	Cache  cache.AtomicCache[string]
+}
+
 type provider struct {
 	cfg   config.TokenConfig
 	cache cache.AtomicCache[string]
 }
 
-func NewProvider(cfg config.TokenConfig, cache cache.AtomicCache[string]) *provider {
+func NewProvider(d Deps) *provider {
 	return &provider{
-		cfg:   cfg,
-		cache: cache,
+		cfg:   d.Config,
+		cache: d.Cache,
 	}
 }
 

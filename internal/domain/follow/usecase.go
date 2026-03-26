@@ -54,7 +54,7 @@ func (u *usecase) Follow(ctx context.Context, followerID int64, followeeID int64
 		return err
 	}
 	if u.cacheInvalidator != nil {
-		_ = u.cacheInvalidator.Invalidate(ctx, common.BuildCacheKey("follow", "followers", followeeID))
+		_ = u.cacheInvalidator.Invalidate(ctx, GetFollowCacheKey(followeeID))
 	}
 	return nil
 }
@@ -67,7 +67,7 @@ func (u *usecase) Unfollow(ctx context.Context, followerID int64, followeeID int
 		return err
 	}
 	if u.cacheInvalidator != nil {
-		_ = u.cacheInvalidator.Invalidate(ctx, common.BuildCacheKey("follow", "followers", followeeID))
+		_ = u.cacheInvalidator.Invalidate(ctx, GetFollowCacheKey(followeeID))
 	}
 	return nil
 }
@@ -116,4 +116,8 @@ func (u *usecase) validateFollow(ctx context.Context, followerID int64, followee
 		return fmt.Errorf("user not found: %w", pkg.ErrBadRequest)
 	}
 	return nil
+}
+
+func GetFollowCacheKey(userID int64) string {
+	return common.BuildCacheKey("follow", "followers", userID)
 }

@@ -23,6 +23,17 @@ import (
 	"air-social/internal/infrastructure/redis"
 )
 
+const (
+	followerCacheL1TTL = 2 * time.Minute
+	followerCacheL2TTL = 5 * time.Minute
+
+	userSummaryCacheL1TTL = 5 * time.Minute
+	userSummaryCacheL2TTL = 12 * time.Hour
+
+	postCacheL1TTL = 2 * time.Minute
+	postCacheL2TTL = 6 * time.Hour
+)
+
 type UseCase struct {
 	Health  health.UseCase
 	User    user.UseCase
@@ -49,15 +60,19 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	mediaUC := getMediaUseCase(deps)
 	userUC := getUserUseCase(deps, mediaUC)
 	authUC := getAuthUseCase(deps, userUC.Fetch, userUC.Account)
-
-	l1 := cache.NewMemCache[[]int64](1000, 2*time.Minute)
+	 
+	l1 := cache.NewMemCache[[]int64](1000, followerCacheL1TTL)
 	l2 := redis.NewRedisStore[[]int64](deps.Infra.Redis)
-	followerCache := cache.NewTieredCache(l1, l2, 2*time.Minute, 5*time.Minute)
+	followerCache := cache.NewTieredCache(l1, l2, followerCacheL1TTL, followerCacheL2TTL)
 
 	followUC := getFollowUseCase(deps, userUC.Fetch, followerCache)
 	likeUC := getLikeUseCase(deps)
 	statsUC := getStatsUseCase(deps)
-	postUC := getPostUseCase(deps, mediaUC, statsUC, likeUC)
+
+	postL1 := cache.NewMemCache[post.Post](1000, postCacheL1TTL)
+	postL2 := redis.NewRedisStore[post.Post](deps.Infra.Redis)
+	postTiered := cache.NewTieredCache(postL1, postL2, postCacheL1TTL, postCacheL2TTL)
+	postUC := getPostUseCase(deps, mediaUC, statsUC, likeUC, post.NewCache(postTiered))
 	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC, statsUC)
 	feedUC := getFeedUseCase(deps, followUC, postUC, followerCache)
 
@@ -100,14 +115,14 @@ func getMediaUseCase(deps UseCaseDeps) media.UseCase {
 	)
 }
 
-func getUserUseCase(deps UseCaseDeps, confirmer userusecase.MediaConfirmer) user.UseCase {
-	l1 := cache.NewMemCache[*user.UserSummary](500, 5*time.Minute)
-	l2 := redis.NewRedisStore[*user.UserSummary](deps.Infra.Redis)
-	userCache := cache.NewTieredCache(l1, l2, 5*time.Minute, 12*time.Hour)
+func getUserUseCase(deps UseCaseDeps, confirmer user.MediaConfirmer) user.UseCase {
+	l1 := cache.NewMemCache[user.UserSummary](500, 5*time.Minute)
+	l2 := redis.NewRedisStore[user.UserSummary](deps.Infra.Redis)
+	userTiered := cache.NewTieredCache(l1, l2, userSummaryCacheL1TTL, userSummaryCacheL2TTL)
 
-	d := userusecase.Deps{
+	d := user.Deps{
 		Repo:  deps.Repo.User,
-		Cache: userCache,
+		Cache: user.NewCache(userTiered),
 		Link:  deps.Prov.Link.LinkProvider,
 		Media: confirmer,
 	}
@@ -140,7 +155,7 @@ func getFollowUseCase(deps UseCaseDeps, fetcher follow.UserFetcher, cacheInvalid
 	)
 }
 
-func getPostUseCase(deps UseCaseDeps, mediaVerifier post.MediaVerifier, statsFetcher post.StatsFetcher, likeChecker post.LikeChecker) post.UseCase {
+func getPostUseCase(deps UseCaseDeps, mediaVerifier post.MediaVerifier, statsFetcher post.StatsFetcher, likeChecker post.LikeChecker, postCache post.Cache) post.UseCase {
 	return post.NewUseCase(
 		post.Deps{
 			PostRepo:      deps.Repo.Post,
@@ -148,6 +163,7 @@ func getPostUseCase(deps UseCaseDeps, mediaVerifier post.MediaVerifier, statsFet
 			StatsFetcher:  statsFetcher,
 			LikeChecker:   likeChecker,
 			Event:         deps.Adapter.EventPub,
+			PostCache:     postCache,
 		},
 	)
 }

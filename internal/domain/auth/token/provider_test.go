@@ -44,7 +44,7 @@ func newMockAuthCache(t interface {
 
 func (s *tokenProviderSuite) TestGenerateAccessToken() {
 	mockCache := newMockAuthCache(s.T())
-	p := token.NewProvider(s.cfg, mockCache)
+	p := token.NewProvider(token.Deps{Config: s.cfg, Cache: mockCache})
 
 	res, err := p.GenerateAccessToken(1, "device-1")
 
@@ -55,7 +55,7 @@ func (s *tokenProviderSuite) TestGenerateAccessToken() {
 
 func (s *tokenProviderSuite) TestVerifyAccessToken() {
 	mockCache := newMockAuthCache(s.T())
-	p := token.NewProvider(s.cfg, mockCache)
+	p := token.NewProvider(token.Deps{Config: s.cfg, Cache: mockCache})
 
 	res, _ := p.GenerateAccessToken(1, "device-1")
 
@@ -69,7 +69,7 @@ func (s *tokenProviderSuite) TestVerifyAccessToken() {
 
 func (s *tokenProviderSuite) TestVerifyAccessToken_Invalid() {
 	mockCache := newMockAuthCache(s.T())
-	p := token.NewProvider(s.cfg, mockCache)
+	p := token.NewProvider(token.Deps{Config: s.cfg, Cache: mockCache})
 
 	_, _, err := p.VerifyAccessToken("invalid.token.string")
 	s.ErrorIs(err, pkg.ErrUnauthorized)
@@ -119,7 +119,7 @@ func (s *tokenProviderSuite) TestIsBlacklisted() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockCache := newMockAuthCache(s.T())
-			p := token.NewProvider(s.cfg, mockCache)
+			p := token.NewProvider(token.Deps{Config: s.cfg, Cache: mockCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(testDeps{cache: mockCache})
@@ -133,7 +133,7 @@ func (s *tokenProviderSuite) TestIsBlacklisted() {
 
 func (s *tokenProviderSuite) TestAddToBlacklist() {
 	mockCache := newMockAuthCache(s.T())
-	p := token.NewProvider(s.cfg, mockCache)
+	p := token.NewProvider(token.Deps{Config: s.cfg, Cache: mockCache})
 
 	tokenStr := "token"
 	expiresAt := pkg.TimeNowUTC().Add(1 * time.Hour)
@@ -148,7 +148,7 @@ func (s *tokenProviderSuite) TestAddToBlacklist() {
 func (s *tokenProviderSuite) TestVerifyRefreshToken() {
 	mockCache := newMockAuthCache(s.T())
 	_ = cache.AtomicCache[string](mockCache) // compile-time interface check
-	p := token.NewProvider(s.cfg, mockCache)
+	p := token.NewProvider(token.Deps{Config: s.cfg, Cache: mockCache})
 
 	// Valid
 	validToken := token.RefreshToken{

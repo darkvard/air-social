@@ -40,6 +40,7 @@ type Deps struct {
 	StatsFetcher  StatsFetcher
 	LikeChecker   LikeChecker
 	Event         common.EventPublisher
+	PostCache     Cache
 }
 
 type usecase struct {
@@ -48,6 +49,7 @@ type usecase struct {
 	likeChecker   LikeChecker
 	statsFetcher  StatsFetcher
 	event         common.EventPublisher
+	postCache     Cache
 }
 
 func NewUseCase(deps Deps) *usecase {
@@ -57,11 +59,14 @@ func NewUseCase(deps Deps) *usecase {
 		statsFetcher:  deps.StatsFetcher,
 		likeChecker:   deps.LikeChecker,
 		event:         deps.Event,
+		postCache:     deps.PostCache,
 	}
 }
 
 func (u *usecase) GetPostDetail(ctx context.Context, postID, viewerID int64) (*Post, error) {
-	post, err := u.postRepo.GetDetail(ctx, postID)
+	post, err := u.postCache.Get(ctx, postID, func(ctx context.Context) (*Post, error) {
+		return u.postRepo.GetDetail(ctx, postID)
+	})
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
 			return nil, pkg.NewError(err, "post not found")
@@ -139,6 +144,8 @@ func (u *usecase) UpdatePost(ctx context.Context, params UpdateParams) (*Post, e
 	if err := u.postRepo.Update(ctx, post); err != nil {
 		return nil, pkg.ErrInternal
 	}
+	// Invalidate stale PostCore so next read fetches fresh data from DB.
+	_ = u.postCache.Invalidate(ctx, post.ID)
 	return post, nil
 }
 
@@ -153,6 +160,8 @@ func (u *usecase) DeletePost(ctx context.Context, postID, userID int64) error {
 	if err := u.postRepo.Delete(ctx, postID); err != nil {
 		return pkg.OrInternalError(err)
 	}
+	// Invalidate cache so deleted post is not served from L1/L2.
+	_ = u.postCache.Invalidate(ctx, postID)
 	_ = u.addPostFeedEvent(ctx, post.ID, post.UserID, common.EventPostDeleted, 0)
 	return nil
 }
@@ -194,7 +203,7 @@ func (u *usecase) GetPostsByIDs(ctx context.Context, postIDs []int64, viewerID i
 		return []*Post{}, nil
 	}
 
-	posts, err := u.postRepo.GetByIDs(ctx, postIDs)
+	posts, err := u.postCache.GetBatch(ctx, postIDs, u.postRepo.GetByIDs)
 	if err != nil {
 		return nil, pkg.OrInternalError(err)
 	}

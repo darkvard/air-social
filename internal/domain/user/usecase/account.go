@@ -6,17 +6,16 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	appcache "air-social/internal/cache"
 	"air-social/internal/domain/user"
 	"air-social/pkg"
 )
 
 type accountUseCase struct {
 	repo  user.Repository
-	cache appcache.TieredStore[*user.UserSummary]
+	cache user.Cache
 }
 
-func NewAccountUseCase(d Deps) *accountUseCase {
+func NewAccountUseCase(d user.Deps) *accountUseCase {
 	return &accountUseCase{
 		repo:  d.Repo,
 		cache: d.Cache,
@@ -31,7 +30,7 @@ func (u *accountUseCase) VerifyEmail(ctx context.Context, email string) error {
 	if err := u.repo.UpdateVerified(ctx, user.ID, true); err != nil {
 		return pkg.ErrInternal
 	}
-	_ = clearUserCache(ctx, u.cache, user.ID)
+	_ = u.cache.Invalidate(ctx, user.ID)
 	return nil
 }
 

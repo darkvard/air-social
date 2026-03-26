@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	appcache "air-social/internal/cache"
-	feedcachemocks "air-social/internal/domain/feed/cache/mocks"
+	"air-social/internal/cache"
+	feedmocks "air-social/internal/domain/feed/mocks"
 	"air-social/internal/domain/feed/usecase"
-	feedmocks "air-social/internal/domain/feed/usecase/mocks"
+	usecasemocks "air-social/internal/domain/feed/usecase/mocks"
 )
 
-func newTestFollowerCache() appcache.TieredStore[[]int64] {
-	return appcache.NewTieredCache(appcache.NewMemCache[[]int64](10, time.Minute), nil, time.Minute, 0)
+func newTestFollowerCache() cache.TieredStore[[]int64] {
+	return cache.NewTieredCache(cache.NewMemCache[[]int64](10, time.Minute), nil, time.Minute, 0)
 }
 
 type commandUseCaseSuite struct {
@@ -38,8 +38,8 @@ func (s *commandUseCaseSuite) TestDistributePost() {
 	expectedFeedIDs := append(followerIDs, authorID)
 
 	type testDeps struct {
-		cache         *feedcachemocks.MockProvider
-		followFetcher *feedmocks.MockFollowFetcher
+		cache         *feedmocks.MockCache
+		followFetcher *usecasemocks.MockFollowFetcher
 	}
 
 	type args struct {
@@ -115,8 +115,8 @@ func (s *commandUseCaseSuite) TestDistributePost() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := feedcachemocks.NewMockProvider(s.T())
-			mockFollow := feedmocks.NewMockFollowFetcher(s.T())
+			mockCache := feedmocks.NewMockCache(s.T())
+			mockFollow := usecasemocks.NewMockFollowFetcher(s.T())
 
 			deps := testDeps{
 				cache:         mockCache,
@@ -154,8 +154,8 @@ func (s *commandUseCaseSuite) TestRevokePost() {
 	expectedFeedIDs := append(followerIDs, authorID)
 
 	type testDeps struct {
-		cache         *feedcachemocks.MockProvider
-		followFetcher *feedmocks.MockFollowFetcher
+		cache         *feedmocks.MockCache
+		followFetcher *usecasemocks.MockFollowFetcher
 	}
 
 	type args struct {
@@ -215,8 +215,8 @@ func (s *commandUseCaseSuite) TestRevokePost() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := feedcachemocks.NewMockProvider(s.T())
-			mockFollow := feedmocks.NewMockFollowFetcher(s.T())
+			mockCache := feedmocks.NewMockCache(s.T())
+			mockFollow := usecasemocks.NewMockFollowFetcher(s.T())
 
 			deps := testDeps{
 				cache:         mockCache,

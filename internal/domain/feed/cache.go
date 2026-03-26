@@ -1,4 +1,4 @@
-package cache
+package feed
 
 import (
 	"context"
@@ -14,27 +14,27 @@ const (
 	FeedKeyPrefix      = "feed"
 )
 
-type Provider interface {
+type Cache interface {
 	PushPostToFeeds(ctx context.Context, followerIDs []int64, postID int64, score float64) error
 	RemovePostFromFeeds(ctx context.Context, followerIDs []int64, postID int64) error
 	GetFeedPostIDs(ctx context.Context, userID int64, cursor int64, limit int) ([]int64, error)
 }
 
-type provider struct {
-	cache appcache.SortedSetStore
+type feedCache struct {
+	store appcache.SortedSetStore
 }
 
-func NewProvider(c appcache.SortedSetStore) *provider {
-	return &provider{cache: c}
+func NewCache(store appcache.SortedSetStore) Cache {
+	return &feedCache{store: store}
 }
 
 // PushPostToFeeds distributes a newly created post to the feeds of all followers.
 // It uses a Redis Pipeline to execute ZADD and ZREMRANGEBYRANK atomically.
-func (p *provider) PushPostToFeeds(ctx context.Context, followerIDs []int64, postID int64, score float64) error {
+func (c *feedCache) PushPostToFeeds(ctx context.Context, followerIDs []int64, postID int64, score float64) error {
 	if len(followerIDs) == 0 {
 		return nil
 	}
-	batch := p.cache.Pipeline()
+	batch := c.store.Pipeline()
 	for _, id := range followerIDs {
 		key := getFeedKey(id)
 
@@ -52,11 +52,11 @@ func (p *provider) PushPostToFeeds(ctx context.Context, followerIDs []int64, pos
 	return batch.Exec(ctx)
 }
 
-func (p *provider) RemovePostFromFeeds(ctx context.Context, followerIDs []int64, postID int64) error {
+func (c *feedCache) RemovePostFromFeeds(ctx context.Context, followerIDs []int64, postID int64) error {
 	if len(followerIDs) == 0 {
 		return nil
 	}
-	batch := p.cache.Pipeline()
+	batch := c.store.Pipeline()
 	for _, id := range followerIDs {
 		batch.ZRem(getFeedKey(id), postID)
 	}
@@ -75,7 +75,7 @@ func (p *provider) RemovePostFromFeeds(ctx context.Context, followerIDs []int64,
 // Redis ZRevRangeByScore is used to:
 // - return results in descending order (newest → oldest)
 // - filter by score range
-func (p *provider) GetFeedPostIDs(ctx context.Context, userID int64, cursor int64, limit int) ([]int64, error) {
+func (c *feedCache) GetFeedPostIDs(ctx context.Context, userID int64, cursor int64, limit int) ([]int64, error) {
 	key := getFeedKey(userID)
 
 	// Default: fetch from newest posts (no upper bound)
@@ -89,7 +89,7 @@ func (p *provider) GetFeedPostIDs(ctx context.Context, userID int64, cursor int6
 
 	// Fetch posts with score in range [-inf, maxScore]
 	// Ordered from highest score → lowest score (newest → oldest)
-	strs, err := p.cache.ZRevRangeByScore(ctx, key, "-inf", maxScore, 0, int64(limit))
+	strs, err := c.store.ZRevRangeByScore(ctx, key, "-inf", maxScore, 0, int64(limit))
 	if err != nil {
 		return nil, err
 	}

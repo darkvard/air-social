@@ -1,4 +1,4 @@
-package cache
+package stats
 
 import (
 	"context"
@@ -15,24 +15,24 @@ const (
 	StateCommentReplies = "comment:replies"
 )
 
-type Provider interface {
+// Cache abstracts hash-store operations for the write-behind stats counters.
+type Cache interface {
 	GetStatsHash(ctx context.Context, state string) (map[int64]int64, error)
 	UpdateStatsHash(ctx context.Context, state string, id int64, incr int64) error
 	ClearSyncedFields(ctx context.Context, state string, syncData map[int64]int64) error
-
 	GetStatsOffsets(ctx context.Context, state string, ids []int64) (map[int64]int64, error)
 }
 
-type provider struct {
-	cache appcache.HashStore
+type statsCache struct {
+	store appcache.HashStore
 }
 
-func NewProvider(c appcache.HashStore) *provider {
-	return &provider{cache: c}
+func NewCache(store appcache.HashStore) Cache {
+	return &statsCache{store: store}
 }
 
-func (p *provider) GetStatsHash(ctx context.Context, state string) (map[int64]int64, error) {
-	dataStr, err := p.cache.HGetAll(ctx, getKey(state))
+func (c *statsCache) GetStatsHash(ctx context.Context, state string) (map[int64]int64, error) {
+	dataStr, err := c.store.HGetAll(ctx, statsHashKey(state))
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (p *provider) GetStatsHash(ctx context.Context, state string) (map[int64]in
 	return result, nil
 }
 
-func (p *provider) ClearSyncedFields(ctx context.Context, state string, syncData map[int64]int64) error {
+func (c *statsCache) ClearSyncedFields(ctx context.Context, state string, syncData map[int64]int64) error {
 	if len(syncData) == 0 {
 		return nil
 	}
@@ -77,18 +77,18 @@ func (p *provider) ClearSyncedFields(ctx context.Context, state string, syncData
 	for id, val := range syncData {
 		field := strconv.FormatInt(id, 10)
 		decrement := -val
-		_, _ = p.cache.Eval(ctx, script, []string{getKey(state)}, field, decrement)
+		_, _ = c.store.Eval(ctx, script, []string{statsHashKey(state)}, field, decrement)
 	}
 	return nil
 }
 
-func (p *provider) UpdateStatsHash(ctx context.Context, state string, id int64, incr int64) error {
+func (c *statsCache) UpdateStatsHash(ctx context.Context, state string, id int64, incr int64) error {
 	field := strconv.FormatInt(id, 10)
-	_, err := p.cache.HIncrBy(ctx, getKey(state), field, incr)
+	_, err := c.store.HIncrBy(ctx, statsHashKey(state), field, incr)
 	return err
 }
 
-func (p *provider) GetStatsOffsets(ctx context.Context, state string, ids []int64) (map[int64]int64, error) {
+func (c *statsCache) GetStatsOffsets(ctx context.Context, state string, ids []int64) (map[int64]int64, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -98,7 +98,7 @@ func (p *provider) GetStatsOffsets(ctx context.Context, state string, ids []int6
 		fields[i] = strconv.FormatInt(id, 10)
 	}
 
-	vals, err := p.cache.HMGet(ctx, getKey(state), fields...)
+	vals, err := c.store.HMGet(ctx, statsHashKey(state), fields...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,12 +113,12 @@ func (p *provider) GetStatsOffsets(ctx context.Context, state string, ids []int6
 	return result, nil
 }
 
-// HashKey returns the Redis hash key for a given stat state.
+// StatsHashKey returns the Redis hash key for a given stat state.
 // Exported so callers can construct expected keys without duplicating logic.
-func HashKey(state string) string {
+func StatsHashKey(state string) string {
 	return "stats:" + state
 }
 
-func getKey(state string) string {
-	return HashKey(state)
+func statsHashKey(state string) string {
+	return StatsHashKey(state)
 }

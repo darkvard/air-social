@@ -5,7 +5,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	appcache "air-social/internal/cache"
+	"air-social/internal/cache"
 )
 
 type redisBatch struct {
@@ -62,6 +62,6 @@ func (s *RedisSortedSetStore) ZRevRangeByScore(ctx context.Context, key string, 
 	}).Result()
 }
 
-func (s *RedisSortedSetStore) Pipeline() appcache.Batch {
+func (s *RedisSortedSetStore) Pipeline() cache.Batch {
 	return &redisBatch{pipe: s.client.Pipeline()}
 }

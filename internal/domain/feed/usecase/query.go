@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"air-social/internal/domain/common"
-	"air-social/internal/domain/feed/cache"
+	"air-social/internal/domain/feed"
 	"air-social/internal/domain/post"
 	"air-social/pkg"
 )
@@ -14,12 +14,12 @@ type PostFetcher interface {
 }
 
 type QueryDeps struct {
-	CacheProvider cache.Provider
+	CacheProvider feed.Cache
 	PostFetcher   PostFetcher
 }
 
 type queryUseCase struct {
-	cacheProvider cache.Provider
+	cacheProvider feed.Cache
 	postFetcher   PostFetcher
 }
 

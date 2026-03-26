@@ -3,13 +3,10 @@ package usecase_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 
-	appcache "air-social/internal/cache"
-	cachemocks "air-social/internal/cache/mocks"
 	commonmocks "air-social/internal/domain/common/mocks"
 	"air-social/internal/domain/user"
 	usermocks "air-social/internal/domain/user/mocks"
@@ -37,7 +34,7 @@ func (s *fetchUseCaseSuite) TestGetByID() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *cachemocks.MockCache[*user.UserSummary]
+		cache *usermocks.MockCache
 		link  *commonmocks.MockLinkProvider
 	}
 
@@ -83,14 +80,6 @@ func (s *fetchUseCaseSuite) TestGetByID() {
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, userID).
 					Return(expectedUser, nil).Once()
-
-				deps.link.EXPECT().
-					PublicFile(mock.Anything).
-					Return("").Times(2)
-
-				deps.cache.EXPECT().
-					Set(mock.Anything, usecase.GetKey(userID), mock.Anything, mock.Anything).
-					Return(nil).Once()
 			},
 			want: want{
 				user: expectedUser,
@@ -102,7 +91,7 @@ func (s *fetchUseCaseSuite) TestGetByID() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache, userCache := newTestCache(s.T())
+			mockCache := usermocks.NewMockCache(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
@@ -110,9 +99,9 @@ func (s *fetchUseCaseSuite) TestGetByID() {
 				cache: mockCache,
 				link:  mockLink,
 			}
-			uc := usecase.NewFetchUseCase(usecase.Deps{
+			uc := usecase.NewFetchUseCase(user.Deps{
 				Repo:  mockRepo,
-				Cache: userCache,
+				Cache: mockCache,
 				Link:  mockLink,
 			})
 
@@ -145,7 +134,7 @@ func (s *fetchUseCaseSuite) TestGetByEmail() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *cachemocks.MockCache[*user.UserSummary]
+		cache *usermocks.MockCache
 		link  *commonmocks.MockLinkProvider
 	}
 
@@ -191,14 +180,6 @@ func (s *fetchUseCaseSuite) TestGetByEmail() {
 				deps.repo.EXPECT().
 					GetByEmail(mock.Anything, email).
 					Return(expectedUser, nil).Once()
-
-				deps.link.EXPECT().
-					PublicFile(mock.Anything).
-					Return("").Times(2)
-
-				deps.cache.EXPECT().
-					Set(mock.Anything, usecase.GetKey(expectedUser.ID), mock.Anything, mock.Anything).
-					Return(nil).Once()
 			},
 			want: want{
 				user: expectedUser,
@@ -210,7 +191,7 @@ func (s *fetchUseCaseSuite) TestGetByEmail() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache, userCache := newTestCache(s.T())
+			mockCache := usermocks.NewMockCache(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
@@ -218,9 +199,9 @@ func (s *fetchUseCaseSuite) TestGetByEmail() {
 				cache: mockCache,
 				link:  mockLink,
 			}
-			uc := usecase.NewFetchUseCase(usecase.Deps{
+			uc := usecase.NewFetchUseCase(user.Deps{
 				Repo:  mockRepo,
-				Cache: userCache,
+				Cache: mockCache,
 				Link:  mockLink,
 			})
 
@@ -272,7 +253,7 @@ func (s *fetchUseCaseSuite) TestGetSummary() {
 
 	type testDeps struct {
 		repo  *usermocks.MockRepository
-		cache *cachemocks.MockCache[*user.UserSummary]
+		cache *usermocks.MockCache
 		link  *commonmocks.MockLinkProvider
 	}
 
@@ -300,7 +281,7 @@ func (s *fetchUseCaseSuite) TestGetSummary() {
 			},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					Get(mock.Anything, usecase.GetKey(userID)).
+					Get(mock.Anything, userID, mock.Anything).
 					Return(expectedSummary, nil).Once()
 			},
 			want: want{
@@ -316,8 +297,10 @@ func (s *fetchUseCaseSuite) TestGetSummary() {
 			},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					Get(mock.Anything, usecase.GetKey(userID)).
-					Return(nil, appcache.ErrCacheMiss).Once()
+					Get(mock.Anything, userID, mock.Anything).
+					RunAndReturn(func(ctx context.Context, id int64, loader func(context.Context) (*user.UserSummary, error)) (*user.UserSummary, error) {
+						return loader(ctx)
+					}).Once()
 
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, userID).
@@ -336,8 +319,10 @@ func (s *fetchUseCaseSuite) TestGetSummary() {
 			},
 			setupMock: func(deps testDeps) {
 				deps.cache.EXPECT().
-					Get(mock.Anything, usecase.GetKey(userID)).
-					Return(nil, appcache.ErrCacheMiss).Once()
+					Get(mock.Anything, userID, mock.Anything).
+					RunAndReturn(func(ctx context.Context, id int64, loader func(context.Context) (*user.UserSummary, error)) (*user.UserSummary, error) {
+						return loader(ctx)
+					}).Once()
 
 				deps.repo.EXPECT().
 					GetByID(mock.Anything, userID).
@@ -350,10 +335,6 @@ func (s *fetchUseCaseSuite) TestGetSummary() {
 				deps.link.EXPECT().
 					PublicFile(coverKey).
 					Return(coverURL).Once()
-
-				deps.cache.EXPECT().
-					Set(mock.Anything, usecase.GetKey(userID), mock.Anything, 12*time.Hour).
-					Return(nil).Once()
 			},
 			want: want{
 				summary: expectedSummary,
@@ -365,7 +346,7 @@ func (s *fetchUseCaseSuite) TestGetSummary() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := usermocks.NewMockRepository(s.T())
-			mockCache, userCache := newTestCache(s.T())
+			mockCache := usermocks.NewMockCache(s.T())
 			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
@@ -373,9 +354,9 @@ func (s *fetchUseCaseSuite) TestGetSummary() {
 				cache: mockCache,
 				link:  mockLink,
 			}
-			uc := usecase.NewFetchUseCase(usecase.Deps{
+			uc := usecase.NewFetchUseCase(user.Deps{
 				Repo:  mockRepo,
-				Cache: userCache,
+				Cache: mockCache,
 				Link:  mockLink,
 			})
 

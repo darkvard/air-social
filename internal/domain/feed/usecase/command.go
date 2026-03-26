@@ -3,9 +3,9 @@ package usecase
 import (
 	"context"
 
-	appcache "air-social/internal/cache"
-	"air-social/internal/domain/common"
-	"air-social/internal/domain/feed/cache"
+	"air-social/internal/cache"
+	"air-social/internal/domain/feed"
+	"air-social/internal/domain/follow"
 )
 
 type FollowFetcher interface {
@@ -13,15 +13,15 @@ type FollowFetcher interface {
 }
 
 type CommandDeps struct {
-	CacheProvider cache.Provider
+	CacheProvider feed.Cache
 	FollowFetcher FollowFetcher
-	FollowerCache appcache.TieredStore[[]int64]
+	FollowerCache cache.TieredStore[[]int64]
 }
 
 type commandUseCase struct {
-	cacheProvider cache.Provider
+	cacheProvider feed.Cache
 	followFetcher FollowFetcher
-	followerCache appcache.TieredStore[[]int64]
+	followerCache cache.TieredStore[[]int64]
 }
 
 func NewCommandUseCase(deps CommandDeps) *commandUseCase {
@@ -33,7 +33,7 @@ func NewCommandUseCase(deps CommandDeps) *commandUseCase {
 }
 
 func (u *commandUseCase) getFollowerIDs(ctx context.Context, userID int64) ([]int64, error) {
-	key := common.BuildCacheKey("follow", "followers", userID)
+	key := follow.GetFollowCacheKey(userID)
 	return u.followerCache.GetOrLoad(ctx, key, func(ctx context.Context) ([]int64, error) {
 		return u.followFetcher.GetFollowerIDs(ctx, userID)
 	})

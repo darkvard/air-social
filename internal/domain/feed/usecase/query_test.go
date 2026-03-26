@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"air-social/internal/domain/common"
-	feedcachemocks "air-social/internal/domain/feed/cache/mocks"
+	feedmocks "air-social/internal/domain/feed/mocks"
 	"air-social/internal/domain/feed/usecase"
-	feedmocks "air-social/internal/domain/feed/usecase/mocks"
+	usecasemocks "air-social/internal/domain/feed/usecase/mocks"
 	"air-social/internal/domain/post"
 	"air-social/pkg"
 )
@@ -41,8 +41,8 @@ func (s *queryUseCaseSuite) TestGetNewsfeed() {
 	}
 
 	type testDeps struct {
-		cache       *feedcachemocks.MockProvider
-		postFetcher *feedmocks.MockPostFetcher
+		cache       *feedmocks.MockCache
+		postFetcher *usecasemocks.MockPostFetcher
 	}
 
 	type args struct {
@@ -189,8 +189,8 @@ func (s *queryUseCaseSuite) TestGetNewsfeed() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockCache := feedcachemocks.NewMockProvider(s.T())
-			mockPostFetcher := feedmocks.NewMockPostFetcher(s.T())
+			mockCache := feedmocks.NewMockCache(s.T())
+			mockPostFetcher := usecasemocks.NewMockPostFetcher(s.T())
 
 			deps := testDeps{
 				cache:       mockCache,

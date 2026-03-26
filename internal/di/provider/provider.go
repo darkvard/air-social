@@ -5,8 +5,8 @@ import (
 	"air-social/internal/domain/auth/token"
 	"air-social/internal/domain/auth/verify"
 	"air-social/internal/domain/common"
-	feedcache "air-social/internal/domain/feed/cache"
-	statscache "air-social/internal/domain/stats/cache"
+	"air-social/internal/domain/feed"
+	"air-social/internal/domain/stats"
 	"air-social/internal/infrastructure/url"
 )
 
@@ -14,13 +14,13 @@ type Provider struct {
 	Link   common.AppLinkManager
 	Token  token.Provider
 	Verify verify.Provider
-	Stats  statscache.Provider
-	Feed   feedcache.Provider
+	Stats  stats.Cache
+	Feed   feed.Cache
 }
 
 func NewProvider(cfg config.Config, adapter Adapter) Provider {
 	linkManager := newLinkManager(cfg)
-	tokenProvider := token.NewProvider(cfg.Token, adapter.AuthCache)
+	tokenProvider := token.NewProvider(token.Deps{Config: cfg.Token, Cache: adapter.AuthCache})
 	verifyProvider := newVerifyProvider(adapter, linkManager.LinkProvider)
 	statsProvider := newStatsProvider(adapter)
 	feedCacheProvider := newFeedCacheProvider(adapter)
@@ -51,10 +51,10 @@ func newVerifyProvider(adapter Adapter, link common.LinkProvider) verify.Provide
 	})
 }
 
-func newStatsProvider(adapter Adapter) statscache.Provider {
-	return statscache.NewProvider(adapter.HashStore)
+func newStatsProvider(adapter Adapter) stats.Cache {
+	return stats.NewCache(adapter.HashStore)
 }
 
-func newFeedCacheProvider(adapter Adapter) feedcache.Provider {
-	return feedcache.NewProvider(adapter.SortedSetStore)
+func newFeedCacheProvider(adapter Adapter) feed.Cache {
+	return feed.NewCache(adapter.SortedSetStore)
 }

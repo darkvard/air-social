@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"air-social/internal/domain/common"
 	"air-social/internal/domain/media"
 )
 
@@ -30,4 +31,15 @@ type UseCase struct {
 	Account AccountUseCase
 	Profile ProfileUseCase
 	Fetch   FetchUseCase
+}
+
+type MediaConfirmer interface {
+	ConfirmUpload(ctx context.Context, params []media.ConfirmParams) ([]string, error)
+}
+
+type Deps struct {
+	Repo  Repository
+	Cache Cache
+	Link  common.LinkProvider
+	Media MediaConfirmer
 }

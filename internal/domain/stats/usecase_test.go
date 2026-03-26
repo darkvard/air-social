@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"air-social/internal/domain/stats"
-	cachemocks "air-social/internal/domain/stats/cache/mocks"
 	statmocks "air-social/internal/domain/stats/mocks"
 	"air-social/pkg"
 )
@@ -25,7 +24,7 @@ func TestStatsUseCaseSuite(t *testing.T) {
 func (s *StatsUseCaseSuite) TestSyncPostStats() {
 	type testDeps struct {
 		repo  *statmocks.MockRepository
-		cache *cachemocks.MockProvider
+		cache *statmocks.MockCache
 	}
 
 	tests := []struct {
@@ -130,7 +129,7 @@ func (s *StatsUseCaseSuite) TestSyncPostStats() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			mockRepo := statmocks.NewMockRepository(s.T())
-			mockCache := cachemocks.NewMockProvider(s.T())
+			mockCache := statmocks.NewMockCache(s.T())
 			deps := testDeps{repo: mockRepo, cache: mockCache}
 			tt.setupMock(deps)
 
@@ -156,7 +155,7 @@ func (s *StatsUseCaseSuite) TestSyncPostStats() {
 func (s *StatsUseCaseSuite) TestSyncCommentStats() {
 	type testDeps struct {
 		repo  *statmocks.MockRepository
-		cache *cachemocks.MockProvider
+		cache *statmocks.MockCache
 	}
 
 	tests := []struct {
@@ -239,7 +238,7 @@ func (s *StatsUseCaseSuite) TestSyncCommentStats() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			mockRepo := statmocks.NewMockRepository(s.T())
-			mockCache := cachemocks.NewMockProvider(s.T())
+			mockCache := statmocks.NewMockCache(s.T())
 			deps := testDeps{repo: mockRepo, cache: mockCache}
 			tt.setupMock(deps)
 
@@ -265,7 +264,7 @@ func (s *StatsUseCaseSuite) TestSyncCommentStats() {
 func (s *StatsUseCaseSuite) TestReconcilePostStats() {
 	type testDeps struct {
 		repo  *statmocks.MockRepository
-		cache *cachemocks.MockProvider
+		cache *statmocks.MockCache
 	}
 
 	tests := []struct {
@@ -303,7 +302,7 @@ func (s *StatsUseCaseSuite) TestReconcilePostStats() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			mockRepo := statmocks.NewMockRepository(s.T())
-			mockCache := cachemocks.NewMockProvider(s.T())
+			mockCache := statmocks.NewMockCache(s.T())
 			deps := testDeps{repo: mockRepo, cache: mockCache}
 			tt.setupMock(deps, tt.args)
 
@@ -326,7 +325,7 @@ func (s *StatsUseCaseSuite) TestReconcilePostStats() {
 func (s *StatsUseCaseSuite) TestReconcileCommentStats() {
 	type testDeps struct {
 		repo  *statmocks.MockRepository
-		cache *cachemocks.MockProvider
+		cache *statmocks.MockCache
 	}
 
 	tests := []struct {
@@ -364,7 +363,7 @@ func (s *StatsUseCaseSuite) TestReconcileCommentStats() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			mockRepo := statmocks.NewMockRepository(s.T())
-			mockCache := cachemocks.NewMockProvider(s.T())
+			mockCache := statmocks.NewMockCache(s.T())
 			deps := testDeps{repo: mockRepo, cache: mockCache}
 			tt.setupMock(deps, tt.args)
 
@@ -387,7 +386,7 @@ func (s *StatsUseCaseSuite) TestReconcileCommentStats() {
 func (s *StatsUseCaseSuite) TestGetPostsStats() {
 	type testDeps struct {
 		repo  *statmocks.MockRepository
-		cache *cachemocks.MockProvider
+		cache *statmocks.MockCache
 	}
 
 	postIDs := []int64{1, 2, 3}
@@ -491,7 +490,7 @@ func (s *StatsUseCaseSuite) TestGetPostsStats() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			mockRepo := statmocks.NewMockRepository(s.T())
-			mockCache := cachemocks.NewMockProvider(s.T())
+			mockCache := statmocks.NewMockCache(s.T())
 			deps := testDeps{repo: mockRepo, cache: mockCache}
 			tt.setupMock(deps)
 
@@ -518,7 +517,7 @@ func (s *StatsUseCaseSuite) TestGetPostsStats() {
 func (s *StatsUseCaseSuite) TestGetCommentsStats() {
 	type testDeps struct {
 		repo  *statmocks.MockRepository
-		cache *cachemocks.MockProvider
+		cache *statmocks.MockCache
 	}
 
 	commentIDs := []int64{1, 2, 3}
@@ -584,7 +583,7 @@ func (s *StatsUseCaseSuite) TestGetCommentsStats() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			mockRepo := statmocks.NewMockRepository(s.T())
-			mockCache := cachemocks.NewMockProvider(s.T())
+			mockCache := statmocks.NewMockCache(s.T())
 			deps := testDeps{repo: mockRepo, cache: mockCache}
 			tt.setupMock(deps)
 
