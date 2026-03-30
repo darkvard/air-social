@@ -19,7 +19,7 @@ type Config struct {
 	Mailer   MailConfig
 	RabbitMQ RabbitMQConfig
 	MinIO    MinioStorageConfig
-	Limiter  RateLimiterCfg
+	Limiter  RateLimiterConfig
 }
 
 func Load() Config {
@@ -41,7 +41,7 @@ func Load() Config {
 		Mailer:   MailCfg(),
 		RabbitMQ: RabbitMQCfg(),
 		MinIO:    MinStorageCfg(serverCfg.AppName),
-		Limiter:  RateLimiterCfg{},
+		Limiter:  RateLimiterCfg(),
 	}
 }
 

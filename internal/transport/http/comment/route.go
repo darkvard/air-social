@@ -10,7 +10,7 @@ func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 	group := g.Group("", m.Auth)
 	postGroup := group.Group("/posts")
 	{
-		postGroup.POST("/:id/comments", h.CreateComment)
+		postGroup.POST("/:id/comments", m.RateLimitComment(), h.CreateComment)
 		postGroup.GET("/:id/comments", h.GetComments)
 	}
 	commentGroup := group.Group("/comments")

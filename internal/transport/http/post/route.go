@@ -16,7 +16,7 @@ func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 		json := post.Group("").Use(m.JSONOnly)
 		{
 			json.PATCH("/:id", h.UpdatePost)
-			json.POST("", h.CreatePost)
+			json.POST("", m.RateLimitPost(), h.CreatePost)
 		}
 	}
 

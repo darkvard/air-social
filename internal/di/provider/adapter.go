@@ -4,6 +4,7 @@ import (
 	"air-social/internal/cache"
 	"air-social/internal/config"
 	"air-social/internal/domain/common"
+	limitdomain "air-social/internal/domain/limit"
 	"air-social/internal/domain/media"
 	"air-social/internal/infrastructure/mailer"
 	"air-social/internal/infrastructure/minio"
@@ -18,6 +19,7 @@ type Adapter struct {
 	SortedSetStore cache.SortedSetStore
 	EventPub       common.EventPublisher
 	Mailer         common.Mailer
+	RateLimiter    limitdomain.RateLimiter
 }
 
 func NewAdapter(cfg config.Config, infra *Infrastructure) (Adapter, error) {
@@ -42,5 +44,6 @@ func NewAdapter(cfg config.Config, infra *Infrastructure) (Adapter, error) {
 		SortedSetStore: redis.NewRedisSortedSetStore(infra.Redis),
 		EventPub:       eventPub,
 		Mailer:         mailer,
+		RateLimiter:    redis.NewRedisRateLimiter(infra.Redis),
 	}, nil
 }

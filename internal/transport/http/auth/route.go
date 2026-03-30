@@ -15,10 +15,10 @@ func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 
 	json := group.Group("").Use(m.JSONOnly)
 	{
-		json.POST("/register", h.Register)
-		json.POST("/login", h.Login)
+		json.POST("/register", m.RateLimitRegister(), h.Register)
+		json.POST("/login", m.RateLimitLoginByIP(), m.RateLimitLoginByEmail(), h.Login)
 		json.POST("/refresh-token", h.Refresh)
-		json.POST("/forgot-password", h.ForgotPassword)
+		json.POST("/forgot-password", m.RateLimitForgotPasswordByIP(), m.RateLimitForgotPasswordByEmail(), h.ForgotPassword)
 		json.POST("/reset-password", h.ResetPassword)
 	}
 

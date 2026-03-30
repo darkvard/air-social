@@ -62,7 +62,7 @@ func setupEngine() *gin.Engine {
 	e := gin.New()
 	e.Use(gin.Logger())
 	e.Use(middleware.Recovery())
-	e.SetTrustedProxies(nil)
+	e.SetTrustedProxies([]string{"172.16.0.0/12", "127.0.0.1"}) // docker bridge subnet + localhost
 	e.HandleMethodNotAllowed = true
 
 	e.SetHTMLTemplate(

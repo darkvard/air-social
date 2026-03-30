@@ -8,5 +8,5 @@ import (
 
 func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 	auth := g.Group("/media", m.Auth)
-	auth.POST("/presigned-urls", h.PresignedUpload)
+	auth.POST("/presigned-urls", m.RateLimitMediaPresigned(), h.PresignedUpload)
 }

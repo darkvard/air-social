@@ -44,7 +44,7 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 		Adapter: adapter,
 	})
 	handler := provider.NewHandler(prov, usecase)
-	middleware := middleware.NewManager(cfg.Server, prov.Token)
+	middleware := middleware.NewManager(cfg.Server, cfg.Limiter, prov.Token, adapter.RateLimiter)
 	server := server.NewServer(cfg, prov, handler, middleware)
 
 	workers := provider.NewWorkers(infra, adapter, prov, usecase)
