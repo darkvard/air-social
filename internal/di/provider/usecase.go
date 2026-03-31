@@ -14,6 +14,7 @@ import (
 	"air-social/internal/domain/like"
 	"air-social/internal/domain/media"
 	"air-social/internal/domain/post"
+	"air-social/internal/domain/search"
 	"air-social/internal/domain/stats"
 	"air-social/internal/domain/user"
 	userusecase "air-social/internal/domain/user/usecase"
@@ -45,6 +46,7 @@ type UseCase struct {
 	Comment comment.UseCase
 	Stats   stats.UseCase
 	Feed    feed.UseCase
+	Search  search.UseCase
 }
 
 type UseCaseDeps struct {
@@ -60,7 +62,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	mediaUC := getMediaUseCase(deps)
 	userUC := getUserUseCase(deps, mediaUC)
 	authUC := getAuthUseCase(deps, userUC.Fetch, userUC.Account)
-	 
+
 	l1 := cache.NewMemCache[[]int64](1000, followerCacheL1TTL)
 	l2 := redis.NewRedisStore[[]int64](deps.Infra.Redis)
 	followerCache := cache.NewTieredCache(l1, l2, followerCacheL1TTL, followerCacheL2TTL)
@@ -75,6 +77,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	postUC := getPostUseCase(deps, mediaUC, statsUC, likeUC, post.NewCache(postTiered))
 	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC, statsUC)
 	feedUC := getFeedUseCase(deps, followUC, postUC, followerCache)
+	searchUC := search.NewUseCase(deps.Repo.Search)
 
 	return UseCase{
 		Health:  healthUC,
@@ -87,6 +90,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 		Comment: commentUC,
 		Stats:   statsUC,
 		Feed:    feedUC,
+		Search:  searchUC,
 	}
 }
 

@@ -572,6 +572,28 @@ definitions:
         - private
         type: string
     type: object
+  internal_transport_http_search.CursorPaginatedResponse-internal_transport_http_search_UserResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/internal_transport_http_search.UserResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/air-social_internal_transport_http_shared.MetaCursor'
+    type: object
+  internal_transport_http_search.UserResponse:
+    properties:
+      avatar:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+      verified:
+        type: boolean
+    type: object
   internal_transport_http_user.ChangePasswordRequest:
     properties:
       current_password:
@@ -1675,6 +1697,58 @@ paths:
       summary: Get users who shared a post
       tags:
       - Post
+  /search/users:
+    get:
+      consumes:
+      - application/json
+      description: Search for users by username or full name using cursor-based pagination.
+        Requires authentication.
+      parameters:
+      - description: Search keyword matched against username and full_name (case-insensitive)
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: Cursor for pagination (ID of the last item from the previous
+          page, 0 for first page)
+        in: query
+        name: cursor
+        type: integer
+      - description: Number of items to return (default=10, max=50)
+        in: query
+        name: limit
+        type: integer
+      - description: Sort order
+        enum:
+        - latest
+        - oldest
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_search.CursorPaginatedResponse-internal_transport_http_search_UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Search users
+      tags:
+      - Search
   /users/{id}/follow:
     delete:
       consumes:

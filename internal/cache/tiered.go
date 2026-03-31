@@ -50,7 +50,7 @@ func (c *TieredCache[V]) GetOrLoad(ctx context.Context, key string, loader func(
 
 	// Both missed -> call loader (DB)
 	pkg.Log().Errorf("[tiered] key=%s -> cache miss, calling loader", key)
-	
+
 	val, err := loader(ctx)
 	if err != nil {
 		pkg.Log().Errorf("[tiered] key=%s -> loader error: %v", key, err)

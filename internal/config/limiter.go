@@ -45,7 +45,7 @@ func RateLimiterCfg() RateLimiterConfig {
 			Limit:  50,
 			Window: time.Hour,
 		},
-		MediaPresigned: LimiterConfig{		 
+		MediaPresigned: LimiterConfig{
 			Limit:  20,
 			Window: time.Hour,
 		},

@@ -92,7 +92,7 @@ func (r *RedisRateLimiter) Allow(ctx context.Context, key string, limit int, win
 	remaining := max(int64(limit)-estimated, 0)
 
 	return limitdomain.LimitResult{
-		Allowed:   allowed == int64(1),  
+		Allowed:   allowed == int64(1),
 		Limit:     limit,
 		Remaining: int(remaining),
 		ResetAt:   time.Unix(resetUnix, 0),

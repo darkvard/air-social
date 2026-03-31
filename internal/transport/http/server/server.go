@@ -21,6 +21,7 @@ import (
 	"air-social/internal/transport/http/media"
 	"air-social/internal/transport/http/middleware"
 	"air-social/internal/transport/http/post"
+	"air-social/internal/transport/http/search"
 	"air-social/internal/transport/http/user"
 	"air-social/pkg"
 	"air-social/templates"
@@ -47,6 +48,7 @@ func NewServer(
 		like.RegisterRoute(group, h.Like, mw)
 		comment.RegisterRoute(group, h.Comment, mw)
 		feed.RegisterRoute(group, h.Feed, mw)
+		search.RegisterRoute(group, h.Search, mw)
 	}
 
 	return &http.Server{
