@@ -19,7 +19,3 @@ func (r *userRow) ToDomain() search.User {
 		Verified: r.Verified,
 	}
 }
-
-type postRow struct {
-	// todo
-}

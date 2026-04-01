@@ -48,7 +48,43 @@ func (r *repository) SearchUsers(ctx context.Context, params search.UsersParams)
 	return result, nil
 }
 
-func (r *repository) SearchPosts(ctx context.Context, params search.PostsParams) ([]search.Post, error) {
-	// todo
-	return nil, nil
+func (r *repository) SearchPostIDs(ctx context.Context, params search.PostsParams) ([]int64, error) {
+	var args []any
+	var builder strings.Builder
+
+	// $1 = search query, $2 = viewerID (for followers visibility check)
+	args = append(args, params.Search, params.ViewerID)
+	argsID := 3
+
+	builder.WriteString(`
+		SELECT p.id
+		FROM posts p
+		WHERE to_tsvector('simple', p.content) @@ plainto_tsquery('simple', $1)
+		  AND p.deleted_at IS NULL
+		  AND (
+		    p.visibility = 'public'
+		    OR (
+		      p.visibility = 'followers'
+		      AND EXISTS (
+		        SELECT 1 FROM follows
+		        WHERE follower_id = $2 AND followee_id = p.user_id
+		      )
+		    )
+		  )`)
+
+	if params.Query.Cursor > 0 {
+		fmt.Fprintf(&builder, " AND p.id %s $%d", params.Query.GetCompareOperator(), argsID)
+		args = append(args, params.Query.Cursor)
+		argsID++
+	}
+
+	fmt.Fprintf(&builder, " ORDER BY p.id %s LIMIT $%d", params.Query.GetSortOrder(), argsID)
+	args = append(args, params.Query.GetFetchLimit())
+
+	var ids []int64
+	if err := r.db.SelectContext(ctx, &ids, builder.String(), args...); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+
+	return ids, nil
 }

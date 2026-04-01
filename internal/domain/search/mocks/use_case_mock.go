@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"air-social/internal/domain/common"
+	"air-social/internal/domain/post"
 	"air-social/internal/domain/search"
 	"context"
 
@@ -40,22 +41,22 @@ func (_m *MockUseCase) EXPECT() *MockUseCase_Expecter {
 }
 
 // SearchPosts provides a mock function for the type MockUseCase
-func (_mock *MockUseCase) SearchPosts(ctx context.Context, params search.PostsParams) (common.CursorPaginatedResult[search.Post, int64], error) {
+func (_mock *MockUseCase) SearchPosts(ctx context.Context, params search.PostsParams) (common.CursorPaginatedResult[*post.Post, int64], error) {
 	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SearchPosts")
 	}
 
-	var r0 common.CursorPaginatedResult[search.Post, int64]
+	var r0 common.CursorPaginatedResult[*post.Post, int64]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, search.PostsParams) (common.CursorPaginatedResult[search.Post, int64], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, search.PostsParams) (common.CursorPaginatedResult[*post.Post, int64], error)); ok {
 		return returnFunc(ctx, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, search.PostsParams) common.CursorPaginatedResult[search.Post, int64]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, search.PostsParams) common.CursorPaginatedResult[*post.Post, int64]); ok {
 		r0 = returnFunc(ctx, params)
 	} else {
-		r0 = ret.Get(0).(common.CursorPaginatedResult[search.Post, int64])
+		r0 = ret.Get(0).(common.CursorPaginatedResult[*post.Post, int64])
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, search.PostsParams) error); ok {
 		r1 = returnFunc(ctx, params)
@@ -95,12 +96,12 @@ func (_c *MockUseCase_SearchPosts_Call) Run(run func(ctx context.Context, params
 	return _c
 }
 
-func (_c *MockUseCase_SearchPosts_Call) Return(cursorPaginatedResult common.CursorPaginatedResult[search.Post, int64], err error) *MockUseCase_SearchPosts_Call {
+func (_c *MockUseCase_SearchPosts_Call) Return(cursorPaginatedResult common.CursorPaginatedResult[*post.Post, int64], err error) *MockUseCase_SearchPosts_Call {
 	_c.Call.Return(cursorPaginatedResult, err)
 	return _c
 }
 
-func (_c *MockUseCase_SearchPosts_Call) RunAndReturn(run func(ctx context.Context, params search.PostsParams) (common.CursorPaginatedResult[search.Post, int64], error)) *MockUseCase_SearchPosts_Call {
+func (_c *MockUseCase_SearchPosts_Call) RunAndReturn(run func(ctx context.Context, params search.PostsParams) (common.CursorPaginatedResult[*post.Post, int64], error)) *MockUseCase_SearchPosts_Call {
 	_c.Call.Return(run)
 	return _c
 }

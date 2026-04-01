@@ -9,6 +9,5 @@ import (
 func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 	group := g.Group("/search", m.Auth)
 	group.GET("/users", h.SearchUsers)
-
-	// todo: posts
+	group.GET("/posts", h.SearchPosts)
 }

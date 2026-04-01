@@ -3,6 +3,7 @@ package search
 import (
 	"air-social/internal/domain/common"
 	"air-social/internal/domain/search"
+	postdto "air-social/internal/transport/http/post"
 	"air-social/internal/transport/http/shared"
 )
 
@@ -20,8 +21,12 @@ func (q CursorQueryParams) toUserParams() search.UsersParams {
 	}
 }
 
-func (q CursorQueryParams) toPostParams() {
-	// todo
+func (q CursorQueryParams) toPostParams(viewerID int64) search.PostsParams {
+	return search.PostsParams{
+		Search:   q.Query,
+		ViewerID: viewerID,
+		Query:    common.CursorQueryParams[int64]{Cursor: q.Cursor, Limit: q.Limit, Sort: q.Sort},
+	}
 }
 
 type UserResponse struct {
@@ -31,6 +36,9 @@ type UserResponse struct {
 	Avatar   string `json:"avatar"`
 	Verified bool   `json:"verified"`
 }
+
+// PostResponse re-uses the post transport DTO to keep search and post responses consistent
+type PostResponse = postdto.PostResponse
 
 type MetaCursor = shared.MetaCursor
 

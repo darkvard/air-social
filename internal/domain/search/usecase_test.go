@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"air-social/internal/domain/common"
+	"air-social/internal/domain/post"
 	"air-social/internal/domain/search"
 	searchmocks "air-social/internal/domain/search/mocks"
 	"air-social/pkg"
@@ -167,7 +168,7 @@ func (s *searchUseCaseSuite) TestSearchUsers() {
 				tc.setupMock(mockRepo)
 			}
 
-			uc := search.NewUseCase(mockRepo)
+			uc := search.NewUseCase(mockRepo, nil)
 			got, err := uc.SearchUsers(tc.args.ctx, tc.args.params)
 
 			if tc.wantErr != nil {
@@ -195,42 +196,151 @@ func (s *searchUseCaseSuite) TestSearchPosts() {
 	}
 
 	tests := []struct {
-		name    string
-		args    args
-		want    common.CursorPaginatedResult[search.Post, int64]
-		wantErr error
+		name        string
+		args        args
+		setupMocks  func(repo *searchmocks.MockRepository, fetcher *searchmocks.MockPostFetcher)
+		wantIDs     []int64 // expected post IDs in order
+		wantNext    int64
+		wantHasNext bool
+		wantErr     error
 	}{
 		{
-			name: "stub_returns_empty",
+			name: "repo_error_returns_internal",
+			args: args{
+				ctx:    context.Background(),
+				params: search.PostsParams{Search: "golang", Query: common.CursorQueryParams[int64]{Limit: 10}},
+			},
+			setupMocks: func(repo *searchmocks.MockRepository, fetcher *searchmocks.MockPostFetcher) {
+				repo.EXPECT().SearchPostIDs(mock.Anything, mock.Anything).Return(nil, assert.AnError).Once()
+				// postFetcher must NOT be called
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "empty_ids_returns_empty_result",
+			args: args{
+				ctx:    context.Background(),
+				params: search.PostsParams{Search: "nomatch", Query: common.CursorQueryParams[int64]{Limit: 5}},
+			},
+			setupMocks: func(repo *searchmocks.MockRepository, fetcher *searchmocks.MockPostFetcher) {
+				repo.EXPECT().SearchPostIDs(mock.Anything, mock.Anything).Return([]int64{}, nil).Once()
+				// postFetcher must NOT be called when IDs are empty
+			},
+			wantIDs:     []int64{},
+			wantHasNext: false,
+			wantNext:    0,
+			wantErr:     nil,
+		},
+		{
+			name: "post_fetcher_error_returns_internal",
 			args: args{
 				ctx: context.Background(),
 				params: search.PostsParams{
-					Search: "hello",
-					Query:  common.CursorQueryParams[int64]{Limit: 10},
+					Search:   "golang",
+					ViewerID: 99,
+					Query:    common.CursorQueryParams[int64]{Limit: 5},
 				},
 			},
-			want: common.CursorPaginatedResult[search.Post, int64]{
-				Data:        nil,
-				HasNextPage: false,
-				NextCursor:  0,
+			setupMocks: func(repo *searchmocks.MockRepository, fetcher *searchmocks.MockPostFetcher) {
+				repo.EXPECT().SearchPostIDs(mock.Anything, mock.Anything).Return([]int64{1, 2}, nil).Once()
+				fetcher.EXPECT().GetPostsByIDs(mock.Anything, []int64{1, 2}, int64(99)).Return(nil, assert.AnError).Once()
 			},
-			wantErr: nil,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "success_no_next_page",
+			args: args{
+				ctx: context.Background(),
+				params: search.PostsParams{
+					Search: "golang",
+					Query:  common.CursorQueryParams[int64]{Limit: 3},
+				},
+			},
+			setupMocks: func(repo *searchmocks.MockRepository, fetcher *searchmocks.MockPostFetcher) {
+				// repo trả về 2 IDs (< limit=3) → không có trang tiếp
+				repo.EXPECT().SearchPostIDs(mock.Anything, mock.Anything).Return([]int64{10, 20}, nil).Once()
+				fetcher.EXPECT().GetPostsByIDs(mock.Anything, []int64{10, 20}, int64(0)).Return([]*post.Post{
+					{ID: 10, Content: "post ten"},
+					{ID: 20, Content: "post twenty"},
+				}, nil).Once()
+			},
+			wantIDs:     []int64{10, 20},
+			wantHasNext: false,
+			wantNext:    0,
+			wantErr:     nil,
+		},
+		{
+			name: "success_has_next_page_cursor_is_last_id",
+			args: args{
+				ctx: context.Background(),
+				params: search.PostsParams{
+					Search: "golang",
+					Query:  common.CursorQueryParams[int64]{Limit: 2},
+				},
+			},
+			setupMocks: func(repo *searchmocks.MockRepository, fetcher *searchmocks.MockPostFetcher) {
+				// repo trả về limit+1=3 IDs → có trang tiếp, trim về [10,20]
+				repo.EXPECT().SearchPostIDs(mock.Anything, mock.Anything).Return([]int64{10, 20, 30}, nil).Once()
+				fetcher.EXPECT().GetPostsByIDs(mock.Anything, []int64{10, 20}, int64(0)).Return([]*post.Post{
+					{ID: 10, Content: "post ten"},
+					{ID: 20, Content: "post twenty"},
+				}, nil).Once()
+			},
+			wantIDs:     []int64{10, 20},
+			wantHasNext: true,
+			wantNext:    20, // ID của item cuối cùng
+			wantErr:     nil,
+		},
+		{
+			name: "ordering_preserved_after_rehydration",
+			args: args{
+				ctx: context.Background(),
+				params: search.PostsParams{
+					Search: "golang",
+					Query:  common.CursorQueryParams[int64]{Limit: 3},
+				},
+			},
+			setupMocks: func(repo *searchmocks.MockRepository, fetcher *searchmocks.MockPostFetcher) {
+				// FTS order: [10, 20, 30]
+				repo.EXPECT().SearchPostIDs(mock.Anything, mock.Anything).Return([]int64{10, 20, 30}, nil).Once()
+				// DB (SQL IN) trả về thứ tự ngẫu nhiên: [30, 10, 20]
+				fetcher.EXPECT().GetPostsByIDs(mock.Anything, []int64{10, 20, 30}, int64(0)).Return([]*post.Post{
+					{ID: 30, Content: "post thirty"},
+					{ID: 10, Content: "post ten"},
+					{ID: 20, Content: "post twenty"},
+				}, nil).Once()
+			},
+			// Final order phải match FTS order: [10, 20, 30]
+			wantIDs:     []int64{10, 20, 30},
+			wantHasNext: false,
+			wantNext:    0,
+			wantErr:     nil,
 		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			mockRepo := searchmocks.NewMockRepository(s.T())
+			mockFetcher := searchmocks.NewMockPostFetcher(s.T())
+			if tc.setupMocks != nil {
+				tc.setupMocks(mockRepo, mockFetcher)
+			}
 
-			uc := search.NewUseCase(mockRepo)
+			uc := search.NewUseCase(mockRepo, mockFetcher)
 			got, err := uc.SearchPosts(tc.args.ctx, tc.args.params)
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
-			} else {
-				s.NoError(err)
-				s.Equal(tc.want.HasNextPage, got.HasNextPage)
-				s.Equal(tc.want.NextCursor, got.NextCursor)
+				s.Empty(got.Data)
+				return
+			}
+
+			s.NoError(err)
+			s.Equal(tc.wantHasNext, got.HasNextPage)
+			s.Equal(tc.wantNext, got.NextCursor)
+			s.Len(got.Data, len(tc.wantIDs))
+			for i, id := range tc.wantIDs {
+				s.Equal(id, got.Data[i].ID)
 			}
 		})
 	}

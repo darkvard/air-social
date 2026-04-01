@@ -8,6 +8,7 @@ type UsersParams struct {
 }
 
 type PostsParams struct {
-	Search string
-	Query  common.CursorQueryParams[int64]
+	Search   string
+	ViewerID int64
+	Query    common.CursorQueryParams[int64]
 }

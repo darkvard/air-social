@@ -1514,6 +1514,83 @@
                 }
             }
         },
+        "/search/posts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Search public posts by content using full-text search with cursor-based pagination. Requires authentication.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search posts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search keyword matched against post content",
+                        "name": "query",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cursor for pagination (ID of the last item from the previous page, 0 for first page)",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to return (default=10, max=50)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "latest",
+                            "oldest"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_search.CursorPaginatedResponse-internal_transport_http_search_PostResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/search/users": {
             "get": {
                 "security": [
@@ -3027,6 +3104,20 @@
                 }
             }
         },
+        "internal_transport_http_search.CursorPaginatedResponse-internal_transport_http_search_PostResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_search.PostResponse"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                }
+            }
+        },
         "internal_transport_http_search.CursorPaginatedResponse-internal_transport_http_search_UserResponse": {
             "type": "object",
             "properties": {
@@ -3038,6 +3129,50 @@
                 },
                 "meta": {
                     "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                }
+            }
+        },
+        "internal_transport_http_search.PostResponse": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.UserResponse"
+                },
+                "comments_count": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_liked": {
+                    "type": "boolean"
+                },
+                "likes_count": {
+                    "type": "integer"
+                },
+                "media": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/air-social_internal_transport_http_post.MediaItemResponse"
+                    }
+                },
+                "original_post_id": {
+                    "type": "integer"
+                },
+                "shares_count": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
                 }
             }
         },

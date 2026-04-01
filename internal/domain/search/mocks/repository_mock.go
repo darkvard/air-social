@@ -38,24 +38,24 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 	return &MockRepository_Expecter{mock: &_m.Mock}
 }
 
-// SearchPosts provides a mock function for the type MockRepository
-func (_mock *MockRepository) SearchPosts(ctx context.Context, params search.PostsParams) ([]search.Post, error) {
+// SearchPostIDs provides a mock function for the type MockRepository
+func (_mock *MockRepository) SearchPostIDs(ctx context.Context, params search.PostsParams) ([]int64, error) {
 	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SearchPosts")
+		panic("no return value specified for SearchPostIDs")
 	}
 
-	var r0 []search.Post
+	var r0 []int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, search.PostsParams) ([]search.Post, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, search.PostsParams) ([]int64, error)); ok {
 		return returnFunc(ctx, params)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, search.PostsParams) []search.Post); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, search.PostsParams) []int64); ok {
 		r0 = returnFunc(ctx, params)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]search.Post)
+			r0 = ret.Get(0).([]int64)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, search.PostsParams) error); ok {
@@ -66,19 +66,19 @@ func (_mock *MockRepository) SearchPosts(ctx context.Context, params search.Post
 	return r0, r1
 }
 
-// MockRepository_SearchPosts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchPosts'
-type MockRepository_SearchPosts_Call struct {
+// MockRepository_SearchPostIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchPostIDs'
+type MockRepository_SearchPostIDs_Call struct {
 	*mock.Call
 }
 
-// SearchPosts is a helper method to define mock.On call
+// SearchPostIDs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params search.PostsParams
-func (_e *MockRepository_Expecter) SearchPosts(ctx interface{}, params interface{}) *MockRepository_SearchPosts_Call {
-	return &MockRepository_SearchPosts_Call{Call: _e.mock.On("SearchPosts", ctx, params)}
+func (_e *MockRepository_Expecter) SearchPostIDs(ctx interface{}, params interface{}) *MockRepository_SearchPostIDs_Call {
+	return &MockRepository_SearchPostIDs_Call{Call: _e.mock.On("SearchPostIDs", ctx, params)}
 }
 
-func (_c *MockRepository_SearchPosts_Call) Run(run func(ctx context.Context, params search.PostsParams)) *MockRepository_SearchPosts_Call {
+func (_c *MockRepository_SearchPostIDs_Call) Run(run func(ctx context.Context, params search.PostsParams)) *MockRepository_SearchPostIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -96,12 +96,12 @@ func (_c *MockRepository_SearchPosts_Call) Run(run func(ctx context.Context, par
 	return _c
 }
 
-func (_c *MockRepository_SearchPosts_Call) Return(posts []search.Post, err error) *MockRepository_SearchPosts_Call {
-	_c.Call.Return(posts, err)
+func (_c *MockRepository_SearchPostIDs_Call) Return(int64s []int64, err error) *MockRepository_SearchPostIDs_Call {
+	_c.Call.Return(int64s, err)
 	return _c
 }
 
-func (_c *MockRepository_SearchPosts_Call) RunAndReturn(run func(ctx context.Context, params search.PostsParams) ([]search.Post, error)) *MockRepository_SearchPosts_Call {
+func (_c *MockRepository_SearchPostIDs_Call) RunAndReturn(run func(ctx context.Context, params search.PostsParams) ([]int64, error)) *MockRepository_SearchPostIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }

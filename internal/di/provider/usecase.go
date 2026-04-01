@@ -77,7 +77,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	postUC := getPostUseCase(deps, mediaUC, statsUC, likeUC, post.NewCache(postTiered))
 	commentUC := getCommentUseCase(deps, postUC, followUC, mediaUC, likeUC, statsUC)
 	feedUC := getFeedUseCase(deps, followUC, postUC, followerCache)
-	searchUC := search.NewUseCase(deps.Repo.Search)
+	searchUC := search.NewUseCase(deps.Repo.Search, postUC)
 
 	return UseCase{
 		Health:  healthUC,
