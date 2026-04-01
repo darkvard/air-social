@@ -32,13 +32,13 @@ type Repository struct {
 
 func NewRepository(infra *Infrastructure) Repository {
 	return Repository{
-		User:    userinfra.NewRepository(infra.DB),
-		Token:   tokeninfra.NewRepository(infra.DB),
-		Follow:  followinfra.NewRepository(infra.DB),
-		Post:    postinfra.NewRepository(infra.DB),
-		Like:    likeinfra.NewRepository(infra.DB),
-		Comment: commentinfra.NewRepository(infra.DB),
-		Stats:   statsinfra.NewRepository(infra.DB),
-		Search:  searchinfra.NewRepository(infra.DB),
+		User:    userinfra.NewRepository(infra.Postgres),
+		Token:   tokeninfra.NewRepository(infra.Postgres),
+		Follow:  followinfra.NewRepository(infra.Postgres),
+		Post:    postinfra.NewRepository(infra.Postgres),
+		Like:    likeinfra.NewRepository(infra.Postgres),
+		Comment: commentinfra.NewRepository(infra.Postgres),
+		Stats:   statsinfra.NewRepository(infra.Postgres),
+		Search:  searchinfra.NewRepository(infra.Postgres),
 	}
 }

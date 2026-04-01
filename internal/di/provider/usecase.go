@@ -19,6 +19,7 @@ import (
 	"air-social/internal/domain/user"
 	userusecase "air-social/internal/domain/user/usecase"
 	"air-social/internal/infrastructure/minio"
+	"air-social/internal/infrastructure/mongo"
 	"air-social/internal/infrastructure/postgres"
 	"air-social/internal/infrastructure/rabbitmq"
 	"air-social/internal/infrastructure/redis"
@@ -96,7 +97,8 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 
 func getHealthUseCase(deps UseCaseDeps) health.UseCase {
 	healths := make(map[string]health.Checker)
-	healths["postgres"] = postgres.NewHealth(deps.Infra.DB)
+	healths["postgres"] = postgres.NewHealth(deps.Infra.Postgres)
+	healths["mongo"] = mongo.NewHealth(deps.Infra.Mongo)
 	healths["redis"] = redis.NewHealth(deps.Infra.Redis)
 	healths["rabbitmq"] = rabbitmq.NewHealth(deps.Infra.Rabbit, deps.Cfg.RabbitMQ)
 	healths["minio"] = minio.NewHealth(deps.Infra.Minio, deps.Cfg.MinIO.BucketPublic)

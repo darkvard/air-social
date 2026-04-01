@@ -1,15 +1,19 @@
 package provider
 
 import (
+	"context"
+
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/minio/minio-go/v7"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.uber.org/zap"
 
 	"air-social/internal/config"
 	minioinfra "air-social/internal/infrastructure/minio"
+	mongoinfra "air-social/internal/infrastructure/mongo"
 	"air-social/internal/infrastructure/postgres"
 	"air-social/internal/infrastructure/rabbitmq"
 	redisinfra "air-social/internal/infrastructure/redis"
@@ -17,16 +21,18 @@ import (
 )
 
 type Infrastructure struct {
-	DB     *sqlx.DB
-	Redis  *redis.Client
-	Rabbit *amqp.Connection
-	Minio  *minio.Client
-	Logger *zap.SugaredLogger
+	Postgres *sqlx.DB
+	Redis    *redis.Client
+	Mongo    *mongo.Client
+	Rabbit   *amqp.Connection
+	Minio    *minio.Client
+	Logger   *zap.SugaredLogger
 }
 
 func NewInfrastructure(cfg config.Config) (*Infrastructure, func(), error) {
 	var (
-		db          *sqlx.DB
+		psql        *sqlx.DB
+		mongoClient *mongo.Client
 		queue       *amqp.Connection
 		cache       *redis.Client
 		minioClient *minio.Client
@@ -40,12 +46,16 @@ func NewInfrastructure(cfg config.Config) (*Infrastructure, func(), error) {
 		if cache != nil {
 			cache.Close()
 		}
-		if db != nil {
-			db.Close()
+		if psql != nil {
+			psql.Close()
+		}
+		if mongoClient != nil {
+			// Use a background context for cleanup, as the original request context may have been cancelled.
+			_ = mongoClient.Disconnect(context.Background())
 		}
 	}
 
-	db, err = postgres.NewConnection(cfg.Postgres)
+	psql, err = postgres.NewConnection(cfg.Postgres)
 	if err != nil {
 		return nil, func() {}, err
 	}
@@ -68,12 +78,19 @@ func NewInfrastructure(cfg config.Config) (*Infrastructure, func(), error) {
 		return nil, func() {}, err
 	}
 
+	mongoClient, err = mongoinfra.NewConnection(cfg.Mongo)
+	if err != nil {
+		cleanup()
+		return nil, func() {}, err
+	}
+
 	infra := &Infrastructure{
-		DB:     db,
-		Redis:  cache,
-		Rabbit: queue,
-		Minio:  minioClient,
-		Logger: pkg.Log(),
+		Postgres: psql,
+		Mongo:    mongoClient,
+		Redis:    cache,
+		Rabbit:   queue,
+		Minio:    minioClient,
+		Logger:   pkg.Log(),
 	}
 	return infra, cleanup, nil
 }

@@ -42,7 +42,7 @@ services:
     volumes:
       - .:/app
     depends_on:
-      db:
+      postgresdb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -50,15 +50,17 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
     networks:
       - air-social-network
 
   # ==========================================
   # 3. DATABASE (POSTGRES)
   # ==========================================
-  db:
+  postgresdb:
     image: postgres:15
-    container_name: db
+    container_name: postgresdb
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -66,7 +68,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
     ports:
       - "127.0.0.1:5432:5432"
-    command: postgres -c 'timezone=UTC'  
+    command: postgres -c 'timezone=UTC'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -145,6 +147,30 @@ services:
     networks:
       - air-social-network
 
+  # ==========================================
+  # 7. CHAT DATABASE (MONGODB)
+  # ==========================================
+  mongodb:
+    image: mongo:8.0
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:-password}
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'mongosh admin --quiet -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --eval ''db.adminCommand("ping")''',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - air-social-network
+
 # ==========================================
 # NETWORKS & VOLUMES
 # ==========================================
@@ -157,3 +183,4 @@ volumes:
   redis_data:
   rabbitmq_data:
   minio_data:
+  mongodb_data:

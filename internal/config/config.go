@@ -20,6 +20,7 @@ type Config struct {
 	RabbitMQ RabbitMQConfig
 	MinIO    MinioStorageConfig
 	Limiter  RateLimiterConfig
+	Mongo    MongoConfig
 }
 
 func Load() Config {
@@ -42,6 +43,7 @@ func Load() Config {
 		RabbitMQ: RabbitMQCfg(),
 		MinIO:    MinStorageCfg(serverCfg.AppName),
 		Limiter:  RateLimiterCfg(),
+		Mongo:    MongoCfg(),
 	}
 }
 

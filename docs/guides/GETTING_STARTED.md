@@ -22,7 +22,7 @@ SERVER_BASIC_AUTH_PASSWORD=password
 DB_USER=postgres
 DB_PASS=postgres
 DB_NAME=air_social
-DB_HOST=db
+DB_HOST=postgresdb
 DB_PORT=5432
 DB_SSL_MODE=disable
 DB_MAX_IDLE=5
@@ -69,6 +69,16 @@ MINIO_ENDPOINT=minio:9000
 MINIO_BUCKET_PUBLIC=air-social-media-public
 MINIO_BUCKET_PRIVATE=air-social-media-private
 MINIO_USE_SSL=false
+
+# MongoDB
+MONGO_USER=admin
+MONGO_PASS=password
+MONGO_URI=mongodb://${MONGO_USER}:${MONGO_PASS}@mongodb:27017
+MONGO_DB=air_social_chat
+MONGO_CONNECT_TIMEOUT=10s
+MONGO_MAX_POOL=100
+MONGO_MIN_POOL=5
+MONGO_MAX_IDLE_TIME=10m
 ```
 
 ## 2. Build & Run

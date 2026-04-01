@@ -3,7 +3,7 @@
 .PHONY: up
 up: ## Start services in detached mode
 	@echo "🚀 Starting services"
-	@docker compose up -d
+	@docker compose up -d --remove-orphans
 
 .PHONY: down
 down: ## Stop services
@@ -31,14 +31,14 @@ ps: ## List containers
 
 .PHONY: debug
 debug: ## Start services in debug mode
-	docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d	
+	docker compose -f docker-compose.yml -f docker-compose.debug.yml up -d --remove-orphans
 
 ## ===================== DEV WORKFLOW ======================
 
 .PHONY: infra
-infra: ## Start only dependencies (DB, Redis, MQ, Nginx, MinIO)
+infra: ## Start only dependencies (DB, Redis, MQ, Nginx, MinIO, MongoDB)
 	@echo "🏗️  Starting infrastructure..."
-	@docker compose up -d db redis rabbitmq nginx minio
+	@docker compose up -d --remove-orphans postgresdb redis rabbitmq nginx minio mongodb
 
 .PHONY: app-up
 app-up: ## Start/Restart App container only
@@ -56,9 +56,9 @@ app-down: ## Stop App container only
 sh-app: ## Open shell in app container
 	@docker compose exec app sh
 
-.PHONY: sh-db
-sh-db: ## Open shell in db container
-	@docker compose exec db sh
+.PHONY: sh-postgresdb
+sh-postgresdb: ## Open shell in postgresdb container
+	@docker compose exec postgresdb sh
 
 .PHONY: sh-redis
 sh-redis: ## Open shell in redis container
@@ -71,3 +71,7 @@ sh-rabbitmq: ## Open shell in rabbitmq container
 .PHONY: sh-nginx
 sh-nginx: ## Open shell in nginx container
 	@docker compose exec nginx sh
+
+.PHONY: sh-mongodb
+sh-mongodb: ## Open shell in mongodb container
+	@docker compose exec mongodb sh

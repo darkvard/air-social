@@ -42,16 +42,16 @@ endif
 	@echo "⚠️  Forcing migration version to $(version)..."
 	@$(MIGRATE_CMD) force $(version)
 
-.PHONY: reset-db
-reset-db: ## Reset Database (Drop & Create only) - Data Loss!
+.PHONY: reset-postgresdb
+reset-postgresdb: ## Reset Database (Drop & Create only) - Data Loss!
 	@echo "🔄 Starting database container..."
-	@docker compose up -d db
+	@docker compose up -d postgresdb
 	@sleep 2
 	@echo "🛑 Killing connections to $(DB_NAME)..."
-	@docker compose exec db psql -U $(DB_USER) -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$(DB_NAME)' AND pid <> pg_backend_pid();"
+	@docker compose exec postgresdb psql -U $(DB_USER) -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$(DB_NAME)' AND pid <> pg_backend_pid();"
 	@echo "🗑️ Dropping database $(DB_NAME)..."
-	@docker compose exec db psql -U $(DB_USER) -d postgres -c "DROP DATABASE IF EXISTS $(DB_NAME);"
+	@docker compose exec postgresdb psql -U $(DB_USER) -d postgres -c "DROP DATABASE IF EXISTS $(DB_NAME);"
 	@echo "✨ Creating empty database $(DB_NAME)..."
-	@docker compose exec db psql -U $(DB_USER) -d postgres -c "CREATE DATABASE $(DB_NAME);"
+	@docker compose exec postgresdb psql -U $(DB_USER) -d postgres -c "CREATE DATABASE $(DB_NAME);"
 	@echo "✅ Database reset done! (Empty DB created)"
 	@echo "👉 Next step: Run 'make migrate-up' to create tables."

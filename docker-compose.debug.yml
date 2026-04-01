@@ -7,12 +7,12 @@ services:
       - "80:80"
     environment:
       - NGINX_TIMEOUT=3600s
-      - SERVER_READ_TIMEOUT=3600s  
+      - SERVER_READ_TIMEOUT=3600s
       - SERVER_WRITE_TIMEOUT=3600s
     extra_hosts:
       - "app:host-gateway"
 
-  db:
+  postgresdb:
     ports:
       - "127.0.0.1:5432:5432"
 
@@ -29,3 +29,7 @@ services:
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
+
+  mongodb:
+    ports:
+      - "127.0.0.1:27017:27017"
