@@ -33,28 +33,22 @@ type Deps struct {
 }
 
 type usecase struct {
-	followRepo       Repository
-	userFetcher      UserFetcher
-	cacheInvalidator CacheInvalidator
+	deps Deps
 }
 
 func NewUseCase(deps Deps) *usecase {
-	return &usecase{
-		followRepo:       deps.FollowRepo,
-		userFetcher:      deps.UserFetcher,
-		cacheInvalidator: deps.CacheInvalidator,
-	}
+	return &usecase{deps: deps}
 }
 
 func (u *usecase) Follow(ctx context.Context, followerID int64, followeeID int64) error {
 	if err := u.validateFollow(ctx, followerID, followeeID); err != nil {
 		return err
 	}
-	if err := pkg.OrInternalError(u.followRepo.Create(ctx, followerID, followeeID)); err != nil {
+	if err := pkg.OrInternalError(u.deps.FollowRepo.Create(ctx, followerID, followeeID)); err != nil {
 		return err
 	}
-	if u.cacheInvalidator != nil {
-		_ = u.cacheInvalidator.Invalidate(ctx, GetFollowCacheKey(followeeID))
+	if u.deps.CacheInvalidator != nil {
+		_ = u.deps.CacheInvalidator.Invalidate(ctx, GetFollowCacheKey(followeeID))
 	}
 	return nil
 }
@@ -63,11 +57,11 @@ func (u *usecase) Unfollow(ctx context.Context, followerID int64, followeeID int
 	if err := u.validateFollow(ctx, followerID, followeeID); err != nil {
 		return err
 	}
-	if err := pkg.OrInternalError(u.followRepo.Delete(ctx, followerID, followeeID)); err != nil {
+	if err := pkg.OrInternalError(u.deps.FollowRepo.Delete(ctx, followerID, followeeID)); err != nil {
 		return err
 	}
-	if u.cacheInvalidator != nil {
-		_ = u.cacheInvalidator.Invalidate(ctx, GetFollowCacheKey(followeeID))
+	if u.deps.CacheInvalidator != nil {
+		_ = u.deps.CacheInvalidator.Invalidate(ctx, GetFollowCacheKey(followeeID))
 	}
 	return nil
 }
@@ -75,7 +69,7 @@ func (u *usecase) Unfollow(ctx context.Context, followerID int64, followeeID int
 func (u *usecase) GetFollowings(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error) {
 	params.Paging.NormalizePagination()
 
-	data, total, err := u.followRepo.GetFollowings(ctx, params)
+	data, total, err := u.deps.FollowRepo.GetFollowings(ctx, params)
 	if err != nil {
 		return common.OffsetPaginatedResult[FollowUser]{}, err
 	}
@@ -86,7 +80,7 @@ func (u *usecase) GetFollowings(ctx context.Context, params GetFollowsParams) (c
 func (u *usecase) GetFollowers(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error) {
 	params.Paging.NormalizePagination()
 
-	data, total, err := u.followRepo.GetFollowers(ctx, params)
+	data, total, err := u.deps.FollowRepo.GetFollowers(ctx, params)
 	if err != nil {
 		return common.OffsetPaginatedResult[FollowUser]{}, err
 	}
@@ -95,11 +89,11 @@ func (u *usecase) GetFollowers(ctx context.Context, params GetFollowsParams) (co
 }
 
 func (u *usecase) GetRelationship(ctx context.Context, userID, targetID int64) (Relationship, error) {
-	return u.followRepo.GetRelationship(ctx, userID, targetID)
+	return u.deps.FollowRepo.GetRelationship(ctx, userID, targetID)
 }
 
 func (u *usecase) GetFollowerIDs(ctx context.Context, userID int64) ([]int64, error) {
-	ids, err := u.followRepo.GetFollowerIDs(ctx, userID)
+	ids, err := u.deps.FollowRepo.GetFollowerIDs(ctx, userID)
 	return ids, pkg.OrInternalError(err)
 }
 
@@ -108,7 +102,7 @@ func (u *usecase) validateFollow(ctx context.Context, followerID int64, followee
 		return fmt.Errorf("cannot perform this action on yourself: %w", pkg.ErrBadRequest)
 	}
 
-	account, err := u.userFetcher.GetSummary(ctx, followeeID)
+	account, err := u.deps.UserFetcher.GetSummary(ctx, followeeID)
 	if err != nil {
 		return pkg.OrInternalError(err, pkg.ErrNotFound)
 	}

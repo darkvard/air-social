@@ -8,24 +8,28 @@ import (
 	"air-social/pkg"
 )
 
-type profileUseCase struct {
-	repo  user.Repository
-	cache user.Cache
-	media user.MediaConfirmer
+type MediaConfirmer interface {
+	ConfirmUpload(ctx context.Context, params []media.ConfirmParams) ([]string, error)
 }
 
-func NewProfileUseCase(d user.Deps) *profileUseCase {
-	return &profileUseCase{
-		repo:  d.Repo,
-		cache: d.Cache,
-		media: d.Media,
-	}
+type ProfileDeps struct {
+	Repo  user.Repository
+	Cache user.Cache
+	Media MediaConfirmer
+}
+
+type profileUseCase struct {
+	deps ProfileDeps
+}
+
+func NewProfileUseCase(d ProfileDeps) *profileUseCase {
+	return &profileUseCase{deps: d}
 }
 
 func (u *profileUseCase) UpdateProfile(ctx context.Context, params user.UpdateParams) (*user.User, error) {
 	var empty *user.User
 
-	user, err := u.repo.GetByID(ctx, params.UserID)
+	user, err := u.deps.Repo.GetByID(ctx, params.UserID)
 	if err != nil {
 		return empty, err
 	}
@@ -45,20 +49,20 @@ func (u *profileUseCase) UpdateProfile(ctx context.Context, params user.UpdatePa
 		user.Username = *params.Username
 	}
 
-	if err := u.repo.UpdateProfile(ctx, user); err != nil {
+	if err := u.deps.Repo.UpdateProfile(ctx, user); err != nil {
 		return empty, pkg.OrInternalError(err)
 	}
-	_ = u.cache.Invalidate(ctx, user.ID)
+	_ = u.deps.Cache.Invalidate(ctx, user.ID)
 
 	return user, nil
 }
 
 func (u *profileUseCase) UpdateAvatar(ctx context.Context, params media.ConfirmParams) (*user.User, error) {
-	if err := u.updateImageUrl(ctx, params, u.repo.UpdateAvatar); err != nil {
+	if err := u.updateImageUrl(ctx, params, u.deps.Repo.UpdateAvatar); err != nil {
 		return nil, err
 	}
 
-	result, err := u.repo.GetByID(ctx, params.EntityID)
+	result, err := u.deps.Repo.GetByID(ctx, params.EntityID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,11 +71,11 @@ func (u *profileUseCase) UpdateAvatar(ctx context.Context, params media.ConfirmP
 }
 
 func (u *profileUseCase) UpdateCover(ctx context.Context, params media.ConfirmParams) (*user.User, error) {
-	if err := u.updateImageUrl(ctx, params, u.repo.UpdateCover); err != nil {
+	if err := u.updateImageUrl(ctx, params, u.deps.Repo.UpdateCover); err != nil {
 		return nil, err
 	}
 
-	result, err := u.repo.GetByID(ctx, params.EntityID)
+	result, err := u.deps.Repo.GetByID(ctx, params.EntityID)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +92,7 @@ func (u *profileUseCase) updateImageUrl(
 		return pkg.ErrBadRequest
 	}
 
-	keys, err := u.media.ConfirmUpload(ctx, []media.ConfirmParams{params})
+	keys, err := u.deps.Media.ConfirmUpload(ctx, []media.ConfirmParams{params})
 	if err != nil || len(keys) == 0 {
 		return pkg.OrInternalError(err, pkg.ErrBadRequest, pkg.ErrNotFound)
 	}
@@ -97,6 +101,6 @@ func (u *profileUseCase) updateImageUrl(
 		return pkg.OrInternalError(err)
 	}
 
-	_ = u.cache.Invalidate(ctx, params.EntityID)
+	_ = u.deps.Cache.Invalidate(ctx, params.EntityID)
 	return nil
 }

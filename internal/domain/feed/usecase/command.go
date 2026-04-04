@@ -19,23 +19,17 @@ type CommandDeps struct {
 }
 
 type commandUseCase struct {
-	cacheProvider feed.Cache
-	followFetcher FollowFetcher
-	followerCache cache.TieredStore[[]int64]
+	deps CommandDeps
 }
 
 func NewCommandUseCase(deps CommandDeps) *commandUseCase {
-	return &commandUseCase{
-		cacheProvider: deps.CacheProvider,
-		followFetcher: deps.FollowFetcher,
-		followerCache: deps.FollowerCache,
-	}
+	return &commandUseCase{deps: deps}
 }
 
 func (u *commandUseCase) getFollowerIDs(ctx context.Context, userID int64) ([]int64, error) {
 	key := follow.GetFollowCacheKey(userID)
-	return u.followerCache.GetOrLoad(ctx, key, func(ctx context.Context) ([]int64, error) {
-		return u.followFetcher.GetFollowerIDs(ctx, userID)
+	return u.deps.FollowerCache.GetOrLoad(ctx, key, func(ctx context.Context) ([]int64, error) {
+		return u.deps.FollowFetcher.GetFollowerIDs(ctx, userID)
 	})
 }
 
@@ -47,7 +41,7 @@ func (u *commandUseCase) DistributePost(ctx context.Context, postID int64, autho
 
 	followerIDs = append(followerIDs, authorID)
 
-	return u.cacheProvider.PushPostToFeeds(ctx, followerIDs, postID, float64(timestamp))
+	return u.deps.CacheProvider.PushPostToFeeds(ctx, followerIDs, postID, float64(timestamp))
 }
 
 func (u *commandUseCase) RevokePost(ctx context.Context, postID int64, authorID int64) error {
@@ -57,5 +51,5 @@ func (u *commandUseCase) RevokePost(ctx context.Context, postID int64, authorID 
 	}
 	followerIDs = append(followerIDs, authorID)
 
-	return u.cacheProvider.RemovePostFromFeeds(ctx, followerIDs, postID)
+	return u.deps.CacheProvider.RemovePostFromFeeds(ctx, followerIDs, postID)
 }

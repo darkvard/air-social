@@ -19,15 +19,11 @@ type QueryDeps struct {
 }
 
 type queryUseCase struct {
-	cacheProvider feed.Cache
-	postFetcher   PostFetcher
+	deps QueryDeps
 }
 
 func NewQueryUseCase(deps QueryDeps) *queryUseCase {
-	return &queryUseCase{
-		cacheProvider: deps.CacheProvider,
-		postFetcher:   deps.PostFetcher,
-	}
+	return &queryUseCase{deps: deps}
 }
 
 func (u *queryUseCase) GetNewsfeed(ctx context.Context, viewerID int64, params common.CursorQueryParams[int64]) (common.CursorPaginatedResult[*post.Post, int64], error) {
@@ -35,7 +31,7 @@ func (u *queryUseCase) GetNewsfeed(ctx context.Context, viewerID int64, params c
 	var empty common.CursorPaginatedResult[*post.Post, int64]
 
 	// Fetch limit+1 from Cache to detect whether a next page exists.
-	postIDs, err := u.cacheProvider.GetFeedPostIDs(ctx, viewerID, params.Cursor, params.GetFetchLimit())
+	postIDs, err := u.deps.CacheProvider.GetFeedPostIDs(ctx, viewerID, params.Cursor, params.GetFetchLimit())
 	if err != nil {
 		return empty, pkg.OrInternalError(err)
 	}
@@ -52,7 +48,7 @@ func (u *queryUseCase) GetNewsfeed(ctx context.Context, viewerID int64, params c
 
 	// Fetch from DB: Get post details.
 	// WARNING: SQL IN clause does not preserve order; re-ordering is done below.
-	posts, err := u.postFetcher.GetPostsByIDs(ctx, postIDs, viewerID)
+	posts, err := u.deps.PostFetcher.GetPostsByIDs(ctx, postIDs, viewerID)
 	if err != nil {
 		return empty, pkg.OrInternalError(err)
 	}

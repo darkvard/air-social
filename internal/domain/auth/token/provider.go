@@ -34,15 +34,11 @@ type Deps struct {
 }
 
 type provider struct {
-	cfg   config.TokenConfig
-	cache cache.AtomicCache[string]
+	deps Deps
 }
 
 func NewProvider(d Deps) *provider {
-	return &provider{
-		cfg:   d.Config,
-		cache: d.Cache,
-	}
+	return &provider{deps: d}
 }
 
 func (p *provider) HashToken(raw string) string {
@@ -54,17 +50,17 @@ func (p *provider) GenerateAccessToken(userID int64, deviceID string) (AccessTok
 	var empty AccessTokenResult
 
 	now := pkg.TimeNowUTC()
-	expiresAt := now.Add(p.cfg.AccessTokenTTL)
+	expiresAt := now.Add(p.deps.Config.AccessTokenTTL)
 
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		pkg.JWTClaimSubject:   fmt.Sprintf("%d", userID),
 		pkg.JWTClaimDevice:    deviceID,
-		pkg.JWTClaimAudience:  p.cfg.Aud,
-		pkg.JWTClaimIssuer:    p.cfg.Iss,
+		pkg.JWTClaimAudience:  p.deps.Config.Aud,
+		pkg.JWTClaimIssuer:    p.deps.Config.Iss,
 		pkg.JWTClaimIssuedAt:  now.Unix(),
 		pkg.JWTClaimNotBefore: now.Unix(),
 		pkg.JWTClaimExpiresAt: expiresAt.Unix(),
-	}).SignedString([]byte(p.cfg.Secret))
+	}).SignedString([]byte(p.deps.Config.Secret))
 
 	if err != nil {
 		return empty, pkg.ErrInternal
@@ -80,7 +76,7 @@ func (p *provider) GenerateRefreshToken() RefreshTokenResult {
 	raw := uuid.NewString()
 	hashed := p.HashToken(raw)
 	now := pkg.TimeNowUTC()
-	expiresAt := now.Add(p.cfg.RefreshTokenTTL)
+	expiresAt := now.Add(p.deps.Config.RefreshTokenTTL)
 
 	return RefreshTokenResult{
 		Raw:       raw,
@@ -97,11 +93,11 @@ func (p *provider) VerifyAccessToken(token string) (TokenClaims, AccessTokenResu
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method %v", t.Header["alg"])
 		}
-		return []byte(p.cfg.Secret), nil
+		return []byte(p.deps.Config.Secret), nil
 	},
 		jwt.WithExpirationRequired(),
-		jwt.WithAudience(p.cfg.Aud),
-		jwt.WithIssuer(p.cfg.Iss),
+		jwt.WithAudience(p.deps.Config.Aud),
+		jwt.WithIssuer(p.deps.Config.Iss),
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
 	if err != nil || !res.Valid {
@@ -140,7 +136,7 @@ func (p *provider) VerifyRefreshToken(token RefreshToken) (bool, error) {
 }
 
 func (p *provider) IsBlacklisted(ctx context.Context, accessToken string) bool {
-	exists, err := p.cache.Exists(ctx, getBlacklistTokenKey(accessToken))
+	exists, err := p.deps.Cache.Exists(ctx, getBlacklistTokenKey(accessToken))
 	if err != nil {
 		return false
 	}
@@ -151,7 +147,7 @@ func (p *provider) AddToBlacklist(ctx context.Context, accessToken string, expir
 	ttl := time.Until(expiresAt)
 	if ttl > 0 {
 		key := getBlacklistTokenKey(accessToken)
-		_ = p.cache.Set(ctx, key, "revoked", ttl)
+		_ = p.deps.Cache.Set(ctx, key, "revoked", ttl)
 	}
 }
 

@@ -108,7 +108,7 @@ func (s *accountUseCaseSuite) TestVerifyEmail() {
 			mockCache := usermocks.NewMockCache(s.T())
 
 			deps := testDeps{repo: mockRepo, cache: mockCache}
-			uc := usecase.NewAccountUseCase(user.Deps{Repo: mockRepo, Cache: mockCache})
+			uc := usecase.NewAccountUseCase(usecase.AccountDeps{Repo: mockRepo, Cache: mockCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -191,7 +191,7 @@ func (s *accountUseCaseSuite) TestCreateUser() {
 			mockCache := usermocks.NewMockCache(s.T())
 
 			deps := testDeps{repo: mockRepo, cache: mockCache}
-			uc := usecase.NewAccountUseCase(user.Deps{Repo: mockRepo, Cache: mockCache})
+			uc := usecase.NewAccountUseCase(usecase.AccountDeps{Repo: mockRepo, Cache: mockCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -319,7 +319,7 @@ func (s *accountUseCaseSuite) TestChangePassword() {
 			mockCache := usermocks.NewMockCache(s.T())
 
 			deps := testDeps{repo: mockRepo, cache: mockCache}
-			uc := usecase.NewAccountUseCase(user.Deps{Repo: mockRepo, Cache: mockCache})
+			uc := usecase.NewAccountUseCase(usecase.AccountDeps{Repo: mockRepo, Cache: mockCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -426,7 +426,7 @@ func (s *accountUseCaseSuite) TestAuthenticate() {
 			mockCache := usermocks.NewMockCache(s.T())
 
 			deps := testDeps{repo: mockRepo, cache: mockCache}
-			uc := usecase.NewAccountUseCase(user.Deps{Repo: mockRepo, Cache: mockCache})
+			uc := usecase.NewAccountUseCase(usecase.AccountDeps{Repo: mockRepo, Cache: mockCache})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)

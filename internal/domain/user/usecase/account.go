@@ -10,27 +10,28 @@ import (
 	"air-social/pkg"
 )
 
-type accountUseCase struct {
-	repo  user.Repository
-	cache user.Cache
+type AccountDeps struct {
+	Repo  user.Repository
+	Cache user.Cache
 }
 
-func NewAccountUseCase(d user.Deps) *accountUseCase {
-	return &accountUseCase{
-		repo:  d.Repo,
-		cache: d.Cache,
-	}
+type accountUseCase struct {
+	deps AccountDeps
+}
+
+func NewAccountUseCase(d AccountDeps) *accountUseCase {
+	return &accountUseCase{deps: d}
 }
 
 func (u *accountUseCase) VerifyEmail(ctx context.Context, email string) error {
-	user, err := u.repo.GetByEmail(ctx, email)
+	user, err := u.deps.Repo.GetByEmail(ctx, email)
 	if err != nil {
 		return pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
-	if err := u.repo.UpdateVerified(ctx, user.ID, true); err != nil {
+	if err := u.deps.Repo.UpdateVerified(ctx, user.ID, true); err != nil {
 		return pkg.ErrInternal
 	}
-	_ = u.cache.Invalidate(ctx, user.ID)
+	_ = u.deps.Cache.Invalidate(ctx, user.ID)
 	return nil
 }
 
@@ -44,14 +45,14 @@ func (u *accountUseCase) CreateUser(ctx context.Context, params user.CreateParam
 		Username:     params.Username,
 		PasswordHash: hashed,
 	}
-	if err := u.repo.Create(ctx, user); err != nil {
+	if err := u.deps.Repo.Create(ctx, user); err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrAlreadyExists)
 	}
 	return user, nil
 }
 
 func (u *accountUseCase) ChangePassword(ctx context.Context, params user.ChangePasswordParams) error {
-	user, err := u.repo.GetByID(ctx, params.UserID)
+	user, err := u.deps.Repo.GetByID(ctx, params.UserID)
 	if err != nil {
 		return pkg.ErrInvalidCredentials
 	}
@@ -68,12 +69,12 @@ func (u *accountUseCase) ChangePassword(ctx context.Context, params user.ChangeP
 		return pkg.ErrInternal
 	}
 	return pkg.OrInternalError(
-		u.repo.UpdatePassword(ctx, user.ID, hashed),
+		u.deps.Repo.UpdatePassword(ctx, user.ID, hashed),
 	)
 }
 
 func (u *accountUseCase) ResetPassword(ctx context.Context, params user.ResetPasswordParams) error {
-	user, err := u.repo.GetByEmail(ctx, params.Email)
+	user, err := u.deps.Repo.GetByEmail(ctx, params.Email)
 	if err != nil {
 		return pkg.ErrInvalidCredentials
 	}
@@ -83,12 +84,12 @@ func (u *accountUseCase) ResetPassword(ctx context.Context, params user.ResetPas
 		return pkg.ErrInternal
 	}
 	return pkg.OrInternalError(
-		u.repo.UpdatePassword(ctx, user.ID, hashed),
+		u.deps.Repo.UpdatePassword(ctx, user.ID, hashed),
 	)
 }
 
 func (u *accountUseCase) Authenticate(ctx context.Context, params user.AuthenticateParams) (*user.User, error) {
-	user, err := u.repo.GetByEmail(ctx, params.Email)
+	user, err := u.deps.Repo.GetByEmail(ctx, params.Email)
 	if err != nil {
 		return nil, pkg.ErrInvalidCredentials
 	}

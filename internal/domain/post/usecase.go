@@ -44,28 +44,16 @@ type Deps struct {
 }
 
 type usecase struct {
-	postRepo      Repository
-	mediaVerifier MediaVerifier
-	likeChecker   LikeChecker
-	statsFetcher  StatsFetcher
-	event         common.EventPublisher
-	postCache     Cache
+	deps Deps
 }
 
 func NewUseCase(deps Deps) *usecase {
-	return &usecase{
-		postRepo:      deps.PostRepo,
-		mediaVerifier: deps.MediaVerifier,
-		statsFetcher:  deps.StatsFetcher,
-		likeChecker:   deps.LikeChecker,
-		event:         deps.Event,
-		postCache:     deps.PostCache,
-	}
+	return &usecase{deps: deps}
 }
 
 func (u *usecase) GetPostDetail(ctx context.Context, postID, viewerID int64) (*Post, error) {
-	post, err := u.postCache.Get(ctx, postID, func(ctx context.Context) (*Post, error) {
-		return u.postRepo.GetDetail(ctx, postID)
+	post, err := u.deps.PostCache.Get(ctx, postID, func(ctx context.Context) (*Post, error) {
+		return u.deps.PostRepo.GetDetail(ctx, postID)
 	})
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
@@ -101,7 +89,7 @@ func (u *usecase) CreatePost(ctx context.Context, params CreateParams) (*Post, e
 		post.Media = media
 	}
 
-	if err := u.postRepo.Create(ctx, post); err != nil {
+	if err := u.deps.PostRepo.Create(ctx, post); err != nil {
 		if errors.Is(err, pkg.ErrInvalidData) {
 			return nil, pkg.NewError(pkg.ErrInvalidData, "original post not found")
 		}
@@ -141,11 +129,11 @@ func (u *usecase) UpdatePost(ctx context.Context, params UpdateParams) (*Post, e
 		post.Media = nil // skip
 	}
 
-	if err := u.postRepo.Update(ctx, post); err != nil {
+	if err := u.deps.PostRepo.Update(ctx, post); err != nil {
 		return nil, pkg.ErrInternal
 	}
 	// Invalidate stale PostCore so next read fetches fresh data from DB.
-	_ = u.postCache.Invalidate(ctx, post.ID)
+	_ = u.deps.PostCache.Invalidate(ctx, post.ID)
 	return post, nil
 }
 
@@ -157,11 +145,11 @@ func (u *usecase) DeletePost(ctx context.Context, postID, userID int64) error {
 	if post.OriginalPostID != nil {
 		_ = u.addShareEvent(ctx, *post, false)
 	}
-	if err := u.postRepo.Delete(ctx, postID); err != nil {
+	if err := u.deps.PostRepo.Delete(ctx, postID); err != nil {
 		return pkg.OrInternalError(err)
 	}
 	// Invalidate cache so deleted post is not served from L1/L2.
-	_ = u.postCache.Invalidate(ctx, postID)
+	_ = u.deps.PostCache.Invalidate(ctx, postID)
 	_ = u.addPostFeedEvent(ctx, post.ID, post.UserID, common.EventPostDeleted, 0)
 	return nil
 }
@@ -170,7 +158,7 @@ func (u *usecase) GetUserPosts(ctx context.Context, params GetCursorParams) (com
 	var empty common.CursorPaginatedResult[Post, int64]
 	params.Query.NormalizePagination()
 
-	posts, err := u.postRepo.GetUserPosts(ctx, params)
+	posts, err := u.deps.PostRepo.GetUserPosts(ctx, params)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -189,7 +177,7 @@ func (u *usecase) GetPostSharers(ctx context.Context, params GetSharersParams) (
 	var empty common.CursorPaginatedResult[Sharer, int64]
 	params.Query.NormalizePagination()
 
-	sharers, err := u.postRepo.GetPostSharers(ctx, params)
+	sharers, err := u.deps.PostRepo.GetPostSharers(ctx, params)
 	if err != nil {
 		return empty, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -203,7 +191,7 @@ func (u *usecase) GetPostsByIDs(ctx context.Context, postIDs []int64, viewerID i
 		return []*Post{}, nil
 	}
 
-	posts, err := u.postCache.GetBatch(ctx, postIDs, u.postRepo.GetByIDs)
+	posts, err := u.deps.PostCache.GetBatch(ctx, postIDs, u.deps.PostRepo.GetByIDs)
 	if err != nil {
 		return nil, pkg.OrInternalError(err)
 	}
@@ -219,7 +207,7 @@ func (u *usecase) validateMedia(ctx context.Context, params []MediaParams) ([]Me
 	for i, m := range params {
 		keys[i] = m.MediaKey
 	}
-	if err := u.mediaVerifier.VerifyMedia(ctx, keys); err != nil {
+	if err := u.deps.MediaVerifier.VerifyMedia(ctx, keys); err != nil {
 		return nil, err
 	}
 
@@ -231,7 +219,7 @@ func (u *usecase) validateMedia(ctx context.Context, params []MediaParams) ([]Me
 }
 
 func (u *usecase) getPostOwner(ctx context.Context, postID, viewerID int64) (*Post, error) {
-	post, err := u.postRepo.GetByID(ctx, postID)
+	post, err := u.deps.PostRepo.GetByID(ctx, postID)
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
 			return nil, pkg.NewError(err, "post not found")
@@ -247,7 +235,7 @@ func (u *usecase) getPostOwner(ctx context.Context, postID, viewerID int64) (*Po
 
 func (u *usecase) addPostFeedEvent(ctx context.Context, postID, authorID int64, typ common.EventType, timestamp int64) error {
 	data := common.PostFeedEventPayload{PostID: postID, AuthorID: authorID, Timestamp: timestamp}
-	return u.event.Publish(ctx, common.NewEvent(typ, data))
+	return u.deps.Event.Publish(ctx, common.NewEvent(typ, data))
 }
 
 func (u *usecase) addShareEvent(ctx context.Context, post Post, isShare bool) error {
@@ -257,7 +245,7 @@ func (u *usecase) addShareEvent(ctx context.Context, post Post, isShare bool) er
 		ActorID:        post.UserID,
 		IsShared:       isShare,
 	}
-	return u.event.Publish(ctx, common.NewEvent(common.EventPostShare, data))
+	return u.deps.Event.Publish(ctx, common.NewEvent(common.EventPostShare, data))
 }
 
 func (u *usecase) mapPostMetadata(ctx context.Context, posts []*Post, viewerID int64) {
@@ -295,7 +283,7 @@ func (u *usecase) fetchStatsAndLikes(ctx context.Context, ids []int64, viewerID 
 	var g errgroup.Group
 
 	g.Go(func() error {
-		res, err := u.statsFetcher.GetPostsStats(ctx, ids)
+		res, err := u.deps.StatsFetcher.GetPostsStats(ctx, ids)
 		if err != nil {
 			pkg.Log().Error("failed to fetch post stats, skipping", err)
 			return nil
@@ -305,7 +293,7 @@ func (u *usecase) fetchStatsAndLikes(ctx context.Context, ids []int64, viewerID 
 	})
 
 	g.Go(func() error {
-		res, err := u.likeChecker.IsPostLiked(ctx, ids, viewerID)
+		res, err := u.deps.LikeChecker.IsPostLiked(ctx, ids, viewerID)
 		if err != nil {
 			pkg.Log().Error("failed to fetch isLiked status, skipping", err)
 			return nil

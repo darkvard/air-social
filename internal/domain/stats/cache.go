@@ -27,7 +27,7 @@ type statsCache struct {
 	store appcache.HashStore
 }
 
-func NewCache(store appcache.HashStore) Cache {
+func NewCache(store appcache.HashStore) *statsCache {
 	return &statsCache{store: store}
 }
 

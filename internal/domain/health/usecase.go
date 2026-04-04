@@ -19,19 +19,20 @@ type Checker interface {
 	Ping(ctx context.Context) error
 }
 
+type Deps struct {
+	Checkers map[string]Checker
+	Link     common.SystemProvider
+}
+
 type usecase struct {
-	checkers map[string]Checker
-	link     common.SystemProvider
+	deps Deps
 }
 
 func NewUseCase(
 	checkers map[string]Checker,
 	link common.SystemProvider,
 ) UseCase {
-	return &usecase{
-		checkers: checkers,
-		link:     link,
-	}
+	return &usecase{deps: Deps{Checkers: checkers, Link: link}}
 }
 
 func (u *usecase) CheckStatus(ctx context.Context) (bool, map[string]string) {
@@ -44,7 +45,7 @@ func (u *usecase) CheckStatus(ctx context.Context) (bool, map[string]string) {
 	details := make(map[string]string)
 	isHealthy := true
 
-	for name, checker := range u.checkers {
+	for name, checker := range u.deps.Checkers {
 		wg.Add(1)
 
 		go func(name string, checker Checker) {
@@ -86,7 +87,7 @@ func (u *usecase) Overview(ctx context.Context) OverviewResponse {
 
 	return OverviewResponse{
 		Title:    "Air Social API",
-		DocsURL:  u.link.SwaggerURL(),
+		DocsURL:  u.deps.Link.SwaggerURL(),
 		Status:   status,
 		HTTPCode: httpCode,
 	}

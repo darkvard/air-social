@@ -26,7 +26,7 @@ type postCache struct {
 	store appcache.TieredStore[Post]
 }
 
-func NewCache(store appcache.TieredStore[Post]) Cache {
+func NewCache(store appcache.TieredStore[Post]) *postCache {
 	return &postCache{store: store}
 }
 

@@ -24,7 +24,7 @@ type feedCache struct {
 	store appcache.SortedSetStore
 }
 
-func NewCache(store appcache.SortedSetStore) Cache {
+func NewCache(store appcache.SortedSetStore) *feedCache {
 	return &feedCache{store: store}
 }
 

@@ -18,20 +18,24 @@ type UseCase interface {
 	SearchPosts(ctx context.Context, params PostsParams) (common.CursorPaginatedResult[*post.Post, int64], error)
 }
 
+type Deps struct {
+	Repo        Repository
+	PostFetcher PostFetcher
+}
+
 type usecase struct {
-	repo        Repository
-	postFetcher PostFetcher
+	deps Deps
 }
 
 func NewUseCase(repo Repository, postFetcher PostFetcher) *usecase {
-	return &usecase{repo: repo, postFetcher: postFetcher}
+	return &usecase{deps: Deps{Repo: repo, PostFetcher: postFetcher}}
 }
 
 func (u *usecase) SearchUsers(ctx context.Context, params UsersParams) (common.CursorPaginatedResult[User, int64], error) {
 	var empty common.CursorPaginatedResult[User, int64]
 	params.Query.NormalizePagination()
 
-	users, err := u.repo.SearchUsers(ctx, params)
+	users, err := u.deps.Repo.SearchUsers(ctx, params)
 	if err != nil {
 		return empty, pkg.OrInternalError(err)
 	}
@@ -44,7 +48,7 @@ func (u *usecase) SearchPosts(ctx context.Context, params PostsParams) (common.C
 	params.Query.NormalizePagination()
 
 	// find matching post IDs via FTS
-	ids, err := u.repo.SearchPostIDs(ctx, params)
+	ids, err := u.deps.Repo.SearchPostIDs(ctx, params)
 	if err != nil {
 		return empty, pkg.OrInternalError(err)
 	}
@@ -60,7 +64,7 @@ func (u *usecase) SearchPosts(ctx context.Context, params PostsParams) (common.C
 	}
 
 	// hydrate full post data (stats, likes, media, author) via PostFetcher 
-	posts, err := u.postFetcher.GetPostsByIDs(ctx, ids, params.ViewerID)
+	posts, err := u.deps.PostFetcher.GetPostsByIDs(ctx, ids, params.ViewerID)
 	if err != nil {
 		return empty, pkg.OrInternalError(err)
 	}

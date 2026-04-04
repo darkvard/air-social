@@ -99,11 +99,7 @@ func (s *fetchUseCaseSuite) TestGetByID() {
 				cache: mockCache,
 				link:  mockLink,
 			}
-			uc := usecase.NewFetchUseCase(user.Deps{
-				Repo:  mockRepo,
-				Cache: mockCache,
-				Link:  mockLink,
-			})
+			uc := usecase.NewFetchUseCase(usecase.FetchDeps{Repo: mockRepo, Cache: mockCache, Link: mockLink})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -199,11 +195,7 @@ func (s *fetchUseCaseSuite) TestGetByEmail() {
 				cache: mockCache,
 				link:  mockLink,
 			}
-			uc := usecase.NewFetchUseCase(user.Deps{
-				Repo:  mockRepo,
-				Cache: mockCache,
-				Link:  mockLink,
-			})
+			uc := usecase.NewFetchUseCase(usecase.FetchDeps{Repo: mockRepo, Cache: mockCache, Link: mockLink})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -354,11 +346,7 @@ func (s *fetchUseCaseSuite) TestGetSummary() {
 				cache: mockCache,
 				link:  mockLink,
 			}
-			uc := usecase.NewFetchUseCase(user.Deps{
-				Repo:  mockRepo,
-				Cache: mockCache,
-				Link:  mockLink,
-			})
+			uc := usecase.NewFetchUseCase(usecase.FetchDeps{Repo: mockRepo, Cache: mockCache, Link: mockLink})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)

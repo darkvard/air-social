@@ -33,12 +33,11 @@ type Deps struct {
 }
 
 type usecase struct {
-	repo  Repository
-	cache Cache
+	deps Deps
 }
 
 func NewUseCase(deps Deps) *usecase {
-	return &usecase{repo: deps.Repo, cache: deps.Cache}
+	return &usecase{deps: deps}
 }
 
 // SyncPostStats executes the Write-Behind sync flow for posts.
@@ -69,7 +68,7 @@ func (u *usecase) SyncPostStats(ctx context.Context) error {
 		params.Shares[i] = maps[2][id]
 	}
 
-	if err := u.repo.BulkUpsertPostStats(ctx, params); err != nil {
+	if err := u.deps.Repo.BulkUpsertPostStats(ctx, params); err != nil {
 		go func(ids []int64) {
 			_ = u.ReconcilePostStats(context.Background(), ids)
 		}(uniqueIDs)
@@ -105,7 +104,7 @@ func (u *usecase) SyncCommentStats(ctx context.Context) error {
 		params.Replies[i] = maps[1][id]
 	}
 
-	if err := u.repo.BulkUpsertCommentStats(ctx, params); err != nil {
+	if err := u.deps.Repo.BulkUpsertCommentStats(ctx, params); err != nil {
 		go func(ids []int64) {
 			_ = u.ReconcileCommentStats(context.Background(), ids)
 		}(uniqueIDs)
@@ -122,7 +121,7 @@ func (u *usecase) ReconcilePostStats(ctx context.Context, postIDs []int64) error
 	if len(postIDs) == 0 {
 		return nil
 	}
-	if err := u.repo.ReconcilePostStats(ctx, postIDs); err != nil {
+	if err := u.deps.Repo.ReconcilePostStats(ctx, postIDs); err != nil {
 		return pkg.NewError(err, "failed to reconcile post stats")
 	}
 	return nil
@@ -134,7 +133,7 @@ func (u *usecase) ReconcileCommentStats(ctx context.Context, commentIDs []int64)
 	if len(commentIDs) == 0 {
 		return nil
 	}
-	if err := u.repo.ReconcileCommentStats(ctx, commentIDs); err != nil {
+	if err := u.deps.Repo.ReconcileCommentStats(ctx, commentIDs); err != nil {
 		return pkg.NewError(err, "failed to reconcile comment stats")
 	}
 	return nil
@@ -162,7 +161,7 @@ func (u *usecase) GetPostsStats(ctx context.Context, postIDs []int64) (map[int64
 	// get from db
 	g.Go(func() error {
 		var err error
-		dbStats, err = u.repo.GetPostsStats(gCtx, postIDs)
+		dbStats, err = u.deps.Repo.GetPostsStats(gCtx, postIDs)
 		return err
 	})
 
@@ -220,7 +219,7 @@ func (u *usecase) GetCommentsStats(ctx context.Context, commentIDs []int64) (map
 	// get from db
 	g.Go(func() error {
 		var err error
-		dbStats, err = u.repo.GetCommentsStats(gCtx, commentIDs)
+		dbStats, err = u.deps.Repo.GetCommentsStats(gCtx, commentIDs)
 		return err
 	})
 
@@ -267,7 +266,7 @@ func (u *usecase) fetchMultipleHashes(ctx context.Context, states ...string) ([]
 
 	for i, state := range states {
 		g.Go(func() error {
-			data, err := u.cache.GetStatsHash(gCtx, state)
+			data, err := u.deps.Cache.GetStatsHash(gCtx, state)
 			if err != nil {
 				return err
 			}
@@ -305,7 +304,7 @@ func (u *usecase) clearMultipleCaches(states []string, maps []map[int64]int64) {
 	for i := range states {
 		go func() {
 			defer wg.Done()
-			_ = u.cache.ClearSyncedFields(context.Background(), states[i], maps[i])
+			_ = u.deps.Cache.ClearSyncedFields(context.Background(), states[i], maps[i])
 		}()
 	}
 	wg.Wait()
@@ -317,7 +316,7 @@ func (u *usecase) fetchMultipleOffsets(ctx context.Context, states []string, ids
 
 	for i, state := range states {
 		g.Go(func() error {
-			offsets, err := u.cache.GetStatsOffsets(gCtx, state, ids)
+			offsets, err := u.deps.Cache.GetStatsOffsets(gCtx, state, ids)
 			if err != nil {
 				return err
 			}

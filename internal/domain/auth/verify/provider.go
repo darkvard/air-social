@@ -34,67 +34,61 @@ type Deps struct {
 }
 
 type provider struct {
-	cache cache.AtomicCache[string]
-	event common.EventPublisher
-	link  common.LinkProvider
+	deps Deps
 }
 
 func NewVerifyProvider(d Deps) *provider {
-	return &provider{
-		cache: d.Cache,
-		event: d.Event,
-		link:  d.Link,
-	}
+	return &provider{deps: d}
 }
 
 func (p *provider) SendVerification(ctx context.Context, email string, username string) error {
 	id := uuid.NewString()
 
-	if err := p.cache.Set(ctx, getVerifyKey(id), email, verificationTTL); err != nil {
+	if err := p.deps.Cache.Set(ctx, getVerifyKey(id), email, verificationTTL); err != nil {
 		return pkg.ErrInternal
 	}
 
 	payload := common.EmailEventPayload{
 		Email:  email,
 		Name:   username,
-		Link:   p.link.VerifyEmail(id),
+		Link:   p.deps.Link.VerifyEmail(id),
 		Expiry: pkg.FormatTTLHuman(verificationTTL),
 	}
 
-	return p.event.Publish(ctx, common.NewEvent(common.EventEmailVerify, payload))
+	return p.deps.Event.Publish(ctx, common.NewEvent(common.EventEmailVerify, payload))
 }
 
 func (p *provider) SendPasswordReset(ctx context.Context, email string, username string) error {
 	id := uuid.NewString()
 
-	if err := p.cache.Set(ctx, getResetKey(id), email, resetPasswordTTL); err != nil {
+	if err := p.deps.Cache.Set(ctx, getResetKey(id), email, resetPasswordTTL); err != nil {
 		return pkg.ErrInternal
 	}
 
 	payload := common.EmailEventPayload{
 		Email:  email,
 		Name:   username,
-		Link:   p.link.ResetPassword(id),
+		Link:   p.deps.Link.ResetPassword(id),
 		Expiry: pkg.FormatTTLHuman(resetPasswordTTL),
 	}
 
-	return p.event.Publish(ctx, common.NewEvent(common.EventEmailResetPassword, payload))
+	return p.deps.Event.Publish(ctx, common.NewEvent(common.EventEmailResetPassword, payload))
 }
 
 func (p *provider) VerifyVerification(ctx context.Context, token string) (string, error) {
-	return p.cache.Get(ctx, getVerifyKey(token))
+	return p.deps.Cache.Get(ctx, getVerifyKey(token))
 }
 
 func (p *provider) VerifyPasswordReset(ctx context.Context, token string) (string, error) {
-	return p.cache.Get(ctx, getResetKey(token))
+	return p.deps.Cache.Get(ctx, getResetKey(token))
 }
 
 func (p *provider) InvalidatePasswordReset(ctx context.Context, token string) error {
-	return p.cache.Delete(ctx, getResetKey(token))
+	return p.deps.Cache.Delete(ctx, getResetKey(token))
 }
 
 func (p *provider) ValidateResetPasswordToken(ctx context.Context, token string) bool {
-	exists, err := p.cache.Exists(ctx, getResetKey(token))
+	exists, err := p.deps.Cache.Exists(ctx, getResetKey(token))
 	if err != nil {
 		return false
 	}

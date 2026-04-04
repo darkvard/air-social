@@ -1,4 +1,4 @@
-package messages
+package usecase
 
 import (
 	"context"
@@ -7,35 +7,20 @@ import (
 	"air-social/internal/domain/common"
 )
 
-// Declared here because MessageUseCase is the consumer of this dependency.
-
-type realtimePublisher interface {
-	PublishNewMessage(ctx context.Context, msg *chat.Message, conv *chat.Conversation) error
-	PublishReadEvent(ctx context.Context, convID string, userID int64, lastReadMsgID string) error
+type MessageDeps struct {
+	MsgRepo     chat.MessageRepository
+	ConvRepo    chat.ConversationRepository
+	Event       common.EventPublisher
+	RTPublisher RealtimePublisher
+	Unread      chat.UnreadStore
 }
 
 type MessageUseCase struct {
-	msgRepo     chat.MessageRepository
-	convRepo    chat.ConversationRepository
-	event       common.EventPublisher
-	rtPublisher realtimePublisher
-	unread      chat.UnreadStore
+	deps MessageDeps
 }
 
-func NewMessageUseCase(
-	msgRepo chat.MessageRepository,
-	convRepo chat.ConversationRepository,
-	event common.EventPublisher,
-	rtPublisher realtimePublisher,
-	unread chat.UnreadStore,
-) *MessageUseCase {
-	return &MessageUseCase{
-		msgRepo:     msgRepo,
-		convRepo:    convRepo,
-		event:       event,
-		rtPublisher: rtPublisher,
-		unread:      unread,
-	}
+func NewMessageUseCase(d MessageDeps) *MessageUseCase {
+	return &MessageUseCase{deps: d}
 }
 
 func (u *MessageUseCase) GetMessages(ctx context.Context, params chat.GetMessagesParams) (common.CursorPaginatedResult[chat.Message, string], error) {
@@ -55,7 +40,7 @@ func (u *MessageUseCase) DeleteMessage(ctx context.Context, msgID string, userID
 	return nil
 }
 
-func (u *MessageUseCase) AddReaction(ctx context.Context, msgID string, userID int64, emoji string) error {
+func (u *MessageUseCase) AddReaction(ctx context.Context, msgID string, userID int64, reaction chat.ReactionType) error {
 	return nil
 }
 

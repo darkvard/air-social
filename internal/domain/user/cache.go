@@ -16,7 +16,7 @@ type userCache struct {
 	store appcache.TieredStore[UserSummary]
 }
 
-func NewCache(store appcache.TieredStore[UserSummary]) Cache {
+func NewCache(store appcache.TieredStore[UserSummary]) *userCache {
 	return &userCache{store: store}
 }
 

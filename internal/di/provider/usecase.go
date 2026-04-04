@@ -121,21 +121,16 @@ func getMediaUseCase(deps UseCaseDeps) media.UseCase {
 	)
 }
 
-func getUserUseCase(deps UseCaseDeps, confirmer user.MediaConfirmer) user.UseCase {
+func getUserUseCase(deps UseCaseDeps, confirmer userusecase.MediaConfirmer) user.UseCase {
 	l1 := cache.NewMemCache[user.UserSummary](500, 5*time.Minute)
 	l2 := redis.NewRedisStore[user.UserSummary](deps.Infra.Redis)
 	userTiered := cache.NewTieredCache(l1, l2, userSummaryCacheL1TTL, userSummaryCacheL2TTL)
+	userCache := user.NewCache(userTiered)
 
-	d := user.Deps{
-		Repo:  deps.Repo.User,
-		Cache: user.NewCache(userTiered),
-		Link:  deps.Prov.Link.LinkProvider,
-		Media: confirmer,
-	}
 	return user.UseCase{
-		Account: userusecase.NewAccountUseCase(d),
-		Profile: userusecase.NewProfileUseCase(d),
-		Fetch:   userusecase.NewFetchUseCase(d),
+		Account: userusecase.NewAccountUseCase(userusecase.AccountDeps{Repo: deps.Repo.User, Cache: userCache}),
+		Profile: userusecase.NewProfileUseCase(userusecase.ProfileDeps{Repo: deps.Repo.User, Cache: userCache, Media: confirmer}),
+		Fetch:   userusecase.NewFetchUseCase(userusecase.FetchDeps{Repo: deps.Repo.User, Cache: userCache, Link: deps.Prov.Link.LinkProvider}),
 	}
 }
 

@@ -8,22 +8,22 @@ import (
 	"air-social/pkg"
 )
 
-type fetchUseCase struct {
-	repo  user.Repository
-	cache user.Cache
-	link  common.LinkProvider
+type FetchDeps struct {
+	Repo  user.Repository
+	Cache user.Cache
+	Link  common.LinkProvider
 }
 
-func NewFetchUseCase(d user.Deps) *fetchUseCase {
-	return &fetchUseCase{
-		repo:  d.Repo,
-		cache: d.Cache,
-		link:  d.Link,
-	}
+type fetchUseCase struct {
+	deps FetchDeps
+}
+
+func NewFetchUseCase(d FetchDeps) *fetchUseCase {
+	return &fetchUseCase{deps: d}
 }
 
 func (u *fetchUseCase) GetByID(ctx context.Context, id int64) (*user.User, error) {
-	usr, err := u.repo.GetByID(ctx, id)
+	usr, err := u.deps.Repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -31,7 +31,7 @@ func (u *fetchUseCase) GetByID(ctx context.Context, id int64) (*user.User, error
 }
 
 func (u *fetchUseCase) GetByEmail(ctx context.Context, email string) (*user.User, error) {
-	usr, err := u.repo.GetByEmail(ctx, email)
+	usr, err := u.deps.Repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 	}
@@ -39,8 +39,8 @@ func (u *fetchUseCase) GetByEmail(ctx context.Context, email string) (*user.User
 }
 
 func (u *fetchUseCase) GetSummary(ctx context.Context, id int64) (*user.UserSummary, error) {
-	return u.cache.Get(ctx, id, func(ctx context.Context) (*user.UserSummary, error) {
-		d, err := u.repo.GetByID(ctx, id)
+	return u.deps.Cache.Get(ctx, id, func(ctx context.Context) (*user.UserSummary, error) {
+		d, err := u.deps.Repo.GetByID(ctx, id)
 		if err != nil {
 			return nil, pkg.OrInternalError(err, pkg.ErrNotFound)
 		}
@@ -52,8 +52,8 @@ func (u *fetchUseCase) toUserSummary(d *user.User) *user.UserSummary {
 	return &user.UserSummary{
 		ID:         d.ID,
 		FullName:   d.Profile.FullName,
-		Avatar:     u.link.PublicFile(d.Profile.Avatar),
-		CoverImage: u.link.PublicFile(d.Profile.CoverImage),
+		Avatar:     u.deps.Link.PublicFile(d.Profile.Avatar),
+		CoverImage: u.deps.Link.PublicFile(d.Profile.CoverImage),
 		Verified:   d.Status.Verified,
 	}
 }

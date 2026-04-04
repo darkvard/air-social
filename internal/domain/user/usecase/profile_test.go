@@ -152,19 +152,13 @@ func (s *profileUseCaseSuite) TestUpdateProfile() {
 			mockRepo := usermocks.NewMockRepository(s.T())
 			mockCache := usermocks.NewMockCache(s.T())
 			mockMedia := mediamocks.NewMockUseCase(s.T())
-			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
 				repo:  mockRepo,
 				cache: mockCache,
 			}
 
-			uc := usecase.NewProfileUseCase(user.Deps{
-				Repo:  mockRepo,
-				Cache: mockCache,
-				Media: mockMedia,
-				Link:  mockLink,
-			})
+			uc := usecase.NewProfileUseCase(usecase.ProfileDeps{Repo: mockRepo, Cache: mockCache, Media: mockMedia})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -352,7 +346,7 @@ func (s *profileUseCaseSuite) TestUpdateAvatar() {
 				media: mockMedia,
 				link:  mockLink,
 			}
-			uc := usecase.NewProfileUseCase(user.Deps{Repo: mockRepo, Cache: mockCache, Media: mockMedia, Link: mockLink})
+			uc := usecase.NewProfileUseCase(usecase.ProfileDeps{Repo: mockRepo, Cache: mockCache, Media: mockMedia})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
@@ -488,7 +482,6 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 			mockRepo := usermocks.NewMockRepository(s.T())
 			mockCache := usermocks.NewMockCache(s.T())
 			mockMedia := mediamocks.NewMockUseCase(s.T())
-			mockLink := commonmocks.NewMockLinkProvider(s.T())
 
 			deps := testDeps{
 				repo:  mockRepo,
@@ -496,12 +489,7 @@ func (s *profileUseCaseSuite) TestUpdateCover() {
 				media: mockMedia,
 			}
 
-			uc := usecase.NewProfileUseCase(user.Deps{
-				Repo:  mockRepo,
-				Cache: mockCache,
-				Media: mockMedia,
-				Link:  mockLink,
-			})
+			uc := usecase.NewProfileUseCase(usecase.ProfileDeps{Repo: mockRepo, Cache: mockCache, Media: mockMedia})
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)

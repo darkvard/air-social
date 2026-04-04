@@ -27,19 +27,11 @@ type Deps struct {
 }
 
 type usecase struct {
-	bucket  Bucket
-	storage Storage
-	link    common.LinkProvider
-	route   common.RouteProvider
+	deps Deps
 }
 
 func NewUseCase(d Deps) *usecase {
-	return &usecase{
-		bucket:  d.Bucket,
-		storage: d.Storage,
-		link:    d.Link.LinkProvider,
-		route:   d.Link.RouteProvider,
-	}
+	return &usecase{deps: d}
 }
 
 // Format: {domain}/{entity_id}/{feature}/{ulid}{ext}
@@ -59,7 +51,7 @@ func (u *usecase) GetPresignedURL(ctx context.Context, params []PresignParams) (
 		}
 
 		location := Location{
-			Bucket: u.bucket.Public,
+			Bucket: u.deps.Bucket.Public,
 			Key:    u.GenerateKey(item),
 		}
 		constraints := Constraints{
@@ -68,7 +60,7 @@ func (u *usecase) GetPresignedURL(ctx context.Context, params []PresignParams) (
 			MaxSize:     rule.MaxBytes,
 		}
 
-		result, err := u.storage.PresignUpload(ctx, location, constraints)
+		result, err := u.deps.Storage.PresignUpload(ctx, location, constraints)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +70,7 @@ func (u *usecase) GetPresignedURL(ctx context.Context, params []PresignParams) (
 			UploadURL: u.getUploadUrl(),
 			FormData:  result.Fields,
 			ObjectKey: location.Key,
-			PublicURL: u.link.PublicFile(location.Key),
+			PublicURL: u.deps.Link.LinkProvider.PublicFile(location.Key),
 			ExpireAt:  pkg.TimeNowUTC().Add(PresignedUploadExpiry),
 		})
 	}
@@ -116,10 +108,10 @@ func (u *usecase) VerifyMedia(ctx context.Context, keys []string) error {
 func (u *usecase) DeleteMedia(ctx context.Context, keys []string) error {
 	for _, key := range keys {
 		location := Location{
-			Bucket: u.bucket.Public,
+			Bucket: u.deps.Bucket.Public,
 			Key:    key,
 		}
-		if err := u.storage.Delete(ctx, location); err != nil {
+		if err := u.deps.Storage.Delete(ctx, location); err != nil {
 			return err
 		}
 	}
@@ -127,17 +119,17 @@ func (u *usecase) DeleteMedia(ctx context.Context, keys []string) error {
 }
 
 func (u *usecase) getUploadUrl() string {
-	baseURL := strings.TrimSuffix(u.route.BaseURL(), "/")
-	return fmt.Sprintf("%s/%s", baseURL, u.bucket.Public)
+	baseURL := strings.TrimSuffix(u.deps.Link.RouteProvider.BaseURL(), "/")
+	return fmt.Sprintf("%s/%s", baseURL, u.deps.Bucket.Public)
 }
 
 func (u *usecase) ensureObjectExists(ctx context.Context, key string) error {
 	loc := Location{
-		Bucket: u.bucket.Public,
+		Bucket: u.deps.Bucket.Public,
 		Key:    key,
 	}
 
-	exists, err := u.storage.Exists(ctx, loc)
+	exists, err := u.deps.Storage.Exists(ctx, loc)
 	if err != nil {
 		return pkg.OrInternalError(err, pkg.ErrNotFound)
 	}

@@ -26,19 +26,15 @@ type Deps struct {
 }
 
 type usecase struct {
-	repo  Repository
-	event common.EventPublisher
+	deps Deps
 }
 
 func NewUsecase(deps Deps) *usecase {
-	return &usecase{
-		repo:  deps.Repo,
-		event: deps.Event,
-	}
+	return &usecase{deps: deps}
 }
 
 func (u *usecase) LikePost(ctx context.Context, postID, userID int64) error {
-	inserted, ownerID, err := u.repo.InsertPostLike(ctx, postID, userID)
+	inserted, ownerID, err := u.deps.Repo.InsertPostLike(ctx, postID, userID)
 	if err != nil {
 		switch err {
 		case pkg.ErrNotFound:
@@ -57,7 +53,7 @@ func (u *usecase) LikePost(ctx context.Context, postID, userID int64) error {
 }
 
 func (u *usecase) UnlikePost(ctx context.Context, postID, userID int64) error {
-	err := u.repo.DeletePostLike(ctx, postID, userID)
+	err := u.deps.Repo.DeletePostLike(ctx, postID, userID)
 	if err != nil {
 		return pkg.NewError(err, "delete post like failed")
 	}
@@ -67,7 +63,7 @@ func (u *usecase) UnlikePost(ctx context.Context, postID, userID int64) error {
 }
 
 func (u *usecase) LikeComment(ctx context.Context, commentID, userID int64) error {
-	inserted, ownerID, err := u.repo.InsertCommentLike(ctx, commentID, userID)
+	inserted, ownerID, err := u.deps.Repo.InsertCommentLike(ctx, commentID, userID)
 	if err != nil {
 		switch err {
 		case pkg.ErrNotFound:
@@ -87,7 +83,7 @@ func (u *usecase) LikeComment(ctx context.Context, commentID, userID int64) erro
 }
 
 func (u *usecase) UnlikeComment(ctx context.Context, commentID, userID int64) error {
-	err := u.repo.DeleteCommentLike(ctx, commentID, userID)
+	err := u.deps.Repo.DeleteCommentLike(ctx, commentID, userID)
 	if err != nil {
 		return pkg.NewError(err, "delete comment like failed")
 	}
@@ -102,7 +98,7 @@ func (u *usecase) IsPostLiked(ctx context.Context, postIDs []int64, userID int64
 		return map[int64]bool{}, nil
 	}
 
-	likedIDs, err := u.repo.GetPostLiked(ctx, postIDs, userID)
+	likedIDs, err := u.deps.Repo.GetPostLiked(ctx, postIDs, userID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err)
 	}
@@ -123,7 +119,7 @@ func (u *usecase) IsCommentLiked(ctx context.Context, commentIDs []int64, userID
 		return map[int64]bool{}, nil
 	}
 
-	likedIDs, err := u.repo.GetCommentLiked(ctx, commentIDs, userID)
+	likedIDs, err := u.deps.Repo.GetCommentLiked(ctx, commentIDs, userID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err)
 	}
@@ -142,7 +138,7 @@ func (u *usecase) IsCommentLiked(ctx context.Context, commentIDs []int64, userID
 func (u *usecase) GetPostLikers(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Liker, int64], error) {
 	params.Query.NormalizePagination()
 
-	likers, err := u.repo.GetPostLikers(ctx, params)
+	likers, err := u.deps.Repo.GetPostLikers(ctx, params)
 	if err != nil {
 		return common.CursorPaginatedResult[Liker, int64]{}, pkg.OrInternalError(err)
 	}
@@ -153,7 +149,7 @@ func (u *usecase) GetPostLikers(ctx context.Context, params GetCursorParams) (co
 func (u *usecase) GetCommentLikers(ctx context.Context, params GetCursorParams) (common.CursorPaginatedResult[Liker, int64], error) {
 	params.Query.NormalizePagination()
 
-	likers, err := u.repo.GetCommentLikers(ctx, params)
+	likers, err := u.deps.Repo.GetCommentLikers(ctx, params)
 	if err != nil {
 		return common.CursorPaginatedResult[Liker, int64]{}, pkg.OrInternalError(err)
 	}
@@ -170,7 +166,7 @@ func (u *usecase) addLikePostEvent(ctx context.Context, isLike bool, postID, use
 		IsLiked:  isLike,
 		Typ:      typ,
 	}
-	return u.event.Publish(ctx, common.NewEvent(typ, data))
+	return u.deps.Event.Publish(ctx, common.NewEvent(typ, data))
 }
 
 func (u *usecase) addLikeCommentEvent(ctx context.Context, isLike bool, commentID, userID, ownerID int64) error {
@@ -182,5 +178,5 @@ func (u *usecase) addLikeCommentEvent(ctx context.Context, isLike bool, commentI
 		IsLiked:  isLike,
 		Typ:      typ,
 	}
-	return u.event.Publish(ctx, common.NewEvent(typ, data))
+	return u.deps.Event.Publish(ctx, common.NewEvent(typ, data))
 }
