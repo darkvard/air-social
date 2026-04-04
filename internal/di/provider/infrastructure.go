@@ -83,6 +83,15 @@ func NewInfrastructure(cfg config.Config) (*Infrastructure, func(), error) {
 		cleanup()
 		return nil, func() {}, err
 	}
+	{
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Mongo.ConnectTimeout)
+		defer cancel()
+		if err = mongoinfra.SetupIndexes(ctx, mongoClient.Database(cfg.Mongo.Database)); err != nil {
+			cleanup()
+			return nil, func() {}, err
+		}
+	}
+	
 
 	infra := &Infrastructure{
 		Postgres: psql,
