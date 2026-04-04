@@ -154,6 +154,8 @@ services:
     image: mongo:8.0
     container_name: mongodb
     restart: always
+    ports:
+      - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:-password}
