@@ -8,6 +8,20 @@ type GetConversationsParams struct {
 	Query  common.CursorQueryParams[string]
 }
 
+type CreateGroupParams struct {
+	CreatorID int64
+	MemberIDs []int64
+	Name      string
+	AvatarKey string
+}
+
+type UpdateGroupParams struct {
+	ConvID    string
+	ActorID   int64
+	Name      *string
+	AvatarKey *string
+}
+
 type GetMessagesParams struct {
 	ConversationID string
 	UserID         int64
@@ -27,18 +41,4 @@ type EditMessageParams struct {
 	MessageID string
 	UserID    int64
 	Content   string
-}
-
-type CreateGroupParams struct {
-	CreatorID int64
-	MemberIDs []int64
-	Name      string
-	AvatarKey string
-}
-
-type UpdateGroupParams struct {
-	ConvID    string
-	ActorID   int64
-	Name      *string
-	AvatarKey *string
 }
