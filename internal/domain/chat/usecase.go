@@ -45,4 +45,3 @@ type UseCase struct {
 	Conversation ConversationUseCase
 	Messages     Messenger
 }
-

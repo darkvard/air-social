@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"reflect"
 	"time"
+
+	"github.com/oklog/ulid/v2"
 )
 
 const (
@@ -188,4 +190,8 @@ func UnmarshalEvent[T any](data any) (T, error) {
 		return target, fmt.Errorf("failed to unmarshal into target struct: %w", err)
 	}
 	return target, nil
+}
+
+func NewULID() string {
+	return ulid.Make().String()
 }

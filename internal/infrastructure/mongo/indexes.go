@@ -39,11 +39,11 @@ func setupMessageIndexes(ctx context.Context, db *mongo.Database) error {
 		{
 			Keys: bson.D{
 				{Key: "conversation_id", Value: 1},
-				{Key: "_id", Value: -1}, 
+				{Key: "_id", Value: -1},
 			},
 		},
 		{
-			Keys:    bson.D{{Key: "client_msg_id", Value: 1}},			// todo: mess_doc.client_msg_id has omitempty (duplicate omitempty key)
+			Keys:    bson.D{{Key: "client_msg_id", Value: 1}}, // todo: mess_doc.client_msg_id has omitempty (duplicate omitempty key)
 			Options: options.Index().SetUnique(true).SetSparse(true),
 		},
 	}

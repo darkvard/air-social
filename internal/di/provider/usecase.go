@@ -6,6 +6,8 @@ import (
 	"air-social/internal/cache"
 	"air-social/internal/config"
 	"air-social/internal/domain/auth"
+	"air-social/internal/domain/chat"
+	chatusecase "air-social/internal/domain/chat/usecase"
 	"air-social/internal/domain/comment"
 	"air-social/internal/domain/feed"
 	feedusecase "air-social/internal/domain/feed/usecase"
@@ -37,17 +39,18 @@ const (
 )
 
 type UseCase struct {
-	Health  health.UseCase
-	User    user.UseCase
-	Auth    auth.UseCase
-	Media   media.UseCase
-	Follow  follow.UseCase
-	Post    post.UseCase
-	Like    like.UseCase
-	Comment comment.UseCase
-	Stats   stats.UseCase
-	Feed    feed.UseCase
-	Search  search.UseCase
+	Health       health.UseCase
+	User         user.UseCase
+	Auth         auth.UseCase
+	Media        media.UseCase
+	Follow       follow.UseCase
+	Post         post.UseCase
+	Like         like.UseCase
+	Comment      comment.UseCase
+	Stats        stats.UseCase
+	Feed         feed.UseCase
+	Search       search.UseCase
+	Conversation chat.ConversationUseCase
 }
 
 type UseCaseDeps struct {
@@ -80,18 +83,21 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	feedUC := getFeedUseCase(deps, followUC, postUC, followerCache)
 	searchUC := search.NewUseCase(deps.Repo.Search, postUC)
 
+	convUC := getChatConversationUseCase(deps, followUC)
+
 	return UseCase{
-		Health:  healthUC,
-		User:    userUC,
-		Auth:    authUC,
-		Media:   mediaUC,
-		Follow:  followUC,
-		Post:    postUC,
-		Like:    likeUC,
-		Comment: commentUC,
-		Stats:   statsUC,
-		Feed:    feedUC,
-		Search:  searchUC,
+		Health:       healthUC,
+		User:         userUC,
+		Auth:         authUC,
+		Media:        mediaUC,
+		Follow:       followUC,
+		Post:         postUC,
+		Like:         likeUC,
+		Comment:      commentUC,
+		Stats:        statsUC,
+		Feed:         feedUC,
+		Search:       searchUC,
+		Conversation: convUC,
 	}
 }
 
@@ -204,6 +210,24 @@ func getStatsUseCase(deps UseCaseDeps) stats.UseCase {
 			Cache: deps.Prov.Stats,
 		},
 	)
+}
+
+func getChatConversationUseCase(deps UseCaseDeps, followChecker chatusecase.FollowChecker) chat.ConversationUseCase {
+	convRepo := deps.Repo.Conversation
+	return chat.ConversationUseCase{
+		Query: chatusecase.NewQueryUseCase(chatusecase.QueryDeps{
+			ConvRepo: convRepo,
+		}),
+		Write: chatusecase.NewWriteUseCase(chatusecase.WriteDeps{
+			ConvRepo:      convRepo,
+			FollowChecker: followChecker,
+			Event:         deps.Adapter.EventPub,
+		}),
+		Member: chatusecase.NewMemberUseCase(chatusecase.MemberDeps{
+			ConvRepo:      convRepo,
+			FollowChecker: followChecker,
+		}),
+	}
 }
 
 func getFeedUseCase(deps UseCaseDeps, followFetcher feedusecase.FollowFetcher, postFetcher feedusecase.PostFetcher, followerCache cache.TieredStore[[]int64]) feed.UseCase {

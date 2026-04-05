@@ -2,6 +2,7 @@ package provider
 
 import (
 	tokendomain "air-social/internal/domain/auth/token"
+	chatdomain "air-social/internal/domain/chat"
 	commentdomain "air-social/internal/domain/comment"
 	followdomain "air-social/internal/domain/follow"
 	likedomain "air-social/internal/domain/like"
@@ -9,6 +10,7 @@ import (
 	searchdomain "air-social/internal/domain/search"
 	statsdomain "air-social/internal/domain/stats"
 	userdomain "air-social/internal/domain/user"
+	conversationinfra "air-social/internal/infrastructure/mongo/conversation"
 	commentinfra "air-social/internal/infrastructure/postgres/comment"
 	followinfra "air-social/internal/infrastructure/postgres/follow"
 	likeinfra "air-social/internal/infrastructure/postgres/like"
@@ -20,25 +22,27 @@ import (
 )
 
 type Repository struct {
-	User    userdomain.Repository
-	Token   tokendomain.Repository
-	Follow  followdomain.Repository
-	Post    postdomain.Repository
-	Like    likedomain.Repository
-	Comment commentdomain.Repository
-	Stats   statsdomain.Repository
-	Search  searchdomain.Repository
+	User         userdomain.Repository
+	Token        tokendomain.Repository
+	Follow       followdomain.Repository
+	Post         postdomain.Repository
+	Like         likedomain.Repository
+	Comment      commentdomain.Repository
+	Stats        statsdomain.Repository
+	Search       searchdomain.Repository
+	Conversation chatdomain.ConversationRepository
 }
 
 func NewRepository(infra *Infrastructure) Repository {
 	return Repository{
-		User:    userinfra.NewRepository(infra.Postgres),
-		Token:   tokeninfra.NewRepository(infra.Postgres),
-		Follow:  followinfra.NewRepository(infra.Postgres),
-		Post:    postinfra.NewRepository(infra.Postgres),
-		Like:    likeinfra.NewRepository(infra.Postgres),
-		Comment: commentinfra.NewRepository(infra.Postgres),
-		Stats:   statsinfra.NewRepository(infra.Postgres),
-		Search:  searchinfra.NewRepository(infra.Postgres),
+		User:         userinfra.NewRepository(infra.Postgres),
+		Token:        tokeninfra.NewRepository(infra.Postgres),
+		Follow:       followinfra.NewRepository(infra.Postgres),
+		Post:         postinfra.NewRepository(infra.Postgres),
+		Like:         likeinfra.NewRepository(infra.Postgres),
+		Comment:      commentinfra.NewRepository(infra.Postgres),
+		Stats:        statsinfra.NewRepository(infra.Postgres),
+		Search:       searchinfra.NewRepository(infra.Postgres),
+		Conversation: conversationinfra.NewRepository(infra.MongoDB),
 	}
 }

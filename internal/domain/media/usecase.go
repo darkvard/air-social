@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/oklog/ulid/v2"
-
 	"air-social/internal/domain/common"
 	"air-social/pkg"
 )
@@ -37,7 +35,7 @@ func NewUseCase(d Deps) *usecase {
 // Format: {domain}/{entity_id}/{feature}/{ulid}{ext}
 func (u *usecase) GenerateKey(params PresignParams) string {
 	ext := filepath.Ext(params.FileName)
-	fileName := fmt.Sprintf("%s%s", ulid.Make().String(), ext)
+	fileName := fmt.Sprintf("%s%s", pkg.NewULID(), ext)
 	return fmt.Sprintf("%s/%d/%s/%s", params.Domain, params.EntityID, params.Feature, fileName)
 }
 

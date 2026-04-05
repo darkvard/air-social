@@ -63,7 +63,7 @@ func (u *usecase) SearchPosts(ctx context.Context, params PostsParams) (common.C
 		ids = ids[:params.Query.Limit]
 	}
 
-	// hydrate full post data (stats, likes, media, author) via PostFetcher 
+	// hydrate full post data (stats, likes, media, author) via PostFetcher
 	posts, err := u.deps.PostFetcher.GetPostsByIDs(ctx, ids, params.ViewerID)
 	if err != nil {
 		return empty, pkg.OrInternalError(err)

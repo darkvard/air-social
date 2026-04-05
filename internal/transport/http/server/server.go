@@ -13,6 +13,7 @@ import (
 	"air-social/internal/config"
 	"air-social/internal/di/provider"
 	"air-social/internal/transport/http/auth"
+	"air-social/internal/transport/http/chat"
 	"air-social/internal/transport/http/comment"
 	"air-social/internal/transport/http/feed"
 	"air-social/internal/transport/http/follow"
@@ -33,6 +34,7 @@ func NewServer(
 	h provider.Handler,
 	mw middleware.Manager,
 ) *http.Server {
+	pkg.SetupValidator()
 	router := setupEngine()
 	group := router.Group(prov.Link.ApiVersion())
 	{
@@ -49,6 +51,7 @@ func NewServer(
 		comment.RegisterRoute(group, h.Comment, mw)
 		feed.RegisterRoute(group, h.Feed, mw)
 		search.RegisterRoute(group, h.Search, mw)
+		chat.RegisterRoute(group, h.Conversation, h.Message, mw)
 	}
 
 	return &http.Server{

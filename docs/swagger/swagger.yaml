@@ -203,6 +203,65 @@ definitions:
       verified:
         type: boolean
     type: object
+  internal_transport_http_chat.ConversationResponse:
+    properties:
+      avatar_key:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      participants:
+        items:
+          $ref: '#/definitions/internal_transport_http_chat.ParticipantResponse'
+        type: array
+      type:
+        type: string
+      unread_count:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  internal_transport_http_chat.CreateDirectReq:
+    properties:
+      target_user_id:
+        type: integer
+    required:
+    - target_user_id
+    type: object
+  internal_transport_http_chat.CreateGroupReq:
+    properties:
+      avatar_key:
+        type: string
+      name:
+        maxLength: 100
+        type: string
+      participant_ids:
+        items:
+          type: integer
+        minItems: 2
+        type: array
+    required:
+    - name
+    - participant_ids
+    type: object
+  internal_transport_http_chat.ParticipantResponse:
+    properties:
+      joined_at:
+        type: string
+      last_read_id:
+        type: string
+      role:
+        type: string
+      state:
+        type: string
+      user_id:
+        type: integer
+    type: object
   internal_transport_http_comment.CommentResponse:
     properties:
       author:
@@ -1253,6 +1312,82 @@ paths:
       summary: Get replies for a comment
       tags:
       - Comment
+  /conversations/direct:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Creates a new direct (1-on-1) conversation between the authenticated user and the target user.
+        If a direct conversation between them already exists, the existing one is returned.
+        The recipient's initial state is "pending" unless they already follow the sender, in which case it is "active".
+      parameters:
+      - description: Target user
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.CreateDirectReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.ConversationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Create or get direct conversation
+      tags:
+      - Chat
+  /conversations/group:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new group conversation with the authenticated user as
+        admin.
+      parameters:
+      - description: Group details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.CreateGroupReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.ConversationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Create group conversation
+      tags:
+      - Chat
   /feed:
     get:
       consumes:

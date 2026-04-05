@@ -36,7 +36,25 @@ func NewWriteUseCase(d WriteDeps) *ConversationWriteUseCase {
 }
 
 func (u *ConversationWriteUseCase) CreateOrGetDirect(ctx context.Context, senderID, recipientID int64) (*chat.Conversation, error) {
-	return nil, nil
+	existingConv, err := u.deps.ConvRepo.FindDirect(ctx, senderID, recipientID)
+	if err != nil {
+		return nil, err
+	}
+	if existingConv != nil {
+		// TODO: populate existingConv.LastMessage from MessageRepository once message layer is implemented.
+		return existingConv, nil
+	}
+
+	relationship, err := u.deps.FollowChecker.GetRelationship(ctx, senderID, recipientID)
+	if err != nil {
+		return nil, err
+	}
+
+	newConv := chat.NewDirectConversation(senderID, recipientID, relationship.IsFollower)
+	if err := u.deps.ConvRepo.Create(ctx, newConv); err != nil {
+		return nil, err
+	}
+	return newConv, nil
 }
 
 func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.CreateGroupParams) (*chat.Conversation, error) {
@@ -46,3 +64,6 @@ func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.
 func (u *ConversationWriteUseCase) UpdateGroup(ctx context.Context, params chat.UpdateGroupParams) error {
 	return nil
 }
+
+// todo: update direct func nua, 
+// vi du dang pending, mot time nao do target thuc hien follow sender thi conversation hien tai phai update state tu pending -> active (primary inbox)

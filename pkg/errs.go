@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 var (
@@ -71,8 +72,19 @@ func MapPostgresError(err error) error {
 	}
 
 	// LOGGING: Log unmapped database errors (e.g. connection issues, syntax errors)
-	Log().Errorw("database error", "code", pgCode(err), "error", err)
+	Log().Errorw("postgresql error", "code", pgCode(err), "error", err)
 	return err
+}
+
+func MapMongoError(err error) error {
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return ErrNotFound
+	}
+	if mongo.IsDuplicateKeyError(err) {
+		return ErrConflict // unique index violation
+	}
+	Log().Errorw("mongodb error", "code", pgCode(err), "error", err)
+	return ErrInternal
 }
 
 func IsPermanentError(err error) bool {

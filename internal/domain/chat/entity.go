@@ -1,6 +1,10 @@
 package chat
 
-import "time"
+import (
+	"time"
+
+	"air-social/pkg"
+)
 
 type ConversationType string
 
@@ -40,7 +44,7 @@ type Participant struct {
 	UserID     int64
 	Role       ParticipantRole  // admin | member; direct conv: both member
 	State      ParticipantState // active | pending | ignored | muted
-	JoinAt     time.Time
+	JoinedAt   time.Time
 	LastReadID string // ULID of last read message; "" = never read
 }
 
@@ -62,6 +66,36 @@ type Conversation struct {
 }
 
 func (c Conversation) GetCursor() string { return c.ID }
+
+func NewDirectConversation(senderID, targetID int64, isTargetFollowingSender bool) *Conversation {
+	targetState := StatePending
+	if isTargetFollowingSender {
+		targetState = StateActive
+	}
+
+	now := pkg.TimeNowUTC()
+	return &Conversation{
+		ID:   pkg.NewULID(),
+		Type: ConversationDirect,
+		Participants: []Participant{
+			{
+				UserID:   senderID,
+				Role:     RoleMember,
+				State:    StateActive,
+				JoinedAt: now,
+			},
+			{
+				UserID:   targetID,
+				Role:     RoleMember,
+				State:    targetState,
+				JoinedAt: now,
+			},
+		},
+		CreatedBy: senderID,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+}
 
 type Message struct {
 	ID             string

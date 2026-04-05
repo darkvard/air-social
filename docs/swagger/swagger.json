@@ -782,6 +782,120 @@
                 }
             }
         },
+        "/conversations/direct": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new direct (1-on-1) conversation between the authenticated user and the target user.\nIf a direct conversation between them already exists, the existing one is returned.\nThe recipient's initial state is \"pending\" unless they already follow the sender, in which case it is \"active\".",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Create or get direct conversation",
+                "parameters": [
+                    {
+                        "description": "Target user",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_chat.CreateDirectReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_chat.ConversationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/conversations/group": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new group conversation with the authenticated user as admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Create group conversation",
+                "parameters": [
+                    {
+                        "description": "Group details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_chat.CreateGroupReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_chat.ConversationResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/feed": {
             "get": {
                 "security": [
@@ -2550,6 +2664,95 @@
                 },
                 "verified": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_transport_http_chat.ConversationResponse": {
+            "type": "object",
+            "properties": {
+                "avatar_key": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_chat.ParticipantResponse"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                },
+                "unread_count": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_chat.CreateDirectReq": {
+            "type": "object",
+            "required": [
+                "target_user_id"
+            ],
+            "properties": {
+                "target_user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_transport_http_chat.CreateGroupReq": {
+            "type": "object",
+            "required": [
+                "name",
+                "participant_ids"
+            ],
+            "properties": {
+                "avatar_key": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "participant_ids": {
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "internal_transport_http_chat.ParticipantResponse": {
+            "type": "object",
+            "properties": {
+                "joined_at": {
+                    "type": "string"
+                },
+                "last_read_id": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

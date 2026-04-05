@@ -84,13 +84,15 @@ func (r *repository) GetFollowings(ctx context.Context, params follow.GetFollows
 
 func (r *repository) GetRelationship(ctx context.Context, userID int64, targetID int64) (follow.Relationship, error) {
 	query := `
-		SELECT 
+		SELECT
 			EXISTS (SELECT 1 FROM follows WHERE follower_id = $1 AND followee_id = $2) as is_following,
 			EXISTS (SELECT 1 FROM follows WHERE follower_id = $2 AND followee_id = $1) as is_follower
 	`
-	var res follow.Relationship
-	err := r.db.GetContext(ctx, &res, query, userID, targetID)
-	return res, err
+	var row RelationshipRow
+	if err := r.db.GetContext(ctx, &row, query, userID, targetID); err != nil {
+		return follow.Relationship{}, err
+	}
+	return row.ToDomain(), nil
 }
 
 func (r *repository) GetRelationships(ctx context.Context, userID int64, targetIDs []int64) (map[int64]follow.Relationship, error) {

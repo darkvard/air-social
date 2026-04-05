@@ -24,6 +24,7 @@ type Infrastructure struct {
 	Postgres *sqlx.DB
 	Redis    *redis.Client
 	Mongo    *mongo.Client
+	MongoDB  *mongo.Database
 	Rabbit   *amqp.Connection
 	Minio    *minio.Client
 	Logger   *zap.SugaredLogger
@@ -83,19 +84,20 @@ func NewInfrastructure(cfg config.Config) (*Infrastructure, func(), error) {
 		cleanup()
 		return nil, func() {}, err
 	}
+	mongoDB := mongoClient.Database(cfg.Mongo.Database)
 	{
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Mongo.ConnectTimeout)
 		defer cancel()
-		if err = mongoinfra.SetupIndexes(ctx, mongoClient.Database(cfg.Mongo.Database)); err != nil {
+		if err = mongoinfra.SetupIndexes(ctx, mongoDB); err != nil {
 			cleanup()
 			return nil, func() {}, err
 		}
 	}
-	
 
 	infra := &Infrastructure{
 		Postgres: psql,
 		Mongo:    mongoClient,
+		MongoDB:  mongoDB,
 		Redis:    cache,
 		Rabbit:   queue,
 		Minio:    minioClient,

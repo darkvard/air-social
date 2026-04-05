@@ -5,12 +5,30 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
+
+// SetupValidator configures gin's validator to use json/form/uri tag names
+// for field name resolution in validation errors instead of Go struct field names.
+// Must be called once during application startup, before any HTTP handlers are registered.
+func SetupValidator() {
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+			for _, tag := range []string{"json", "form", "uri"} {
+				name := strings.SplitN(fld.Tag.Get(tag), ",", 2)[0]
+				if name != "" && name != "-" {
+					return name
+				}
+			}
+			return fld.Name
+		})
+	}
+}
 
 type FieldError struct {
 	Field   string `json:"field,omitempty"`
