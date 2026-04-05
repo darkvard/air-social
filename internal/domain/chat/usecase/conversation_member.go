@@ -19,6 +19,10 @@ func NewMemberUseCase(d MemberDeps) *ConversationMemberUseCase {
 	return &ConversationMemberUseCase{deps: d}
 }
 
+// AcceptConversation moves the caller's participant state from pending/ignored → active.
+// pending → active has 2 triggers:
+//  1. Automatic: EventFollowCreated worker detects caller followed the sender and updates state.
+//  2. Manual:    Caller explicitly accepts via this method (e.g. user taps "Accept" in UI).
 func (u *ConversationMemberUseCase) AcceptConversation(ctx context.Context, convID string, userID int64) error {
 	return nil
 }

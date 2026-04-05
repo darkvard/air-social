@@ -64,6 +64,3 @@ func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.
 func (u *ConversationWriteUseCase) UpdateGroup(ctx context.Context, params chat.UpdateGroupParams) error {
 	return nil
 }
-
-// todo: update direct func nua, 
-// vi du dang pending, mot time nao do target thuc hien follow sender thi conversation hien tai phai update state tu pending -> active (primary inbox)
