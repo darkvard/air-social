@@ -15,6 +15,7 @@ type UseCase interface {
 	GetFollowings(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error)
 	GetFollowers(ctx context.Context, params GetFollowsParams) (common.OffsetPaginatedResult[FollowUser], error)
 	GetRelationship(ctx context.Context, userID, targetID int64) (Relationship, error)
+	GetRelationships(ctx context.Context, userID int64, targetIDs []int64) (map[int64]Relationship, error)
 	GetFollowerIDs(ctx context.Context, userID int64) ([]int64, error)
 }
 
@@ -90,6 +91,10 @@ func (u *usecase) GetFollowers(ctx context.Context, params GetFollowsParams) (co
 
 func (u *usecase) GetRelationship(ctx context.Context, userID, targetID int64) (Relationship, error) {
 	return u.deps.FollowRepo.GetRelationship(ctx, userID, targetID)
+}
+
+func (u *usecase) GetRelationships(ctx context.Context, userID int64, targetIDs []int64) (map[int64]Relationship, error) {
+	return u.deps.FollowRepo.GetRelationships(ctx, userID, targetIDs)
 }
 
 func (u *usecase) GetFollowerIDs(ctx context.Context, userID int64) ([]int64, error) {

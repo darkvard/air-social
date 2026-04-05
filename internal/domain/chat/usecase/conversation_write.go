@@ -2,14 +2,26 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"air-social/internal/domain/chat"
 	"air-social/internal/domain/common"
 	"air-social/internal/domain/follow"
+	"air-social/pkg"
 )
 
 type FollowChecker interface {
 	GetRelationship(ctx context.Context, userID, targetID int64) (follow.Relationship, error)
+	GetRelationships(ctx context.Context, userID int64, targetIDs []int64) (map[int64]follow.Relationship, error)
+}
+
+type UserChecker interface {
+	FilterNonExistent(ctx context.Context, ids []int64) (missing []int64, err error)
+}
+
+type MediaVerifier interface {
+	VerifyMedia(ctx context.Context, keys []string) error
 }
 
 type RealtimePublisher interface {
@@ -23,6 +35,8 @@ type RealtimePublisher interface {
 type WriteDeps struct {
 	ConvRepo      chat.ConversationRepository
 	FollowChecker FollowChecker
+	UserChecker   UserChecker
+	MediaVerifier MediaVerifier
 	Event         common.EventPublisher
 	RTPublisher   RealtimePublisher
 }
@@ -58,7 +72,113 @@ func (u *ConversationWriteUseCase) CreateOrGetDirect(ctx context.Context, sender
 }
 
 func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.CreateGroupParams) (*chat.Conversation, error) {
-	return nil, nil
+	memberIDs, err := u.sanitizeGroupMembers(params)
+	if err != nil {
+		return nil, err
+	}
+
+	if params.AvatarKey != "" {
+		if err := u.deps.MediaVerifier.VerifyMedia(ctx, []string{params.AvatarKey}); err != nil {
+			return nil, err
+		}
+	}
+
+	if params.ClientConvID != "" {
+		existing, err := u.deps.ConvRepo.FindByClientConvID(ctx, params.ClientConvID)
+		if err != nil {
+			return nil, err
+		}
+		if existing != nil {
+			// TODO: populate existing.LastMessage from MessageRepository once message layer is implemented.
+			return existing, nil
+		}
+	}
+
+	memberStates, err := u.resolveMembers(ctx, params.CreatorID, memberIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return u.persistGroup(ctx, params, memberIDs, memberStates)
+}
+
+// sanitizeGroupMembers deduplicates memberIDs, removes creatorID, and enforces minimum count.
+func (u *ConversationWriteUseCase) sanitizeGroupMembers(params chat.CreateGroupParams) ([]int64, error) {
+	seen := make(map[int64]struct{}, len(params.MemberIDs))
+	memberIDs := make([]int64, 0, len(params.MemberIDs))
+	for _, id := range params.MemberIDs {
+		if id == params.CreatorID {
+			continue
+		}
+		if _, ok := seen[id]; !ok {
+			seen[id] = struct{}{}
+			memberIDs = append(memberIDs, id)
+		}
+	}
+	if len(memberIDs) < 2 {
+		return nil, fmt.Errorf("group requires at least 2 unique members (excluding creator): %w", pkg.ErrBadRequest)
+	}
+	return memberIDs, nil
+}
+
+// resolveMembers validates that all member IDs exist, then bulk-checks their follow relationship
+// with the creator to determine each member's initial inbox state.
+// Members who follow the creator land in Active (main inbox); others in Pending (message requests).
+func (u *ConversationWriteUseCase) resolveMembers(ctx context.Context, creatorID int64, memberIDs []int64) (map[int64]chat.ParticipantState, error) {
+	missing, err := u.deps.UserChecker.FilterNonExistent(ctx, memberIDs)
+	if err != nil {
+		return nil, err
+	}
+	if len(missing) > 0 {
+		return nil, fmt.Errorf("participant user IDs not found %v: %w", missing, pkg.ErrNotFound)
+	}
+
+	relationships, err := u.deps.FollowChecker.GetRelationships(ctx, creatorID, memberIDs)
+	if err != nil {
+		return nil, err
+	}
+	states := make(map[int64]chat.ParticipantState, len(memberIDs))
+	for _, id := range memberIDs {
+		if rel, ok := relationships[id]; ok && rel.IsFollower {
+			states[id] = chat.StateActive
+		} else {
+			states[id] = chat.StatePending
+		}
+	}
+	return states, nil
+}
+
+// persistGroup creates the conversation document and handles the idempotency conflict race.
+func (u *ConversationWriteUseCase) persistGroup(
+	ctx context.Context,
+	params chat.CreateGroupParams,
+	memberIDs []int64,
+	memberStates map[int64]chat.ParticipantState,
+) (*chat.Conversation, error) {
+	conv := chat.NewGroupConversation(chat.CreateGroupParams{
+		CreatorID:    params.CreatorID,
+		MemberIDs:    memberIDs,
+		MemberStates: memberStates,
+		Name:         params.Name,
+		AvatarKey:    params.AvatarKey,
+		ClientConvID: params.ClientConvID,
+	})
+
+	if err := u.deps.ConvRepo.Create(ctx, conv); err != nil {
+		if errors.Is(err, pkg.ErrConflict) && params.ClientConvID != "" {
+			// Race condition: a concurrent request created the same ClientConvID first.
+			existing, findErr := u.deps.ConvRepo.FindByClientConvID(ctx, params.ClientConvID)
+			if findErr != nil {
+				return nil, findErr
+			}
+			if existing != nil {
+				return existing, nil
+			}
+		}
+		return nil, err
+	}
+
+	return conv, nil
 }
 
 func (u *ConversationWriteUseCase) UpdateGroup(ctx context.Context, params chat.UpdateGroupParams) error {

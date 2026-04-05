@@ -5,11 +5,13 @@ definitions:
     - users
     - posts
     - messages
+    - groups
     type: string
     x-enum-varnames:
     - DomainUser
     - DomainPost
     - DomainMessage
+    - DomainGroup
   air-social_internal_domain_media.UploadFeature:
     enum:
     - avatar
@@ -236,6 +238,8 @@ definitions:
   internal_transport_http_chat.CreateGroupReq:
     properties:
       avatar_key:
+        type: string
+      client_conv_id:
         type: string
       name:
         maxLength: 100

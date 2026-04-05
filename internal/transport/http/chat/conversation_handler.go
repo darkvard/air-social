@@ -74,5 +74,29 @@ func (h ConversationHandler) CreateDirect(c *gin.Context) {
 //	@Failure		500		{object}	pkg.Response
 //	@Router			/conversations/group [post]
 func (h ConversationHandler) CreateGroup(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
 
+	var req CreateGroupReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	conv, err := h.uc.Write.CreateGroup(c.Request.Context(), chatdomain.CreateGroupParams{
+		CreatorID:    claims.UserID,
+		MemberIDs:    req.ParticipantIDs,
+		Name:         req.Name,
+		AvatarKey:    req.AvatarKey,
+		ClientConvID: req.ClientConvID,
+	})
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, toConversationResponse(conv))
 }

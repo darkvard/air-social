@@ -14,6 +14,7 @@ type CreateGroupReq struct {
 	Name           string  `json:"name" binding:"required,max=100"`
 	ParticipantIDs []int64 `json:"participant_ids" binding:"required,min=2"`
 	AvatarKey      string  `json:"avatar_key,omitempty"`
+	ClientConvID   string  `json:"client_conv_id,omitempty"`
 }
 
 type ParticipantResponse struct {

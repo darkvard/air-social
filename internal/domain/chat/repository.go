@@ -6,6 +6,9 @@ type ConversationRepository interface {
 	Create(ctx context.Context, conv *Conversation) error
 	GetByID(ctx context.Context, id string) (*Conversation, error)
 	FindDirect(ctx context.Context, userAID, userBID int64) (*Conversation, error)
+
+	// FindByClientConvID is used for group creation idempotency: returns nil, nil if not found.
+	FindByClientConvID(ctx context.Context, clientConvID string) (*Conversation, error)
 	GetParticipantConversations(ctx context.Context, params GetConversationsParams) ([]Conversation, error)
 
 	AddParticipant(ctx context.Context, convID string, p Participant) error
@@ -15,7 +18,6 @@ type ConversationRepository interface {
 
 	// UpdateGroupInfo only updates non-nil fields — nil means keep existing value.
 	UpdateGroupInfo(ctx context.Context, convID string, name, avatarKey *string) error
-
 	UpdateLastRead(ctx context.Context, convID string, userID int64, messageID string) error
 	TouchConversation(ctx context.Context, convID, lastMsgID string) error
 }

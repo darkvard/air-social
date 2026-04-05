@@ -58,6 +58,7 @@ type Conversation struct {
 	Participants []Participant
 	Name         string // group only
 	AvatarKey    string // group only
+	ClientConvID string // group only; optional idempotency key set by client on creation
 	CreatedBy    int64
 	LastMessage  *Message // populated by repo (separate query); nil if no messages yet
 	UnreadCount  int      // populated from Redis UnreadStore; not stored in MongoDB
@@ -94,6 +95,40 @@ func NewDirectConversation(senderID, targetID int64, isTargetFollowingSender boo
 		CreatedBy: senderID,
 		CreatedAt: now,
 		UpdatedAt: now,
+	}
+}
+
+func NewGroupConversation(params CreateGroupParams) *Conversation {
+	now := pkg.TimeNowUTC()
+	participants := make([]Participant, 0, 1+len(params.MemberIDs))
+	participants = append(participants, Participant{
+		UserID:   params.CreatorID,
+		Role:     RoleAdmin,
+		State:    StateActive,
+		JoinedAt: now,
+	})
+	for _, id := range params.MemberIDs {
+		state := StatePending // default: no follow relationship with creator → pending
+		if s, ok := params.MemberStates[id]; ok {
+			state = s
+		}
+		participants = append(participants, Participant{
+			UserID:   id,
+			Role:     RoleMember,
+			State:    state,
+			JoinedAt: now,
+		})
+	}
+	return &Conversation{
+		ID:           pkg.NewULID(),
+		Type:         ConversationGroup,
+		Participants: participants,
+		Name:         params.Name,
+		AvatarKey:    params.AvatarKey,
+		ClientConvID: params.ClientConvID,
+		CreatedBy:    params.CreatorID,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 }
 

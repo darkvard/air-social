@@ -29,6 +29,10 @@ func setupConversationIndexes(ctx context.Context, db *mongo.Database) error {
 				{Key: "type", Value: 1},
 			},
 		},
+		{
+			Keys:    bson.D{{Key: "client_conv_id", Value: 1}},
+			Options: options.Index().SetUnique(true).SetSparse(true),
+		},
 	}
 	_, err := db.Collection("conversations").Indexes().CreateMany(ctx, indexes)
 	return err

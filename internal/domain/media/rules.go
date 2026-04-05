@@ -8,6 +8,7 @@ const (
 	DomainUser    UploadDomain = "users"
 	DomainPost    UploadDomain = "posts"
 	DomainMessage UploadDomain = "messages"
+	DomainGroup   UploadDomain = "groups"
 )
 
 const (
@@ -48,12 +49,16 @@ var MediaUploadRules = map[UploadDomain]map[UploadFeature]Rule{
 		FeatureFeedImage:  {MaxBytes: Limit10MB, AllowedTypes: ImageAllowedTypes},
 		FeatureAttachment: {MaxBytes: Limit50MB, AllowedTypes: nil},
 	},
+	DomainGroup: {
+		FeatureAvatar: {MaxBytes: Limit5MB, AllowedTypes: ImageAllowedTypes},
+	},
 }
 
 var ValidDomainFeatures = map[UploadDomain][]UploadFeature{
 	DomainUser:    {FeatureAvatar, FeatureCover},
 	DomainPost:    {FeatureFeedImage, FeatureFeedVideo},
 	DomainMessage: {FeatureAttachment, FeatureVoiceChat, FeatureFeedImage},
+	DomainGroup:   {FeatureAvatar},
 }
 
 type UploadDomain string

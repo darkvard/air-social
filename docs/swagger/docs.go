@@ -2381,12 +2381,14 @@ const docTemplate = `{
             "enum": [
                 "users",
                 "posts",
-                "messages"
+                "messages",
+                "groups"
             ],
             "x-enum-varnames": [
                 "DomainUser",
                 "DomainPost",
-                "DomainMessage"
+                "DomainMessage",
+                "DomainGroup"
             ]
         },
         "air-social_internal_domain_media.UploadFeature": {
@@ -2727,6 +2729,9 @@ const docTemplate = `{
             ],
             "properties": {
                 "avatar_key": {
+                    "type": "string"
+                },
+                "client_conv_id": {
                     "type": "string"
                 },
                 "name": {

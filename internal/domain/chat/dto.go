@@ -9,10 +9,12 @@ type GetConversationsParams struct {
 }
 
 type CreateGroupParams struct {
-	CreatorID int64
-	MemberIDs []int64
-	Name      string
-	AvatarKey string
+	CreatorID    int64
+	MemberIDs    []int64
+	MemberStates map[int64]ParticipantState // resolved by usecase; missing key defaults to StatePending
+	Name         string
+	AvatarKey    string
+	ClientConvID string // optional; empty = no idempotency guarantee
 }
 
 type UpdateGroupParams struct {

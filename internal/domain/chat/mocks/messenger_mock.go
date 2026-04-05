@@ -40,16 +40,16 @@ func (_m *MockMessenger) EXPECT() *MockMessenger_Expecter {
 }
 
 // AddReaction provides a mock function for the type MockMessenger
-func (_mock *MockMessenger) AddReaction(ctx context.Context, msgID string, userID int64, emoji string) error {
-	ret := _mock.Called(ctx, msgID, userID, emoji)
+func (_mock *MockMessenger) AddReaction(ctx context.Context, msgID string, userID int64, reaction chat.ReactionType) error {
+	ret := _mock.Called(ctx, msgID, userID, reaction)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddReaction")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64, string) error); ok {
-		r0 = returnFunc(ctx, msgID, userID, emoji)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64, chat.ReactionType) error); ok {
+		r0 = returnFunc(ctx, msgID, userID, reaction)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -65,12 +65,12 @@ type MockMessenger_AddReaction_Call struct {
 //   - ctx context.Context
 //   - msgID string
 //   - userID int64
-//   - emoji string
-func (_e *MockMessenger_Expecter) AddReaction(ctx interface{}, msgID interface{}, userID interface{}, emoji interface{}) *MockMessenger_AddReaction_Call {
-	return &MockMessenger_AddReaction_Call{Call: _e.mock.On("AddReaction", ctx, msgID, userID, emoji)}
+//   - reaction chat.ReactionType
+func (_e *MockMessenger_Expecter) AddReaction(ctx interface{}, msgID interface{}, userID interface{}, reaction interface{}) *MockMessenger_AddReaction_Call {
+	return &MockMessenger_AddReaction_Call{Call: _e.mock.On("AddReaction", ctx, msgID, userID, reaction)}
 }
 
-func (_c *MockMessenger_AddReaction_Call) Run(run func(ctx context.Context, msgID string, userID int64, emoji string)) *MockMessenger_AddReaction_Call {
+func (_c *MockMessenger_AddReaction_Call) Run(run func(ctx context.Context, msgID string, userID int64, reaction chat.ReactionType)) *MockMessenger_AddReaction_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -84,9 +84,9 @@ func (_c *MockMessenger_AddReaction_Call) Run(run func(ctx context.Context, msgI
 		if args[2] != nil {
 			arg2 = args[2].(int64)
 		}
-		var arg3 string
+		var arg3 chat.ReactionType
 		if args[3] != nil {
-			arg3 = args[3].(string)
+			arg3 = args[3].(chat.ReactionType)
 		}
 		run(
 			arg0,
@@ -103,7 +103,7 @@ func (_c *MockMessenger_AddReaction_Call) Return(err error) *MockMessenger_AddRe
 	return _c
 }
 
-func (_c *MockMessenger_AddReaction_Call) RunAndReturn(run func(ctx context.Context, msgID string, userID int64, emoji string) error) *MockMessenger_AddReaction_Call {
+func (_c *MockMessenger_AddReaction_Call) RunAndReturn(run func(ctx context.Context, msgID string, userID int64, reaction chat.ReactionType) error) *MockMessenger_AddReaction_Call {
 	_c.Call.Return(run)
 	return _c
 }

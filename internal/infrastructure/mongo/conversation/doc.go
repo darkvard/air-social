@@ -12,6 +12,7 @@ const (
 	fieldParticipants = "participants"
 	fieldName         = "name"
 	fieldAvatarKey    = "avatar_key"
+	fieldClientConvID = "client_conv_id"
 	fieldCreatedBy    = "created_by"
 	fieldLastMsgID    = "last_msg_id"
 	fieldCreatedAt    = "created_at"
@@ -64,6 +65,7 @@ type conversationDoc struct {
 	Participants []participantDoc `bson:"participants"`
 	Name         string           `bson:"name,omitempty"`
 	AvatarKey    string           `bson:"avatar_key,omitempty"`
+	ClientConvID string           `bson:"client_conv_id,omitempty"`
 	CreatedBy    int64            `bson:"created_by"`
 	LastMsgID    string           `bson:"last_msg_id,omitempty"`
 	CreatedAt    time.Time        `bson:"created_at"`
@@ -81,6 +83,7 @@ func (d *conversationDoc) toDomain() *chat.Conversation {
 		Participants: participants,
 		Name:         d.Name,
 		AvatarKey:    d.AvatarKey,
+		ClientConvID: d.ClientConvID,
 		CreatedBy:    d.CreatedBy,
 		CreatedAt:    d.CreatedAt,
 		UpdatedAt:    d.UpdatedAt,
@@ -100,6 +103,7 @@ func fromDomain(c *chat.Conversation) *conversationDoc {
 		Participants: participants,
 		Name:         c.Name,
 		AvatarKey:    c.AvatarKey,
+		ClientConvID: c.ClientConvID,
 		CreatedBy:    c.CreatedBy,
 		CreatedAt:    c.CreatedAt,
 		UpdatedAt:    c.UpdatedAt,

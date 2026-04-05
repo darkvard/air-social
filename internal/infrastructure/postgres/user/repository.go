@@ -104,3 +104,25 @@ func (r *repository) UpdateVerified(ctx context.Context, id int64, status bool) 
 	query := `UPDATE users SET verified = $1 WHERE id = $2`
 	return postgres.ExecOne(ctx, r.db, query, status, id)
 }
+
+func (r *repository) FilterNonExistent(ctx context.Context, ids []int64) ([]int64, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	query := `SELECT id FROM users WHERE id = ANY($1::bigint[])`
+	var found []int64
+	if err := r.db.SelectContext(ctx, &found, query, ids); err != nil {
+		return nil, pkg.MapPostgresError(err)
+	}
+	foundSet := make(map[int64]struct{}, len(found))
+	for _, id := range found {
+		foundSet[id] = struct{}{}
+	}
+	var missing []int64
+	for _, id := range ids {
+		if _, ok := foundSet[id]; !ok {
+			missing = append(missing, id)
+		}
+	}
+	return missing, nil
+}

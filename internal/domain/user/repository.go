@@ -9,6 +9,8 @@ type Repository interface {
 
 	GetByID(ctx context.Context, id int64) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	// FilterNonExistent returns ids from the input that do not exist in the users table.
+	FilterNonExistent(ctx context.Context, ids []int64) (missing []int64, err error)
 
 	UpdateProfile(ctx context.Context, user *User) error
 	UpdateAvatar(ctx context.Context, id int64, url string) error

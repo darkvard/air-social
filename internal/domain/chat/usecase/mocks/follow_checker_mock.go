@@ -109,3 +109,77 @@ func (_c *MockFollowChecker_GetRelationship_Call) RunAndReturn(run func(ctx cont
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetRelationships provides a mock function for the type MockFollowChecker
+func (_mock *MockFollowChecker) GetRelationships(ctx context.Context, userID int64, targetIDs []int64) (map[int64]follow.Relationship, error) {
+	ret := _mock.Called(ctx, userID, targetIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRelationships")
+	}
+
+	var r0 map[int64]follow.Relationship
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, []int64) (map[int64]follow.Relationship, error)); ok {
+		return returnFunc(ctx, userID, targetIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, []int64) map[int64]follow.Relationship); ok {
+		r0 = returnFunc(ctx, userID, targetIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int64]follow.Relationship)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, []int64) error); ok {
+		r1 = returnFunc(ctx, userID, targetIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFollowChecker_GetRelationships_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRelationships'
+type MockFollowChecker_GetRelationships_Call struct {
+	*mock.Call
+}
+
+// GetRelationships is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID int64
+//   - targetIDs []int64
+func (_e *MockFollowChecker_Expecter) GetRelationships(ctx interface{}, userID interface{}, targetIDs interface{}) *MockFollowChecker_GetRelationships_Call {
+	return &MockFollowChecker_GetRelationships_Call{Call: _e.mock.On("GetRelationships", ctx, userID, targetIDs)}
+}
+
+func (_c *MockFollowChecker_GetRelationships_Call) Run(run func(ctx context.Context, userID int64, targetIDs []int64)) *MockFollowChecker_GetRelationships_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 []int64
+		if args[2] != nil {
+			arg2 = args[2].([]int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFollowChecker_GetRelationships_Call) Return(int64ToRelationship map[int64]follow.Relationship, err error) *MockFollowChecker_GetRelationships_Call {
+	_c.Call.Return(int64ToRelationship, err)
+	return _c
+}
+
+func (_c *MockFollowChecker_GetRelationships_Call) RunAndReturn(run func(ctx context.Context, userID int64, targetIDs []int64) (map[int64]follow.Relationship, error)) *MockFollowChecker_GetRelationships_Call {
+	_c.Call.Return(run)
+	return _c
+}

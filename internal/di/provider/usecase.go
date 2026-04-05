@@ -83,7 +83,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 	feedUC := getFeedUseCase(deps, followUC, postUC, followerCache)
 	searchUC := search.NewUseCase(deps.Repo.Search, postUC)
 
-	convUC := getChatConversationUseCase(deps, followUC)
+	convUC := getChatConversationUseCase(deps, followUC, deps.Repo.User, mediaUC)
 
 	return UseCase{
 		Health:       healthUC,
@@ -212,7 +212,12 @@ func getStatsUseCase(deps UseCaseDeps) stats.UseCase {
 	)
 }
 
-func getChatConversationUseCase(deps UseCaseDeps, followChecker chatusecase.FollowChecker) chat.ConversationUseCase {
+func getChatConversationUseCase(
+	deps UseCaseDeps,
+	followChecker chatusecase.FollowChecker,
+	userChecker chatusecase.UserChecker,
+	mediaVerifier chatusecase.MediaVerifier,
+) chat.ConversationUseCase {
 	convRepo := deps.Repo.Conversation
 	return chat.ConversationUseCase{
 		Query: chatusecase.NewQueryUseCase(chatusecase.QueryDeps{
@@ -221,6 +226,8 @@ func getChatConversationUseCase(deps UseCaseDeps, followChecker chatusecase.Foll
 		Write: chatusecase.NewWriteUseCase(chatusecase.WriteDeps{
 			ConvRepo:      convRepo,
 			FollowChecker: followChecker,
+			UserChecker:   userChecker,
+			MediaVerifier: mediaVerifier,
 			Event:         deps.Adapter.EventPub,
 		}),
 		Member: chatusecase.NewMemberUseCase(chatusecase.MemberDeps{

@@ -52,6 +52,18 @@ func (r *repository) FindDirect(ctx context.Context, userAID int64, userBID int6
 	return doc.toDomain(), nil
 }
 
+func (r *repository) FindByClientConvID(ctx context.Context, clientConvID string) (*chat.Conversation, error) {
+	filter := bson.M{fieldClientConvID: clientConvID}
+	var doc conversationDoc
+	if err := r.coll.FindOne(ctx, filter).Decode(&doc); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, pkg.MapMongoError(err)
+	}
+	return doc.toDomain(), nil
+}
+
 func (r *repository) GetByID(ctx context.Context, id string) (*chat.Conversation, error) {
 	return nil, nil
 }
