@@ -52,7 +52,7 @@ func NewWriteUseCase(d WriteDeps) *ConversationWriteUseCase {
 func (u *ConversationWriteUseCase) CreateOrGetDirect(ctx context.Context, senderID, recipientID int64) (*chat.Conversation, error) {
 	existingConv, err := u.deps.ConvRepo.FindDirect(ctx, senderID, recipientID)
 	if err != nil {
-		return nil, err
+		return nil, pkg.OrInternalError(err)
 	}
 	if existingConv != nil {
 		// TODO: populate existingConv.LastMessage from MessageRepository once message layer is implemented.
@@ -61,12 +61,12 @@ func (u *ConversationWriteUseCase) CreateOrGetDirect(ctx context.Context, sender
 
 	relationship, err := u.deps.FollowChecker.GetRelationship(ctx, senderID, recipientID)
 	if err != nil {
-		return nil, err
+		return nil, pkg.OrInternalError(err)
 	}
 
 	newConv := chat.NewDirectConversation(senderID, recipientID, relationship.IsFollower)
 	if err := u.deps.ConvRepo.Create(ctx, newConv); err != nil {
-		return nil, err
+		return nil, pkg.OrInternalError(err)
 	}
 	return newConv, nil
 }
@@ -79,14 +79,17 @@ func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.
 
 	if params.AvatarKey != "" {
 		if err := u.deps.MediaVerifier.VerifyMedia(ctx, []string{params.AvatarKey}); err != nil {
-			return nil, err
+			if errors.Is(err, pkg.ErrNotFound) {
+				return nil, pkg.NewError(pkg.ErrBadRequest, "avatar media not found or invalid")
+			}
+			return nil, pkg.OrInternalError(err)
 		}
 	}
 
 	if params.ClientConvID != "" {
 		existing, err := u.deps.ConvRepo.FindByClientConvID(ctx, params.ClientConvID)
 		if err != nil {
-			return nil, err
+			return nil, pkg.OrInternalError(err)
 		}
 		if existing != nil {
 			// TODO: populate existing.LastMessage from MessageRepository once message layer is implemented.
@@ -116,7 +119,7 @@ func (u *ConversationWriteUseCase) sanitizeGroupMembers(params chat.CreateGroupP
 		}
 	}
 	if len(memberIDs) < 2 {
-		return nil, fmt.Errorf("group requires at least 2 unique members (excluding creator): %w", pkg.ErrBadRequest)
+		return nil, pkg.NewError(pkg.ErrBadRequest, "group requires at least 2 unique members excluding creator")
 	}
 	return memberIDs, nil
 }
@@ -127,15 +130,15 @@ func (u *ConversationWriteUseCase) sanitizeGroupMembers(params chat.CreateGroupP
 func (u *ConversationWriteUseCase) resolveMembers(ctx context.Context, creatorID int64, memberIDs []int64) (map[int64]chat.ParticipantState, error) {
 	missing, err := u.deps.UserChecker.FilterNonExistent(ctx, memberIDs)
 	if err != nil {
-		return nil, err
+		return nil, pkg.OrInternalError(err)
 	}
 	if len(missing) > 0 {
-		return nil, fmt.Errorf("participant user IDs not found %v: %w", missing, pkg.ErrNotFound)
+		return nil, pkg.NewError(pkg.ErrNotFound, fmt.Sprintf("participants not found: %v", missing))
 	}
 
 	relationships, err := u.deps.FollowChecker.GetRelationships(ctx, creatorID, memberIDs)
 	if err != nil {
-		return nil, err
+		return nil, pkg.OrInternalError(err)
 	}
 	states := make(map[int64]chat.ParticipantState, len(memberIDs))
 	for _, id := range memberIDs {
@@ -169,13 +172,13 @@ func (u *ConversationWriteUseCase) persistGroup(
 			// Race condition: a concurrent request created the same ClientConvID first.
 			existing, findErr := u.deps.ConvRepo.FindByClientConvID(ctx, params.ClientConvID)
 			if findErr != nil {
-				return nil, findErr
+				return nil, pkg.OrInternalError(findErr)
 			}
 			if existing != nil {
 				return existing, nil
 			}
 		}
-		return nil, err
+		return nil, pkg.OrInternalError(err)
 	}
 
 	return conv, nil

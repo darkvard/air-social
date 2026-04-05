@@ -53,7 +53,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 					FindDirect(mock.Anything, senderID, recipientID).
 					Return(nil, assert.AnError).Once()
 			},
-			wantErr: assert.AnError,
+			wantErr: pkg.ErrInternal,
 		},
 		{
 			name: "existing_conv_returned",
@@ -76,7 +76,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 					GetRelationship(mock.Anything, senderID, recipientID).
 					Return(follow.Relationship{}, assert.AnError).Once()
 			},
-			wantErr: assert.AnError,
+			wantErr: pkg.ErrInternal,
 		},
 		{
 			name: "creates_with_pending_state",
@@ -135,7 +135,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(assert.AnError).Once()
 			},
-			wantErr: assert.AnError,
+			wantErr: pkg.ErrInternal,
 		},
 	}
 
@@ -253,7 +253,22 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					VerifyMedia(mock.Anything, []string{"groups/tmp/avatar/key.jpg"}).
 					Return(assert.AnError).Once()
 			},
-			wantErr: assert.AnError,
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "avatar_key_not_found",
+			params: chat.CreateGroupParams{
+				CreatorID: creatorID,
+				MemberIDs: []int64{member1, member2},
+				Name:      "Team",
+				AvatarKey: "groups/tmp/avatar/key.jpg",
+			},
+			setupMock: func(deps testDeps) {
+				deps.mediaVerifier.EXPECT().
+					VerifyMedia(mock.Anything, []string{"groups/tmp/avatar/key.jpg"}).
+					Return(pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
 		},
 		{
 			name: "idempotency_existing_conv_returned",
@@ -285,7 +300,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					FilterNonExistent(mock.Anything, []int64{member1, member2}).
 					Return(nil, assert.AnError).Once()
 			},
-			wantErr: assert.AnError,
+			wantErr: pkg.ErrInternal,
 		},
 		{
 			name: "member_ids_not_found",
@@ -397,7 +412,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					GetRelationships(mock.Anything, creatorID, []int64{member1, member2}).
 					Return(nil, assert.AnError).Once()
 			},
-			wantErr: assert.AnError,
+			wantErr: pkg.ErrInternal,
 		},
 		{
 			name: "creates_successfully",
@@ -516,7 +531,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(assert.AnError).Once()
 			},
-			wantErr: assert.AnError,
+			wantErr: pkg.ErrInternal,
 		},
 	}
 
