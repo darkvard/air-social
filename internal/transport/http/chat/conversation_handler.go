@@ -100,3 +100,45 @@ func (h ConversationHandler) CreateGroup(c *gin.Context) {
 
 	pkg.Success(c, toConversationResponse(conv))
 }
+
+// GetConversation godoc
+//
+//	@Summary		Get conversation by ID
+//	@Description	Returns a single conversation the authenticated user is a participant of.
+//	@Description	Includes unread count from Redis. LastMessage is populated once message layer is implemented.
+//	@Tags			Chat
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Conversation ID (ULID)"
+//	@Success		200	{object}	ConversationResponse
+//	@Failure		400	{object}	pkg.Response
+//	@Failure		401	{object}	pkg.Response
+//	@Failure		403	{object}	pkg.Response
+//	@Failure		404	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
+//	@Router			/conversations/{id} [get]
+func (h ConversationHandler) GetConversation(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
+	var req GetConversationReq
+	if err := c.ShouldBindUri(&req); err != nil {
+		pkg.BadRequest(c, "invalid conversation id")
+		return
+	}
+
+	res, err := h.uc.Query.GetConversation(c.Request.Context(), req.ID, claims.UserID)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, toConversationResponse(res))
+}
+
+func (h ConversationHandler) GetConversations(c *gin.Context) {
+
+}

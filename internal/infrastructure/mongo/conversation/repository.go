@@ -53,19 +53,12 @@ func (r *repository) FindDirect(ctx context.Context, userAID int64, userBID int6
 }
 
 func (r *repository) FindByClientConvID(ctx context.Context, clientConvID string) (*chat.Conversation, error) {
-	filter := bson.M{fieldClientConvID: clientConvID}
-	var doc conversationDoc
-	if err := r.coll.FindOne(ctx, filter).Decode(&doc); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil
-		}
-		return nil, pkg.MapMongoError(err)
-	}
-	return doc.toDomain(), nil
+	return r.getByID(ctx, bson.M{fieldClientConvID: clientConvID})
+
 }
 
 func (r *repository) GetByID(ctx context.Context, id string) (*chat.Conversation, error) {
-	return nil, nil
+	return r.getByID(ctx, bson.M{fieldID: id})
 }
 
 func (r *repository) GetParticipantConversations(ctx context.Context, params chat.GetConversationsParams) ([]chat.Conversation, error) {
@@ -103,4 +96,15 @@ func (r *repository) UpdateLastRead(ctx context.Context, convID string, userID i
 func (r *repository) TouchConversation(ctx context.Context, convID string, lastMsgID string) error {
 	return nil
 
+}
+
+func (r *repository) getByID(ctx context.Context, filter any) (*chat.Conversation, error) {
+	var doc conversationDoc
+	if err := r.coll.FindOne(ctx, filter).Decode(&doc); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, pkg.MapMongoError(err)
+	}
+	return doc.toDomain(), nil
 }

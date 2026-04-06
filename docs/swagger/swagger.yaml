@@ -1316,6 +1316,49 @@ paths:
       summary: Get replies for a comment
       tags:
       - Comment
+  /conversations/{id}:
+    get:
+      description: |-
+        Returns a single conversation the authenticated user is a participant of.
+        Includes unread count from Redis. LastMessage is populated once message layer is implemented.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.ConversationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get conversation by ID
+      tags:
+      - Chat
   /conversations/direct:
     post:
       consumes:

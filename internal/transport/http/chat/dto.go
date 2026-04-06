@@ -6,6 +6,10 @@ import (
 	chatdomain "air-social/internal/domain/chat"
 )
 
+type GetConversationReq struct {
+	ID string `uri:"id" binding:"required"`
+}
+
 type CreateDirectReq struct {
 	TargetUserID int64 `json:"target_user_id" binding:"required,gt=0"`
 }
