@@ -158,12 +158,12 @@ func (_c *MockConversationRepository_Create_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
-// FindByClientConvID provides a mock function for the type MockConversationRepository
-func (_mock *MockConversationRepository) FindByClientConvID(ctx context.Context, clientConvID string) (*chat.Conversation, error) {
+// GetByClientConvID provides a mock function for the type MockConversationRepository
+func (_mock *MockConversationRepository) GetByClientConvID(ctx context.Context, clientConvID string) (*chat.Conversation, error) {
 	ret := _mock.Called(ctx, clientConvID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindByClientConvID")
+		panic("no return value specified for GetByClientConvID")
 	}
 
 	var r0 *chat.Conversation
@@ -186,19 +186,19 @@ func (_mock *MockConversationRepository) FindByClientConvID(ctx context.Context,
 	return r0, r1
 }
 
-// MockConversationRepository_FindByClientConvID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByClientConvID'
-type MockConversationRepository_FindByClientConvID_Call struct {
+// MockConversationRepository_GetByClientConvID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByClientConvID'
+type MockConversationRepository_GetByClientConvID_Call struct {
 	*mock.Call
 }
 
-// FindByClientConvID is a helper method to define mock.On call
+// GetByClientConvID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - clientConvID string
-func (_e *MockConversationRepository_Expecter) FindByClientConvID(ctx interface{}, clientConvID interface{}) *MockConversationRepository_FindByClientConvID_Call {
-	return &MockConversationRepository_FindByClientConvID_Call{Call: _e.mock.On("FindByClientConvID", ctx, clientConvID)}
+func (_e *MockConversationRepository_Expecter) GetByClientConvID(ctx interface{}, clientConvID interface{}) *MockConversationRepository_GetByClientConvID_Call {
+	return &MockConversationRepository_GetByClientConvID_Call{Call: _e.mock.On("GetByClientConvID", ctx, clientConvID)}
 }
 
-func (_c *MockConversationRepository_FindByClientConvID_Call) Run(run func(ctx context.Context, clientConvID string)) *MockConversationRepository_FindByClientConvID_Call {
+func (_c *MockConversationRepository_GetByClientConvID_Call) Run(run func(ctx context.Context, clientConvID string)) *MockConversationRepository_GetByClientConvID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -216,86 +216,12 @@ func (_c *MockConversationRepository_FindByClientConvID_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockConversationRepository_FindByClientConvID_Call) Return(conversation *chat.Conversation, err error) *MockConversationRepository_FindByClientConvID_Call {
+func (_c *MockConversationRepository_GetByClientConvID_Call) Return(conversation *chat.Conversation, err error) *MockConversationRepository_GetByClientConvID_Call {
 	_c.Call.Return(conversation, err)
 	return _c
 }
 
-func (_c *MockConversationRepository_FindByClientConvID_Call) RunAndReturn(run func(ctx context.Context, clientConvID string) (*chat.Conversation, error)) *MockConversationRepository_FindByClientConvID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// FindDirect provides a mock function for the type MockConversationRepository
-func (_mock *MockConversationRepository) FindDirect(ctx context.Context, userAID int64, userBID int64) (*chat.Conversation, error) {
-	ret := _mock.Called(ctx, userAID, userBID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for FindDirect")
-	}
-
-	var r0 *chat.Conversation
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (*chat.Conversation, error)); ok {
-		return returnFunc(ctx, userAID, userBID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) *chat.Conversation); ok {
-		r0 = returnFunc(ctx, userAID, userBID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*chat.Conversation)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
-		r1 = returnFunc(ctx, userAID, userBID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockConversationRepository_FindDirect_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindDirect'
-type MockConversationRepository_FindDirect_Call struct {
-	*mock.Call
-}
-
-// FindDirect is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userAID int64
-//   - userBID int64
-func (_e *MockConversationRepository_Expecter) FindDirect(ctx interface{}, userAID interface{}, userBID interface{}) *MockConversationRepository_FindDirect_Call {
-	return &MockConversationRepository_FindDirect_Call{Call: _e.mock.On("FindDirect", ctx, userAID, userBID)}
-}
-
-func (_c *MockConversationRepository_FindDirect_Call) Run(run func(ctx context.Context, userAID int64, userBID int64)) *MockConversationRepository_FindDirect_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 int64
-		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 int64
-		if args[2] != nil {
-			arg2 = args[2].(int64)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockConversationRepository_FindDirect_Call) Return(conversation *chat.Conversation, err error) *MockConversationRepository_FindDirect_Call {
-	_c.Call.Return(conversation, err)
-	return _c
-}
-
-func (_c *MockConversationRepository_FindDirect_Call) RunAndReturn(run func(ctx context.Context, userAID int64, userBID int64) (*chat.Conversation, error)) *MockConversationRepository_FindDirect_Call {
+func (_c *MockConversationRepository_GetByClientConvID_Call) RunAndReturn(run func(ctx context.Context, clientConvID string) (*chat.Conversation, error)) *MockConversationRepository_GetByClientConvID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -368,12 +294,86 @@ func (_c *MockConversationRepository_GetByID_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
-// GetParticipantConversations provides a mock function for the type MockConversationRepository
-func (_mock *MockConversationRepository) GetParticipantConversations(ctx context.Context, params chat.GetConversationsParams) ([]chat.Conversation, error) {
+// GetDirect provides a mock function for the type MockConversationRepository
+func (_mock *MockConversationRepository) GetDirect(ctx context.Context, userAID int64, userBID int64) (*chat.Conversation, error) {
+	ret := _mock.Called(ctx, userAID, userBID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDirect")
+	}
+
+	var r0 *chat.Conversation
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) (*chat.Conversation, error)); ok {
+		return returnFunc(ctx, userAID, userBID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) *chat.Conversation); ok {
+		r0 = returnFunc(ctx, userAID, userBID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*chat.Conversation)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = returnFunc(ctx, userAID, userBID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockConversationRepository_GetDirect_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDirect'
+type MockConversationRepository_GetDirect_Call struct {
+	*mock.Call
+}
+
+// GetDirect is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userAID int64
+//   - userBID int64
+func (_e *MockConversationRepository_Expecter) GetDirect(ctx interface{}, userAID interface{}, userBID interface{}) *MockConversationRepository_GetDirect_Call {
+	return &MockConversationRepository_GetDirect_Call{Call: _e.mock.On("GetDirect", ctx, userAID, userBID)}
+}
+
+func (_c *MockConversationRepository_GetDirect_Call) Run(run func(ctx context.Context, userAID int64, userBID int64)) *MockConversationRepository_GetDirect_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockConversationRepository_GetDirect_Call) Return(conversation *chat.Conversation, err error) *MockConversationRepository_GetDirect_Call {
+	_c.Call.Return(conversation, err)
+	return _c
+}
+
+func (_c *MockConversationRepository_GetDirect_Call) RunAndReturn(run func(ctx context.Context, userAID int64, userBID int64) (*chat.Conversation, error)) *MockConversationRepository_GetDirect_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetList provides a mock function for the type MockConversationRepository
+func (_mock *MockConversationRepository) GetList(ctx context.Context, params chat.GetConversationsParams) ([]chat.Conversation, error) {
 	ret := _mock.Called(ctx, params)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetParticipantConversations")
+		panic("no return value specified for GetList")
 	}
 
 	var r0 []chat.Conversation
@@ -396,19 +396,19 @@ func (_mock *MockConversationRepository) GetParticipantConversations(ctx context
 	return r0, r1
 }
 
-// MockConversationRepository_GetParticipantConversations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetParticipantConversations'
-type MockConversationRepository_GetParticipantConversations_Call struct {
+// MockConversationRepository_GetList_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetList'
+type MockConversationRepository_GetList_Call struct {
 	*mock.Call
 }
 
-// GetParticipantConversations is a helper method to define mock.On call
+// GetList is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params chat.GetConversationsParams
-func (_e *MockConversationRepository_Expecter) GetParticipantConversations(ctx interface{}, params interface{}) *MockConversationRepository_GetParticipantConversations_Call {
-	return &MockConversationRepository_GetParticipantConversations_Call{Call: _e.mock.On("GetParticipantConversations", ctx, params)}
+func (_e *MockConversationRepository_Expecter) GetList(ctx interface{}, params interface{}) *MockConversationRepository_GetList_Call {
+	return &MockConversationRepository_GetList_Call{Call: _e.mock.On("GetList", ctx, params)}
 }
 
-func (_c *MockConversationRepository_GetParticipantConversations_Call) Run(run func(ctx context.Context, params chat.GetConversationsParams)) *MockConversationRepository_GetParticipantConversations_Call {
+func (_c *MockConversationRepository_GetList_Call) Run(run func(ctx context.Context, params chat.GetConversationsParams)) *MockConversationRepository_GetList_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -426,12 +426,12 @@ func (_c *MockConversationRepository_GetParticipantConversations_Call) Run(run f
 	return _c
 }
 
-func (_c *MockConversationRepository_GetParticipantConversations_Call) Return(conversations []chat.Conversation, err error) *MockConversationRepository_GetParticipantConversations_Call {
+func (_c *MockConversationRepository_GetList_Call) Return(conversations []chat.Conversation, err error) *MockConversationRepository_GetList_Call {
 	_c.Call.Return(conversations, err)
 	return _c
 }
 
-func (_c *MockConversationRepository_GetParticipantConversations_Call) RunAndReturn(run func(ctx context.Context, params chat.GetConversationsParams) ([]chat.Conversation, error)) *MockConversationRepository_GetParticipantConversations_Call {
+func (_c *MockConversationRepository_GetList_Call) RunAndReturn(run func(ctx context.Context, params chat.GetConversationsParams) ([]chat.Conversation, error)) *MockConversationRepository_GetList_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -499,12 +499,12 @@ func (_c *MockConversationRepository_RemoveParticipant_Call) RunAndReturn(run fu
 	return _c
 }
 
-// TouchConversation provides a mock function for the type MockConversationRepository
-func (_mock *MockConversationRepository) TouchConversation(ctx context.Context, convID string, lastMsgID string) error {
+// Touch provides a mock function for the type MockConversationRepository
+func (_mock *MockConversationRepository) Touch(ctx context.Context, convID string, lastMsgID string) error {
 	ret := _mock.Called(ctx, convID, lastMsgID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for TouchConversation")
+		panic("no return value specified for Touch")
 	}
 
 	var r0 error
@@ -516,20 +516,20 @@ func (_mock *MockConversationRepository) TouchConversation(ctx context.Context, 
 	return r0
 }
 
-// MockConversationRepository_TouchConversation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TouchConversation'
-type MockConversationRepository_TouchConversation_Call struct {
+// MockConversationRepository_Touch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Touch'
+type MockConversationRepository_Touch_Call struct {
 	*mock.Call
 }
 
-// TouchConversation is a helper method to define mock.On call
+// Touch is a helper method to define mock.On call
 //   - ctx context.Context
 //   - convID string
 //   - lastMsgID string
-func (_e *MockConversationRepository_Expecter) TouchConversation(ctx interface{}, convID interface{}, lastMsgID interface{}) *MockConversationRepository_TouchConversation_Call {
-	return &MockConversationRepository_TouchConversation_Call{Call: _e.mock.On("TouchConversation", ctx, convID, lastMsgID)}
+func (_e *MockConversationRepository_Expecter) Touch(ctx interface{}, convID interface{}, lastMsgID interface{}) *MockConversationRepository_Touch_Call {
+	return &MockConversationRepository_Touch_Call{Call: _e.mock.On("Touch", ctx, convID, lastMsgID)}
 }
 
-func (_c *MockConversationRepository_TouchConversation_Call) Run(run func(ctx context.Context, convID string, lastMsgID string)) *MockConversationRepository_TouchConversation_Call {
+func (_c *MockConversationRepository_Touch_Call) Run(run func(ctx context.Context, convID string, lastMsgID string)) *MockConversationRepository_Touch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -552,12 +552,12 @@ func (_c *MockConversationRepository_TouchConversation_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockConversationRepository_TouchConversation_Call) Return(err error) *MockConversationRepository_TouchConversation_Call {
+func (_c *MockConversationRepository_Touch_Call) Return(err error) *MockConversationRepository_Touch_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockConversationRepository_TouchConversation_Call) RunAndReturn(run func(ctx context.Context, convID string, lastMsgID string) error) *MockConversationRepository_TouchConversation_Call {
+func (_c *MockConversationRepository_Touch_Call) RunAndReturn(run func(ctx context.Context, convID string, lastMsgID string) error) *MockConversationRepository_Touch_Call {
 	_c.Call.Return(run)
 	return _c
 }

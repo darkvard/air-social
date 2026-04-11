@@ -50,7 +50,7 @@ func NewWriteUseCase(d WriteDeps) *ConversationWriteUseCase {
 }
 
 func (u *ConversationWriteUseCase) CreateOrGetDirect(ctx context.Context, senderID, recipientID int64) (*chat.Conversation, error) {
-	existingConv, err := u.deps.ConvRepo.FindDirect(ctx, senderID, recipientID)
+	existingConv, err := u.deps.ConvRepo.GetDirect(ctx, senderID, recipientID)
 	if err != nil {
 		return nil, pkg.OrInternalError(err)
 	}
@@ -87,7 +87,7 @@ func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.
 	}
 
 	if params.ClientConvID != "" {
-		existing, err := u.deps.ConvRepo.FindByClientConvID(ctx, params.ClientConvID)
+		existing, err := u.deps.ConvRepo.GetByClientConvID(ctx, params.ClientConvID)
 		if err != nil {
 			return nil, pkg.OrInternalError(err)
 		}
@@ -170,7 +170,7 @@ func (u *ConversationWriteUseCase) persistGroup(
 	if err := u.deps.ConvRepo.Create(ctx, conv); err != nil {
 		if errors.Is(err, pkg.ErrConflict) && params.ClientConvID != "" {
 			// Race condition: a concurrent request created the same ClientConvID first.
-			existing, findErr := u.deps.ConvRepo.FindByClientConvID(ctx, params.ClientConvID)
+			existing, findErr := u.deps.ConvRepo.GetByClientConvID(ctx, params.ClientConvID)
 			if findErr != nil {
 				return nil, pkg.OrInternalError(findErr)
 			}

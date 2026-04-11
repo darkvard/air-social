@@ -4,10 +4,28 @@ import (
 	"time"
 
 	chatdomain "air-social/internal/domain/chat"
+	"air-social/internal/domain/common"
 )
 
 type GetConversationReq struct {
 	ID string `uri:"id" binding:"required"`
+}
+
+type GetConversationsReq struct {
+	State  string `form:"state,default=active" binding:"omitempty,oneof=active pending ignored muted"`
+	Cursor string `form:"cursor" binding:"omitempty"`
+	Limit  int    `form:"limit,default=10" binding:"omitempty,min=1,max=50"`
+}
+
+func (q GetConversationsReq) ToDomain(userID int64) chatdomain.GetConversationsParams {
+	return chatdomain.GetConversationsParams{
+		UserID: userID,
+		State:  chatdomain.ParticipantState(q.State),
+		Query: common.CursorQueryParams[string]{
+			Cursor: q.Cursor,
+			Limit:  q.Limit,
+		},
+	}
 }
 
 type CreateDirectReq struct {
@@ -21,7 +39,13 @@ type CreateGroupReq struct {
 	ClientConvID   string  `json:"client_conv_id,omitempty"`
 }
 
-type ParticipantResponse struct {
+type ConversationsRes struct {
+	Data        []ConversationRes `json:"data"`
+	NextCursor  string            `json:"next_cursor,omitempty"`
+	HasNextPage bool              `json:"has_next_page"`
+}
+
+type ParticipantRes struct {
 	UserID     int64     `json:"user_id"`
 	Role       string    `json:"role"`
 	State      string    `json:"state"`
@@ -29,22 +53,22 @@ type ParticipantResponse struct {
 	LastReadID string    `json:"last_read_id,omitempty"`
 }
 
-type ConversationResponse struct {
-	ID           string                `json:"id"`
-	Type         string                `json:"type"`
-	Name         string                `json:"name,omitempty"`
-	AvatarKey    string                `json:"avatar_key,omitempty"`
-	CreatedBy    int64                 `json:"created_by"`
-	Participants []ParticipantResponse `json:"participants"`
-	UnreadCount  int                   `json:"unread_count,omitempty"`
-	CreatedAt    time.Time             `json:"created_at"`
-	UpdatedAt    time.Time             `json:"updated_at"`
+type ConversationRes struct {
+	ID           string           `json:"id"`
+	Type         string           `json:"type"`
+	Name         string           `json:"name,omitempty"`
+	AvatarKey    string           `json:"avatar_key,omitempty"`
+	CreatedBy    int64            `json:"created_by"`
+	Participants []ParticipantRes `json:"participants"`
+	UnreadCount  int              `json:"unread_count,omitempty"`
+	CreatedAt    time.Time        `json:"created_at"`
+	UpdatedAt    time.Time        `json:"updated_at"`
 }
 
-func toConversationResponse(conv *chatdomain.Conversation) ConversationResponse {
-	participants := make([]ParticipantResponse, len(conv.Participants))
+func toConversationResponse(conv *chatdomain.Conversation) ConversationRes {
+	participants := make([]ParticipantRes, len(conv.Participants))
 	for i, p := range conv.Participants {
-		participants[i] = ParticipantResponse{
+		participants[i] = ParticipantRes{
 			UserID:     p.UserID,
 			Role:       string(p.Role),
 			State:      string(p.State),
@@ -53,7 +77,7 @@ func toConversationResponse(conv *chatdomain.Conversation) ConversationResponse 
 		}
 	}
 
-	return ConversationResponse{
+	return ConversationRes{
 		ID:           conv.ID,
 		Type:         string(conv.Type),
 		Name:         conv.Name,

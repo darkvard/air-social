@@ -50,7 +50,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 			name: "find_direct_error",
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
-					FindDirect(mock.Anything, senderID, recipientID).
+					GetDirect(mock.Anything, senderID, recipientID).
 					Return(nil, assert.AnError).Once()
 			},
 			wantErr: pkg.ErrInternal,
@@ -59,7 +59,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 			name: "existing_conv_returned",
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
-					FindDirect(mock.Anything, senderID, recipientID).
+					GetDirect(mock.Anything, senderID, recipientID).
 					Return(existingConv, nil).Once()
 			},
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
@@ -70,7 +70,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 			name: "follow_checker_error",
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
-					FindDirect(mock.Anything, senderID, recipientID).
+					GetDirect(mock.Anything, senderID, recipientID).
 					Return(nil, nil).Once()
 				deps.followChecker.EXPECT().
 					GetRelationship(mock.Anything, senderID, recipientID).
@@ -82,7 +82,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 			name: "creates_with_pending_state",
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
-					FindDirect(mock.Anything, senderID, recipientID).
+					GetDirect(mock.Anything, senderID, recipientID).
 					Return(nil, nil).Once()
 				deps.followChecker.EXPECT().
 					GetRelationship(mock.Anything, senderID, recipientID).
@@ -106,7 +106,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 			name: "creates_with_active_state",
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
-					FindDirect(mock.Anything, senderID, recipientID).
+					GetDirect(mock.Anything, senderID, recipientID).
 					Return(nil, nil).Once()
 				deps.followChecker.EXPECT().
 					GetRelationship(mock.Anything, senderID, recipientID).
@@ -126,7 +126,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 			name: "create_repo_error",
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
-					FindDirect(mock.Anything, senderID, recipientID).
+					GetDirect(mock.Anything, senderID, recipientID).
 					Return(nil, nil).Once()
 				deps.followChecker.EXPECT().
 					GetRelationship(mock.Anything, senderID, recipientID).
@@ -281,7 +281,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 			setupMock: func(deps testDeps) {
 				existing := &chat.Conversation{ID: "01EXISTING", Type: chat.ConversationGroup}
 				deps.convRepo.EXPECT().
-					FindByClientConvID(mock.Anything, "client-uuid-123").
+					GetByClientConvID(mock.Anything, "client-uuid-123").
 					Return(existing, nil).Once()
 			},
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
@@ -498,7 +498,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 			setupMock: func(deps testDeps) {
 				existing := &chat.Conversation{ID: "01RACE", Type: chat.ConversationGroup}
 				deps.convRepo.EXPECT().
-					FindByClientConvID(mock.Anything, "client-uuid-456").
+					GetByClientConvID(mock.Anything, "client-uuid-456").
 					Return(nil, nil).Once()
 				deps.userChecker.EXPECT().
 					FilterNonExistent(mock.Anything, []int64{member1, member2}).
@@ -508,7 +508,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(pkg.ErrConflict).Once()
 				deps.convRepo.EXPECT().
-					FindByClientConvID(mock.Anything, "client-uuid-456").
+					GetByClientConvID(mock.Anything, "client-uuid-456").
 					Return(existing, nil).Once()
 			},
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {

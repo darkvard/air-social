@@ -4,20 +4,19 @@ import "context"
 
 type ConversationRepository interface {
 	Create(ctx context.Context, conv *Conversation) error
-	AddParticipant(ctx context.Context, convID string, p Participant) error
-
+	GetList(ctx context.Context, params GetConversationsParams) ([]Conversation, error)
+	GetDirect(ctx context.Context, userAID, userBID int64) (*Conversation, error)
 	GetByID(ctx context.Context, id string) (*Conversation, error)
-	GetParticipantConversations(ctx context.Context, params GetConversationsParams) ([]Conversation, error)
-	FindDirect(ctx context.Context, userAID, userBID int64) (*Conversation, error)
-	FindByClientConvID(ctx context.Context, clientConvID string) (*Conversation, error)
 
-	TouchConversation(ctx context.Context, convID, lastMsgID string) error
+	GetByClientConvID(ctx context.Context, clientConvID string) (*Conversation, error)
+	Touch(ctx context.Context, convID, lastMsgID string) error
+	UpdateLastRead(ctx context.Context, convID string, userID int64, messageID string) error
+
+	UpdateGroupInfo(ctx context.Context, convID string, name, avatarKey *string) error
+	AddParticipant(ctx context.Context, convID string, p Participant) error
 	RemoveParticipant(ctx context.Context, convID string, userID int64) error
-
 	UpdateParticipantState(ctx context.Context, convID string, userID int64, state ParticipantState) error
 	UpdateParticipantRole(ctx context.Context, convID string, userID int64, role ParticipantRole) error
-	UpdateGroupInfo(ctx context.Context, convID string, name, avatarKey *string) error
-	UpdateLastRead(ctx context.Context, convID string, userID int64, messageID string) error
 }
 
 type MessageRepository interface {
@@ -44,5 +43,5 @@ type UnreadStore interface {
 	Increment(ctx context.Context, userID int64, convID string) error
 	Reset(ctx context.Context, userID int64, convID string) error
 	Get(ctx context.Context, userID int64, convID string) (int64, error)
-	GetAll(ctx context.Context, userID int64) (map[string]int64, error)
+	GetAll(ctx context.Context, userID int64) (map[string]int64, error) // todo HGETALL = O(1)
 }

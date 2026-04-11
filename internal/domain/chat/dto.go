@@ -1,11 +1,19 @@
 package chat
 
-import "air-social/internal/domain/common"
+import (
+	"time"
+
+	"air-social/internal/domain/common"
+)
 
 type GetConversationsParams struct {
 	UserID int64
 	State  ParticipantState
 	Query  common.CursorQueryParams[string]
+}
+
+func (p GetConversationsParams) GetTimeFromCursor() (time.Time, error) {
+	return time.Parse(TimeFormat, p.Query.Cursor)
 }
 
 type CreateGroupParams struct {

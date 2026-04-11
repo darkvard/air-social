@@ -205,7 +205,7 @@ definitions:
       verified:
         type: boolean
     type: object
-  internal_transport_http_chat.ConversationResponse:
+  internal_transport_http_chat.ConversationRes:
     properties:
       avatar_key:
         type: string
@@ -219,13 +219,24 @@ definitions:
         type: string
       participants:
         items:
-          $ref: '#/definitions/internal_transport_http_chat.ParticipantResponse'
+          $ref: '#/definitions/internal_transport_http_chat.ParticipantRes'
         type: array
       type:
         type: string
       unread_count:
         type: integer
       updated_at:
+        type: string
+    type: object
+  internal_transport_http_chat.ConversationsRes:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
+        type: array
+      has_next_page:
+        type: boolean
+      next_cursor:
         type: string
     type: object
   internal_transport_http_chat.CreateDirectReq:
@@ -253,7 +264,7 @@ definitions:
     - name
     - participant_ids
     type: object
-  internal_transport_http_chat.ParticipantResponse:
+  internal_transport_http_chat.ParticipantRes:
     properties:
       joined_at:
         type: string
@@ -1316,6 +1327,49 @@ paths:
       summary: Get replies for a comment
       tags:
       - Comment
+  /conversations:
+    get:
+      description: |-
+        Returns cursor-paginated conversation inbox for the authenticated user.
+        Default state is "active". Use ?state=pending to fetch message requests.
+        Cursor is the next_cursor value from the previous response — pass it back as-is.
+      parameters:
+      - description: 'Participant state: active (default) | pending | ignored | muted'
+        in: query
+        name: state
+        type: string
+      - description: Pagination cursor from previous response
+        in: query
+        name: cursor
+        type: string
+      - description: 'Page size (default: 10, max: 50)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.ConversationsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: List conversations
+      tags:
+      - Chat
   /conversations/{id}:
     get:
       description: |-
@@ -1333,7 +1387,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_transport_http_chat.ConversationResponse'
+            $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
         "400":
           description: Bad Request
           schema:
@@ -1380,7 +1434,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_transport_http_chat.ConversationResponse'
+            $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
         "400":
           description: Bad Request
           schema:
@@ -1417,7 +1471,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_transport_http_chat.ConversationResponse'
+            $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
         "400":
           description: Bad Request
           schema:

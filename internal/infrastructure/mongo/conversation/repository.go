@@ -6,6 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"air-social/internal/domain/chat"
 	"air-social/pkg"
@@ -31,7 +32,7 @@ func (r *repository) Create(ctx context.Context, conv *chat.Conversation) error 
 	return nil
 }
 
-func (r *repository) FindDirect(ctx context.Context, userAID int64, userBID int64) (*chat.Conversation, error) {
+func (r *repository) GetDirect(ctx context.Context, userAID int64, userBID int64) (*chat.Conversation, error) {
 	filter := bson.M{
 		fieldType: string(chat.ConversationDirect),
 		fieldParticipantUserID_Find: bson.M{
@@ -52,7 +53,7 @@ func (r *repository) FindDirect(ctx context.Context, userAID int64, userBID int6
 	return doc.toDomain(), nil
 }
 
-func (r *repository) FindByClientConvID(ctx context.Context, clientConvID string) (*chat.Conversation, error) {
+func (r *repository) GetByClientConvID(ctx context.Context, clientConvID string) (*chat.Conversation, error) {
 	return r.getByID(ctx, bson.M{fieldClientConvID: clientConvID})
 
 }
@@ -61,8 +62,46 @@ func (r *repository) GetByID(ctx context.Context, id string) (*chat.Conversation
 	return r.getByID(ctx, bson.M{fieldID: id})
 }
 
-func (r *repository) GetParticipantConversations(ctx context.Context, params chat.GetConversationsParams) ([]chat.Conversation, error) {
-	return nil, nil
+func (r *repository) GetList(ctx context.Context, params chat.GetConversationsParams) ([]chat.Conversation, error) {
+	filter := bson.M{
+		fieldParticipants: bson.M{
+			"$elemMatch": bson.M{
+				fieldUserID: params.UserID,
+				fieldState:  string(params.State),
+			},
+		},
+	}
+
+	if params.Query.Cursor != "" {
+		cursorTime, err := params.GetTimeFromCursor()
+		if err != nil {
+			return nil, pkg.ErrBadRequest
+		}
+		filter[fieldUpdatedAt] = bson.M{"$lt": cursorTime}
+	}
+
+	opts := options.Find().
+		SetSort(bson.D{
+			{Key: fieldUpdatedAt, Value: -1}, // newest
+			{Key: fieldID, Value: -1},
+		}).
+		SetLimit(int64(params.Query.GetFetchLimit()))
+
+	cursor, err := r.coll.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, pkg.MapMongoError(err)
+	}
+	defer cursor.Close(ctx)
+
+	var docs []conversationDoc
+	if err := cursor.All(ctx, &docs); err != nil {
+		return nil, pkg.MapMongoError(err)
+	}
+	var res []chat.Conversation
+	for _, doc := range docs {
+		res = append(res, *doc.toDomain())
+	}
+	return res, nil
 }
 
 func (r *repository) AddParticipant(ctx context.Context, convID string, p chat.Participant) error {
@@ -93,7 +132,7 @@ func (r *repository) UpdateLastRead(ctx context.Context, convID string, userID i
 
 }
 
-func (r *repository) TouchConversation(ctx context.Context, convID string, lastMsgID string) error {
+func (r *repository) Touch(ctx context.Context, convID string, lastMsgID string) error {
 	return nil
 
 }

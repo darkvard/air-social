@@ -8,7 +8,6 @@ import (
 
 type ConversationQuerier interface {
 	GetConversations(ctx context.Context, params GetConversationsParams) (common.CursorPaginatedResult[Conversation, string], error)
-	GetPendingConversations(ctx context.Context, userID int64, q common.CursorQueryParams[string]) (common.CursorPaginatedResult[Conversation, string], error)
 	GetConversation(ctx context.Context, convID string, userID int64) (*Conversation, error)
 }
 

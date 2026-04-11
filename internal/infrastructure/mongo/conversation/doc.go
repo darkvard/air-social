@@ -20,6 +20,14 @@ const (
 )
 
 const (
+	fieldUserID   = "user_id"
+	fieldRole     = "role"
+	fieldState    = "state"
+	fieldJoinedAt = "joined_at"
+	fieldLastRead = "last_read"
+)
+
+const (
 	fieldParticipantUserID_Find = "participants.user_id"
 	fieldParticipantRole_Find   = "participants.role"
 	fieldParticipantState_Find  = "participants.state"
@@ -60,7 +68,7 @@ func participantFromDomain(p chat.Participant) participantDoc {
 }
 
 type conversationDoc struct {
-	ID           string           `bson:"_id"` // ULID
+	ID           string           `bson:"_id"`
 	Type         string           `bson:"type"`
 	Participants []participantDoc `bson:"participants"`
 	Name         string           `bson:"name,omitempty"`

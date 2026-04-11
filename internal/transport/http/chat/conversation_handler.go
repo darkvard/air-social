@@ -27,7 +27,7 @@ func NewConversationHandler(uc chatdomain.ConversationUseCase) ConversationHandl
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			body	body		CreateDirectReq	true	"Target user"
-//	@Success		200		{object}	ConversationResponse
+//	@Success		200		{object}	ConversationRes
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -68,7 +68,7 @@ func (h ConversationHandler) CreateDirect(c *gin.Context) {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			body	body		CreateGroupReq	true	"Group details"
-//	@Success		200		{object}	ConversationResponse
+//	@Success		200		{object}	ConversationRes
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -110,7 +110,7 @@ func (h ConversationHandler) CreateGroup(c *gin.Context) {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			id	path		string	true	"Conversation ID (ULID)"
-//	@Success		200	{object}	ConversationResponse
+//	@Success		200	{object}	ConversationRes
 //	@Failure		400	{object}	pkg.Response
 //	@Failure		401	{object}	pkg.Response
 //	@Failure		403	{object}	pkg.Response
@@ -139,6 +139,49 @@ func (h ConversationHandler) GetConversation(c *gin.Context) {
 	pkg.Success(c, toConversationResponse(res))
 }
 
+// GetConversations godoc
+//
+//	@Summary		List conversations
+//	@Description	Returns cursor-paginated conversation inbox for the authenticated user.
+//	@Description	Default state is "active". Use ?state=pending to fetch message requests.
+//	@Description	Cursor is the next_cursor value from the previous response — pass it back as-is.
+//	@Tags			Chat
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			state	query		string	false	"Participant state: active (default) | pending | ignored | muted"
+//	@Param			cursor	query		string	false	"Pagination cursor from previous response"
+//	@Param			limit	query		int		false	"Page size (default: 10, max: 50)"
+//	@Success		200		{object}	ConversationsRes
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/conversations [get]
 func (h ConversationHandler) GetConversations(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
 
+	var req GetConversationsReq
+	if err := c.ShouldBindQuery(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	result, err := h.uc.Query.GetConversations(c.Request.Context(), req.ToDomain(claims.UserID))
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	data := make([]ConversationRes, len(result.Data))
+	for i := range result.Data {
+		data[i] = toConversationResponse(&result.Data[i])
+	}
+	pkg.Success(c, ConversationsRes{
+		Data:        data,
+		NextCursor:  result.NextCursor,
+		HasNextPage: result.HasNextPage,
+	})
 }

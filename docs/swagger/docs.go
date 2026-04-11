@@ -788,6 +788,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/conversations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns cursor-paginated conversation inbox for the authenticated user.\nDefault state is \"active\". Use ?state=pending to fetch message requests.\nCursor is the next_cursor value from the previous response — pass it back as-is.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "List conversations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Participant state: active (default) | pending | ignored | muted",
+                        "name": "state",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pagination cursor from previous response",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (default: 10, max: 50)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_chat.ConversationsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/conversations/direct": {
             "post": {
                 "security": [
@@ -821,7 +884,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_transport_http_chat.ConversationResponse"
+                            "$ref": "#/definitions/internal_transport_http_chat.ConversationRes"
                         }
                     },
                     "400": {
@@ -878,7 +941,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_transport_http_chat.ConversationResponse"
+                            "$ref": "#/definitions/internal_transport_http_chat.ConversationRes"
                         }
                     },
                     "400": {
@@ -930,7 +993,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_transport_http_chat.ConversationResponse"
+                            "$ref": "#/definitions/internal_transport_http_chat.ConversationRes"
                         }
                     },
                     "400": {
@@ -2739,7 +2802,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_transport_http_chat.ConversationResponse": {
+        "internal_transport_http_chat.ConversationRes": {
             "type": "object",
             "properties": {
                 "avatar_key": {
@@ -2760,7 +2823,7 @@ const docTemplate = `{
                 "participants": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/internal_transport_http_chat.ParticipantResponse"
+                        "$ref": "#/definitions/internal_transport_http_chat.ParticipantRes"
                     }
                 },
                 "type": {
@@ -2770,6 +2833,23 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_chat.ConversationsRes": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_transport_http_chat.ConversationRes"
+                    }
+                },
+                "has_next_page": {
+                    "type": "boolean"
+                },
+                "next_cursor": {
                     "type": "string"
                 }
             }
@@ -2811,7 +2891,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_transport_http_chat.ParticipantResponse": {
+        "internal_transport_http_chat.ParticipantRes": {
             "type": "object",
             "properties": {
                 "joined_at": {

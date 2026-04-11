@@ -52,10 +52,30 @@ func (u *ConversationQueryUseCase) GetConversation(ctx context.Context, convID s
 
 func (u *ConversationQueryUseCase) GetConversations(ctx context.Context, params chat.GetConversationsParams) (common.CursorPaginatedResult[chat.Conversation, string], error) {
 	var empty common.CursorPaginatedResult[chat.Conversation, string]
-	return empty, nil
-}
 
-func (u *ConversationQueryUseCase) GetPendingConversations(ctx context.Context, userID int64, q common.CursorQueryParams[string]) (common.CursorPaginatedResult[chat.Conversation, string], error) {
-	var empty common.CursorPaginatedResult[chat.Conversation, string]
-	return empty, nil
+	if params.State == "" {
+		params.State = chat.StateActive
+	}
+	params.Query.NormalizePagination()
+
+	convs, err := u.deps.ConvRepo.GetList(ctx, params)
+	if err != nil {
+		return empty, pkg.OrInternalError(err)
+	}
+
+	// unread count — Unread may be nil until UnreadStore is implemented
+	var unreadMap map[string]int64
+	if u.deps.Unread != nil {
+		unreadMap, err = u.deps.Unread.GetAll(ctx, params.UserID)
+		if err != nil {
+			return empty, pkg.OrInternalError(err)
+		}
+	}
+	for i := range convs {
+		if u.deps.Unread != nil {
+			convs[i].UnreadCount = int(unreadMap[convs[i].ID])
+		}
+	}
+
+	return common.NewCursorPaginatedResult(convs, params.Query.Limit), nil
 }
