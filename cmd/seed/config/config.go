@@ -25,6 +25,11 @@ type SeedConfig struct {
 		PerPost    int `yaml:"per_post"`
 		PerComment int `yaml:"per_comment"`
 	}
+	Conversations struct {
+		DirectActive  int `yaml:"direct_active"`
+		DirectPending int `yaml:"direct_pending"`
+		Groups        int `yaml:"groups"`
+	}
 }
 
 func Load() SeedConfig {

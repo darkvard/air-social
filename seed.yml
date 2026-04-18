@@ -15,3 +15,8 @@ comments:
 likes:
   per_post: 15
   per_comment: 5
+
+conversations:
+  direct_active: 10    
+  direct_pending: 3    
+  groups: 2            
