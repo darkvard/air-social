@@ -14,25 +14,22 @@ A production-grade social media backend built with Go — featuring a RESTful AP
 ## Architecture
 
 ```mermaid
+%%{init: {'flowchart': {'nodeSpacing': 40, 'rankSpacing': 60}}}%%
 flowchart TD
-    Client(["Client (Browser / App)\nREST API  ·  WebSocket"])
+    Client(["Client — Browser / App\nREST API · WebSocket"])
 
     Nginx["Nginx — Gateway\nReverse proxy · Port 80"]
 
-    API["Go API Server\nHTTP Handlers · WebSocket Hub · Background Workers\nClean Architecture + Domain-Driven Design"]
+    API["Go API Server\nHTTP Handlers · WebSocket Hub · Workers\nClean Architecture + Domain-Driven Design"]
 
-    PG[("PostgreSQL 15\nUsers · Posts · Comments\nLikes · Follows · Stats")]
+    PG[("PostgreSQL 15\nUsers · Auth · Posts\nComments · Likes\nFollows · Stats · Search")]
     Mongo[("MongoDB 8\nConversations\nMessages")]
-    Redis[("Redis 8\nNewsfeed · Stats cache\nSessions · Presence")]
-    MQ[["RabbitMQ 4\nFeed fanout · Stats sync\nEmail · Notifications"]]
+    Redis[("Redis 8\nNewsfeed · Stats cache\nRate limiting · Locks")]
+    MQ[("RabbitMQ 4\nFeed fanout · Stats sync\nEmail · Notifications")]
     MinIO[("MinIO\nMedia storage\nS3-compatible")]
 
     Client --> Nginx --> API
-    API --> PG
-    API --> Mongo
-    API --> Redis
-    API --> MQ
-    API --> MinIO
+    API --> PG & Mongo & Redis & MQ & MinIO
 
     style Client fill:#4A90D9,stroke:#2C5F8A,color:#fff
     style Nginx fill:#2ECC71,stroke:#1A7A43,color:#fff
@@ -248,7 +245,8 @@ Client B ──WS──► Hub (instance 2) ◄──subscribe──────
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/conversations` | Create direct or group conversation |
+| `POST` | `/conversations/direct` | Create or get direct (1-on-1) conversation |
+| `POST` | `/conversations/group` | Create group conversation |
 | `GET` | `/conversations` | List active conversations (cursor) |
 | `GET` | `/conversations/pending` | Message requests (cursor) |
 | `GET` | `/conversations/:id` | Get conversation |
