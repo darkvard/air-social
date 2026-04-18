@@ -11,7 +11,7 @@ import (
 )
 
 func Connect() *sqlx.DB {
-	// Use Overload to prioritize .env.local over environment variables set by Make or Shell
+	_ = godotenv.Load(".env")
 	_ = godotenv.Overload(".env.local")
 
 	dsn := os.Getenv("DB_DSN")

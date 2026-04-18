@@ -22,11 +22,11 @@ mocks: ## Generate mocks using mockery
 .PHONY: seed
 seed: ## Seed database
 	@echo "1️⃣  Starting database..."
-	docker compose up -d db
+	docker compose up -d postgresdb
 	@echo "⏳ Waiting 3s for database to be ready..."
 	@sleep 3
 	@echo "2️⃣  Seeding data..."
 	go run cmd/seed/main.go
 	@echo "3️⃣  Stopping database..."
-	docker compose stop db 
+	docker compose stop postgresdb
 	@echo "✅ Done"

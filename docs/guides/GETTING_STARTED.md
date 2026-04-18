@@ -101,6 +101,14 @@ Once images are built, use this command to start all containers (App, DB, Redis,
 make up
 ```
 
+### Run Migrations
+
+Create all database tables. Requires the full stack to be running (`make up`).
+
+```bash
+make migrate-up
+```
+
 ### Seed Database
 
 Populate the database with dummy data (Users, Follows, etc.) for testing. Note: This command will truncate (wipe) all existing data in the database before seeding.
