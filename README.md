@@ -13,31 +13,35 @@ A production-grade social media backend built with Go — featuring a RESTful AP
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Client (Browser / App)                        │
-│                   REST API              WebSocket                    │
-└──────────────┬──────────────────────────────┬───────────────────────┘
-               │                              │
-        ┌──────▼──────────────────────────────▼──────┐
-        │               Nginx (Gateway)               │
-        │          Reverse proxy · Port 80            │
-        └──────────────────┬──────────────────────────┘
-                           │
-        ┌──────────────────▼──────────────────────────┐
-        │               Go API Server                  │
-        │  HTTP Handlers · WebSocket Hub · Workers     │
-        │  Clean Architecture + Domain-Driven Design   │
-        └────┬──────┬──────┬──────┬──────┬────────────┘
-             │      │      │      │      │
-        ┌────▼─┐ ┌──▼──┐ ┌─▼──┐ ┌▼────┐ ┌▼─────┐
-        │ Post │ │Mongo│ │Redis│ │  MQ │ │MinIO │
-        │ gres │ │ DB  │ │     │ │     │ │      │
-        │      │ │     │ │     │ │     │ │      │
-        │Users │ │Chat │ │Feed │ │Jobs │ │Media │
-        │Posts │ │Msgs │ │Stats│ │     │ │      │
-        │Stats │ │     │ │Sess │ │     │ │      │
-        └──────┘ └─────┘ └─────┘ └─────┘ └──────┘
+```mermaid
+flowchart TD
+    Client(["Client (Browser / App)\nREST API  ·  WebSocket"])
+
+    Nginx["Nginx — Gateway\nReverse proxy · Port 80"]
+
+    API["Go API Server\nHTTP Handlers · WebSocket Hub · Background Workers\nClean Architecture + Domain-Driven Design"]
+
+    PG[("PostgreSQL 15\nUsers · Posts · Comments\nLikes · Follows · Stats")]
+    Mongo[("MongoDB 8\nConversations\nMessages")]
+    Redis[("Redis 8\nNewsfeed · Stats cache\nSessions · Presence")]
+    MQ[["RabbitMQ 4\nFeed fanout · Stats sync\nEmail · Notifications"]]
+    MinIO[("MinIO\nMedia storage\nS3-compatible")]
+
+    Client --> Nginx --> API
+    API --> PG
+    API --> Mongo
+    API --> Redis
+    API --> MQ
+    API --> MinIO
+
+    style Client fill:#4A90D9,stroke:#2C5F8A,color:#fff
+    style Nginx fill:#2ECC71,stroke:#1A7A43,color:#fff
+    style API fill:#9B59B6,stroke:#6C3483,color:#fff
+    style PG fill:#336791,stroke:#1E3F5A,color:#fff
+    style Mongo fill:#4DB33D,stroke:#2E7A26,color:#fff
+    style Redis fill:#DC382D,stroke:#8B1A12,color:#fff
+    style MQ fill:#FF6600,stroke:#CC5200,color:#fff
+    style MinIO fill:#C72E3E,stroke:#8B1A27,color:#fff
 ```
 
 ---
