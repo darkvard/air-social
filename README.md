@@ -283,10 +283,9 @@ Client B ──WS──► Hub (instance 2) ◄──subscribe──────
 ## Getting Started
 
 ```bash
-make rebuild      # Build Docker images
-make up           # Start full stack
-make migrate-up   # Create database tables
-make seed         # Seed with dummy data
+cp .env.example .env   # Configure environment
+make setup             # Install tools, build images, start stack, apply migrations
+make seed              # (optional) Populate with dummy data
 ```
 
 See [`docs/guides/GETTING_STARTED.md`](docs/guides/GETTING_STARTED.md) for the full setup guide including environment configuration.
@@ -320,9 +319,10 @@ make migrate-create name= # Create new migration file
 make reset-postgresdb     # Drop and recreate database
 
 # Development
-make seed         # Seed database with dummy data
-make docs         # Regenerate Swagger documentation
-make mocks        # Regenerate mocks with mockery
+make setup          # First-time setup (one command)
+make seed           # Re-seed database with dummy data
+make docs           # Regenerate Swagger documentation
+make mocks          # Regenerate mocks with mockery
 
 # Testing
 make test               # Run all tests

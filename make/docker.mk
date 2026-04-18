@@ -1,5 +1,15 @@
 ## ===================== DOCKER COMPOSE ======================
 
+.PHONY: setup
+setup: ## First-time setup: install tools, build images, start stack, and apply migrations
+	@$(MAKE) install-tools
+	@$(MAKE) rebuild
+	@docker compose up -d --wait
+	@$(MAKE) migrate-up
+	@echo "✅ Setup complete."
+	@echo "   make seed   — seed dummy data (run make up after to restart the stack)"
+	@echo "   make up     — start the full stack"
+
 .PHONY: up
 up: ## Start services in detached mode
 	@echo "🚀 Starting services"
@@ -19,7 +29,6 @@ restart: ## Restart app container
 rebuild: ## Rebuild all images and start services
 	@echo "♻️ Rebuilding all images"
 	@docker compose build --no-cache
-	$(MAKE) up
 
 .PHONY: logs
 logs: ## Follow app logs

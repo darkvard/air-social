@@ -1,6 +1,4 @@
 inpackage: false
-force-file-write: true
-formatter: goimports
 
 packages:
   air-social/internal:
@@ -10,4 +8,4 @@ packages:
       dir: "{{.InterfaceDir}}/mocks"
       filename: "{{.InterfaceName | snakecase}}_mock.go"
       structname: "Mock{{.InterfaceName}}"
-      pkgname: "mocks"
+      outpkg: "mocks"

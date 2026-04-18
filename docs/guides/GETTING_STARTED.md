@@ -81,50 +81,29 @@ MONGO_MIN_POOL=5
 MONGO_MAX_IDLE_TIME=10m
 ```
 
-## 2. Build & Run
+## 2. Setup
 
-Use Makefile commands to manage the application lifecycle.
-
-### First Run (Build Images)
-
-For the first setup, you need to build the Go application image from the Dockerfile.
+Install dev tools and build Docker images:
 
 ```bash
-make rebuild
+make setup
 ```
 
-### Start Application
-
-Once images are built, use this command to start all containers (App, DB, Redis, Queue, Storage).
+## 3. Run
 
 ```bash
-make up
+make setup   # Install tools, build images, start stack, apply migrations
+make seed    # (optional) Seed database with dummy data — run make up after to restart the full stack
 ```
 
-### Run Migrations
+Once the stack is up, the API is live at `http://localhost/air-social/api/v1/swagger/index.html`.
 
-Create all database tables. Requires the full stack to be running (`make up`).
-
-```bash
-make migrate-up
-```
-
-### Seed Database
-
-Populate the database with dummy data (Users, Follows, etc.) for testing. Note: This command will truncate (wipe) all existing data in the database before seeding.
-
-You can configure the data volume in seed.yml.
+### Other useful commands
 
 ```bash
-make seed
-```
-
-### Stop Application
-
-Stop and remove all containers and networks.
-
-```bash
-make down
+make down         # Stop all services
+make rebuild      # Rebuild images after code changes
+make seed         # Re-seed database (wipes existing data)
 ```
 
 ## 3. Verification

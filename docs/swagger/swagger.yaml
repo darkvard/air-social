@@ -205,6 +205,13 @@ definitions:
       verified:
         type: boolean
     type: object
+  internal_transport_http_chat.AddMemberReq:
+    properties:
+      user_id:
+        type: integer
+    required:
+    - user_id
+    type: object
   internal_transport_http_chat.ConversationRes:
     properties:
       avatar_key:
@@ -276,6 +283,27 @@ definitions:
         type: string
       user_id:
         type: integer
+    type: object
+  internal_transport_http_chat.UpdateGroupReq:
+    properties:
+      avatar_key:
+        type: string
+      name:
+        maxLength: 100
+        type: string
+    type: object
+  internal_transport_http_chat.UpdateMemberRoleReq:
+    properties:
+      role:
+        enum:
+        - admin
+        - member
+        type: string
+      user_id:
+        type: integer
+    required:
+    - role
+    - user_id
     type: object
   internal_transport_http_comment.CommentResponse:
     properties:
@@ -1411,6 +1439,204 @@ paths:
       security:
       - BearerAuth: []
       summary: Get conversation by ID
+      tags:
+      - Chat
+    patch:
+      consumes:
+      - application/json
+      description: Updates the name and/or avatar of a group conversation. Only admins
+        can update. Fields are optional — only provided fields are updated.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.UpdateGroupReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Update group conversation
+      tags:
+      - Chat
+  /conversations/{id}/members:
+    patch:
+      consumes:
+      - application/json
+      description: Updates the role of a group member. Only admins can change roles.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Target user and new role
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.UpdateMemberRoleReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Update member role
+      tags:
+      - Chat
+    post:
+      consumes:
+      - application/json
+      description: Adds a new member to a group conversation. Only admins can add
+        members.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.AddMemberReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Add member to group
+      tags:
+      - Chat
+  /conversations/{id}/members/{uid}:
+    delete:
+      description: Removes a member from a group conversation. Admins can remove anyone;
+        any member can remove themselves (leave).
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID to remove
+        in: path
+        name: uid
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Remove member from group / leave group
       tags:
       - Chat
   /conversations/direct:

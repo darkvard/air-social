@@ -1,5 +1,13 @@
 ## ===================== UTILS ======================
 
+.PHONY: install-tools
+install-tools: ## Install required dev tools (run once after cloning)
+	@echo "Installing dev tools..."
+	@go install github.com/swaggo/swag/cmd/swag@latest
+	@go install github.com/vektra/mockery/v2@latest
+	@go install github.com/air-verse/air@latest
+	@echo "✅ Done. Ensure $$(go env GOPATH)/bin is in your PATH."
+
 .PHONY: air-build
 air-build: ## Build app with Air (hot reload)
 	@go build -buildvcs=false -o ./tmp/main ./cmd/api
@@ -21,12 +29,10 @@ mocks: ## Generate mocks using mockery
 
 .PHONY: seed
 seed: ## Seed database
-	@echo "1️⃣  Starting database..."
-	docker compose up -d postgresdb mongodb
-	@echo "⏳ Waiting 3s for databases to be ready..."
-	@sleep 3
+	@echo "1️⃣  Starting databases..."
+	@docker compose up -d --wait postgresdb mongodb
 	@echo "2️⃣  Seeding data..."
-	go run cmd/seed/main.go
+	@go run cmd/seed/main.go
 	@echo "3️⃣  Stopping databases..."
-	docker compose stop postgresdb mongodb
-	@echo "✅ Done"
+	@docker compose stop postgresdb mongodb
+	@echo "✅ Done. Run 'make up' to restart the full stack."
