@@ -46,6 +46,14 @@ func member(userID int64) chat.Participant {
 	return chat.Participant{UserID: userID, Role: chat.RoleMember, State: chat.StateActive}
 }
 
+func pendingMember(userID int64) chat.Participant {
+	return chat.Participant{UserID: userID, Role: chat.RoleMember, State: chat.StatePending}
+}
+
+func ignoredMember(userID int64) chat.Participant {
+	return chat.Participant{UserID: userID, Role: chat.RoleMember, State: chat.StateIgnored}
+}
+
 type memberDeps struct {
 	repo          *chatmocks.MockConversationRepository
 	followChecker *ucmocks.MockFollowChecker
@@ -63,6 +71,166 @@ func newMemberUC(d memberDeps) *usecase.ConversationMemberUseCase {
 		ConvRepo:      d.repo,
 		FollowChecker: d.followChecker,
 	})
+}
+
+// ── AcceptConversation ────────────────────────────────────────────────────────
+
+func (s *conversationMemberSuite) TestAcceptConversation() {
+	var (
+		convID = "01CONV"
+		userID = int64(1)
+	)
+
+	tests := []struct {
+		name      string
+		setupMock func(d memberDeps)
+		wantErr   error
+	}{
+		{
+			name: "repo_get_error",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).Return(nil, assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "conv_not_found",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).Return(nil, nil).Once()
+			},
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name: "user_not_participant",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, member(99)), nil).Once()
+			},
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name: "already_active",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, member(userID)), nil).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name: "accept_from_pending",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, pendingMember(userID)), nil).Once()
+				d.repo.EXPECT().UpdateParticipantState(mock.Anything, convID, userID, chat.StateActive).Return(nil).Once()
+			},
+		},
+		{
+			name: "accept_from_ignored",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, ignoredMember(userID)), nil).Once()
+				d.repo.EXPECT().UpdateParticipantState(mock.Anything, convID, userID, chat.StateActive).Return(nil).Once()
+			},
+		},
+		{
+			name: "update_state_repo_error",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, pendingMember(userID)), nil).Once()
+				d.repo.EXPECT().UpdateParticipantState(mock.Anything, convID, userID, chat.StateActive).
+					Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			d := newDeps(s.T())
+			tc.setupMock(d)
+			err := newMemberUC(d).AcceptConversation(context.Background(), convID, userID)
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}
+
+// ── AcceptPendingByFollowEvent ────────────────────────────────────────────────
+
+func (s *conversationMemberSuite) TestAcceptPendingByFollowEvent() {
+	var (
+		followerID = int64(2) // B just followed A
+		followeeID = int64(1) // A
+		convID     = "01CONV"
+	)
+
+	tests := []struct {
+		name      string
+		setupMock func(d memberDeps)
+		wantErr   error
+	}{
+		{
+			name: "get_direct_error",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetDirect(mock.Anything, followerID, followeeID).Return(nil, assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name: "no_conv_silent_skip",
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetDirect(mock.Anything, followerID, followeeID).Return(nil, nil).Once()
+			},
+		},
+		{
+			name: "follower_not_participant_silent_skip",
+			setupMock: func(d memberDeps) {
+				conv := &chat.Conversation{ID: convID, Participants: []chat.Participant{member(followeeID)}}
+				d.repo.EXPECT().GetDirect(mock.Anything, followerID, followeeID).Return(conv, nil).Once()
+			},
+		},
+		{
+			name: "already_active_silent_skip",
+			setupMock: func(d memberDeps) {
+				conv := &chat.Conversation{ID: convID, Participants: []chat.Participant{member(followerID)}}
+				d.repo.EXPECT().GetDirect(mock.Anything, followerID, followeeID).Return(conv, nil).Once()
+			},
+		},
+		{
+			name: "pending_accepted",
+			setupMock: func(d memberDeps) {
+				conv := &chat.Conversation{ID: convID, Participants: []chat.Participant{pendingMember(followerID)}}
+				d.repo.EXPECT().GetDirect(mock.Anything, followerID, followeeID).Return(conv, nil).Once()
+				d.repo.EXPECT().UpdateParticipantState(mock.Anything, convID, followerID, chat.StateActive).Return(nil).Once()
+			},
+		},
+		{
+			name: "update_state_error",
+			setupMock: func(d memberDeps) {
+				conv := &chat.Conversation{ID: convID, Participants: []chat.Participant{pendingMember(followerID)}}
+				d.repo.EXPECT().GetDirect(mock.Anything, followerID, followeeID).Return(conv, nil).Once()
+				d.repo.EXPECT().UpdateParticipantState(mock.Anything, convID, followerID, chat.StateActive).
+					Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			d := newDeps(s.T())
+			tc.setupMock(d)
+			err := newMemberUC(d).AcceptPendingByFollowEvent(context.Background(), followerID, followeeID)
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
 }
 
 // ── AddMember ─────────────────────────────────────────────────────────────────

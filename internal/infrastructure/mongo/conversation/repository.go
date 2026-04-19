@@ -113,8 +113,18 @@ func (r *repository) RemoveParticipant(ctx context.Context, convID string, userI
 }
 
 func (r *repository) UpdateParticipantState(ctx context.Context, convID string, userID int64, state chat.ParticipantState) error {
+	filter := bson.M{
+		fieldID:                     convID,
+		fieldParticipantUserID_Find: userID,
+	}
+	update := bson.M{"$set": bson.M{
+		fieldUpdatedAt:               pkg.TimeNowUTC(),
+		fieldParticipantState_Update: string(state),
+	}}
+	if _, err := r.coll.UpdateOne(ctx, filter, update); err != nil {
+		return pkg.MapMongoError(err)
+	}
 	return nil
-
 }
 
 func (r *repository) UpdateParticipantRole(ctx context.Context, convID string, userID int64, role chat.ParticipantRole) error {

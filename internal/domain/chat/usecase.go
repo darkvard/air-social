@@ -19,9 +19,11 @@ type ConversationWriter interface {
 
 type ConversationMember interface {
 	AcceptConversation(ctx context.Context, convID string, userID int64) error
+	AcceptPendingByFollowEvent(ctx context.Context, followerID, followeeID int64) error
 	IgnoreConversation(ctx context.Context, convID string, userID int64) error
 	AddMember(ctx context.Context, convID string, actorID, newUserID int64) error
 	RemoveMember(ctx context.Context, convID string, actorID, targetID int64) error
+	UpdateMemberRole(ctx context.Context, convID string, actorID, targetID int64, role ParticipantRole) error
 }
 
 type Messenger interface {

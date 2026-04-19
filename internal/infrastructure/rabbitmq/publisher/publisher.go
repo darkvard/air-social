@@ -26,6 +26,7 @@ var eventRoutingMap = map[common.EventType]string{
 	common.EventCommentDeleted:     config.SocialCommentDeletedQueueConfig.RoutingKey,
 	common.EventPostCreated:        config.SocialPostCreatedQueueConfig.RoutingKey,
 	common.EventPostDeleted:        config.SocialPostDeletedQueueConfig.RoutingKey,
+	common.EventFollowCreated:      config.ChatFollowCreatedQueueConfig.RoutingKey,
 }
 
 // pubChannel wraps an AMQP channel together with its confirm

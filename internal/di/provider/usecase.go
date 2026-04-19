@@ -158,6 +158,7 @@ func getFollowUseCase(deps UseCaseDeps, fetcher follow.UserFetcher, cacheInvalid
 			FollowRepo:       deps.Repo.Follow,
 			UserFetcher:      fetcher,
 			CacheInvalidator: cacheInvalidator,
+			Event:            deps.Adapter.EventPub,
 		},
 	)
 }

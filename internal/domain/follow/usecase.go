@@ -31,6 +31,7 @@ type Deps struct {
 	FollowRepo       Repository
 	UserFetcher      UserFetcher
 	CacheInvalidator CacheInvalidator
+	Event            common.EventPublisher
 }
 
 type usecase struct {
@@ -50,6 +51,12 @@ func (u *usecase) Follow(ctx context.Context, followerID int64, followeeID int64
 	}
 	if u.deps.CacheInvalidator != nil {
 		_ = u.deps.CacheInvalidator.Invalidate(ctx, GetFollowCacheKey(followeeID))
+	}
+	if u.deps.Event != nil {
+		_ = u.deps.Event.Publish(ctx, common.NewEvent(common.EventFollowCreated, common.FollowCreatedPayload{
+			FollowerID: followerID,
+			FolloweeID: followeeID,
+		}))
 	}
 	return nil
 }

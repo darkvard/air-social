@@ -142,21 +142,33 @@ func (_c *MockConversationWriter_CreateOrGetDirect_Call) RunAndReturn(run func(c
 }
 
 // UpdateGroup provides a mock function with given fields: ctx, params
-func (_m *MockConversationWriter) UpdateGroup(ctx context.Context, params chat.UpdateGroupParams) error {
+func (_m *MockConversationWriter) UpdateGroup(ctx context.Context, params chat.UpdateGroupParams) (*chat.Conversation, error) {
 	ret := _m.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateGroup")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, chat.UpdateGroupParams) error); ok {
+	var r0 *chat.Conversation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, chat.UpdateGroupParams) (*chat.Conversation, error)); ok {
+		return rf(ctx, params)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, chat.UpdateGroupParams) *chat.Conversation); ok {
 		r0 = rf(ctx, params)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*chat.Conversation)
+		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, chat.UpdateGroupParams) error); ok {
+		r1 = rf(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockConversationWriter_UpdateGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateGroup'
@@ -178,12 +190,12 @@ func (_c *MockConversationWriter_UpdateGroup_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockConversationWriter_UpdateGroup_Call) Return(_a0 error) *MockConversationWriter_UpdateGroup_Call {
-	_c.Call.Return(_a0)
+func (_c *MockConversationWriter_UpdateGroup_Call) Return(_a0 *chat.Conversation, _a1 error) *MockConversationWriter_UpdateGroup_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockConversationWriter_UpdateGroup_Call) RunAndReturn(run func(context.Context, chat.UpdateGroupParams) error) *MockConversationWriter_UpdateGroup_Call {
+func (_c *MockConversationWriter_UpdateGroup_Call) RunAndReturn(run func(context.Context, chat.UpdateGroupParams) (*chat.Conversation, error)) *MockConversationWriter_UpdateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -14,7 +14,8 @@ func RegisterRoute(g *gin.RouterGroup, convH ConversationHandler, msgH MessageHa
 		conv.PATCH("/:id", convH.UpdateGroup)
 	}
 	{
-		conv.GET("/:id", convH.GetConversation)
 		conv.GET("", convH.GetConversations)
+		conv.GET("/:id", convH.GetConversation)
+		conv.POST("/:id/accept", convH.AcceptConversation)
 	}
 }

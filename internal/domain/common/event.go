@@ -24,6 +24,8 @@ const (
 	EventCommentLike    EventType = "social.comment.like"
 	EventCommentCreated EventType = "social.comment.created"
 	EventCommentDeleted EventType = "social.comment.deleted"
+
+	EventFollowCreated EventType = "social.follow.created"
 )
 
 type EventType string
@@ -106,4 +108,9 @@ type PostFeedEventPayload struct {
 	PostID    int64 `json:"post_id"`
 	AuthorID  int64 `json:"author_id"`
 	Timestamp int64 `json:"timestamp"` // UnixMilli, used as score in Redis sorted set
+}
+
+type FollowCreatedPayload struct {
+	FollowerID int64 `json:"follower_id"`
+	FolloweeID int64 `json:"followee_id"`
 }

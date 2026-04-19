@@ -147,6 +147,43 @@ func (h ConversationHandler) UpdateGroup(c *gin.Context) {
 	pkg.Success(c, toConversationResponse(conv))
 }
 
+// AcceptConversation godoc
+//
+//	@Summary		Accept a conversation
+//	@Description	Moves the caller's participant state from pending or ignored to active.
+//	@Description	Used when a user manually accepts a message request.
+//	@Tags			Chat
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Conversation ID (ULID)"
+//	@Success		200	{object}	pkg.Response
+//	@Failure		400	{object}	pkg.Response
+//	@Failure		401	{object}	pkg.Response
+//	@Failure		403	{object}	pkg.Response
+//	@Failure		404	{object}	pkg.Response
+//	@Failure		500	{object}	pkg.Response
+//	@Router			/conversations/{id}/accept [post]
+func (h ConversationHandler) AcceptConversation(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
+	var req PathIDParam
+	if err := c.ShouldBindUri(&req); err != nil {
+		pkg.BadRequest(c, "invalid conversation id")
+		return
+	}
+
+	if err := h.uc.Member.AcceptConversation(c.Request.Context(), req.ID, claims.UserID); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, nil)
+}
+
 // GetConversation godoc
 //
 //	@Summary		Get conversation by ID

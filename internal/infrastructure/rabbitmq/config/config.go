@@ -59,6 +59,13 @@ const (
 )
 
 const (
+	followCreatedRouting          = "social.follow.created"
+	followCreatedQueue            = "chat_follow_created_queue"
+	followCreatedQueueDead        = followCreatedQueue + deadExt
+	followCreatedQueueDeadRouting = followCreatedRouting + deadExt
+)
+
+const (
 	postDeletedRouting          = "social.post.deleted"
 	postDeletedQueue            = "social_post_deleted_queue"
 	postDeletedQueueDead        = postDeletedQueue + deadExt
@@ -145,6 +152,14 @@ var SocialPostCreatedQueueConfig = QueueConfig{
 	DeadLetterExchange:   TopicEventsExchange.Name,
 	DeadLetterQueue:      postCreatedQueueDead,
 	DeadLetterRoutingKey: postCreatedQueueDeadRouting,
+}
+
+var ChatFollowCreatedQueueConfig = QueueConfig{
+	Queue:                followCreatedQueue,
+	RoutingKey:           followCreatedRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      followCreatedQueueDead,
+	DeadLetterRoutingKey: followCreatedQueueDeadRouting,
 }
 
 var SocialPostDeletedQueueConfig = QueueConfig{
