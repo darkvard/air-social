@@ -10,8 +10,8 @@ import (
 // NewsfeedResponse is the paginated response envelope for GET /feed.
 // Defined as a concrete struct (not a generic alias) so swaggo can generate docs correctly.
 type NewsfeedResponse struct {
-	Data []posthttp.PostResponse `json:"data"`
-	Meta shared.MetaCursor       `json:"meta"`
+	Data []posthttp.PostResponse  `json:"data"`
+	Meta shared.MetaCursor[int64] `json:"meta"`
 }
 
 // FeedQueryParams holds query parameters for the newsfeed endpoint.

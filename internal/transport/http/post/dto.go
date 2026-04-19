@@ -103,9 +103,9 @@ type SharerResponse struct {
 	IsVerified bool   `json:"is_verified"`
 }
 
-type MetaCursor = shared.MetaCursor
+type MetaCursor = shared.MetaCursor[int64]
 
-type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T]
+type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T, int64]
 
 type UserResponse = shared.UserResponse
 

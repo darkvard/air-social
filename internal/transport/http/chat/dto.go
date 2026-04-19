@@ -5,6 +5,7 @@ import (
 
 	chatdomain "air-social/internal/domain/chat"
 	"air-social/internal/domain/common"
+	"air-social/internal/transport/http/shared"
 )
 
 type GetConversationReq struct {
@@ -39,11 +40,7 @@ type CreateGroupReq struct {
 	ClientConvID   string  `json:"client_conv_id,omitempty"`
 }
 
-type ConversationsRes struct {
-	Data        []ConversationRes `json:"data"`
-	NextCursor  string            `json:"next_cursor,omitempty"`
-	HasNextPage bool              `json:"has_next_page"`
-}
+type ConversationsRes = shared.CursorPaginatedResponse[ConversationRes, string]
 
 type ParticipantRes struct {
 	UserID     int64     `json:"user_id"`

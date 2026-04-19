@@ -40,6 +40,6 @@ type UserResponse struct {
 // PostResponse re-uses the post transport DTO to keep search and post responses consistent
 type PostResponse = postdto.PostResponse
 
-type MetaCursor = shared.MetaCursor
+type MetaCursor = shared.MetaCursor[int64]
 
-type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T]
+type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T, int64]

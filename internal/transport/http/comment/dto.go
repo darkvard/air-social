@@ -48,8 +48,8 @@ func (q CursorQueryParams) ToDomain(userID int64) comment.GetCursorParams {
 	}
 }
 
-type MetaCursor = shared.MetaCursor
-type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T]
+type MetaCursor = shared.MetaCursor[int64]
+type CursorPaginatedResponse[T any] = shared.CursorPaginatedResponse[T, int64]
 
 type CommentResponse struct {
 	ID           int64               `json:"id"`

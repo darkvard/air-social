@@ -5,6 +5,7 @@ import (
 
 	chatdomain "air-social/internal/domain/chat"
 	"air-social/internal/transport/http/middleware"
+	"air-social/internal/transport/http/shared"
 	"air-social/pkg"
 )
 
@@ -180,8 +181,10 @@ func (h ConversationHandler) GetConversations(c *gin.Context) {
 		data[i] = toConversationResponse(&result.Data[i])
 	}
 	pkg.Success(c, ConversationsRes{
-		Data:        data,
-		NextCursor:  result.NextCursor,
-		HasNextPage: result.HasNextPage,
+		Data: data,
+		Meta: shared.MetaCursor[string]{
+			NextCursor:  result.NextCursor,
+			HasNextPage: result.HasNextPage,
+		},
 	})
 }

@@ -1027,307 +1027,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Updates the name and/or avatar of a group conversation. Only admins can update. Fields are optional — only provided fields are updated.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chat"
-                ],
-                "summary": "Update group conversation",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Conversation ID (ULID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Fields to update",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_transport_http_chat.UpdateGroupReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/conversations/{id}/members": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Adds a new member to a group conversation. Only admins can add members.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chat"
-                ],
-                "summary": "Add member to group",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Conversation ID (ULID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "User to add",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_transport_http_chat.AddMemberReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Updates the role of a group member. Only admins can change roles.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chat"
-                ],
-                "summary": "Update member role",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Conversation ID (ULID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Target user and new role",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_transport_http_chat.UpdateMemberRoleReq"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/conversations/{id}/members/{uid}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Removes a member from a group conversation. Admins can remove anyone; any member can remove themselves (leave).",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chat"
-                ],
-                "summary": "Remove member from group / leave group",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Conversation ID (ULID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "User ID to remove",
-                        "name": "uid",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.Response"
-                        }
-                    }
-                }
             }
         },
         "/feed": {
@@ -2908,7 +2607,7 @@ const docTemplate = `{
                 }
             }
         },
-        "air-social_internal_transport_http_shared.MetaCursor": {
+        "air-social_internal_transport_http_shared.MetaCursor-int64": {
             "type": "object",
             "properties": {
                 "has_next_page": {
@@ -2916,6 +2615,17 @@ const docTemplate = `{
                 },
                 "next_cursor": {
                     "type": "integer"
+                }
+            }
+        },
+        "air-social_internal_transport_http_shared.MetaCursor-string": {
+            "type": "object",
+            "properties": {
+                "has_next_page": {
+                    "type": "boolean"
+                },
+                "next_cursor": {
+                    "type": "string"
                 }
             }
         },
@@ -3103,17 +2813,6 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_transport_http_chat.AddMemberReq": {
-            "type": "object",
-            "required": [
-                "user_id"
-            ],
-            "properties": {
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "internal_transport_http_chat.ConversationRes": {
             "type": "object",
             "properties": {
@@ -3152,17 +2851,14 @@ const docTemplate = `{
         "internal_transport_http_chat.ConversationsRes": {
             "type": "object",
             "properties": {
-                "data": {
+                "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_chat.ConversationRes"
                     }
                 },
-                "has_next_page": {
-                    "type": "boolean"
-                },
-                "next_cursor": {
-                    "type": "string"
+                "meta": {
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor-string"
                 }
             }
         },
@@ -3217,37 +2913,6 @@ const docTemplate = `{
                 },
                 "state": {
                     "type": "string"
-                },
-                "user_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "internal_transport_http_chat.UpdateGroupReq": {
-            "type": "object",
-            "properties": {
-                "avatar_key": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100
-                }
-            }
-        },
-        "internal_transport_http_chat.UpdateMemberRoleReq": {
-            "type": "object",
-            "required": [
-                "role",
-                "user_id"
-            ],
-            "properties": {
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "admin",
-                        "member"
-                    ]
                 },
                 "user_id": {
                     "type": "integer"
@@ -3315,14 +2980,14 @@ const docTemplate = `{
         "internal_transport_http_comment.CursorPaginatedResponse-internal_transport_http_comment_CommentResponse": {
             "type": "object",
             "properties": {
-                "data": {
+                "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_comment.CommentResponse"
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor-int64"
                 }
             }
         },
@@ -3401,7 +3066,7 @@ const docTemplate = `{
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor-int64"
                 }
             }
         },
@@ -3454,14 +3119,14 @@ const docTemplate = `{
         "internal_transport_http_like.CursorPaginatedResponse-internal_transport_http_like_LikerResponse": {
             "type": "object",
             "properties": {
-                "data": {
+                "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_like.LikerResponse"
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor-int64"
                 }
             }
         },
@@ -3628,28 +3293,28 @@ const docTemplate = `{
         "internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_PostResponse": {
             "type": "object",
             "properties": {
-                "data": {
+                "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_post.PostResponse"
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor-int64"
                 }
             }
         },
         "internal_transport_http_post.CursorPaginatedResponse-internal_transport_http_post_SharerResponse": {
             "type": "object",
             "properties": {
-                "data": {
+                "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_post.SharerResponse"
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor-int64"
                 }
             }
         },
@@ -3808,28 +3473,28 @@ const docTemplate = `{
         "internal_transport_http_search.CursorPaginatedResponse-internal_transport_http_search_PostResponse": {
             "type": "object",
             "properties": {
-                "data": {
+                "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_search.PostResponse"
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor-int64"
                 }
             }
         },
         "internal_transport_http_search.CursorPaginatedResponse-internal_transport_http_search_UserResponse": {
             "type": "object",
             "properties": {
-                "data": {
+                "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/internal_transport_http_search.UserResponse"
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor"
+                    "$ref": "#/definitions/air-social_internal_transport_http_shared.MetaCursor-int64"
                 }
             }
         },

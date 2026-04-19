@@ -6,15 +6,15 @@ type PathIDParam struct {
 }
 
 // MetaCursor holds pagination metadata for cursor-based responses.
-type MetaCursor struct {
-	NextCursor  int64 `json:"next_cursor"`
-	HasNextPage bool  `json:"has_next_page"`
+type MetaCursor[K any] struct {
+	NextCursor  K    `json:"next_cursor"`
+	HasNextPage bool `json:"has_next_page"`
 }
 
 // CursorPaginatedResponse is a generic cursor-paginated response envelope.
-type CursorPaginatedResponse[T any] struct {
-	Data []T        `json:"data"`
-	Meta MetaCursor `json:"meta"`
+type CursorPaginatedResponse[T any, K any] struct {
+	Data []T           `json:"items"`
+	Meta MetaCursor[K] `json:"meta"`
 }
 
 // UserResponse is the compact author summary embedded in post and comment responses.
