@@ -235,12 +235,17 @@ func (s *authUseCaseSuite) TestLogin() {
 				})
 			}
 
-			_, _, err := uc.Login(context.Background(), params)
+			gotUser, gotToken, err := uc.Login(context.Background(), params)
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
 			} else {
 				s.NoError(err)
+				s.Equal(authUser, gotUser)
+				s.Equal(accessToken.Token, gotToken.AccessToken)
+				s.Equal(refreshToken.Raw, gotToken.RefreshToken)
+				s.Equal(accessToken.ExpiresAt, gotToken.AccessExpireAt)
+				s.Equal(refreshToken.ExpiresAt, gotToken.RefreshExpireAt)
 			}
 		})
 	}
@@ -649,11 +654,15 @@ func (s *authUseCaseSuite) TestRefreshToken() {
 				tc.setupMock(testDeps{tokenRepo: mockTokenRepo, tokenProvider: mockTokenProv})
 			}
 
-			_, err := uc.RefreshToken(context.Background(), rawRefreshToken)
+			gotToken, err := uc.RefreshToken(context.Background(), rawRefreshToken)
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
 			} else {
 				s.NoError(err)
+				s.Equal(newAccessToken.Token, gotToken.AccessToken)
+				s.Equal(newRefreshToken.Raw, gotToken.RefreshToken)
+				s.Equal(newAccessToken.ExpiresAt, gotToken.AccessExpireAt)
+				s.Equal(newRefreshToken.ExpiresAt, gotToken.RefreshExpireAt)
 			}
 		})
 	}

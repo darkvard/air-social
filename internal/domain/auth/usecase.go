@@ -103,10 +103,11 @@ func (u *usecase) Login(ctx context.Context, params LoginParams) (*user.User, To
 	}
 
 	return account, TokenResult{
-		AccessToken:    accessToken.Token,
-		RefreshToken:   refreshToken.Raw,
-		AccessExpireAt: accessToken.ExpiresAt,
-		Type:           pkg.AuthorizationType,
+		AccessToken:     accessToken.Token,
+		RefreshToken:    refreshToken.Raw,
+		AccessExpireAt:  accessToken.ExpiresAt,
+		RefreshExpireAt: refreshToken.ExpiresAt,
+		Type:            pkg.AuthorizationType,
 	}, nil
 }
 
@@ -203,9 +204,10 @@ func (u *usecase) rotateToken(ctx context.Context, oldToken token.RefreshToken) 
 	}
 
 	return TokenResult{
-		AccessToken:    accessToken.Token,
-		RefreshToken:   refreshToken.Raw,
-		AccessExpireAt: accessToken.ExpiresAt,
-		Type:           pkg.AuthorizationType,
+		AccessToken:     accessToken.Token,
+		RefreshToken:    refreshToken.Raw,
+		AccessExpireAt:  accessToken.ExpiresAt,
+		RefreshExpireAt: refreshToken.ExpiresAt,
+		Type:            pkg.AuthorizationType,
 	}, nil
 }
