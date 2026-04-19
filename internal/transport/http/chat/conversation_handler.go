@@ -102,6 +102,51 @@ func (h ConversationHandler) CreateGroup(c *gin.Context) {
 	pkg.Success(c, toConversationResponse(conv))
 }
 
+// UpdateGroup godoc
+//
+//	@Summary		Update group conversation
+//	@Description	Updates a group conversation's name and/or avatar. Only admins can update group info.
+//	@Description	At least one field (name or avatar_key) must be provided.
+//	@Tags			Chat
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string			true	"Conversation ID (ULID)"
+//	@Param			body	body		UpdateGroupReq	true	"Fields to update (at least one required)"
+//	@Success		200		{object}	ConversationRes
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		403		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/conversations/{id} [patch]
+func (h ConversationHandler) UpdateGroup(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
+	var req UpdateGroupReq
+	if err := pkg.StrictBindJSON(c, &req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	conv, err := h.uc.Write.UpdateGroup(c.Request.Context(), chatdomain.UpdateGroupParams{
+		ConvID:    c.Param("id"),
+		ActorID:   claims.UserID,
+		Name:      req.Name,
+		AvatarKey: req.AvatarKey,
+	})
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, toConversationResponse(conv))
+}
+
 // GetConversation godoc
 //
 //	@Summary		Get conversation by ID
@@ -125,7 +170,7 @@ func (h ConversationHandler) GetConversation(c *gin.Context) {
 		return
 	}
 
-	var req GetConversationReq
+	var req PathIDParam
 	if err := c.ShouldBindUri(&req); err != nil {
 		pkg.BadRequest(c, "invalid conversation id")
 		return

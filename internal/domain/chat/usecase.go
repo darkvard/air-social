@@ -14,7 +14,7 @@ type ConversationQuerier interface {
 type ConversationWriter interface {
 	CreateOrGetDirect(ctx context.Context, senderID, recipientID int64) (*Conversation, error)
 	CreateGroup(ctx context.Context, params CreateGroupParams) (*Conversation, error)
-	UpdateGroup(ctx context.Context, params UpdateGroupParams) error
+	UpdateGroup(ctx context.Context, params UpdateGroupParams) (*Conversation, error)
 }
 
 type ConversationMember interface {

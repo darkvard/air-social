@@ -560,6 +560,190 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 	}
 }
 
+func (s *conversationWriteSuite) TestUpdateGroup() {
+	var (
+		convID  = "01CONV"
+		actorID = int64(1)
+	)
+
+	strPtr := func(v string) *string { return &v }
+
+	type testDeps struct {
+		convRepo      *chatmocks.MockConversationRepository
+		mediaVerifier *ucmocks.MockMediaVerifier
+	}
+
+	newDeps := func(t *testing.T) testDeps {
+		return testDeps{
+			convRepo:      chatmocks.NewMockConversationRepository(t),
+			mediaVerifier: ucmocks.NewMockMediaVerifier(t),
+		}
+	}
+
+	newUC := func(d testDeps) *usecase.ConversationWriteUseCase {
+		return usecase.NewWriteUseCase(usecase.WriteDeps{
+			ConvRepo:      d.convRepo,
+			MediaVerifier: d.mediaVerifier,
+		})
+	}
+
+	tests := []struct {
+		name         string
+		params       chat.UpdateGroupParams
+		setupMock    func(d testDeps)
+		wantErr      error
+		assertResult func(s *conversationWriteSuite, conv *chat.Conversation)
+	}{
+		{
+			name:   "repo_get_error",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, Name: strPtr("X")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).Return(nil, assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:   "conv_not_found",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, Name: strPtr("X")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).Return(nil, nil).Once()
+			},
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name:   "direct_conv_rejected",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, Name: strPtr("X")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).Return(directConv(convID), nil).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name:   "actor_not_in_conv",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, Name: strPtr("X")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, member(99)), nil).Once()
+			},
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name:   "actor_not_admin",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, Name: strPtr("X")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, member(actorID)), nil).Once()
+			},
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name:   "nothing_to_update",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name:   "avatar_verify_error",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, AvatarKey: strPtr("key.jpg")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+				d.mediaVerifier.EXPECT().VerifyMedia(mock.Anything, []string{"key.jpg"}).
+					Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:   "avatar_not_found",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, AvatarKey: strPtr("key.jpg")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+				d.mediaVerifier.EXPECT().VerifyMedia(mock.Anything, []string{"key.jpg"}).
+					Return(pkg.ErrNotFound).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name:   "repo_update_error",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, Name: strPtr("New")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+				d.convRepo.EXPECT().UpdateGroupInfo(mock.Anything, convID, strPtr("New"), (*string)(nil)).
+					Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:   "updates_name_only",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, Name: strPtr("New Name")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+				d.convRepo.EXPECT().UpdateGroupInfo(mock.Anything, convID, strPtr("New Name"), (*string)(nil)).
+					Return(nil).Once()
+			},
+			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
+				s.Equal("New Name", conv.Name)
+			},
+		},
+		{
+			name:   "updates_avatar_only",
+			params: chat.UpdateGroupParams{ConvID: convID, ActorID: actorID, AvatarKey: strPtr("new/avatar.jpg")},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+				d.mediaVerifier.EXPECT().VerifyMedia(mock.Anything, []string{"new/avatar.jpg"}).Return(nil).Once()
+				d.convRepo.EXPECT().UpdateGroupInfo(mock.Anything, convID, (*string)(nil), strPtr("new/avatar.jpg")).
+					Return(nil).Once()
+			},
+			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
+				s.Equal("new/avatar.jpg", conv.AvatarKey)
+			},
+		},
+		{
+			name: "updates_both_fields",
+			params: chat.UpdateGroupParams{
+				ConvID: convID, ActorID: actorID,
+				Name: strPtr("Team"), AvatarKey: strPtr("team/avatar.jpg"),
+			},
+			setupMock: func(d testDeps) {
+				d.convRepo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+				d.mediaVerifier.EXPECT().VerifyMedia(mock.Anything, []string{"team/avatar.jpg"}).Return(nil).Once()
+				d.convRepo.EXPECT().UpdateGroupInfo(mock.Anything, convID, strPtr("Team"), strPtr("team/avatar.jpg")).
+					Return(nil).Once()
+			},
+			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
+				s.Equal("Team", conv.Name)
+				s.Equal("team/avatar.jpg", conv.AvatarKey)
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			d := newDeps(s.T())
+			tc.setupMock(d)
+			got, err := newUC(d).UpdateGroup(context.Background(), tc.params)
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+				s.Nil(got)
+			} else {
+				s.NoError(err)
+				s.NotNil(got)
+				if tc.assertResult != nil {
+					tc.assertResult(s, got)
+				}
+			}
+		})
+	}
+}
+
 func participantMap(conv *chat.Conversation) map[int64]chat.Participant {
 	m := make(map[int64]chat.Participant, len(conv.Participants))
 	for _, p := range conv.Participants {

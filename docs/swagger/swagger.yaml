@@ -282,6 +282,14 @@ definitions:
       user_id:
         type: integer
     type: object
+  internal_transport_http_chat.UpdateGroupReq:
+    properties:
+      avatar_key:
+        type: string
+      name:
+        maxLength: 100
+        type: string
+    type: object
   internal_transport_http_comment.CommentResponse:
     properties:
       author:
@@ -1416,6 +1424,56 @@ paths:
       security:
       - BearerAuth: []
       summary: Get conversation by ID
+      tags:
+      - Chat
+    patch:
+      consumes:
+      - application/json
+      description: |-
+        Updates a group conversation's name and/or avatar. Only admins can update group info.
+        At least one field (name or avatar_key) must be provided.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update (at least one required)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.UpdateGroupReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Update group conversation
       tags:
       - Chat
   /conversations/direct:

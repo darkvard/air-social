@@ -121,10 +121,18 @@ func (r *repository) UpdateParticipantRole(ctx context.Context, convID string, u
 	return nil
 }
 
-// UpdateGroupInfo only updates non-nil fields — nil means keep existing value.
 func (r *repository) UpdateGroupInfo(ctx context.Context, convID string, name *string, avatarKey *string) error {
+	set := bson.M{fieldUpdatedAt: pkg.TimeNowUTC()}
+	if name != nil {
+		set[fieldName] = *name
+	}
+	if avatarKey != nil {
+		set[fieldAvatarKey] = *avatarKey
+	}
+	if _, err := r.coll.UpdateOne(ctx, bson.M{fieldID: convID}, bson.M{"$set": set}); err != nil {
+		return pkg.MapMongoError(err)
+	}
 	return nil
-
 }
 
 func (r *repository) UpdateLastRead(ctx context.Context, convID string, userID int64, messageID string) error {

@@ -72,37 +72,78 @@ func (u *ConversationWriteUseCase) CreateOrGetDirect(ctx context.Context, sender
 }
 
 func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.CreateGroupParams) (*chat.Conversation, error) {
+	// clean input: deduplicate members, remove creator, enforce minimum count
 	memberIDs, err := u.sanitizeGroupMembers(params)
 	if err != nil {
 		return nil, err
 	}
 
-	if params.AvatarKey != "" {
-		if err := u.deps.MediaVerifier.VerifyMedia(ctx, []string{params.AvatarKey}); err != nil {
-			if errors.Is(err, pkg.ErrNotFound) {
-				return nil, pkg.NewError(pkg.ErrBadRequest, "avatar media not found or invalid")
-			}
-			return nil, pkg.OrInternalError(err)
-		}
+	// validate media: ensure avatar key exists in storage
+	if err := u.verifyAvatar(ctx, params.AvatarKey); err != nil {
+		return nil, err
 	}
 
-	if params.ClientConvID != "" {
-		existing, err := u.deps.ConvRepo.GetByClientConvID(ctx, params.ClientConvID)
-		if err != nil {
-			return nil, pkg.OrInternalError(err)
-		}
-		if existing != nil {
-			// TODO: populate existing.LastMessage from MessageRepository once message layer is implemented.
-			return existing, nil
-		}
+	// idempotency: return existing conversation if client already created it
+	if existing, err := u.checkClientConvID(ctx, params.ClientConvID); err != nil {
+		return nil, err
+	} else if existing != nil {
+		return existing, nil
 	}
 
+	// check members exist and decide who lands in active vs pending inbox
 	memberStates, err := u.resolveMembers(ctx, params.CreatorID, memberIDs)
 	if err != nil {
 		return nil, err
 	}
 
+	// write conversation, recover gracefully if a concurrent request won the race
 	return u.persistGroup(ctx, params, memberIDs, memberStates)
+}
+
+func (u *ConversationWriteUseCase) UpdateGroup(ctx context.Context, params chat.UpdateGroupParams) (*chat.Conversation, error) {
+	// load conv: ensure it exists and is a group
+	conv, err := u.deps.ConvRepo.GetByID(ctx, params.ConvID)
+	if err != nil {
+		return nil, pkg.OrInternalError(err)
+	}
+	if conv == nil {
+		return nil, pkg.ErrNotFound
+	}
+	if conv.Type != chat.ConversationGroup {
+		return nil, pkg.NewError(pkg.ErrBadRequest, "only group conversations can be updated")
+	}
+
+	// authorize: only admins can update group info
+	actor := findParticipant(conv.Participants, params.ActorID)
+	if actor == nil || actor.Role != chat.RoleAdmin {
+		return nil, pkg.ErrForbidden
+	}
+
+	// guard: at least one field must change, otherwise reject early
+	if params.Name == nil && params.AvatarKey == nil {
+		return nil, pkg.NewError(pkg.ErrBadRequest, "nothing to update")
+	}
+
+	// validate media: ensure new avatar key exists in storage
+	if params.AvatarKey != nil {
+		if err := u.verifyAvatar(ctx, *params.AvatarKey); err != nil {
+			return nil, err
+		}
+	}
+
+	// persist: only non-nil fields are written, existing values are preserved
+	if err := u.deps.ConvRepo.UpdateGroupInfo(ctx, params.ConvID, params.Name, params.AvatarKey); err != nil {
+		return nil, pkg.OrInternalError(err)
+	}
+
+	// patch in-memory to avoid a redundant re-fetch from DB
+	if params.Name != nil {
+		conv.Name = *params.Name
+	}
+	if params.AvatarKey != nil {
+		conv.AvatarKey = *params.AvatarKey
+	}
+	return conv, nil
 }
 
 // sanitizeGroupMembers deduplicates memberIDs, removes creatorID, and enforces minimum count.
@@ -184,6 +225,40 @@ func (u *ConversationWriteUseCase) persistGroup(
 	return conv, nil
 }
 
-func (u *ConversationWriteUseCase) UpdateGroup(ctx context.Context, params chat.UpdateGroupParams) error {
+// checkClientConvID provides idempotency for group creation.
+// Mobile clients generate a UUID before sending the request and attach it as ClientConvID.
+// If the network drops and the client retries, this check returns the already-created
+// conversation instead of creating a duplicate — even if the first request succeeded.
+// Empty ClientConvID means the caller opted out of idempotency (no guarantee against duplicates).
+func (u *ConversationWriteUseCase) checkClientConvID(ctx context.Context, clientConvID string) (*chat.Conversation, error) {
+	if clientConvID == "" {
+		return nil, nil
+	}
+	existing, err := u.deps.ConvRepo.GetByClientConvID(ctx, clientConvID)
+	if err != nil {
+		return nil, pkg.OrInternalError(err)
+	}
+	return existing, nil
+}
+
+func (u *ConversationWriteUseCase) verifyAvatar(ctx context.Context, avatarKey string) error {
+	if avatarKey == "" {
+		return nil
+	}
+	if err := u.deps.MediaVerifier.VerifyMedia(ctx, []string{avatarKey}); err != nil {
+		if errors.Is(err, pkg.ErrNotFound) {
+			return pkg.NewError(pkg.ErrBadRequest, "avatar media not found or invalid")
+		}
+		return pkg.OrInternalError(err)
+	}
+	return nil
+}
+
+func findParticipant(participants []chat.Participant, userID int64) *chat.Participant {
+	for i := range participants {
+		if participants[i].UserID == userID {
+			return &participants[i]
+		}
+	}
 	return nil
 }

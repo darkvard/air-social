@@ -5,6 +5,11 @@ type PathIDParam struct {
 	ID int64 `uri:"id" binding:"required,gt=0"`
 }
 
+// PathStringIDParam is a common URI path parameter for single-resource endpoints.
+type PathStringIDParam struct {
+	ID string `uri:"id" binding:"required"`
+}
+
 // MetaCursor holds pagination metadata for cursor-based responses.
 type MetaCursor[K any] struct {
 	NextCursor  K    `json:"next_cursor"`

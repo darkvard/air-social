@@ -8,9 +8,7 @@ import (
 	"air-social/internal/transport/http/shared"
 )
 
-type GetConversationReq struct {
-	ID string `uri:"id" binding:"required"`
-}
+type PathIDParam = shared.PathStringIDParam
 
 type GetConversationsReq struct {
 	State  string `form:"state,default=active" binding:"omitempty,oneof=active pending ignored muted"`
@@ -38,6 +36,11 @@ type CreateGroupReq struct {
 	ParticipantIDs []int64 `json:"participant_ids" binding:"required,min=2"`
 	AvatarKey      string  `json:"avatar_key,omitempty"`
 	ClientConvID   string  `json:"client_conv_id,omitempty"`
+}
+
+type UpdateGroupReq struct {
+	Name      *string `json:"name,omitempty" binding:"omitempty,max=100"`
+	AvatarKey *string `json:"avatar_key,omitempty"`
 }
 
 type ConversationsRes = shared.CursorPaginatedResponse[ConversationRes, string]
