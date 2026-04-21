@@ -26,6 +26,10 @@ type Participant struct {
 	LastReadID string // ULID of last read message; "" = never read
 }
 
+func (p Participant) IsAdmin() bool {
+	return p.Role == RoleAdmin
+}
+
 func (p Participant) HasReadAnyMessage() bool {
 	return p.LastReadID != ""
 }

@@ -43,6 +43,19 @@ type UpdateGroupReq struct {
 	AvatarKey *string `json:"avatar_key,omitempty"`
 }
 
+type AddMemberReq struct {
+	UserID int64 `json:"user_id" binding:"required,gt=0"`
+}
+
+type UpdateMemberRoleReq struct {
+	Role string `json:"role" binding:"required,oneof=admin member"`
+}
+
+type MemberPathParam struct {
+	ConvID string `uri:"id"`
+	UserID int64  `uri:"userID"`
+}
+
 type ConversationsRes = shared.CursorPaginatedResponse[ConversationRes, string]
 
 type ParticipantRes struct {

@@ -114,8 +114,8 @@ func (u *ConversationWriteUseCase) UpdateGroup(ctx context.Context, params chat.
 	}
 
 	// authorize: only admins can update group info
-	actor := findParticipant(conv.Participants, params.ActorID)
-	if actor == nil || actor.Role != chat.RoleAdmin {
+	actor := conv.FindParticipant(params.ActorID)
+	if actor == nil || !actor.IsAdmin() {
 		return nil, pkg.ErrForbidden
 	}
 
@@ -250,15 +250,6 @@ func (u *ConversationWriteUseCase) verifyAvatar(ctx context.Context, avatarKey s
 			return pkg.NewError(pkg.ErrBadRequest, "avatar media not found or invalid")
 		}
 		return pkg.OrInternalError(err)
-	}
-	return nil
-}
-
-func findParticipant(participants []chat.Participant, userID int64) *chat.Participant {
-	for i := range participants {
-		if participants[i].UserID == userID {
-			return &participants[i]
-		}
 	}
 	return nil
 }

@@ -184,6 +184,147 @@ func (h ConversationHandler) AcceptConversation(c *gin.Context) {
 	pkg.Success(c, nil)
 }
 
+// AddMember godoc
+//
+//	@Summary		Add member to group
+//	@Description	Adds a new member to a group conversation. Only admins can add members.
+//	@Description	The new member's state is "active" if they follow the actor, otherwise "pending".
+//	@Tags			Chat
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string			true	"Conversation ID (ULID)"
+//	@Param			body	body		AddMemberReq	true	"User to add"
+//	@Success		200		{object}	pkg.Response
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		403		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		409		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/conversations/{id}/members [post]
+func (h ConversationHandler) AddMember(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
+	var param PathIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		pkg.BadRequest(c, "invalid conversation id")
+		return
+	}
+
+	var req AddMemberReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	if err := h.uc.Member.AddMember(c.Request.Context(), chatdomain.AddMemberParams{
+		ConvID:    param.ID,
+		ActorID:   claims.UserID,
+		NewUserID: req.UserID,
+	}); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, nil)
+}
+
+// RemoveMember godoc
+//
+//	@Summary		Remove member from group
+//	@Description	Removes a member from a group conversation. Admins can remove any member. Any member can leave (remove themselves).
+//	@Tags			Chat
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string	true	"Conversation ID (ULID)"
+//	@Param			userID	path		int		true	"Target user ID"
+//	@Success		200		{object}	pkg.Response
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		403		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/conversations/{id}/members/{userID} [delete]
+func (h ConversationHandler) RemoveMember(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
+	var param MemberPathParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		pkg.BadRequest(c, "invalid path params")
+		return
+	}
+
+	if err := h.uc.Member.RemoveMember(c.Request.Context(), chatdomain.RemoveMemberParams{
+		ConvID:   param.ConvID,
+		ActorID:  claims.UserID,
+		TargetID: param.UserID,
+	}); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, nil)
+}
+
+// UpdateMemberRole godoc
+//
+//	@Summary		Update member role
+//	@Description	Promotes or demotes a group member. Only admins can change roles. An admin cannot change their own role.
+//	@Tags			Chat
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Conversation ID (ULID)"
+//	@Param			userID	path		int					true	"Target user ID"
+//	@Param			body	body		UpdateMemberRoleReq	true	"New role"
+//	@Success		200		{object}	pkg.Response
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		403		{object}	pkg.Response
+//	@Failure		404		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/conversations/{id}/members/{userID}/role [patch]
+func (h ConversationHandler) UpdateMemberRole(c *gin.Context) {
+	claims, err := middleware.GetTokenClaims(c)
+	if err != nil {
+		pkg.Unauthorized(c, "unauthorized")
+		return
+	}
+
+	var param MemberPathParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		pkg.BadRequest(c, "invalid path params")
+		return
+	}
+
+	var req UpdateMemberRoleReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+
+	if err := h.uc.Member.UpdateMemberRole(c.Request.Context(), chatdomain.UpdateMemberRoleParams{
+		ConvID:   param.ConvID,
+		ActorID:  claims.UserID,
+		TargetID: param.UserID,
+		Role:     chatdomain.ParticipantRole(req.Role),
+	}); err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+
+	pkg.Success(c, nil)
+}
+
 // GetConversation godoc
 //
 //	@Summary		Get conversation by ID

@@ -33,6 +33,15 @@ func (c Conversation) GetCursor() string {
 	return c.UpdatedAt.Format(TimeFormat)
 }
 
+func (c Conversation) FindParticipant(userID int64) *Participant {
+	for i := range c.Participants {
+		if c.Participants[i].UserID == userID {
+			return &c.Participants[i]
+		}
+	}
+	return nil
+}
+
 func NewDirectConversation(senderID, targetID int64, isTargetFollowingSender bool) *Conversation {
 	targetState := StatePending
 	if isTargetFollowingSender {

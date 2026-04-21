@@ -348,7 +348,7 @@ func (s *conversationMemberSuite) TestAddMember() {
 		s.Run(tc.name, func() {
 			d := newDeps(s.T())
 			tc.setupMock(d)
-			err := newMemberUC(d).AddMember(context.Background(), convID, actorID, newUser)
+			err := newMemberUC(d).AddMember(context.Background(), chat.AddMemberParams{ConvID: convID, ActorID: actorID, NewUserID: newUser})
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
 			} else {
@@ -457,7 +457,133 @@ func (s *conversationMemberSuite) TestRemoveMember() {
 		s.Run(tc.name, func() {
 			d := newDeps(s.T())
 			tc.setupMock(d)
-			err := newMemberUC(d).RemoveMember(context.Background(), convID, tc.actorID, tc.targetID)
+			err := newMemberUC(d).RemoveMember(context.Background(), chat.RemoveMemberParams{ConvID: convID, ActorID: tc.actorID, TargetID: tc.targetID})
+			if tc.wantErr != nil {
+				s.ErrorIs(err, tc.wantErr)
+			} else {
+				s.NoError(err)
+			}
+		})
+	}
+}
+
+// ── UpdateMemberRole ──────────────────────────────────────────────────────────
+
+func (s *conversationMemberSuite) TestUpdateMemberRole() {
+	var (
+		convID   = "01CONV"
+		actorID  = int64(1)
+		targetID = int64(2)
+	)
+
+	tests := []struct {
+		name      string
+		actorID   int64
+		targetID  int64
+		setupMock func(d memberDeps)
+		wantErr   error
+	}{
+		{
+			name:     "repo_get_error",
+			actorID:  actorID,
+			targetID: targetID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).Return(nil, assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+		{
+			name:     "conv_not_found",
+			actorID:  actorID,
+			targetID: targetID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).Return(nil, nil).Once()
+			},
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name:     "direct_conv_rejected",
+			actorID:  actorID,
+			targetID: targetID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).Return(directConv(convID), nil).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name:     "actor_not_in_conv",
+			actorID:  actorID,
+			targetID: targetID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, member(99)), nil).Once()
+			},
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name:     "actor_not_admin",
+			actorID:  actorID,
+			targetID: targetID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, member(actorID), member(targetID)), nil).Once()
+			},
+			wantErr: pkg.ErrForbidden,
+		},
+		{
+			name:     "cannot_change_own_role",
+			actorID:  actorID,
+			targetID: actorID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+			},
+			wantErr: pkg.ErrBadRequest,
+		},
+		{
+			name:     "target_not_found",
+			actorID:  actorID,
+			targetID: targetID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID)), nil).Once()
+			},
+			wantErr: pkg.ErrNotFound,
+		},
+		{
+			name:     "success_promote_to_admin",
+			actorID:  actorID,
+			targetID: targetID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID), member(targetID)), nil).Once()
+				d.repo.EXPECT().UpdateParticipantRole(mock.Anything, convID, targetID, chat.RoleAdmin).Return(nil).Once()
+			},
+		},
+		{
+			name:     "update_role_repo_error",
+			actorID:  actorID,
+			targetID: targetID,
+			setupMock: func(d memberDeps) {
+				d.repo.EXPECT().GetByID(mock.Anything, convID).
+					Return(groupConv(convID, admin(actorID), member(targetID)), nil).Once()
+				d.repo.EXPECT().UpdateParticipantRole(mock.Anything, convID, targetID, chat.RoleAdmin).
+					Return(assert.AnError).Once()
+			},
+			wantErr: pkg.ErrInternal,
+		},
+	}
+
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			d := newDeps(s.T())
+			tc.setupMock(d)
+			err := newMemberUC(d).UpdateMemberRole(context.Background(), chat.UpdateMemberRoleParams{
+				ConvID:   convID,
+				ActorID:  tc.actorID,
+				TargetID: tc.targetID,
+				Role:     chat.RoleAdmin,
+			})
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
 			} else {

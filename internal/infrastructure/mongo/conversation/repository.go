@@ -12,8 +12,6 @@ import (
 	"air-social/pkg"
 )
 
-// todo: $push & $pull for race condition (concurrency)
-
 type repository struct {
 	coll *mongo.Collection
 }
@@ -105,11 +103,32 @@ func (r *repository) GetList(ctx context.Context, params chat.GetConversationsPa
 }
 
 func (r *repository) AddParticipant(ctx context.Context, convID string, p chat.Participant) error {
+	// filter excludes documents where user already exists → atomic duplicate guard
+	filter := bson.M{
+		fieldID:                     convID,
+		fieldParticipantUserID_Find: bson.M{"$ne": p.UserID},
+	}
+	update := bson.M{
+		"$push": bson.M{fieldParticipants: participantFromDomain(p)},
+		"$set":  bson.M{fieldUpdatedAt: pkg.TimeNowUTC()},
+	}
+	res, err := r.coll.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return pkg.MapMongoError(err)
+	}
+	if res.MatchedCount == 0 {
+		return pkg.ErrAlreadyExists
+	}
 	return nil
 }
 
 func (r *repository) RemoveParticipant(ctx context.Context, convID string, userID int64) error {
-	return nil
+	update := bson.M{
+		"$pull": bson.M{fieldParticipants: bson.M{fieldUserID: userID}},
+		"$set":  bson.M{fieldUpdatedAt: pkg.TimeNowUTC()},
+	}
+	_, err := r.coll.UpdateOne(ctx, bson.M{fieldID: convID}, update)
+	return pkg.MapMongoError(err)
 }
 
 func (r *repository) UpdateParticipantState(ctx context.Context, convID string, userID int64, state chat.ParticipantState) error {
@@ -128,7 +147,16 @@ func (r *repository) UpdateParticipantState(ctx context.Context, convID string, 
 }
 
 func (r *repository) UpdateParticipantRole(ctx context.Context, convID string, userID int64, role chat.ParticipantRole) error {
-	return nil
+	filter := bson.M{
+		fieldID:                     convID,
+		fieldParticipantUserID_Find: userID,
+	}
+	update := bson.M{"$set": bson.M{
+		fieldUpdatedAt:              pkg.TimeNowUTC(),
+		fieldParticipantRole_Update: string(role),
+	}}
+	_, err := r.coll.UpdateOne(ctx, filter, update)
+	return pkg.MapMongoError(err)
 }
 
 func (r *repository) UpdateGroupInfo(ctx context.Context, convID string, name *string, avatarKey *string) error {

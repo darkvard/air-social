@@ -118,17 +118,17 @@ func (_c *MockConversationMember_AcceptPendingByFollowEvent_Call) RunAndReturn(r
 	return _c
 }
 
-// AddMember provides a mock function with given fields: ctx, convID, actorID, newUserID
-func (_m *MockConversationMember) AddMember(ctx context.Context, convID string, actorID int64, newUserID int64) error {
-	ret := _m.Called(ctx, convID, actorID, newUserID)
+// AddMember provides a mock function with given fields: ctx, p
+func (_m *MockConversationMember) AddMember(ctx context.Context, p chat.AddMemberParams) error {
+	ret := _m.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddMember")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) error); ok {
-		r0 = rf(ctx, convID, actorID, newUserID)
+	if rf, ok := ret.Get(0).(func(context.Context, chat.AddMemberParams) error); ok {
+		r0 = rf(ctx, p)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -143,16 +143,14 @@ type MockConversationMember_AddMember_Call struct {
 
 // AddMember is a helper method to define mock.On call
 //   - ctx context.Context
-//   - convID string
-//   - actorID int64
-//   - newUserID int64
-func (_e *MockConversationMember_Expecter) AddMember(ctx interface{}, convID interface{}, actorID interface{}, newUserID interface{}) *MockConversationMember_AddMember_Call {
-	return &MockConversationMember_AddMember_Call{Call: _e.mock.On("AddMember", ctx, convID, actorID, newUserID)}
+//   - p chat.AddMemberParams
+func (_e *MockConversationMember_Expecter) AddMember(ctx interface{}, p interface{}) *MockConversationMember_AddMember_Call {
+	return &MockConversationMember_AddMember_Call{Call: _e.mock.On("AddMember", ctx, p)}
 }
 
-func (_c *MockConversationMember_AddMember_Call) Run(run func(ctx context.Context, convID string, actorID int64, newUserID int64)) *MockConversationMember_AddMember_Call {
+func (_c *MockConversationMember_AddMember_Call) Run(run func(ctx context.Context, p chat.AddMemberParams)) *MockConversationMember_AddMember_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(int64), args[3].(int64))
+		run(args[0].(context.Context), args[1].(chat.AddMemberParams))
 	})
 	return _c
 }
@@ -162,7 +160,7 @@ func (_c *MockConversationMember_AddMember_Call) Return(_a0 error) *MockConversa
 	return _c
 }
 
-func (_c *MockConversationMember_AddMember_Call) RunAndReturn(run func(context.Context, string, int64, int64) error) *MockConversationMember_AddMember_Call {
+func (_c *MockConversationMember_AddMember_Call) RunAndReturn(run func(context.Context, chat.AddMemberParams) error) *MockConversationMember_AddMember_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -215,17 +213,17 @@ func (_c *MockConversationMember_IgnoreConversation_Call) RunAndReturn(run func(
 	return _c
 }
 
-// RemoveMember provides a mock function with given fields: ctx, convID, actorID, targetID
-func (_m *MockConversationMember) RemoveMember(ctx context.Context, convID string, actorID int64, targetID int64) error {
-	ret := _m.Called(ctx, convID, actorID, targetID)
+// RemoveMember provides a mock function with given fields: ctx, p
+func (_m *MockConversationMember) RemoveMember(ctx context.Context, p chat.RemoveMemberParams) error {
+	ret := _m.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveMember")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) error); ok {
-		r0 = rf(ctx, convID, actorID, targetID)
+	if rf, ok := ret.Get(0).(func(context.Context, chat.RemoveMemberParams) error); ok {
+		r0 = rf(ctx, p)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -240,16 +238,14 @@ type MockConversationMember_RemoveMember_Call struct {
 
 // RemoveMember is a helper method to define mock.On call
 //   - ctx context.Context
-//   - convID string
-//   - actorID int64
-//   - targetID int64
-func (_e *MockConversationMember_Expecter) RemoveMember(ctx interface{}, convID interface{}, actorID interface{}, targetID interface{}) *MockConversationMember_RemoveMember_Call {
-	return &MockConversationMember_RemoveMember_Call{Call: _e.mock.On("RemoveMember", ctx, convID, actorID, targetID)}
+//   - p chat.RemoveMemberParams
+func (_e *MockConversationMember_Expecter) RemoveMember(ctx interface{}, p interface{}) *MockConversationMember_RemoveMember_Call {
+	return &MockConversationMember_RemoveMember_Call{Call: _e.mock.On("RemoveMember", ctx, p)}
 }
 
-func (_c *MockConversationMember_RemoveMember_Call) Run(run func(ctx context.Context, convID string, actorID int64, targetID int64)) *MockConversationMember_RemoveMember_Call {
+func (_c *MockConversationMember_RemoveMember_Call) Run(run func(ctx context.Context, p chat.RemoveMemberParams)) *MockConversationMember_RemoveMember_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(int64), args[3].(int64))
+		run(args[0].(context.Context), args[1].(chat.RemoveMemberParams))
 	})
 	return _c
 }
@@ -259,22 +255,22 @@ func (_c *MockConversationMember_RemoveMember_Call) Return(_a0 error) *MockConve
 	return _c
 }
 
-func (_c *MockConversationMember_RemoveMember_Call) RunAndReturn(run func(context.Context, string, int64, int64) error) *MockConversationMember_RemoveMember_Call {
+func (_c *MockConversationMember_RemoveMember_Call) RunAndReturn(run func(context.Context, chat.RemoveMemberParams) error) *MockConversationMember_RemoveMember_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateMemberRole provides a mock function with given fields: ctx, convID, actorID, targetID, role
-func (_m *MockConversationMember) UpdateMemberRole(ctx context.Context, convID string, actorID int64, targetID int64, role chat.ParticipantRole) error {
-	ret := _m.Called(ctx, convID, actorID, targetID, role)
+// UpdateMemberRole provides a mock function with given fields: ctx, p
+func (_m *MockConversationMember) UpdateMemberRole(ctx context.Context, p chat.UpdateMemberRoleParams) error {
+	ret := _m.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateMemberRole")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64, chat.ParticipantRole) error); ok {
-		r0 = rf(ctx, convID, actorID, targetID, role)
+	if rf, ok := ret.Get(0).(func(context.Context, chat.UpdateMemberRoleParams) error); ok {
+		r0 = rf(ctx, p)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -289,17 +285,14 @@ type MockConversationMember_UpdateMemberRole_Call struct {
 
 // UpdateMemberRole is a helper method to define mock.On call
 //   - ctx context.Context
-//   - convID string
-//   - actorID int64
-//   - targetID int64
-//   - role chat.ParticipantRole
-func (_e *MockConversationMember_Expecter) UpdateMemberRole(ctx interface{}, convID interface{}, actorID interface{}, targetID interface{}, role interface{}) *MockConversationMember_UpdateMemberRole_Call {
-	return &MockConversationMember_UpdateMemberRole_Call{Call: _e.mock.On("UpdateMemberRole", ctx, convID, actorID, targetID, role)}
+//   - p chat.UpdateMemberRoleParams
+func (_e *MockConversationMember_Expecter) UpdateMemberRole(ctx interface{}, p interface{}) *MockConversationMember_UpdateMemberRole_Call {
+	return &MockConversationMember_UpdateMemberRole_Call{Call: _e.mock.On("UpdateMemberRole", ctx, p)}
 }
 
-func (_c *MockConversationMember_UpdateMemberRole_Call) Run(run func(ctx context.Context, convID string, actorID int64, targetID int64, role chat.ParticipantRole)) *MockConversationMember_UpdateMemberRole_Call {
+func (_c *MockConversationMember_UpdateMemberRole_Call) Run(run func(ctx context.Context, p chat.UpdateMemberRoleParams)) *MockConversationMember_UpdateMemberRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(int64), args[3].(int64), args[4].(chat.ParticipantRole))
+		run(args[0].(context.Context), args[1].(chat.UpdateMemberRoleParams))
 	})
 	return _c
 }
@@ -309,7 +302,7 @@ func (_c *MockConversationMember_UpdateMemberRole_Call) Return(_a0 error) *MockC
 	return _c
 }
 
-func (_c *MockConversationMember_UpdateMemberRole_Call) RunAndReturn(run func(context.Context, string, int64, int64, chat.ParticipantRole) error) *MockConversationMember_UpdateMemberRole_Call {
+func (_c *MockConversationMember_UpdateMemberRole_Call) RunAndReturn(run func(context.Context, chat.UpdateMemberRoleParams) error) *MockConversationMember_UpdateMemberRole_Call {
 	_c.Call.Return(run)
 	return _c
 }

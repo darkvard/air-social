@@ -21,9 +21,9 @@ type ConversationMember interface {
 	AcceptConversation(ctx context.Context, convID string, userID int64) error
 	AcceptPendingByFollowEvent(ctx context.Context, followerID, followeeID int64) error
 	IgnoreConversation(ctx context.Context, convID string, userID int64) error
-	AddMember(ctx context.Context, convID string, actorID, newUserID int64) error
-	RemoveMember(ctx context.Context, convID string, actorID, targetID int64) error
-	UpdateMemberRole(ctx context.Context, convID string, actorID, targetID int64, role ParticipantRole) error
+	AddMember(ctx context.Context, p AddMemberParams) error
+	RemoveMember(ctx context.Context, p RemoveMemberParams) error
+	UpdateMemberRole(ctx context.Context, p UpdateMemberRoleParams) error
 }
 
 type Messenger interface {

@@ -18,4 +18,9 @@ func RegisterRoute(g *gin.RouterGroup, convH ConversationHandler, msgH MessageHa
 		conv.GET("/:id", convH.GetConversation)
 		conv.POST("/:id/accept", convH.AcceptConversation)
 	}
+	{
+		conv.POST("/:id/members", convH.AddMember)
+		conv.DELETE("/:id/members/:userID", convH.RemoveMember)
+		conv.PATCH("/:id/members/:userID/role", convH.UpdateMemberRole)
+	}
 }

@@ -52,3 +52,22 @@ type EditMessageParams struct {
 	UserID    int64
 	Content   string
 }
+
+type AddMemberParams struct {
+	ConvID    string
+	ActorID   int64
+	NewUserID int64
+}
+
+type RemoveMemberParams struct {
+	ConvID   string
+	ActorID  int64
+	TargetID int64
+}
+
+type UpdateMemberRoleParams struct {
+	ConvID   string
+	ActorID  int64
+	TargetID int64
+	Role     ParticipantRole
+}

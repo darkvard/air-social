@@ -212,6 +212,13 @@ definitions:
       verified:
         type: boolean
     type: object
+  internal_transport_http_chat.AddMemberReq:
+    properties:
+      user_id:
+        type: integer
+    required:
+    - user_id
+    type: object
   internal_transport_http_chat.ConversationRes:
     properties:
       avatar_key:
@@ -289,6 +296,16 @@ definitions:
       name:
         maxLength: 100
         type: string
+    type: object
+  internal_transport_http_chat.UpdateMemberRoleReq:
+    properties:
+      role:
+        enum:
+        - admin
+        - member
+        type: string
+    required:
+    - role
     type: object
   internal_transport_http_comment.CommentResponse:
     properties:
@@ -1517,6 +1534,163 @@ paths:
       security:
       - BearerAuth: []
       summary: Accept a conversation
+      tags:
+      - Chat
+  /conversations/{id}/members:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Adds a new member to a group conversation. Only admins can add members.
+        The new member's state is "active" if they follow the actor, otherwise "pending".
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.AddMemberReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Add member to group
+      tags:
+      - Chat
+  /conversations/{id}/members/{userID}:
+    delete:
+      description: Removes a member from a group conversation. Admins can remove any
+        member. Any member can leave (remove themselves).
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Target user ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Remove member from group
+      tags:
+      - Chat
+  /conversations/{id}/members/{userID}/role:
+    patch:
+      consumes:
+      - application/json
+      description: Promotes or demotes a group member. Only admins can change roles.
+        An admin cannot change their own role.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Target user ID
+        in: path
+        name: userID
+        required: true
+        type: integer
+      - description: New role
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.UpdateMemberRoleReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Update member role
       tags:
       - Chat
   /conversations/direct:
