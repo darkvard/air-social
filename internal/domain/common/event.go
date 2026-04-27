@@ -28,6 +28,10 @@ const (
 	EventFollowCreated EventType = "social.follow.created"
 )
 
+const (
+	EventMessageCreated EventType = "chat.message.created"
+)
+
 type EventType string
 
 type EventPublisher interface {
@@ -113,4 +117,11 @@ type PostFeedEventPayload struct {
 type FollowCreatedPayload struct {
 	FollowerID int64 `json:"follower_id"`
 	FolloweeID int64 `json:"followee_id"`
+}
+
+type MessageEventPayload struct {
+	MessageID      string  `json:"message_id"`
+	ConversationID string  `json:"conversation_id"`
+	SenderID       int64   `json:"sender_id"`
+	RecipientIDs   []int64 `json:"recipient_ids"`
 }

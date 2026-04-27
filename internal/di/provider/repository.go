@@ -11,6 +11,7 @@ import (
 	statsdomain "air-social/internal/domain/stats"
 	userdomain "air-social/internal/domain/user"
 	conversationinfra "air-social/internal/infrastructure/mongo/conversation"
+	messageinfra "air-social/internal/infrastructure/mongo/message"
 	commentinfra "air-social/internal/infrastructure/postgres/comment"
 	followinfra "air-social/internal/infrastructure/postgres/follow"
 	likeinfra "air-social/internal/infrastructure/postgres/like"
@@ -31,6 +32,7 @@ type Repository struct {
 	Stats        statsdomain.Repository
 	Search       searchdomain.Repository
 	Conversation chatdomain.ConversationRepository
+	Message      chatdomain.MessageRepository
 }
 
 func NewRepository(infra *Infrastructure) Repository {
@@ -44,5 +46,6 @@ func NewRepository(infra *Infrastructure) Repository {
 		Stats:        statsinfra.NewRepository(infra.Postgres),
 		Search:       searchinfra.NewRepository(infra.Postgres),
 		Conversation: conversationinfra.NewRepository(infra.MongoDB),
+		Message:      messageinfra.NewRepository(infra.MongoDB),
 	}
 }

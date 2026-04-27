@@ -45,12 +45,14 @@ func (s *conversationQuerySuite) TestGetConversation() {
 
 	type testDeps struct {
 		convRepo    *chatmocks.MockConversationRepository
+		msgRepo     *chatmocks.MockMessageRepository
 		unreadStore *chatmocks.MockUnreadStore
 	}
 
 	newDeps := func(t *testing.T) testDeps {
 		return testDeps{
 			convRepo:    chatmocks.NewMockConversationRepository(t),
+			msgRepo:     chatmocks.NewMockMessageRepository(t),
 			unreadStore: chatmocks.NewMockUnreadStore(t),
 		}
 	}
@@ -58,6 +60,7 @@ func (s *conversationQuerySuite) TestGetConversation() {
 	newUC := func(d testDeps) *usecase.ConversationQueryUseCase {
 		return usecase.NewQueryUseCase(usecase.QueryDeps{
 			ConvRepo: d.convRepo,
+			MsgRepo:  d.msgRepo,
 			Unread:   d.unreadStore,
 		})
 	}
@@ -82,7 +85,7 @@ func (s *conversationQuerySuite) TestGetConversation() {
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
 					GetByID(mock.Anything, convID).
-					Return(nil, pkg.ErrNotFound).Once()
+					Return(nil, nil).Once()
 			},
 			wantErr: pkg.ErrNotFound,
 		},
@@ -97,7 +100,7 @@ func (s *conversationQuerySuite) TestGetConversation() {
 					GetByID(mock.Anything, convID).
 					Return(conv, nil).Once()
 			},
-			wantErr: pkg.ErrUnauthorized,
+			wantErr: pkg.ErrForbidden,
 		},
 		{
 			name: "unread_error",
@@ -125,6 +128,7 @@ func (s *conversationQuerySuite) TestGetConversation() {
 				s.Equal(convID, conv.ID)
 				s.Equal(5, conv.UnreadCount)
 				s.Len(conv.Participants, 2)
+				s.Nil(conv.LastMessage)
 			},
 		},
 		{
@@ -139,6 +143,66 @@ func (s *conversationQuerySuite) TestGetConversation() {
 			},
 			assertResult: func(s *conversationQuerySuite, conv *chat.Conversation) {
 				s.Equal(0, conv.UnreadCount)
+			},
+		},
+		{
+			// conv has LastMsgID → MsgRepo.GetByIDs called → LastMessage populated.
+			name: "success_populates_last_message",
+			setupMock: func(deps testDeps) {
+				conv := existingConv()
+				conv.LastMsgID = "01MSG"
+				deps.convRepo.EXPECT().
+					GetByID(mock.Anything, convID).
+					Return(conv, nil).Once()
+				deps.unreadStore.EXPECT().
+					Get(mock.Anything, userID, convID).
+					Return(int64(2), nil).Once()
+				deps.msgRepo.EXPECT().
+					GetByIDs(mock.Anything, []string{"01MSG"}).
+					Return([]chat.Message{{ID: "01MSG", Content: "hello"}}, nil).Once()
+			},
+			assertResult: func(s *conversationQuerySuite, conv *chat.Conversation) {
+				s.NotNil(conv.LastMessage)
+				s.Equal("01MSG", conv.LastMessage.ID)
+				s.Equal("hello", conv.LastMessage.Content)
+				s.Equal(2, conv.UnreadCount)
+			},
+		},
+		{
+			// conv has no LastMsgID → MsgRepo.GetByIDs must NOT be called.
+			name: "success_no_last_msg_id",
+			setupMock: func(deps testDeps) {
+				deps.convRepo.EXPECT().
+					GetByID(mock.Anything, convID).
+					Return(existingConv(), nil).Once()
+				deps.unreadStore.EXPECT().
+					Get(mock.Anything, userID, convID).
+					Return(int64(0), nil).Once()
+				// no msgRepo expectation → mockery fails if GetByIDs is called unexpectedly
+			},
+			assertResult: func(s *conversationQuerySuite, conv *chat.Conversation) {
+				s.Nil(conv.LastMessage)
+			},
+		},
+		{
+			// LastMessage fetch error is swallowed; conversation still returned.
+			name: "last_message_fetch_error_swallowed",
+			setupMock: func(deps testDeps) {
+				conv := existingConv()
+				conv.LastMsgID = "01MSG"
+				deps.convRepo.EXPECT().
+					GetByID(mock.Anything, convID).
+					Return(conv, nil).Once()
+				deps.unreadStore.EXPECT().
+					Get(mock.Anything, userID, convID).
+					Return(int64(0), nil).Once()
+				deps.msgRepo.EXPECT().
+					GetByIDs(mock.Anything, []string{"01MSG"}).
+					Return(nil, assert.AnError).Once()
+			},
+			assertResult: func(s *conversationQuerySuite, conv *chat.Conversation) {
+				s.NotNil(conv) // conv still returned despite msg fetch error
+				s.Nil(conv.LastMessage)
 			},
 		},
 	}
@@ -171,7 +235,7 @@ func (s *conversationQuerySuite) TestGetConversation() {
 func (s *conversationQuerySuite) TestGetConversations() {
 	const userID = int64(1)
 
-	// makeConvs tạo n conversation với UpdatedAt giảm dần (conv[0] mới nhất).
+	// makeConvs creates n conversations with decreasing UpdatedAt (index 0 = newest).
 	makeConvs := func(n int) []chat.Conversation {
 		convs := make([]chat.Conversation, n)
 		base := time.Now().UTC().Truncate(time.Second)
@@ -184,14 +248,25 @@ func (s *conversationQuerySuite) TestGetConversations() {
 		return convs
 	}
 
+	// makeConvsWithMsg creates n conversations each referencing a last message.
+	makeConvsWithMsg := func(n int) []chat.Conversation {
+		convs := makeConvs(n)
+		for i := range convs {
+			convs[i].LastMsgID = fmt.Sprintf("01MSG%02d", i)
+		}
+		return convs
+	}
+
 	type testDeps struct {
 		convRepo    *chatmocks.MockConversationRepository
+		msgRepo     *chatmocks.MockMessageRepository
 		unreadStore *chatmocks.MockUnreadStore
 	}
 
 	newDeps := func(t *testing.T) testDeps {
 		return testDeps{
 			convRepo:    chatmocks.NewMockConversationRepository(t),
+			msgRepo:     chatmocks.NewMockMessageRepository(t),
 			unreadStore: chatmocks.NewMockUnreadStore(t),
 		}
 	}
@@ -199,15 +274,8 @@ func (s *conversationQuerySuite) TestGetConversations() {
 	newUC := func(d testDeps) *usecase.ConversationQueryUseCase {
 		return usecase.NewQueryUseCase(usecase.QueryDeps{
 			ConvRepo: d.convRepo,
+			MsgRepo:  d.msgRepo,
 			Unread:   d.unreadStore,
-		})
-	}
-
-	// newUCNoUnread tạo usecase với Unread = nil — test nil-guard trong GetConversations.
-	newUCNoUnread := func(d testDeps) *usecase.ConversationQueryUseCase {
-		return usecase.NewQueryUseCase(usecase.QueryDeps{
-			ConvRepo: d.convRepo,
-			Unread:   nil,
 		})
 	}
 
@@ -215,31 +283,28 @@ func (s *conversationQuerySuite) TestGetConversations() {
 		name         string
 		params       chat.GetConversationsParams
 		setupMock    func(deps testDeps)
-		buildUC      func(deps testDeps) *usecase.ConversationQueryUseCase
 		wantErr      error
 		assertResult func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string])
 	}
 
 	defaultParams := chat.GetConversationsParams{
 		UserID: userID,
-		// State empty → usecase default thành StateActive
-		Query: common.CursorQueryParams[string]{Limit: 10},
+		Query:  common.CursorQueryParams[string]{Limit: 10},
 	}
 
 	tests := []testCase{
 		{
-			name: "repo_error",
+			name:   "repo_error",
 			params: defaultParams,
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
 					GetList(mock.Anything, mock.Anything).
 					Return(nil, assert.AnError).Once()
 			},
-			buildUC: newUC,
 			wantErr: pkg.ErrInternal,
 		},
 		{
-			name: "unread_error",
+			name:   "unread_error",
 			params: defaultParams,
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
@@ -249,11 +314,10 @@ func (s *conversationQuerySuite) TestGetConversations() {
 					GetAll(mock.Anything, userID).
 					Return(nil, assert.AnError).Once()
 			},
-			buildUC: newUC,
 			wantErr: pkg.ErrInternal,
 		},
 		{
-			// GetList trả 2 conv, limit=10 → không có trang tiếp.
+			// GetList returns 2 convs, limit=10 → no next page.
 			name:   "success_first_page_no_more",
 			params: defaultParams,
 			setupMock: func(deps testDeps) {
@@ -264,7 +328,6 @@ func (s *conversationQuerySuite) TestGetConversations() {
 					GetAll(mock.Anything, userID).
 					Return(map[string]int64{}, nil).Once()
 			},
-			buildUC: newUC,
 			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
 				s.Len(result.Data, 2)
 				s.False(result.HasNextPage)
@@ -272,9 +335,9 @@ func (s *conversationQuerySuite) TestGetConversations() {
 			},
 		},
 		{
-			// GetList trả limit+1=11 conv → HasNextPage=true, data trimmed về 10.
-			// NextCursor = UpdatedAt của item thứ 10 (index 9) vì GetCursor() = UpdatedAt.
-			name: "success_has_next_page",
+			// GetList returns limit+1=11 → HasNextPage=true, data trimmed to 10.
+			// NextCursor = GetCursor() of the 10th item (index 9).
+			name:   "success_has_next_page",
 			params: defaultParams,
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
@@ -284,16 +347,14 @@ func (s *conversationQuerySuite) TestGetConversations() {
 					GetAll(mock.Anything, userID).
 					Return(map[string]int64{}, nil).Once()
 			},
-			buildUC: newUC,
 			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
 				s.Len(result.Data, 10)
 				s.True(result.HasNextPage)
-				// cursor = GetCursor() của item cuối = UpdatedAt RFC3339Nano
 				s.Equal(result.Data[9].GetCursor(), result.NextCursor)
 			},
 		},
 		{
-			// UnreadCount được populate đúng từ Redis map.
+			// UnreadCount populated correctly from Redis map.
 			name:   "success_populates_unread",
 			params: defaultParams,
 			setupMock: func(deps testDeps) {
@@ -305,15 +366,14 @@ func (s *conversationQuerySuite) TestGetConversations() {
 					GetAll(mock.Anything, userID).
 					Return(map[string]int64{convs[0].ID: 7}, nil).Once()
 			},
-			buildUC: newUC,
 			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
 				s.Equal(7, result.Data[0].UnreadCount)
 			},
 		},
 		{
-			// Khi State="" → usecase tự default thành StateActive trước khi gọi repo.
+			// State="" → usecase defaults to StateActive before calling repo.
 			name:   "success_state_defaults_to_active",
-			params: defaultParams, // State: ""
+			params: defaultParams,
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
 					GetList(mock.Anything, mock.MatchedBy(func(p chat.GetConversationsParams) bool {
@@ -324,27 +384,117 @@ func (s *conversationQuerySuite) TestGetConversations() {
 					GetAll(mock.Anything, userID).
 					Return(map[string]int64{}, nil).Once()
 			},
-			buildUC: newUC,
 			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
 				s.Len(result.Data, 1)
 			},
 		},
 		{
-			// Khi Unread dep = nil → không panic, UnreadCount = 0 (zero value).
-			name:   "success_nil_unread_store",
+			// Convs with LastMsgID → bulk fetch via GetByIDs → LastMessage populated.
+			name:   "success_populates_last_messages",
+			params: defaultParams,
+			setupMock: func(deps testDeps) {
+				convs := makeConvsWithMsg(2)
+				deps.convRepo.EXPECT().
+					GetList(mock.Anything, mock.Anything).
+					Return(convs, nil).Once()
+				deps.unreadStore.EXPECT().
+					GetAll(mock.Anything, userID).
+					Return(map[string]int64{}, nil).Once()
+				// Bulk fetch: both last-msg IDs collected in a single call.
+				deps.msgRepo.EXPECT().
+					GetByIDs(mock.Anything, mock.MatchedBy(func(ids []string) bool {
+						return len(ids) == 2
+					})).
+					Return([]chat.Message{
+						{ID: "01MSG00", Content: "first"},
+						{ID: "01MSG01", Content: "second"},
+					}, nil).Once()
+			},
+			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
+				s.Len(result.Data, 2)
+				for _, c := range result.Data {
+					s.NotNil(c.LastMessage)
+				}
+			},
+		},
+		{
+			// Convs with no LastMsgID → GetByIDs must NOT be called.
+			name:   "success_no_last_msg_ids_skips_fetch",
 			params: defaultParams,
 			setupMock: func(deps testDeps) {
 				deps.convRepo.EXPECT().
 					GetList(mock.Anything, mock.Anything).
 					Return(makeConvs(2), nil).Once()
-				// unreadStore không được gọi vì dep là nil
+				deps.unreadStore.EXPECT().
+					GetAll(mock.Anything, userID).
+					Return(map[string]int64{}, nil).Once()
+				// no msgRepo expectation — if GetByIDs is called the mock will fail
 			},
-			buildUC: newUCNoUnread,
 			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
-				s.Len(result.Data, 2)
-				for _, conv := range result.Data {
-					s.Equal(0, conv.UnreadCount)
+				for _, c := range result.Data {
+					s.Nil(c.LastMessage)
 				}
+			},
+		},
+		{
+			// Bulk last-message fetch fails → error swallowed, convs still returned without LastMessage.
+			name:   "last_message_bulk_fetch_error_swallowed",
+			params: defaultParams,
+			setupMock: func(deps testDeps) {
+				convs := makeConvsWithMsg(1)
+				deps.convRepo.EXPECT().
+					GetList(mock.Anything, mock.Anything).
+					Return(convs, nil).Once()
+				deps.unreadStore.EXPECT().
+					GetAll(mock.Anything, userID).
+					Return(map[string]int64{}, nil).Once()
+				deps.msgRepo.EXPECT().
+					GetByIDs(mock.Anything, mock.Anything).
+					Return(nil, assert.AnError).Once()
+			},
+			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
+				s.Len(result.Data, 1)
+				s.Nil(result.Data[0].LastMessage)
+			},
+		},
+		{
+			// Cursor pagination: explicit state=pending filter passes through.
+			name: "success_pending_state_filter",
+			params: chat.GetConversationsParams{
+				UserID: userID,
+				State:  chat.StatePending,
+				Query:  common.CursorQueryParams[string]{Limit: 5},
+			},
+			setupMock: func(deps testDeps) {
+				deps.convRepo.EXPECT().
+					GetList(mock.Anything, mock.MatchedBy(func(p chat.GetConversationsParams) bool {
+						return p.State == chat.StatePending
+					})).
+					Return(makeConvs(3), nil).Once()
+				deps.unreadStore.EXPECT().
+					GetAll(mock.Anything, userID).
+					Return(map[string]int64{}, nil).Once()
+			},
+			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
+				s.Len(result.Data, 3)
+			},
+		},
+		{
+			// Empty result: repo returns no convs → empty paginated result with no next page.
+			name:   "success_empty_inbox",
+			params: defaultParams,
+			setupMock: func(deps testDeps) {
+				deps.convRepo.EXPECT().
+					GetList(mock.Anything, mock.Anything).
+					Return([]chat.Conversation{}, nil).Once()
+				deps.unreadStore.EXPECT().
+					GetAll(mock.Anything, userID).
+					Return(map[string]int64{}, nil).Once()
+			},
+			assertResult: func(s *conversationQuerySuite, result common.CursorPaginatedResult[chat.Conversation, string]) {
+				s.Empty(result.Data)
+				s.False(result.HasNextPage)
+				s.Empty(result.NextCursor)
 			},
 		},
 	}
@@ -352,7 +502,7 @@ func (s *conversationQuerySuite) TestGetConversations() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			deps := newDeps(s.T())
-			uc := tc.buildUC(deps)
+			uc := newUC(deps)
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)

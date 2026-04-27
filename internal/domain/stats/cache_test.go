@@ -125,11 +125,11 @@ func (s *statsCacheSuite) TestClearSyncedFields() {
 			setupMock: func(deps testDeps) {
 				key := stats.StatsHashKey(stats.StatePostLikes)
 				deps.store.EXPECT().
-					Eval(mock.Anything, mock.AnythingOfType("string"), []string{key}, []interface{}{"1", int64(-10)}).
+					Eval(mock.Anything, mock.AnythingOfType("string"), []string{key}, "1", int64(-10)).
 					Return(nil, nil).
 					Maybe()
 				deps.store.EXPECT().
-					Eval(mock.Anything, mock.AnythingOfType("string"), []string{key}, []interface{}{"2", int64(-5)}).
+					Eval(mock.Anything, mock.AnythingOfType("string"), []string{key}, "2", int64(-5)).
 					Return(nil, nil).
 					Maybe()
 			},
@@ -253,7 +253,7 @@ func (s *statsCacheSuite) TestGetStatsOffsets() {
 				key := stats.StatsHashKey(a.state)
 				retVals := []string{"10", "-5", "", "not-an-int"}
 				deps.store.EXPECT().
-					HMGet(mock.Anything, key, []string{"1", "2", "3", "4"}).
+					HMGet(mock.Anything, key, "1", "2", "3", "4").
 					Return(retVals, nil).
 					Once()
 			},
@@ -278,7 +278,7 @@ func (s *statsCacheSuite) TestGetStatsOffsets() {
 			setupMock: func(deps testDeps, a args) {
 				key := stats.StatsHashKey(a.state)
 				deps.store.EXPECT().
-					HMGet(mock.Anything, key, []string{"1"}).
+					HMGet(mock.Anything, key, "1").
 					Return(nil, assert.AnError).
 					Once()
 			},

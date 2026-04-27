@@ -61,10 +61,6 @@ func (u *ConversationMemberUseCase) AcceptPendingByFollowEvent(ctx context.Conte
 	return pkg.OrInternalError(u.deps.ConvRepo.UpdateParticipantState(ctx, conv.ID, followerID, chat.StateActive))
 }
 
-func (u *ConversationMemberUseCase) IgnoreConversation(ctx context.Context, convID string, userID int64) error {
-	return nil
-}
-
 func (u *ConversationMemberUseCase) AddMember(ctx context.Context, p chat.AddMemberParams) error {
 	conv, err := u.loadGroupConv(ctx, p.ConvID)
 	if err != nil {

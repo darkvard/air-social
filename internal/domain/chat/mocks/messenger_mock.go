@@ -237,17 +237,17 @@ func (_c *MockMessenger_GetMessages_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// MarkRead provides a mock function with given fields: ctx, convID, userID, lastReadMsgID
-func (_m *MockMessenger) MarkRead(ctx context.Context, convID string, userID int64, lastReadMsgID string) error {
-	ret := _m.Called(ctx, convID, userID, lastReadMsgID)
+// MarkRead provides a mock function with given fields: ctx, convID, userID
+func (_m *MockMessenger) MarkRead(ctx context.Context, convID string, userID int64) error {
+	ret := _m.Called(ctx, convID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MarkRead")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64, string) error); ok {
-		r0 = rf(ctx, convID, userID, lastReadMsgID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+		r0 = rf(ctx, convID, userID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -264,14 +264,13 @@ type MockMessenger_MarkRead_Call struct {
 //   - ctx context.Context
 //   - convID string
 //   - userID int64
-//   - lastReadMsgID string
-func (_e *MockMessenger_Expecter) MarkRead(ctx interface{}, convID interface{}, userID interface{}, lastReadMsgID interface{}) *MockMessenger_MarkRead_Call {
-	return &MockMessenger_MarkRead_Call{Call: _e.mock.On("MarkRead", ctx, convID, userID, lastReadMsgID)}
+func (_e *MockMessenger_Expecter) MarkRead(ctx interface{}, convID interface{}, userID interface{}) *MockMessenger_MarkRead_Call {
+	return &MockMessenger_MarkRead_Call{Call: _e.mock.On("MarkRead", ctx, convID, userID)}
 }
 
-func (_c *MockMessenger_MarkRead_Call) Run(run func(ctx context.Context, convID string, userID int64, lastReadMsgID string)) *MockMessenger_MarkRead_Call {
+func (_c *MockMessenger_MarkRead_Call) Run(run func(ctx context.Context, convID string, userID int64)) *MockMessenger_MarkRead_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(int64), args[3].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(int64))
 	})
 	return _c
 }
@@ -281,7 +280,55 @@ func (_c *MockMessenger_MarkRead_Call) Return(_a0 error) *MockMessenger_MarkRead
 	return _c
 }
 
-func (_c *MockMessenger_MarkRead_Call) RunAndReturn(run func(context.Context, string, int64, string) error) *MockMessenger_MarkRead_Call {
+func (_c *MockMessenger_MarkRead_Call) RunAndReturn(run func(context.Context, string, int64) error) *MockMessenger_MarkRead_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkUnread provides a mock function with given fields: ctx, convID, userID
+func (_m *MockMessenger) MarkUnread(ctx context.Context, convID string, userID int64) error {
+	ret := _m.Called(ctx, convID, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkUnread")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+		r0 = rf(ctx, convID, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockMessenger_MarkUnread_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkUnread'
+type MockMessenger_MarkUnread_Call struct {
+	*mock.Call
+}
+
+// MarkUnread is a helper method to define mock.On call
+//   - ctx context.Context
+//   - convID string
+//   - userID int64
+func (_e *MockMessenger_Expecter) MarkUnread(ctx interface{}, convID interface{}, userID interface{}) *MockMessenger_MarkUnread_Call {
+	return &MockMessenger_MarkUnread_Call{Call: _e.mock.On("MarkUnread", ctx, convID, userID)}
+}
+
+func (_c *MockMessenger_MarkUnread_Call) Run(run func(ctx context.Context, convID string, userID int64)) *MockMessenger_MarkUnread_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(int64))
+	})
+	return _c
+}
+
+func (_c *MockMessenger_MarkUnread_Call) Return(_a0 error) *MockMessenger_MarkUnread_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockMessenger_MarkUnread_Call) RunAndReturn(run func(context.Context, string, int64) error) *MockMessenger_MarkUnread_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -335,7 +382,7 @@ func (_c *MockMessenger_RemoveReaction_Call) RunAndReturn(run func(context.Conte
 }
 
 // SendMessage provides a mock function with given fields: ctx, params
-func (_m *MockMessenger) SendMessage(ctx context.Context, params chat.SendMessageParams) (*chat.Message, error) {
+func (_m *MockMessenger) SendMessage(ctx context.Context, params chat.SendMessageParams) (*chat.Message, bool, error) {
 	ret := _m.Called(ctx, params)
 
 	if len(ret) == 0 {
@@ -343,8 +390,9 @@ func (_m *MockMessenger) SendMessage(ctx context.Context, params chat.SendMessag
 	}
 
 	var r0 *chat.Message
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, chat.SendMessageParams) (*chat.Message, error)); ok {
+	var r1 bool
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, chat.SendMessageParams) (*chat.Message, bool, error)); ok {
 		return rf(ctx, params)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, chat.SendMessageParams) *chat.Message); ok {
@@ -355,13 +403,19 @@ func (_m *MockMessenger) SendMessage(ctx context.Context, params chat.SendMessag
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, chat.SendMessageParams) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, chat.SendMessageParams) bool); ok {
 		r1 = rf(ctx, params)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(bool)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, chat.SendMessageParams) error); ok {
+		r2 = rf(ctx, params)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // MockMessenger_SendMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendMessage'
@@ -383,12 +437,12 @@ func (_c *MockMessenger_SendMessage_Call) Run(run func(ctx context.Context, para
 	return _c
 }
 
-func (_c *MockMessenger_SendMessage_Call) Return(_a0 *chat.Message, _a1 error) *MockMessenger_SendMessage_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockMessenger_SendMessage_Call) Return(_a0 *chat.Message, _a1 bool, _a2 error) *MockMessenger_SendMessage_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockMessenger_SendMessage_Call) RunAndReturn(run func(context.Context, chat.SendMessageParams) (*chat.Message, error)) *MockMessenger_SendMessage_Call {
+func (_c *MockMessenger_SendMessage_Call) RunAndReturn(run func(context.Context, chat.SendMessageParams) (*chat.Message, bool, error)) *MockMessenger_SendMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }

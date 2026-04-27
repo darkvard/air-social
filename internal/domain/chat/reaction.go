@@ -7,12 +7,12 @@ import (
 type ReactionType string
 
 const (
-	ReactionLike  ReactionType = "👍"
-	ReactionLove  ReactionType = "❤️"
-	ReactionHaha  ReactionType = "😂"
-	ReactionWow   ReactionType = "😮"
-	ReactionSad   ReactionType = "😢"
-	ReactionAngry ReactionType = "😠"
+	ReactionLike  ReactionType = "like"
+	ReactionLove  ReactionType = "love"
+	ReactionHaha  ReactionType = "haha"
+	ReactionWow   ReactionType = "wow"
+	ReactionSad   ReactionType = "sad"
+	ReactionAngry ReactionType = "angry"
 )
 
 var allowedReactions = map[ReactionType]bool{

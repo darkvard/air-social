@@ -229,6 +229,8 @@ definitions:
         type: integer
       id:
         type: string
+      last_message:
+        $ref: '#/definitions/internal_transport_http_chat.MessageRes'
       name:
         type: string
       participants:
@@ -276,6 +278,49 @@ definitions:
     - name
     - participant_ids
     type: object
+  internal_transport_http_chat.EditMessageReq:
+    properties:
+      content:
+        type: string
+    required:
+    - content
+    type: object
+  internal_transport_http_chat.MessageRes:
+    properties:
+      content:
+        type: string
+      conversation_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_deleted:
+        type: boolean
+      is_edited:
+        type: boolean
+      reactions:
+        items:
+          $ref: '#/definitions/internal_transport_http_chat.ReactionRes'
+        type: array
+      reply_to_id:
+        type: string
+      sender_id:
+        type: integer
+      type:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_transport_http_chat.MessagesRes:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/internal_transport_http_chat.MessageRes'
+        type: array
+      meta:
+        $ref: '#/definitions/air-social_internal_transport_http_shared.MetaCursor-string'
+    type: object
   internal_transport_http_chat.ParticipantRes:
     properties:
       joined_at:
@@ -288,6 +333,49 @@ definitions:
         type: string
       user_id:
         type: integer
+    type: object
+  internal_transport_http_chat.ReactionReq:
+    properties:
+      type:
+        enum:
+        - like
+        - love
+        - haha
+        - wow
+        - sad
+        - angry
+        type: string
+    required:
+    - type
+    type: object
+  internal_transport_http_chat.ReactionRes:
+    properties:
+      created_at:
+        type: string
+      type:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  internal_transport_http_chat.SendMessageReq:
+    properties:
+      client_msg_id:
+        type: string
+      content:
+        type: string
+      reply_to_id:
+        type: string
+      type:
+        enum:
+        - text
+        - image
+        - video
+        - audio
+        - file
+        type: string
+    required:
+    - content
+    - type
     type: object
   internal_transport_http_chat.UpdateGroupReq:
     properties:
@@ -1693,13 +1781,385 @@ paths:
       summary: Update member role
       tags:
       - Chat
+  /conversations/{id}/messages:
+    get:
+      description: |-
+        Returns cursor-paginated messages for a conversation the authenticated user is a participant of.
+        Messages are returned newest-first. Pass next_cursor from the previous response to paginate.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pagination cursor from previous response
+        in: query
+        name: cursor
+        type: string
+      - description: 'Page size (default: 20, max: 50)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.MessagesRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: List messages in a conversation
+      tags:
+      - Chat
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Sends a message to a conversation. The authenticated user must be an active or pending participant.
+        Pending senders are implicitly accepted on first message. Supports idempotency via client_msg_id.
+        For non-text types (image, video, audio, file), content must be a valid MinIO object key.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.SendMessageReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Duplicate message (idempotent retry via client_msg_id)
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.MessageRes'
+        "201":
+          description: New message created
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.MessageRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Send a message
+      tags:
+      - Chat
+  /conversations/{id}/messages/{msgID}:
+    delete:
+      description: Soft-deletes a message. Only the original sender can delete. Content
+        is cleared but the message row is preserved for thread context.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message ID (ULID)
+        in: path
+        name: msgID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a message
+      tags:
+      - Chat
+    patch:
+      consumes:
+      - application/json
+      description: Updates the content of a message. Only the original sender can
+        edit. Deleted messages cannot be edited.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message ID (ULID)
+        in: path
+        name: msgID
+        required: true
+        type: string
+      - description: New content
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.EditMessageReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.MessageRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Edit a message
+      tags:
+      - Chat
+  /conversations/{id}/messages/{msgID}/reactions:
+    delete:
+      description: |-
+        Removes the authenticated user's reaction from the specified message.
+        Deleted messages cannot be modified.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message ID (ULID)
+        in: path
+        name: msgID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Remove a reaction from a message
+      tags:
+      - Chat
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Adds an emoji reaction from the authenticated user to the specified message.
+        Allowed reactions: like | love | haha | wow | sad | angry
+        Deleted messages cannot be reacted to.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message ID (ULID)
+        in: path
+        name: msgID
+        required: true
+        type: string
+      - description: Emoji reaction
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_chat.ReactionReq'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Add a reaction to a message
+      tags:
+      - Chat
+  /conversations/{id}/read:
+    delete:
+      description: |-
+        Sets the unread count to 1 for the authenticated user. Private reminder only — does NOT roll back
+        the seen status visible to other participants. Once a message is seen, it remains seen for the sender.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Mark conversation as unread
+      tags:
+      - Chat
+    patch:
+      description: |-
+        Resets unread count to 0 and updates the authenticated user's last-read pointer to the conversation's latest message.
+        No request body needed. The server derives the latest message from the conversation state.
+      parameters:
+      - description: Conversation ID (ULID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Mark conversation as read
+      tags:
+      - Chat
   /conversations/direct:
     post:
       consumes:
       - application/json
       description: |-
         Creates a new direct (1-on-1) conversation between the authenticated user and the target user.
-        If a direct conversation between them already exists, the existing one is returned.
+        If a direct conversation between them already exists, the existing one is returned (200).
         The recipient's initial state is "pending" unless they already follow the sender, in which case it is "active".
       parameters:
       - description: Target user
@@ -1712,7 +2172,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Existing conversation returned
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
+        "201":
+          description: Conversation created
           schema:
             $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
         "400":
@@ -1736,8 +2200,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new group conversation with the authenticated user as
-        admin.
+      description: |-
+        Creates a new group conversation with the authenticated user as admin.
+        If client_conv_id is provided and a conversation with that key already exists, the existing one is returned (200).
       parameters:
       - description: Group details
         in: body
@@ -1749,7 +2214,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Existing conversation returned (idempotent retry via client_conv_id)
+          schema:
+            $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
+        "201":
+          description: Conversation created
           schema:
             $ref: '#/definitions/internal_transport_http_chat.ConversationRes'
         "400":

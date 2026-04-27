@@ -165,54 +165,6 @@ func (_c *MockConversationMember_AddMember_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// IgnoreConversation provides a mock function with given fields: ctx, convID, userID
-func (_m *MockConversationMember) IgnoreConversation(ctx context.Context, convID string, userID int64) error {
-	ret := _m.Called(ctx, convID, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IgnoreConversation")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
-		r0 = rf(ctx, convID, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockConversationMember_IgnoreConversation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IgnoreConversation'
-type MockConversationMember_IgnoreConversation_Call struct {
-	*mock.Call
-}
-
-// IgnoreConversation is a helper method to define mock.On call
-//   - ctx context.Context
-//   - convID string
-//   - userID int64
-func (_e *MockConversationMember_Expecter) IgnoreConversation(ctx interface{}, convID interface{}, userID interface{}) *MockConversationMember_IgnoreConversation_Call {
-	return &MockConversationMember_IgnoreConversation_Call{Call: _e.mock.On("IgnoreConversation", ctx, convID, userID)}
-}
-
-func (_c *MockConversationMember_IgnoreConversation_Call) Run(run func(ctx context.Context, convID string, userID int64)) *MockConversationMember_IgnoreConversation_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(int64))
-	})
-	return _c
-}
-
-func (_c *MockConversationMember_IgnoreConversation_Call) Return(_a0 error) *MockConversationMember_IgnoreConversation_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockConversationMember_IgnoreConversation_Call) RunAndReturn(run func(context.Context, string, int64) error) *MockConversationMember_IgnoreConversation_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RemoveMember provides a mock function with given fields: ctx, p
 func (_m *MockConversationMember) RemoveMember(ctx context.Context, p chat.RemoveMemberParams) error {
 	ret := _m.Called(ctx, p)

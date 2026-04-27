@@ -23,7 +23,7 @@ func (_m *MockMessageRepository) EXPECT() *MockMessageRepository_Expecter {
 }
 
 // AddReaction provides a mock function with given fields: ctx, msgID, r
-func (_m *MockMessageRepository) AddReaction(ctx context.Context, msgID string, r chat.Reaction) error {
+func (_m *MockMessageRepository) AddReaction(ctx context.Context, msgID string, r *chat.Reaction) error {
 	ret := _m.Called(ctx, msgID, r)
 
 	if len(ret) == 0 {
@@ -31,7 +31,7 @@ func (_m *MockMessageRepository) AddReaction(ctx context.Context, msgID string, 
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, chat.Reaction) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, *chat.Reaction) error); ok {
 		r0 = rf(ctx, msgID, r)
 	} else {
 		r0 = ret.Error(0)
@@ -48,14 +48,14 @@ type MockMessageRepository_AddReaction_Call struct {
 // AddReaction is a helper method to define mock.On call
 //   - ctx context.Context
 //   - msgID string
-//   - r chat.Reaction
+//   - r *chat.Reaction
 func (_e *MockMessageRepository_Expecter) AddReaction(ctx interface{}, msgID interface{}, r interface{}) *MockMessageRepository_AddReaction_Call {
 	return &MockMessageRepository_AddReaction_Call{Call: _e.mock.On("AddReaction", ctx, msgID, r)}
 }
 
-func (_c *MockMessageRepository_AddReaction_Call) Run(run func(ctx context.Context, msgID string, r chat.Reaction)) *MockMessageRepository_AddReaction_Call {
+func (_c *MockMessageRepository_AddReaction_Call) Run(run func(ctx context.Context, msgID string, r *chat.Reaction)) *MockMessageRepository_AddReaction_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(chat.Reaction))
+		run(args[0].(context.Context), args[1].(string), args[2].(*chat.Reaction))
 	})
 	return _c
 }
@@ -65,7 +65,7 @@ func (_c *MockMessageRepository_AddReaction_Call) Return(_a0 error) *MockMessage
 	return _c
 }
 
-func (_c *MockMessageRepository_AddReaction_Call) RunAndReturn(run func(context.Context, string, chat.Reaction) error) *MockMessageRepository_AddReaction_Call {
+func (_c *MockMessageRepository_AddReaction_Call) RunAndReturn(run func(context.Context, string, *chat.Reaction) error) *MockMessageRepository_AddReaction_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -117,9 +117,9 @@ func (_c *MockMessageRepository_Create_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
-// GetByClientMsgID provides a mock function with given fields: ctx, clientMsgID
-func (_m *MockMessageRepository) GetByClientMsgID(ctx context.Context, clientMsgID string) (*chat.Message, error) {
-	ret := _m.Called(ctx, clientMsgID)
+// GetByClientMsgID provides a mock function with given fields: ctx, clientMsgID, senderID
+func (_m *MockMessageRepository) GetByClientMsgID(ctx context.Context, clientMsgID string, senderID int64) (*chat.Message, error) {
+	ret := _m.Called(ctx, clientMsgID, senderID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByClientMsgID")
@@ -127,19 +127,19 @@ func (_m *MockMessageRepository) GetByClientMsgID(ctx context.Context, clientMsg
 
 	var r0 *chat.Message
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*chat.Message, error)); ok {
-		return rf(ctx, clientMsgID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) (*chat.Message, error)); ok {
+		return rf(ctx, clientMsgID, senderID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *chat.Message); ok {
-		r0 = rf(ctx, clientMsgID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) *chat.Message); ok {
+		r0 = rf(ctx, clientMsgID, senderID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*chat.Message)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, clientMsgID)
+	if rf, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = rf(ctx, clientMsgID, senderID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -155,13 +155,14 @@ type MockMessageRepository_GetByClientMsgID_Call struct {
 // GetByClientMsgID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - clientMsgID string
-func (_e *MockMessageRepository_Expecter) GetByClientMsgID(ctx interface{}, clientMsgID interface{}) *MockMessageRepository_GetByClientMsgID_Call {
-	return &MockMessageRepository_GetByClientMsgID_Call{Call: _e.mock.On("GetByClientMsgID", ctx, clientMsgID)}
+//   - senderID int64
+func (_e *MockMessageRepository_Expecter) GetByClientMsgID(ctx interface{}, clientMsgID interface{}, senderID interface{}) *MockMessageRepository_GetByClientMsgID_Call {
+	return &MockMessageRepository_GetByClientMsgID_Call{Call: _e.mock.On("GetByClientMsgID", ctx, clientMsgID, senderID)}
 }
 
-func (_c *MockMessageRepository_GetByClientMsgID_Call) Run(run func(ctx context.Context, clientMsgID string)) *MockMessageRepository_GetByClientMsgID_Call {
+func (_c *MockMessageRepository_GetByClientMsgID_Call) Run(run func(ctx context.Context, clientMsgID string, senderID int64)) *MockMessageRepository_GetByClientMsgID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(int64))
 	})
 	return _c
 }
@@ -171,7 +172,7 @@ func (_c *MockMessageRepository_GetByClientMsgID_Call) Return(_a0 *chat.Message,
 	return _c
 }
 
-func (_c *MockMessageRepository_GetByClientMsgID_Call) RunAndReturn(run func(context.Context, string) (*chat.Message, error)) *MockMessageRepository_GetByClientMsgID_Call {
+func (_c *MockMessageRepository_GetByClientMsgID_Call) RunAndReturn(run func(context.Context, string, int64) (*chat.Message, error)) *MockMessageRepository_GetByClientMsgID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -235,12 +236,71 @@ func (_c *MockMessageRepository_GetByID_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
-// GetConversationMessages provides a mock function with given fields: ctx, params
-func (_m *MockMessageRepository) GetConversationMessages(ctx context.Context, params chat.GetMessagesParams) ([]chat.Message, error) {
+// GetByIDs provides a mock function with given fields: ctx, ids
+func (_m *MockMessageRepository) GetByIDs(ctx context.Context, ids []string) ([]chat.Message, error) {
+	ret := _m.Called(ctx, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []chat.Message
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string) ([]chat.Message, error)); ok {
+		return rf(ctx, ids)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []string) []chat.Message); ok {
+		r0 = rf(ctx, ids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]chat.Message)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []string) error); ok {
+		r1 = rf(ctx, ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockMessageRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockMessageRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ids []string
+func (_e *MockMessageRepository_Expecter) GetByIDs(ctx interface{}, ids interface{}) *MockMessageRepository_GetByIDs_Call {
+	return &MockMessageRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, ids)}
+}
+
+func (_c *MockMessageRepository_GetByIDs_Call) Run(run func(ctx context.Context, ids []string)) *MockMessageRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]string))
+	})
+	return _c
+}
+
+func (_c *MockMessageRepository_GetByIDs_Call) Return(_a0 []chat.Message, _a1 error) *MockMessageRepository_GetByIDs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockMessageRepository_GetByIDs_Call) RunAndReturn(run func(context.Context, []string) ([]chat.Message, error)) *MockMessageRepository_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetList provides a mock function with given fields: ctx, params
+func (_m *MockMessageRepository) GetList(ctx context.Context, params chat.GetMessagesParams) ([]chat.Message, error) {
 	ret := _m.Called(ctx, params)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetConversationMessages")
+		panic("no return value specified for GetList")
 	}
 
 	var r0 []chat.Message
@@ -265,31 +325,31 @@ func (_m *MockMessageRepository) GetConversationMessages(ctx context.Context, pa
 	return r0, r1
 }
 
-// MockMessageRepository_GetConversationMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetConversationMessages'
-type MockMessageRepository_GetConversationMessages_Call struct {
+// MockMessageRepository_GetList_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetList'
+type MockMessageRepository_GetList_Call struct {
 	*mock.Call
 }
 
-// GetConversationMessages is a helper method to define mock.On call
+// GetList is a helper method to define mock.On call
 //   - ctx context.Context
 //   - params chat.GetMessagesParams
-func (_e *MockMessageRepository_Expecter) GetConversationMessages(ctx interface{}, params interface{}) *MockMessageRepository_GetConversationMessages_Call {
-	return &MockMessageRepository_GetConversationMessages_Call{Call: _e.mock.On("GetConversationMessages", ctx, params)}
+func (_e *MockMessageRepository_Expecter) GetList(ctx interface{}, params interface{}) *MockMessageRepository_GetList_Call {
+	return &MockMessageRepository_GetList_Call{Call: _e.mock.On("GetList", ctx, params)}
 }
 
-func (_c *MockMessageRepository_GetConversationMessages_Call) Run(run func(ctx context.Context, params chat.GetMessagesParams)) *MockMessageRepository_GetConversationMessages_Call {
+func (_c *MockMessageRepository_GetList_Call) Run(run func(ctx context.Context, params chat.GetMessagesParams)) *MockMessageRepository_GetList_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(chat.GetMessagesParams))
 	})
 	return _c
 }
 
-func (_c *MockMessageRepository_GetConversationMessages_Call) Return(_a0 []chat.Message, _a1 error) *MockMessageRepository_GetConversationMessages_Call {
+func (_c *MockMessageRepository_GetList_Call) Return(_a0 []chat.Message, _a1 error) *MockMessageRepository_GetList_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockMessageRepository_GetConversationMessages_Call) RunAndReturn(run func(context.Context, chat.GetMessagesParams) ([]chat.Message, error)) *MockMessageRepository_GetConversationMessages_Call {
+func (_c *MockMessageRepository_GetList_Call) RunAndReturn(run func(context.Context, chat.GetMessagesParams) ([]chat.Message, error)) *MockMessageRepository_GetList_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -342,17 +402,17 @@ func (_c *MockMessageRepository_RemoveReaction_Call) RunAndReturn(run func(conte
 	return _c
 }
 
-// SoftDelete provides a mock function with given fields: ctx, id, userID
-func (_m *MockMessageRepository) SoftDelete(ctx context.Context, id string, userID int64) error {
-	ret := _m.Called(ctx, id, userID)
+// SoftDelete provides a mock function with given fields: ctx, id
+func (_m *MockMessageRepository) SoftDelete(ctx context.Context, id string) error {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SoftDelete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
-		r0 = rf(ctx, id, userID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -368,14 +428,13 @@ type MockMessageRepository_SoftDelete_Call struct {
 // SoftDelete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - userID int64
-func (_e *MockMessageRepository_Expecter) SoftDelete(ctx interface{}, id interface{}, userID interface{}) *MockMessageRepository_SoftDelete_Call {
-	return &MockMessageRepository_SoftDelete_Call{Call: _e.mock.On("SoftDelete", ctx, id, userID)}
+func (_e *MockMessageRepository_Expecter) SoftDelete(ctx interface{}, id interface{}) *MockMessageRepository_SoftDelete_Call {
+	return &MockMessageRepository_SoftDelete_Call{Call: _e.mock.On("SoftDelete", ctx, id)}
 }
 
-func (_c *MockMessageRepository_SoftDelete_Call) Run(run func(ctx context.Context, id string, userID int64)) *MockMessageRepository_SoftDelete_Call {
+func (_c *MockMessageRepository_SoftDelete_Call) Run(run func(ctx context.Context, id string)) *MockMessageRepository_SoftDelete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(int64))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -385,7 +444,7 @@ func (_c *MockMessageRepository_SoftDelete_Call) Return(_a0 error) *MockMessageR
 	return _c
 }
 
-func (_c *MockMessageRepository_SoftDelete_Call) RunAndReturn(run func(context.Context, string, int64) error) *MockMessageRepository_SoftDelete_Call {
+func (_c *MockMessageRepository_SoftDelete_Call) RunAndReturn(run func(context.Context, string) error) *MockMessageRepository_SoftDelete_Call {
 	_c.Call.Return(run)
 	return _c
 }

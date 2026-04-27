@@ -77,13 +77,16 @@ func MapPostgresError(err error) error {
 }
 
 func MapMongoError(err error) error {
+	if err == nil {
+		return nil
+	}
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return ErrNotFound
 	}
 	if mongo.IsDuplicateKeyError(err) {
-		return ErrConflict // unique index violation
+		return ErrConflict
 	}
-	Log().Errorw("mongodb error", "code", pgCode(err), "error", err)
+	Log().Errorw("mongodb error", "error", err)
 	return ErrInternal
 }
 

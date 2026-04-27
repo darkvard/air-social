@@ -93,10 +93,9 @@ func (d *conversationDoc) toDomain() *chat.Conversation {
 		AvatarKey:    d.AvatarKey,
 		ClientConvID: d.ClientConvID,
 		CreatedBy:    d.CreatedBy,
+		LastMsgID:    d.LastMsgID,
 		CreatedAt:    d.CreatedAt,
 		UpdatedAt:    d.UpdatedAt,
-		// LastMessage and UnreadCount are not stored in MongoDB —
-		// repo populates them separately after fetching.
 	}
 }
 

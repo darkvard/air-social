@@ -21,14 +21,15 @@ func NewConversationHandler(uc chatdomain.ConversationUseCase) ConversationHandl
 //
 //	@Summary		Create or get direct conversation
 //	@Description	Creates a new direct (1-on-1) conversation between the authenticated user and the target user.
-//	@Description	If a direct conversation between them already exists, the existing one is returned.
+//	@Description	If a direct conversation between them already exists, the existing one is returned (200).
 //	@Description	The recipient's initial state is "pending" unless they already follow the sender, in which case it is "active".
 //	@Tags			Chat
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			body	body		CreateDirectReq	true	"Target user"
-//	@Success		200		{object}	ConversationRes
+//	@Success		201		{object}	ConversationRes	"Conversation created"
+//	@Success		200		{object}	ConversationRes	"Existing conversation returned"
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -51,25 +52,31 @@ func (h ConversationHandler) CreateDirect(c *gin.Context) {
 		return
 	}
 
-	conv, err := h.uc.Write.CreateOrGetDirect(c.Request.Context(), claims.UserID, req.TargetUserID)
+	conv, isNew, err := h.uc.Write.CreateOrGetDirect(c.Request.Context(), claims.UserID, req.TargetUserID)
 	if err != nil {
 		pkg.HandleServiceError(c, err)
 		return
 	}
 
-	pkg.Success(c, toConversationResponse(conv))
+	if isNew {
+		pkg.Created(c, toConversationResponse(conv))
+	} else {
+		pkg.Success(c, toConversationResponse(conv))
+	}
 }
 
 // CreateGroup godoc
 //
 //	@Summary		Create group conversation
 //	@Description	Creates a new group conversation with the authenticated user as admin.
+//	@Description	If client_conv_id is provided and a conversation with that key already exists, the existing one is returned (200).
 //	@Tags			Chat
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Param			body	body		CreateGroupReq	true	"Group details"
-//	@Success		200		{object}	ConversationRes
+//	@Success		201		{object}	ConversationRes	"Conversation created"
+//	@Success		200		{object}	ConversationRes	"Existing conversation returned (idempotent retry via client_conv_id)"
 //	@Failure		400		{object}	pkg.Response
 //	@Failure		401		{object}	pkg.Response
 //	@Failure		500		{object}	pkg.Response
@@ -87,7 +94,7 @@ func (h ConversationHandler) CreateGroup(c *gin.Context) {
 		return
 	}
 
-	conv, err := h.uc.Write.CreateGroup(c.Request.Context(), chatdomain.CreateGroupParams{
+	conv, isNew, err := h.uc.Write.CreateGroup(c.Request.Context(), chatdomain.CreateGroupParams{
 		CreatorID:    claims.UserID,
 		MemberIDs:    req.ParticipantIDs,
 		Name:         req.Name,
@@ -99,7 +106,11 @@ func (h ConversationHandler) CreateGroup(c *gin.Context) {
 		return
 	}
 
-	pkg.Success(c, toConversationResponse(conv))
+	if isNew {
+		pkg.Created(c, toConversationResponse(conv))
+	} else {
+		pkg.Success(c, toConversationResponse(conv))
+	}
 }
 
 // UpdateGroup godoc
@@ -127,6 +138,12 @@ func (h ConversationHandler) UpdateGroup(c *gin.Context) {
 		return
 	}
 
+	var param PathIDParam
+	if err := c.ShouldBindUri(&param); err != nil {
+		pkg.BadRequest(c, "invalid conversation id")
+		return
+	}
+
 	var req UpdateGroupReq
 	if err := pkg.StrictBindJSON(c, &req); err != nil {
 		pkg.HandleValidateError(c, err)
@@ -134,7 +151,7 @@ func (h ConversationHandler) UpdateGroup(c *gin.Context) {
 	}
 
 	conv, err := h.uc.Write.UpdateGroup(c.Request.Context(), chatdomain.UpdateGroupParams{
-		ConvID:    c.Param("id"),
+		ConvID:    param.ID,
 		ActorID:   claims.UserID,
 		Name:      req.Name,
 		AvatarKey: req.AvatarKey,

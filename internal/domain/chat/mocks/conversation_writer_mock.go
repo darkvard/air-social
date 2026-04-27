@@ -23,7 +23,7 @@ func (_m *MockConversationWriter) EXPECT() *MockConversationWriter_Expecter {
 }
 
 // CreateGroup provides a mock function with given fields: ctx, params
-func (_m *MockConversationWriter) CreateGroup(ctx context.Context, params chat.CreateGroupParams) (*chat.Conversation, error) {
+func (_m *MockConversationWriter) CreateGroup(ctx context.Context, params chat.CreateGroupParams) (*chat.Conversation, bool, error) {
 	ret := _m.Called(ctx, params)
 
 	if len(ret) == 0 {
@@ -31,8 +31,9 @@ func (_m *MockConversationWriter) CreateGroup(ctx context.Context, params chat.C
 	}
 
 	var r0 *chat.Conversation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, chat.CreateGroupParams) (*chat.Conversation, error)); ok {
+	var r1 bool
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, chat.CreateGroupParams) (*chat.Conversation, bool, error)); ok {
 		return rf(ctx, params)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, chat.CreateGroupParams) *chat.Conversation); ok {
@@ -43,13 +44,19 @@ func (_m *MockConversationWriter) CreateGroup(ctx context.Context, params chat.C
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, chat.CreateGroupParams) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, chat.CreateGroupParams) bool); ok {
 		r1 = rf(ctx, params)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(bool)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, chat.CreateGroupParams) error); ok {
+		r2 = rf(ctx, params)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // MockConversationWriter_CreateGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateGroup'
@@ -71,18 +78,18 @@ func (_c *MockConversationWriter_CreateGroup_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockConversationWriter_CreateGroup_Call) Return(_a0 *chat.Conversation, _a1 error) *MockConversationWriter_CreateGroup_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockConversationWriter_CreateGroup_Call) Return(_a0 *chat.Conversation, _a1 bool, _a2 error) *MockConversationWriter_CreateGroup_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockConversationWriter_CreateGroup_Call) RunAndReturn(run func(context.Context, chat.CreateGroupParams) (*chat.Conversation, error)) *MockConversationWriter_CreateGroup_Call {
+func (_c *MockConversationWriter_CreateGroup_Call) RunAndReturn(run func(context.Context, chat.CreateGroupParams) (*chat.Conversation, bool, error)) *MockConversationWriter_CreateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateOrGetDirect provides a mock function with given fields: ctx, senderID, recipientID
-func (_m *MockConversationWriter) CreateOrGetDirect(ctx context.Context, senderID int64, recipientID int64) (*chat.Conversation, error) {
+func (_m *MockConversationWriter) CreateOrGetDirect(ctx context.Context, senderID int64, recipientID int64) (*chat.Conversation, bool, error) {
 	ret := _m.Called(ctx, senderID, recipientID)
 
 	if len(ret) == 0 {
@@ -90,8 +97,9 @@ func (_m *MockConversationWriter) CreateOrGetDirect(ctx context.Context, senderI
 	}
 
 	var r0 *chat.Conversation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) (*chat.Conversation, error)); ok {
+	var r1 bool
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) (*chat.Conversation, bool, error)); ok {
 		return rf(ctx, senderID, recipientID)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) *chat.Conversation); ok {
@@ -102,13 +110,19 @@ func (_m *MockConversationWriter) CreateOrGetDirect(ctx context.Context, senderI
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) bool); ok {
 		r1 = rf(ctx, senderID, recipientID)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(bool)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(context.Context, int64, int64) error); ok {
+		r2 = rf(ctx, senderID, recipientID)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // MockConversationWriter_CreateOrGetDirect_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateOrGetDirect'
@@ -131,12 +145,12 @@ func (_c *MockConversationWriter_CreateOrGetDirect_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockConversationWriter_CreateOrGetDirect_Call) Return(_a0 *chat.Conversation, _a1 error) *MockConversationWriter_CreateOrGetDirect_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockConversationWriter_CreateOrGetDirect_Call) Return(_a0 *chat.Conversation, _a1 bool, _a2 error) *MockConversationWriter_CreateOrGetDirect_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockConversationWriter_CreateOrGetDirect_Call) RunAndReturn(run func(context.Context, int64, int64) (*chat.Conversation, error)) *MockConversationWriter_CreateOrGetDirect_Call {
+func (_c *MockConversationWriter_CreateOrGetDirect_Call) RunAndReturn(run func(context.Context, int64, int64) (*chat.Conversation, bool, error)) *MockConversationWriter_CreateOrGetDirect_Call {
 	_c.Call.Return(run)
 	return _c
 }

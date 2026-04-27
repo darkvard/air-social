@@ -43,6 +43,6 @@ func NewHandler(prov Provider, usecase UseCase) Handler {
 		Feed:         feed.NewHandler(link, usecase.Feed),
 		Search:       search.NewHandler(link, usecase.Search),
 		Conversation: chat.NewConversationHandler(usecase.Conversation),
-		Message:      chat.MessageHandler{},
+		Message:      chat.NewMessageHandler(usecase.Messages),
 	}
 }

@@ -73,6 +73,7 @@ type ConversationRes struct {
 	AvatarKey    string           `json:"avatar_key,omitempty"`
 	CreatedBy    int64            `json:"created_by"`
 	Participants []ParticipantRes `json:"participants"`
+	LastMessage  *MessageRes      `json:"last_message,omitempty"`
 	UnreadCount  int              `json:"unread_count,omitempty"`
 	CreatedAt    time.Time        `json:"created_at"`
 	UpdatedAt    time.Time        `json:"updated_at"`
@@ -90,6 +91,12 @@ func toConversationResponse(conv *chatdomain.Conversation) ConversationRes {
 		}
 	}
 
+	var lastMsg *MessageRes
+	if conv.LastMessage != nil {
+		m := toMessageRes(conv.LastMessage)
+		lastMsg = &m
+	}
+
 	return ConversationRes{
 		ID:           conv.ID,
 		Type:         string(conv.Type),
@@ -97,6 +104,7 @@ func toConversationResponse(conv *chatdomain.Conversation) ConversationRes {
 		AvatarKey:    conv.AvatarKey,
 		CreatedBy:    conv.CreatedBy,
 		Participants: participants,
+		LastMessage:  lastMsg,
 		UnreadCount:  conv.UnreadCount,
 		CreatedAt:    conv.CreatedAt,
 		UpdatedAt:    conv.UpdatedAt,

@@ -28,22 +28,39 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 	var (
 		senderID    = int64(1)
 		recipientID = int64(2)
+		lastMsgID   = "01MSG"
 	)
-
-	existingConv := &chat.Conversation{
-		ID:   "01EXISTING",
-		Type: chat.ConversationDirect,
-	}
 
 	type testDeps struct {
 		convRepo      *chatmocks.MockConversationRepository
+		msgRepo       *chatmocks.MockMessageRepository
+		unread        *chatmocks.MockUnreadStore
 		followChecker *ucmocks.MockFollowChecker
+	}
+
+	newDeps := func(t *testing.T) testDeps {
+		return testDeps{
+			convRepo:      chatmocks.NewMockConversationRepository(t),
+			msgRepo:       chatmocks.NewMockMessageRepository(t),
+			unread:        chatmocks.NewMockUnreadStore(t),
+			followChecker: ucmocks.NewMockFollowChecker(t),
+		}
+	}
+
+	newUC := func(d testDeps) *usecase.ConversationWriteUseCase {
+		return usecase.NewWriteUseCase(usecase.WriteDeps{
+			ConvRepo:      d.convRepo,
+			MsgRepo:       d.msgRepo,
+			Unread:        d.unread,
+			FollowChecker: d.followChecker,
+		})
 	}
 
 	tests := []struct {
 		name         string
 		setupMock    func(deps testDeps)
 		wantErr      error
+		wantNew      bool
 		assertResult func(s *conversationWriteSuite, conv *chat.Conversation)
 	}{
 		{
@@ -56,14 +73,44 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 			wantErr: pkg.ErrInternal,
 		},
 		{
-			name: "existing_conv_returned",
+			name: "existing_conv_no_last_msg",
 			setupMock: func(deps testDeps) {
+				existing := &chat.Conversation{ID: "01EXISTING", Type: chat.ConversationDirect}
 				deps.convRepo.EXPECT().
 					GetDirect(mock.Anything, senderID, recipientID).
-					Return(existingConv, nil).Once()
+					Return(existing, nil).Once()
+				deps.unread.EXPECT().
+					Get(mock.Anything, senderID, "01EXISTING").
+					Return(int64(3), nil).Once()
 			},
+			wantNew: false,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
-				s.Equal(existingConv.ID, conv.ID)
+				s.Equal("01EXISTING", conv.ID)
+				s.Equal(3, conv.UnreadCount)
+				s.Nil(conv.LastMessage)
+			},
+		},
+		{
+			name: "existing_conv_with_last_msg",
+			setupMock: func(deps testDeps) {
+				existing := &chat.Conversation{ID: "01EXISTING", Type: chat.ConversationDirect, LastMsgID: lastMsgID}
+				lastMsg := chat.Message{ID: lastMsgID, Content: "hello"}
+				deps.convRepo.EXPECT().
+					GetDirect(mock.Anything, senderID, recipientID).
+					Return(existing, nil).Once()
+				deps.msgRepo.EXPECT().
+					GetByIDs(mock.Anything, []string{lastMsgID}).
+					Return([]chat.Message{lastMsg}, nil).Once()
+				deps.unread.EXPECT().
+					Get(mock.Anything, senderID, "01EXISTING").
+					Return(int64(1), nil).Once()
+			},
+			wantNew: false,
+			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
+				s.Equal("01EXISTING", conv.ID)
+				s.Require().NotNil(conv.LastMessage)
+				s.Equal(lastMsgID, conv.LastMessage.ID)
+				s.Equal(1, conv.UnreadCount)
 			},
 		},
 		{
@@ -91,6 +138,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(nil).Once()
 			},
+			wantNew: true,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				s.Equal(chat.ConversationDirect, conv.Type)
 				s.Equal(senderID, conv.CreatedBy)
@@ -115,6 +163,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(nil).Once()
 			},
+			wantNew: true,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				s.Equal(chat.ConversationDirect, conv.Type)
 				recipientP := conv.Participants[1]
@@ -141,20 +190,14 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			mockConvRepo := chatmocks.NewMockConversationRepository(s.T())
-			mockFollowChecker := ucmocks.NewMockFollowChecker(s.T())
-
-			deps := testDeps{convRepo: mockConvRepo, followChecker: mockFollowChecker}
-			uc := usecase.NewWriteUseCase(usecase.WriteDeps{
-				ConvRepo:      mockConvRepo,
-				FollowChecker: mockFollowChecker,
-			})
+			deps := newDeps(s.T())
+			uc := newUC(deps)
 
 			if tc.setupMock != nil {
 				tc.setupMock(deps)
 			}
 
-			got, err := uc.CreateOrGetDirect(context.Background(), senderID, recipientID)
+			got, isNew, err := uc.CreateOrGetDirect(context.Background(), senderID, recipientID)
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
@@ -162,6 +205,7 @@ func (s *conversationWriteSuite) TestCreateOrGetDirect() {
 			} else {
 				s.NoError(err)
 				s.NotNil(got)
+				s.Equal(tc.wantNew, isNew)
 				if tc.assertResult != nil {
 					tc.assertResult(s, got)
 				}
@@ -180,6 +224,8 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 
 	type testDeps struct {
 		convRepo      *chatmocks.MockConversationRepository
+		msgRepo       *chatmocks.MockMessageRepository
+		unread        *chatmocks.MockUnreadStore
 		followChecker *ucmocks.MockFollowChecker
 		userChecker   *ucmocks.MockUserChecker
 		mediaVerifier *ucmocks.MockMediaVerifier
@@ -188,6 +234,8 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 	newDeps := func(t *testing.T) testDeps {
 		return testDeps{
 			convRepo:      chatmocks.NewMockConversationRepository(t),
+			msgRepo:       chatmocks.NewMockMessageRepository(t),
+			unread:        chatmocks.NewMockUnreadStore(t),
 			followChecker: ucmocks.NewMockFollowChecker(t),
 			userChecker:   ucmocks.NewMockUserChecker(t),
 			mediaVerifier: ucmocks.NewMockMediaVerifier(t),
@@ -197,6 +245,8 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 	newUC := func(d testDeps) *usecase.ConversationWriteUseCase {
 		return usecase.NewWriteUseCase(usecase.WriteDeps{
 			ConvRepo:      d.convRepo,
+			MsgRepo:       d.msgRepo,
+			Unread:        d.unread,
 			FollowChecker: d.followChecker,
 			UserChecker:   d.userChecker,
 			MediaVerifier: d.mediaVerifier,
@@ -218,6 +268,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 		params       chat.CreateGroupParams
 		setupMock    func(deps testDeps)
 		wantErr      error
+		wantNew      bool
 		assertResult func(s *conversationWriteSuite, conv *chat.Conversation)
 	}{
 		{
@@ -283,6 +334,10 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 				deps.convRepo.EXPECT().
 					GetByClientConvID(mock.Anything, "client-uuid-123").
 					Return(existing, nil).Once()
+				// LastMsgID="" → skip MsgRepo; Unread.Get always called
+				deps.unread.EXPECT().
+					Get(mock.Anything, creatorID, "01EXISTING").
+					Return(int64(0), nil).Once()
 			},
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				s.Equal("01EXISTING", conv.ID)
@@ -337,6 +392,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(nil).Once()
 			},
+			wantNew: true,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				pm := participantMap(conv)
 				s.Equal(chat.StateActive, pm[member1].State)
@@ -364,6 +420,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(nil).Once()
 			},
+			wantNew: true,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				pm := participantMap(conv)
 				s.Equal(chat.StatePending, pm[member1].State)
@@ -391,6 +448,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(nil).Once()
 			},
+			wantNew: true,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				pm := participantMap(conv)
 				s.Equal(chat.StateActive, pm[member1].State)
@@ -430,6 +488,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(nil).Once()
 			},
+			wantNew: true,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				s.Equal(chat.ConversationGroup, conv.Type)
 				s.Equal("Team", conv.Name)
@@ -459,6 +518,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(nil).Once()
 			},
+			wantNew: true,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				s.Len(conv.Participants, 4)
 			},
@@ -483,6 +543,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 					Create(mock.Anything, mock.AnythingOfType("*chat.Conversation")).
 					Return(nil).Once()
 			},
+			wantNew: true,
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				s.Equal("groups/tmp/avatar/key.jpg", conv.AvatarKey)
 			},
@@ -510,6 +571,9 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 				deps.convRepo.EXPECT().
 					GetByClientConvID(mock.Anything, "client-uuid-456").
 					Return(existing, nil).Once()
+				deps.unread.EXPECT().
+					Get(mock.Anything, creatorID, "01RACE").
+					Return(int64(0), nil).Once()
 			},
 			assertResult: func(s *conversationWriteSuite, conv *chat.Conversation) {
 				s.Equal("01RACE", conv.ID)
@@ -544,7 +608,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 				tc.setupMock(deps)
 			}
 
-			got, err := uc.CreateGroup(context.Background(), tc.params)
+			got, isNew, err := uc.CreateGroup(context.Background(), tc.params)
 
 			if tc.wantErr != nil {
 				s.ErrorIs(err, tc.wantErr)
@@ -552,6 +616,7 @@ func (s *conversationWriteSuite) TestCreateGroup() {
 			} else {
 				s.NoError(err)
 				s.NotNil(got)
+				s.Equal(tc.wantNew, isNew)
 				if tc.assertResult != nil {
 					tc.assertResult(s, got)
 				}

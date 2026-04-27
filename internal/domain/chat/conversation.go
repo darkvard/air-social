@@ -23,7 +23,8 @@ type Conversation struct {
 	AvatarKey    string // group only
 	ClientConvID string // group only; optional idempotency key set by client on creation
 	CreatedBy    int64
-	LastMessage  *Message // populated by repo (separate query); nil if no messages yet
+	LastMsgID    string   // ULID of the last message; "" = no messages yet
+	LastMessage  *Message // populated by query usecase via bulk fetch; nil if no messages yet
 	UnreadCount  int      // populated from Redis UnreadStore; not stored in MongoDB
 	CreatedAt    time.Time
 	UpdatedAt    time.Time

@@ -64,7 +64,7 @@ flowchart TD
 ### Core Social ✅
 
 - **Authentication** — JWT access + refresh tokens, multi-device session management, email verification, password reset
-- **Posts** — create, edit, delete, share (repost); public / private visibility
+- **Posts** — create, edit, delete, share (repost); public / followers-only / private visibility
 - **Comments** — nested replies, media attachments, cursor-paginated
 - **Likes** — on posts and comments
 - **Follows** — follow / unfollow, followers / following lists
@@ -89,8 +89,9 @@ flowchart TD
 - **Presence system** — TTL-based online status (15 s expiry, 10 s heartbeat)
 - **Unread counters** — Redis Hash, single `HGETALL` round-trip for all conversations
 - Message features: reply-to, reactions (6 types), soft delete, edit
-- **Idempotent send** — `client_msg_id` deduplication prevents duplicate messages on retry
-- Mark-read with "Seen by X" broadcast to conversation participants
+- **Idempotent send** — `client_msg_id` deduplication prevents duplicate messages on retry; returns 200 on retry, 201 on new
+- **Mark read / unread** — mark-read updates `last_read_id` pointer and broadcasts read event; mark-unread is a private reminder (does not roll back seen status for other participants)
+- **Seen status** — derived from `participant.last_read_id` vs message ULID; no per-message writes needed
 
 ### Notifications 🚧
 
@@ -243,26 +244,28 @@ Client B ──WS──► Hub (instance 2) ◄──subscribe──────
 <details>
 <summary>Chat 🚧</summary>
 
+> `GET /conversations?state=pending` filters pending (message requests); `state=active` (default) filters active inbox.
+
 | Method | Path | Description |
 |---|---|---|
 | `POST` | `/conversations/direct` | Create or get direct (1-on-1) conversation |
 | `POST` | `/conversations/group` | Create group conversation |
-| `GET` | `/conversations` | List active conversations (cursor) |
-| `GET` | `/conversations/pending` | Message requests (cursor) |
+| `GET` | `/conversations` | List conversations by state (cursor, `?state=active\|pending`) |
 | `GET` | `/conversations/:id` | Get conversation |
 | `PATCH` | `/conversations/:id` | Update group info |
 | `POST` | `/conversations/:id/accept` | Accept message request |
-| `POST` | `/conversations/:id/ignore` | Ignore message request |
 | `POST` | `/conversations/:id/members` | Add member |
-| `DELETE` | `/conversations/:id/members/:uid` | Remove member |
+| `DELETE` | `/conversations/:id/members/:userID` | Remove member |
+| `PATCH` | `/conversations/:id/members/:userID/role` | Update member role |
 | `GET` | `/conversations/:id/messages` | List messages (cursor) |
 | `POST` | `/conversations/:id/messages` | Send message |
-| `PATCH` | `/conversations/:id/messages/:mid` | Edit message |
-| `DELETE` | `/conversations/:id/messages/:mid` | Delete message |
-| `POST` | `/conversations/:id/messages/:mid/reactions` | Add reaction |
-| `DELETE` | `/conversations/:id/messages/:mid/reactions` | Remove reaction |
-| `PUT` | `/conversations/:id/read` | Mark as read |
-| `GET` | `/ws` | WebSocket connection |
+| `PATCH` | `/conversations/:id/messages/:msgID` | Edit message |
+| `DELETE` | `/conversations/:id/messages/:msgID` | Delete message |
+| `POST` | `/conversations/:id/messages/:msgID/reactions` | Add reaction |
+| `DELETE` | `/conversations/:id/messages/:msgID/reactions` | Remove reaction |
+| `PATCH` | `/conversations/:id/read` | Mark as read (resets unread count, updates last-read pointer) |
+| `DELETE` | `/conversations/:id/read` | Mark as unread (private reminder, sets unread badge to 1) |
+| `GET` | `/ws` | WebSocket connection 🚧 |
 
 </details>
 

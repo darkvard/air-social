@@ -174,13 +174,25 @@ func (r *repository) UpdateGroupInfo(ctx context.Context, convID string, name *s
 }
 
 func (r *repository) UpdateLastRead(ctx context.Context, convID string, userID int64, messageID string) error {
-	return nil
-
+	filter := bson.M{
+		fieldID:                     convID,
+		fieldParticipantUserID_Find: userID,
+	}
+	update := bson.M{"$set": bson.M{
+		fieldParticipantLastReadID_Update: messageID,
+		fieldUpdatedAt:                    pkg.TimeNowUTC(),
+	}}
+	_, err := r.coll.UpdateOne(ctx, filter, update)
+	return pkg.MapMongoError(err)
 }
 
 func (r *repository) Touch(ctx context.Context, convID string, lastMsgID string) error {
-	return nil
-
+	update := bson.M{"$set": bson.M{
+		fieldLastMsgID: lastMsgID,
+		fieldUpdatedAt: pkg.TimeNowUTC(),
+	}}
+	_, err := r.coll.UpdateOne(ctx, bson.M{fieldID: convID}, update)
+	return pkg.MapMongoError(err)
 }
 
 func (r *repository) getByID(ctx context.Context, filter any) (*chat.Conversation, error) {

@@ -34,11 +34,12 @@ type RealtimePublisher interface {
 
 type WriteDeps struct {
 	ConvRepo      chat.ConversationRepository
+	MsgRepo       chat.MessageRepository
+	Unread        chat.UnreadStore
 	FollowChecker FollowChecker
 	UserChecker   UserChecker
 	MediaVerifier MediaVerifier
 	Event         common.EventPublisher
-	RTPublisher   RealtimePublisher
 }
 
 type ConversationWriteUseCase struct {
@@ -49,51 +50,52 @@ func NewWriteUseCase(d WriteDeps) *ConversationWriteUseCase {
 	return &ConversationWriteUseCase{deps: d}
 }
 
-func (u *ConversationWriteUseCase) CreateOrGetDirect(ctx context.Context, senderID, recipientID int64) (*chat.Conversation, error) {
+func (u *ConversationWriteUseCase) CreateOrGetDirect(ctx context.Context, senderID, recipientID int64) (*chat.Conversation, bool, error) {
 	existingConv, err := u.deps.ConvRepo.GetDirect(ctx, senderID, recipientID)
 	if err != nil {
-		return nil, pkg.OrInternalError(err)
+		return nil, false, pkg.OrInternalError(err)
 	}
 	if existingConv != nil {
-		// TODO: populate existingConv.LastMessage from MessageRepository once message layer is implemented.
-		return existingConv, nil
+		u.enrichConversation(ctx, existingConv, senderID)
+		return existingConv, false, nil
 	}
 
 	relationship, err := u.deps.FollowChecker.GetRelationship(ctx, senderID, recipientID)
 	if err != nil {
-		return nil, pkg.OrInternalError(err)
+		return nil, false, pkg.OrInternalError(err)
 	}
 
 	newConv := chat.NewDirectConversation(senderID, recipientID, relationship.IsFollower)
 	if err := u.deps.ConvRepo.Create(ctx, newConv); err != nil {
-		return nil, pkg.OrInternalError(err)
+		return nil, false, pkg.OrInternalError(err)
 	}
-	return newConv, nil
+	return newConv, true, nil
 }
 
-func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.CreateGroupParams) (*chat.Conversation, error) {
+func (u *ConversationWriteUseCase) CreateGroup(ctx context.Context, params chat.CreateGroupParams) (*chat.Conversation, bool, error) {
 	// clean input: deduplicate members, remove creator, enforce minimum count
 	memberIDs, err := u.sanitizeGroupMembers(params)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	// validate media: ensure avatar key exists in storage
 	if err := u.verifyAvatar(ctx, params.AvatarKey); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	// idempotency: return existing conversation if client already created it
 	if existing, err := u.checkClientConvID(ctx, params.ClientConvID); err != nil {
-		return nil, err
+		return nil, false, err
 	} else if existing != nil {
-		return existing, nil
+		u.enrichConversation(ctx, existing, params.CreatorID)
+		return existing, false, nil
 	}
 
 	// check members exist and decide who lands in active vs pending inbox
 	memberStates, err := u.resolveMembers(ctx, params.CreatorID, memberIDs)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	// write conversation, recover gracefully if a concurrent request won the race
@@ -193,12 +195,13 @@ func (u *ConversationWriteUseCase) resolveMembers(ctx context.Context, creatorID
 }
 
 // persistGroup creates the conversation document and handles the idempotency conflict race.
+// Returns (conv, isNew, err): isNew=false when a concurrent request already created the same ClientConvID.
 func (u *ConversationWriteUseCase) persistGroup(
 	ctx context.Context,
 	params chat.CreateGroupParams,
 	memberIDs []int64,
 	memberStates map[int64]chat.ParticipantState,
-) (*chat.Conversation, error) {
+) (*chat.Conversation, bool, error) {
 	conv := chat.NewGroupConversation(chat.CreateGroupParams{
 		CreatorID:    params.CreatorID,
 		MemberIDs:    memberIDs,
@@ -213,16 +216,32 @@ func (u *ConversationWriteUseCase) persistGroup(
 			// Race condition: a concurrent request created the same ClientConvID first.
 			existing, findErr := u.deps.ConvRepo.GetByClientConvID(ctx, params.ClientConvID)
 			if findErr != nil {
-				return nil, pkg.OrInternalError(findErr)
+				return nil, false, pkg.OrInternalError(findErr)
 			}
 			if existing != nil {
-				return existing, nil
+				u.enrichConversation(ctx, existing, params.CreatorID)
+				return existing, false, nil
 			}
 		}
-		return nil, pkg.OrInternalError(err)
+		return nil, false, pkg.OrInternalError(err)
 	}
 
-	return conv, nil
+	return conv, true, nil
+}
+
+// enrichConversation populates LastMessage and UnreadCount on an existing conversation
+// returned by write operations. Errors are swallowed — fields stay at zero values if fetches fail.
+func (u *ConversationWriteUseCase) enrichConversation(ctx context.Context, conv *chat.Conversation, userID int64) {
+	if conv.LastMsgID != "" {
+		msgs, err := u.deps.MsgRepo.GetByIDs(ctx, []string{conv.LastMsgID})
+		if err == nil && len(msgs) > 0 {
+			conv.LastMessage = &msgs[0]
+		}
+	}
+	count, err := u.deps.Unread.Get(ctx, userID, conv.ID)
+	if err == nil {
+		conv.UnreadCount = int(count)
+	}
 }
 
 // checkClientConvID provides idempotency for group creation.
