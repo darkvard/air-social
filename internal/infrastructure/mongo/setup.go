@@ -14,13 +14,17 @@ func NewConnection(mc config.MongoConfig) (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), mc.ConnectTimeout)
 	defer cancel()
 
-	// The mongo-driver provides connection pooling out of the box.
-	// We can configure the pool size, but the default is usually fine.
+	// HeartbeatInterval and ServerSelectionTimeout are tuned below default (10s/30s)
+	// to avoid multi-second latency spikes after idle: Docker silently drops TCP
+	// connections, causing the driver to mark the server Unknown and block the next
+	// request until the monitor confirms it is reachable again.
 	clientOptions := options.Client().
 		ApplyURI(mc.URI).
 		SetMaxPoolSize(mc.MaxPoolSize).
 		SetMinPoolSize(mc.MinPoolSize).
-		SetMaxConnIdleTime(mc.MaxConnIdleTime)
+		SetMaxConnIdleTime(mc.MaxConnIdleTime).
+		SetHeartbeatInterval(mc.HeartbeatInterval).
+		SetServerSelectionTimeout(mc.ServerSelectionTimeout)
 
 	client, err := mongo.Connect(clientOptions)
 	if err != nil {
