@@ -33,7 +33,20 @@ server {
         proxy_read_timeout    ${NGINX_TIMEOUT};
     }
 
-    # 2. Public File
+    # 2. WebSocket
+    location /${SERVER_NAME}/api/v1/ws {
+        proxy_pass http://backend_api/api/v1/ws;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+
+        proxy_read_timeout 3600s;
+    }
+
+    # 3. Public File
     location /${MINIO_BUCKET_PUBLIC}/ {
         proxy_pass http://minio_storage/${MINIO_BUCKET_PUBLIC}/;
         proxy_set_header Host minio:9000;
