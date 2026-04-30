@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -37,8 +38,17 @@ func (c *Client) readPump() {
 		if err != nil {
 			break
 		}
-		_ = message
-		// todo
+
+		var event InboundEvent
+		if err := json.Unmarshal(message, &event); err != nil {
+			continue
+		}
+
+		switch event.Type {
+		case EventPing:
+			pong, _ := OutboundEvent{Type: EventPong}.encode()
+			c.send <- pong
+		}
 	}
 }
 
