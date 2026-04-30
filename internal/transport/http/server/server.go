@@ -24,6 +24,7 @@ import (
 	"air-social/internal/transport/http/post"
 	"air-social/internal/transport/http/search"
 	"air-social/internal/transport/http/user"
+	"air-social/internal/transport/ws"
 	"air-social/pkg"
 	"air-social/templates"
 )
@@ -33,6 +34,7 @@ func NewServer(
 	prov provider.Provider,
 	h provider.Handler,
 	mw middleware.Manager,
+	hub *ws.Hub,
 ) *http.Server {
 	pkg.SetupValidator()
 	router := setupEngine()
@@ -40,7 +42,6 @@ func NewServer(
 	{
 		group.GET("", h.Health.Welcome)
 		group.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
 		health.RegisterRoute(group, h.Health, mw)
 		auth.RegisterRoute(group, h.Auth, mw)
 		user.RegisterRoute(group, h.User, mw)
@@ -53,6 +54,9 @@ func NewServer(
 		search.RegisterRoute(group, h.Search, mw)
 		chat.RegisterRoute(group, h.Conversation, h.Message, mw)
 	}
+	group.GET("/ws", mw.Auth, func(c *gin.Context) {
+		ws.ServeWS(hub, c)
+	})
 
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Server.Port),

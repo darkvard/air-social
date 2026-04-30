@@ -45,14 +45,15 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 	})
 	handler := provider.NewHandler(prov, usecase)
 	middleware := middleware.NewManager(cfg.Server, cfg.Limiter, prov.Token, adapter.RateLimiter)
-	server := server.NewServer(cfg, prov, handler, middleware)
+	hub := ws.NewHub()
+	server := server.NewServer(cfg, prov, handler, middleware, hub)
 
 	workers := provider.NewWorkers(infra, adapter, prov, usecase)
 
 	return &Container{
 		Server: server,
 		Worker: workers,
-		Hub:    ws.NewHub(),
+		Hub:    hub,
 		Infra:  infra,
 	}, cleanup, nil
 }

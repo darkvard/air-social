@@ -242,7 +242,7 @@ Client B ──WS──► Hub (instance 2) ◄──subscribe──────
 </details>
 
 <details>
-<summary>Chat 🚧</summary>
+<summary>Chat</summary>
 
 > `GET /conversations?state=pending` filters pending (message requests); `state=active` (default) filters active inbox.
 
@@ -265,7 +265,7 @@ Client B ──WS──► Hub (instance 2) ◄──subscribe──────
 | `DELETE` | `/conversations/:id/messages/:msgID/reactions` | Remove reaction |
 | `PATCH` | `/conversations/:id/read` | Mark as read (resets unread count, updates last-read pointer) |
 | `DELETE` | `/conversations/:id/read` | Mark as unread (private reminder, sets unread badge to 1) |
-| `GET` | `/ws` | WebSocket connection 🚧 |
+| `GET` | `/ws` | WebSocket connection |
 
 </details>
 

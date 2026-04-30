@@ -29,7 +29,7 @@ func NewApp(httpSrv *http.Server, worker *worker.Manager, ws *ws.Hub) *App {
 
 func (a *App) Run() {
 	go a.worker.Start(context.Background())
-	go a.ws.Run()
+	go a.ws.Run(context.Background())
 	go func() {
 		if err := a.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			pkg.Log().Errorw("http server listen failed", "error", err)
