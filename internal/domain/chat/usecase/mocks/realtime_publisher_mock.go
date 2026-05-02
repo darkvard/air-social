@@ -70,6 +70,53 @@ func (_c *MockRealtimePublisher_PublishMessageDeleted_Call) RunAndReturn(run fun
 	return _c
 }
 
+// PublishMessageEdited provides a mock function with given fields: ctx, msg
+func (_m *MockRealtimePublisher) PublishMessageEdited(ctx context.Context, msg *chat.Message) error {
+	ret := _m.Called(ctx, msg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PublishMessageEdited")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *chat.Message) error); ok {
+		r0 = rf(ctx, msg)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRealtimePublisher_PublishMessageEdited_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PublishMessageEdited'
+type MockRealtimePublisher_PublishMessageEdited_Call struct {
+	*mock.Call
+}
+
+// PublishMessageEdited is a helper method to define mock.On call
+//   - ctx context.Context
+//   - msg *chat.Message
+func (_e *MockRealtimePublisher_Expecter) PublishMessageEdited(ctx interface{}, msg interface{}) *MockRealtimePublisher_PublishMessageEdited_Call {
+	return &MockRealtimePublisher_PublishMessageEdited_Call{Call: _e.mock.On("PublishMessageEdited", ctx, msg)}
+}
+
+func (_c *MockRealtimePublisher_PublishMessageEdited_Call) Run(run func(ctx context.Context, msg *chat.Message)) *MockRealtimePublisher_PublishMessageEdited_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*chat.Message))
+	})
+	return _c
+}
+
+func (_c *MockRealtimePublisher_PublishMessageEdited_Call) Return(_a0 error) *MockRealtimePublisher_PublishMessageEdited_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRealtimePublisher_PublishMessageEdited_Call) RunAndReturn(run func(context.Context, *chat.Message) error) *MockRealtimePublisher_PublishMessageEdited_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PublishNewMessage provides a mock function with given fields: ctx, msg, conv
 func (_m *MockRealtimePublisher) PublishNewMessage(ctx context.Context, msg *chat.Message, conv *chat.Conversation) error {
 	ret := _m.Called(ctx, msg, conv)

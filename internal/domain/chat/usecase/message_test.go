@@ -637,6 +637,7 @@ func (s *messageSuite) TestEditMessage() {
 				d.msgRepo.EXPECT().Update(msgCtx, mock.MatchedBy(func(m *chat.Message) bool {
 					return m.Content == "updated content" && m.IsEdited
 				})).Return(nil).Once()
+				d.rtPublisher.EXPECT().PublishMessageEdited(msgCtx, mock.Anything).Return(nil).Once()
 			},
 			assertResult: func(s *messageSuite, m *chat.Message) {
 				s.Equal("updated content", m.Content)

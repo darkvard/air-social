@@ -55,13 +55,22 @@ func (c *Client) readPump() {
 			pong, _ := OutboundEvent{Type: EventPong}.encode()
 			c.send <- pong
 			go func() { _ = c.hub.presence.SetOnline(context.Background(), c.userID) }()
+
 		case EventJoin:
-			var p struct {
-				ConversationID string `json:"conversation_id"`
+			if id := c.convIDFromPayload(event.Payload); id != "" {
+				c.hub.joinConv(c, id)
 			}
-			json.Unmarshal(event.Payload, &p)
-			if p.ConversationID != "" {
-				c.hub.joinConv(c, p.ConversationID)
+		case EventLeave:
+			if id := c.convIDFromPayload(event.Payload); id != "" {
+				c.hub.leaveConv(c, id)
+			}
+		case EventTyping:
+			if id := c.convIDFromPayload(event.Payload); id != "" {
+				c.hub.broadcastTyping(id, c.userID, true)
+			}
+		case EventStopTyping:
+			if id := c.convIDFromPayload(event.Payload); id != "" {
+				c.hub.broadcastTyping(id, c.userID, false)
 			}
 		}
 	}
@@ -97,6 +106,12 @@ func (c *Client) writePump() {
 
 func (c *Client) closeChannel() {
 	c.closeOnce.Do(func() { close(c.send) })
+}
+
+func (c *Client) convIDFromPayload(raw json.RawMessage) string {
+	var p convPayload
+	json.Unmarshal(raw, &p)
+	return p.ConversationID
 }
 
 func (c *Client) joinConv(convID string) {

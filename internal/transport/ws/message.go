@@ -9,6 +9,7 @@ const (
 	EventStopTyping = "stop_typing"
 	EventMarkRead   = "mark_read"
 	EventJoin       = "join"
+	EventLeave      = "leave"
 )
 
 // outbound
@@ -20,7 +21,6 @@ const (
 	EventReactionAdded   = "reaction_added"
 	EventReactionRemoved = "reaction_removed"
 	EventRead            = "read"
-	EventLeave           = "leave"
 )
 
 type InboundEvent struct {
@@ -35,6 +35,10 @@ type OutboundEvent struct {
 
 func (e OutboundEvent) encode() ([]byte, error) {
 	return json.Marshal(e)
+}
+
+type convPayload struct {
+	ConversationID string `json:"conversation_id"`
 }
 
 func chatChannel(convID string) string {

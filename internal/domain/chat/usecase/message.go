@@ -107,6 +107,7 @@ func (u *MessageUseCase) EditMessage(ctx context.Context, params chat.EditMessag
 		return nil, pkg.OrInternalError(err)
 	}
 
+	_ = u.deps.Hub.PublishMessageEdited(ctx, msg)
 	return msg, nil
 }
 

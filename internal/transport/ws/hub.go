@@ -113,6 +113,18 @@ func (h *Hub) joinConv(client *Client, convID string) {
 	})
 }
 
+func (h *Hub) broadcastTyping(convID string, userID int64, typing bool) {
+	eventType := EventTyping
+	if !typing {
+		eventType = EventStopTyping
+	}
+	payload, _ := OutboundEvent{
+		Type: eventType,
+		Data: map[string]any{keyUserID: userID},
+	}.encode()
+	h.broadcastToConv(convID, payload)
+}
+
 func (h *Hub) leaveConv(client *Client, convID string) {
 	client.leaveConv(convID)
 	if !h.hasClientInConv(convID) {

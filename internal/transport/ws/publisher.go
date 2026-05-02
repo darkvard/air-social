@@ -38,6 +38,10 @@ func (p *HubPublisher) PublishNewMessage(ctx context.Context, msg *chat.Message,
 	return p.publish(ctx, conv.ID, OutboundEvent{Type: EventNewMessage, Data: msg})
 }
 
+func (p *HubPublisher) PublishMessageEdited(ctx context.Context, msg *chat.Message) error {
+	return p.publish(ctx, msg.ConversationID, OutboundEvent{Type: EventMessageEdited, Data: msg})
+}
+
 func (p *HubPublisher) PublishReadEvent(ctx context.Context, convID string, userID int64, lastReadMsgID string) error {
 	return p.publish(ctx, convID, OutboundEvent{
 		Type: EventRead,

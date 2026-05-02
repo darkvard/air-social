@@ -26,10 +26,11 @@ type MediaVerifier interface {
 
 type RealtimePublisher interface {
 	PublishNewMessage(ctx context.Context, msg *chat.Message, conv *chat.Conversation) error
-	PublishReadEvent(ctx context.Context, convID string, userID int64, lastReadMsgID string) error
+	PublishMessageEdited(ctx context.Context, msg *chat.Message) error
 	PublishMessageDeleted(ctx context.Context, msgID string, convID string) error
 	PublishReactionAdded(ctx context.Context, msgID string, convID string, reaction chat.Reaction) error
 	PublishReactionRemoved(ctx context.Context, msgID string, convID string, userID int64) error
+	PublishReadEvent(ctx context.Context, convID string, userID int64, lastReadMsgID string) error
 }
 
 type WriteDeps struct {
