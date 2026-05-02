@@ -45,7 +45,7 @@ func Initialize(cfg config.Config) (*Container, func(), error) {
 	})
 	handler := provider.NewHandler(prov, usecase)
 	middleware := middleware.NewManager(cfg.Server, cfg.Limiter, prov.Token, adapter.RateLimiter)
-	hub := ws.NewHub()
+	hub := ws.NewHub(infra.Redis, adapter.Presence)
 	server := server.NewServer(cfg, prov, handler, middleware, hub)
 
 	workers := provider.NewWorkers(infra, adapter, prov, usecase)

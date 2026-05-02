@@ -1,7 +1,9 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -15,11 +17,15 @@ const (
 )
 
 type Client struct {
-	userID int64
-	hub    *Hub
-	conn   *websocket.Conn
-	send   chan []byte
+	userID    int64
+	hub       *Hub
+	conn      *websocket.Conn
+	send      chan []byte
+	convIDs   map[string]struct{}
+	mu        sync.RWMutex
+	closeOnce sync.Once
 }
+
 
 func (c *Client) readPump() {
 	defer func() {
@@ -48,6 +54,15 @@ func (c *Client) readPump() {
 		case EventPing:
 			pong, _ := OutboundEvent{Type: EventPong}.encode()
 			c.send <- pong
+			go func() { _ = c.hub.presence.SetOnline(context.Background(), c.userID) }()
+		case EventJoin:
+			var p struct {
+				ConversationID string `json:"conversation_id"`
+			}
+			json.Unmarshal(event.Payload, &p)
+			if p.ConversationID != "" {
+				c.hub.joinConv(c, p.ConversationID)
+			}
 		}
 	}
 }
@@ -78,4 +93,20 @@ func (c *Client) writePump() {
 			}
 		}
 	}
+}
+
+func (c *Client) closeChannel() {
+	c.closeOnce.Do(func() { close(c.send) })
+}
+
+func (c *Client) joinConv(convID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.convIDs[convID] = struct{}{}
+}
+
+func (c *Client) leaveConv(convID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.convIDs, convID)
 }

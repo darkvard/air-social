@@ -26,6 +26,7 @@ import (
 	"air-social/internal/infrastructure/rabbitmq"
 	"air-social/internal/infrastructure/redis"
 	rediscache "air-social/internal/infrastructure/redis/cache"
+	"air-social/internal/transport/ws"
 )
 
 const (
@@ -251,7 +252,7 @@ func getMessageUseCase(deps UseCaseDeps, mediaVerifier chatusecase.MediaVerifier
 		MsgRepo:       deps.Repo.Message,
 		ConvRepo:      deps.Repo.Conversation,
 		Event:         deps.Adapter.EventPub,
-		Hub:           chatusecase.NewNoopRTPublisher(),
+		Hub:           ws.NewHubPublisher(deps.Infra.Redis),
 		Unread:        deps.Adapter.Unread,
 		MediaVerifier: mediaVerifier,
 	})
