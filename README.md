@@ -81,12 +81,12 @@ flowchart TD
 - **Rate Limiting** — token bucket algorithm per endpoint
 - **Graceful Degradation** — stats read falls back to DB-only when Redis is unavailable
 
-### Real-Time Chat 🚧
+### Real-Time Chat ✅
 
 - Direct (1-on-1) and group conversations
 - **Messenger-style inbox routing** — active inbox vs. message requests based on follow relationship; implicit accept on reply
 - WebSocket Hub with **Redis Pub/Sub** — horizontally scalable across multiple server instances
-- **Presence system** — TTL-based online status (15 s expiry, 10 s heartbeat)
+- **Presence system** — TTL-based online status; refreshed automatically via WebSocket keep-alive every 20 s, expires 30 s after disconnect
 - **Unread counters** — Redis Hash, single `HGETALL` round-trip for all conversations
 - Message features: reply-to, reactions (6 types), soft delete, edit
 - **Idempotent send** — `client_msg_id` deduplication prevents duplicate messages on retry; returns 200 on retry, 201 on new
@@ -186,6 +186,7 @@ Client B ──WS──► Hub (instance 2) ◄──subscribe──────
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/users/me` | Get current user profile |
+| `POST` | `/users/presence` | Get online status for multiple users (batch, max 100) |
 | `PATCH` | `/users/me` | Update profile |
 | `PUT` | `/users/me/password` | Change password |
 | `PUT` | `/users/me/avatar` | Update avatar |

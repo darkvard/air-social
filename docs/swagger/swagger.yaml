@@ -836,6 +836,24 @@ definitions:
     - current_password
     - new_password
     type: object
+  internal_transport_http_user.PresenceBatchRequest:
+    properties:
+      user_ids:
+        items:
+          type: integer
+        maxItems: 100
+        minItems: 1
+        type: array
+    required:
+    - user_ids
+    type: object
+  internal_transport_http_user.PresenceResponse:
+    properties:
+      online:
+        type: boolean
+      user_id:
+        type: integer
+    type: object
   internal_transport_http_user.ProfileResponse:
     properties:
       avatar:
@@ -3201,6 +3219,94 @@ paths:
       summary: Change password
       tags:
       - User
+  /users/presence:
+    post:
+      consumes:
+      - application/json
+      description: Returns online status for up to 100 users in a single request.
+        Presence is refreshed automatically via WebSocket keep-alive every 20s and
+        expires 30s after disconnect.
+      parameters:
+      - description: List of user IDs (max 100)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_user.PresenceBatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_transport_http_user.PresenceResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Get online status for multiple users
+      tags:
+      - User
+  /ws:
+    get:
+      description: |-
+        Upgrades the HTTP connection to WebSocket. Requires a valid Bearer token.
+
+        **Authentication**: Pass token via header `Authorization: Bearer <token>`.
+
+        ## Inbound events (client → server)
+
+        | type | payload | description |
+        |------|---------|-------------|
+        | `ping` | — | Heartbeat. Server replies with `pong` and marks user online. |
+        | `join` | `{"conversation_id":"..."}` | Subscribe to real-time events for a conversation. Must call before receiving messages. |
+        | `leave` | `{"conversation_id":"..."}` | Unsubscribe from a conversation. |
+        | `typing` | `{"conversation_id":"..."}` | Notify others that user is typing. |
+        | `stop_typing` | `{"conversation_id":"..."}` | Notify others that user stopped typing. |
+
+        ## Outbound events (server → client)
+
+        | type | data | description |
+        |------|------|-------------|
+        | `pong` | — | Response to `ping`. |
+        | `new_message` | `Message` | A new message was sent in a joined conversation. |
+        | `message_edited` | `Message` | A message was edited. |
+        | `message_deleted` | `{"message_id":"..."}` | A message was soft-deleted. |
+        | `reaction_added` | `{"message_id":"...","reaction":{...}}` | Reaction added to a message. |
+        | `reaction_removed` | `{"message_id":"...","user_id":...}` | Reaction removed. |
+        | `read` | `{"user_id":...,"last_read_msg_id":"..."}` | A participant marked the conversation as read. |
+        | `typing` | `{"user_id":...}` | A participant is typing. |
+        | `stop_typing` | `{"user_id":...}` | A participant stopped typing. |
+
+        ## Typical flow
+        1. Connect with valid Bearer token
+        2. Send `{"type":"join","payload":{"conversation_id":"<id>"}}` to subscribe
+        3. Use REST `POST /conversations/{id}/messages` to send a message
+        4. Receive `new_message`, `typing`, etc. events in real time
+      responses:
+        "101":
+          description: Switching Protocols
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/pkg.Response'
+      security:
+      - BearerAuth: []
+      summary: Connect to real-time chat
+      tags:
+      - websocket
 securityDefinitions:
   BearerAuth:
     in: header

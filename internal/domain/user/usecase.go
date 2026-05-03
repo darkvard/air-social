@@ -26,8 +26,13 @@ type FetchUseCase interface {
 	GetSummary(ctx context.Context, id int64) (*UserSummary, error)
 }
 
+type PresenceUseCase interface {
+	GetBatchStatus(ctx context.Context, userIDs []int64) (map[int64]bool, error)
+}
+
 type UseCase struct {
-	Account AccountUseCase
-	Profile ProfileUseCase
-	Fetch   FetchUseCase
+	Account  AccountUseCase
+	Profile  ProfileUseCase
+	Fetch    FetchUseCase
+	Presence PresenceUseCase
 }

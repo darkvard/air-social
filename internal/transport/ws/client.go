@@ -12,7 +12,7 @@ import (
 const (
 	writeWait  = 10 * time.Second
 	pongWait   = 60 * time.Second
-	pingPeriod = 50 * time.Second
+	pingPeriod = 20 * time.Second // must be < presenceTTL (30s)
 	maxMsgSize = 4096
 )
 
@@ -26,6 +26,15 @@ type Client struct {
 	closeOnce sync.Once
 }
 
+func newClient(userID int64, hub *Hub, conn *websocket.Conn) *Client {
+	return &Client{
+		userID:  userID,
+		hub:     hub,
+		conn:    conn,
+		send:    make(chan []byte, sendBufferSize),
+		convIDs: make(map[string]struct{}),
+	}
+}
 
 func (c *Client) readPump() {
 	defer func() {
@@ -36,6 +45,7 @@ func (c *Client) readPump() {
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error {
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		go func() { _ = c.hub.presence.SetOnline(context.Background(), c.userID) }()
 		return nil
 	})
 
@@ -54,7 +64,6 @@ func (c *Client) readPump() {
 		case EventPing:
 			pong, _ := OutboundEvent{Type: EventPong}.encode()
 			c.send <- pong
-			go func() { _ = c.hub.presence.SetOnline(context.Background(), c.userID) }()
 
 		case EventJoin:
 			if id := c.convIDFromPayload(event.Payload); id != "" {

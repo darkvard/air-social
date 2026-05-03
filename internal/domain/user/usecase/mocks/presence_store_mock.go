@@ -80,53 +80,6 @@ func (_c *MockPresenceStore_IsOnlineBatch_Call) RunAndReturn(run func(context.Co
 	return _c
 }
 
-// SetOnline provides a mock function with given fields: ctx, userID
-func (_m *MockPresenceStore) SetOnline(ctx context.Context, userID int64) error {
-	ret := _m.Called(ctx, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetOnline")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
-		r0 = rf(ctx, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockPresenceStore_SetOnline_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetOnline'
-type MockPresenceStore_SetOnline_Call struct {
-	*mock.Call
-}
-
-// SetOnline is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID int64
-func (_e *MockPresenceStore_Expecter) SetOnline(ctx interface{}, userID interface{}) *MockPresenceStore_SetOnline_Call {
-	return &MockPresenceStore_SetOnline_Call{Call: _e.mock.On("SetOnline", ctx, userID)}
-}
-
-func (_c *MockPresenceStore_SetOnline_Call) Run(run func(ctx context.Context, userID int64)) *MockPresenceStore_SetOnline_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64))
-	})
-	return _c
-}
-
-func (_c *MockPresenceStore_SetOnline_Call) Return(_a0 error) *MockPresenceStore_SetOnline_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockPresenceStore_SetOnline_Call) RunAndReturn(run func(context.Context, int64) error) *MockPresenceStore_SetOnline_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // NewMockPresenceStore creates a new instance of MockPresenceStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockPresenceStore(t interface {

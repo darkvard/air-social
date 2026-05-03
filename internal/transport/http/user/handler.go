@@ -250,3 +250,35 @@ func (h Handler) toUserResponse(user user.User) UserResponse {
 		Version:   user.Version,
 	}
 }
+
+// GetPresenceBatch godoc
+//
+//	@Summary		Get online status for multiple users
+//	@Description	Returns online status for up to 100 users in a single request. Presence is refreshed automatically via WebSocket keep-alive every 20s and expires 30s after disconnect.
+//	@Tags			User
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		PresenceBatchRequest	true	"List of user IDs (max 100)"
+//	@Success		200		{object}	[]PresenceResponse
+//	@Failure		400		{object}	pkg.Response
+//	@Failure		401		{object}	pkg.Response
+//	@Failure		500		{object}	pkg.Response
+//	@Router			/users/presence [post]
+func (h Handler) GetPresenceBatch(c *gin.Context) {
+	var req PresenceBatchRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		pkg.HandleValidateError(c, err)
+		return
+	}
+	statuses, err := h.usecase.Presence.GetBatchStatus(c.Request.Context(), req.UserIDs)
+	if err != nil {
+		pkg.HandleServiceError(c, err)
+		return
+	}
+	result := make([]PresenceResponse, 0, len(req.UserIDs))
+	for _, id := range req.UserIDs {
+		result = append(result, PresenceResponse{UserID: id, Online: statuses[id]})
+	}
+	pkg.Success(c, result)
+}

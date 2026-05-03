@@ -19,4 +19,9 @@ func RegisterRoute(g *gin.RouterGroup, h Handler, m middleware.Manager) {
 			json.PUT("/cover", h.UpdateCover)
 		}
 	}
+
+	presence := g.Group("/users", m.Auth)
+	{
+		presence.POST("/presence", h.GetPresenceBatch)
+	}
 }

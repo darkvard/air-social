@@ -7,7 +7,6 @@ const (
 	EventPing       = "ping"
 	EventTyping     = "typing"
 	EventStopTyping = "stop_typing"
-	EventMarkRead   = "mark_read"
 	EventJoin       = "join"
 	EventLeave      = "leave"
 )

@@ -12,13 +12,12 @@ import (
 const sendBufferSize = 256
 
 type Hub struct {
-	// a single user may have multiple connections (e.g.g multiple browser tabs)
+	// a single user may have multiple connections (e.g. multiple browser tabs)
 	// guarantees each connection is a distinct key, and struct{} costs zero bytes (slice O(n) -> map O(1))
 	clients    map[int64]map[*Client]struct{}
 	mu         sync.RWMutex
 	register   chan *Client
 	unregister chan *Client
-	broadcast  chan *BroadcastMessage
 	subMgr     *subscriptionManager
 	presence   chat.PresenceStore
 }
@@ -28,7 +27,6 @@ func NewHub(redis *redis.Client, presence chat.PresenceStore) *Hub {
 		clients:    make(map[int64]map[*Client]struct{}),
 		register:   make(chan *Client, 16),
 		unregister: make(chan *Client, 16),
-		broadcast:  make(chan *BroadcastMessage, 256),
 		presence:   presence,
 	}
 	h.subMgr = newSubscriptionManager(redis)
@@ -43,8 +41,6 @@ func (h *Hub) Run(ctx context.Context) {
 		case client := <-h.unregister:
 			h.remove(client)
 			client.closeChannel()
-		case msg := <-h.broadcast:
-			h.send(msg)
 		case <-ctx.Done():
 			return
 		}
@@ -84,25 +80,6 @@ func (h *Hub) remove(client *Client) {
 		if !h.hasClientInConv(convID) {
 			h.subMgr.cancel(convID)
 		}
-	}
-}
-
-func (h *Hub) send(msg *BroadcastMessage) {
-	h.mu.RLock()
-	var toRemove []*Client
-	for _, id := range msg.userIDs {
-		for client := range h.clients[id] {
-			select {
-			case client.send <- msg.message:
-			default:
-				toRemove = append(toRemove, client)
-			}
-		}
-	}
-	h.mu.RUnlock()
-	for _, client := range toRemove {
-		h.remove(client)
-		client.closeChannel()
 	}
 }
 

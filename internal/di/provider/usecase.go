@@ -139,9 +139,10 @@ func getUserUseCase(deps UseCaseDeps, confirmer userusecase.MediaConfirmer) user
 	userCache := user.NewCache(userTiered)
 
 	return user.UseCase{
-		Account: userusecase.NewAccountUseCase(userusecase.AccountDeps{Repo: deps.Repo.User, Cache: userCache}),
-		Profile: userusecase.NewProfileUseCase(userusecase.ProfileDeps{Repo: deps.Repo.User, Cache: userCache, Media: confirmer}),
-		Fetch:   userusecase.NewFetchUseCase(userusecase.FetchDeps{Repo: deps.Repo.User, Cache: userCache, Link: deps.Prov.Link.LinkProvider}),
+		Account:  userusecase.NewAccountUseCase(userusecase.AccountDeps{Repo: deps.Repo.User, Cache: userCache}),
+		Profile:  userusecase.NewProfileUseCase(userusecase.ProfileDeps{Repo: deps.Repo.User, Cache: userCache, Media: confirmer}),
+		Fetch:    userusecase.NewFetchUseCase(userusecase.FetchDeps{Repo: deps.Repo.User, Cache: userCache, Link: deps.Prov.Link.LinkProvider}),
+		Presence: userusecase.NewPresenceUseCase(userusecase.PresenceDeps{Store: deps.Adapter.Presence}),
 	}
 }
 

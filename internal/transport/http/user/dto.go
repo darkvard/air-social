@@ -45,3 +45,12 @@ type StatusResponse struct {
 	Verified   bool       `json:"verified"`
 	VerifiedAt *time.Time `json:"verified_at"`
 }
+
+type PresenceBatchRequest struct {
+	UserIDs []int64 `json:"user_ids" binding:"required,min=1,max=100,dive,gt=0"`
+}
+
+type PresenceResponse struct {
+	UserID int64 `json:"user_id"`
+	Online bool  `json:"online"`
+}

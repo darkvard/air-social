@@ -3090,6 +3090,66 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/presence": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns online status for up to 100 users in a single request. Presence is refreshed automatically via WebSocket keep-alive every 20s and expires 30s after disconnect.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Get online status for multiple users",
+                "parameters": [
+                    {
+                        "description": "List of user IDs (max 100)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_user.PresenceBatchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_transport_http_user.PresenceResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}/follow": {
             "post": {
                 "security": [
@@ -3430,6 +3490,31 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/ws": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upgrades the HTTP connection to WebSocket. Requires a valid Bearer token.\n\n**Authentication**: Pass token via header ` + "`" + `Authorization: Bearer \u003ctoken\u003e` + "`" + `.\n\n## Inbound events (client → server)\n\n| type | payload | description |\n|------|---------|-------------|\n| ` + "`" + `ping` + "`" + ` | — | Heartbeat. Server replies with ` + "`" + `pong` + "`" + ` and marks user online. |\n| ` + "`" + `join` + "`" + ` | ` + "`" + `{\"conversation_id\":\"...\"}` + "`" + ` | Subscribe to real-time events for a conversation. Must call before receiving messages. |\n| ` + "`" + `leave` + "`" + ` | ` + "`" + `{\"conversation_id\":\"...\"}` + "`" + ` | Unsubscribe from a conversation. |\n| ` + "`" + `typing` + "`" + ` | ` + "`" + `{\"conversation_id\":\"...\"}` + "`" + ` | Notify others that user is typing. |\n| ` + "`" + `stop_typing` + "`" + ` | ` + "`" + `{\"conversation_id\":\"...\"}` + "`" + ` | Notify others that user stopped typing. |\n\n## Outbound events (server → client)\n\n| type | data | description |\n|------|------|-------------|\n| ` + "`" + `pong` + "`" + ` | — | Response to ` + "`" + `ping` + "`" + `. |\n| ` + "`" + `new_message` + "`" + ` | ` + "`" + `Message` + "`" + ` | A new message was sent in a joined conversation. |\n| ` + "`" + `message_edited` + "`" + ` | ` + "`" + `Message` + "`" + ` | A message was edited. |\n| ` + "`" + `message_deleted` + "`" + ` | ` + "`" + `{\"message_id\":\"...\"}` + "`" + ` | A message was soft-deleted. |\n| ` + "`" + `reaction_added` + "`" + ` | ` + "`" + `{\"message_id\":\"...\",\"reaction\":{...}}` + "`" + ` | Reaction added to a message. |\n| ` + "`" + `reaction_removed` + "`" + ` | ` + "`" + `{\"message_id\":\"...\",\"user_id\":...}` + "`" + ` | Reaction removed. |\n| ` + "`" + `read` + "`" + ` | ` + "`" + `{\"user_id\":...,\"last_read_msg_id\":\"...\"}` + "`" + ` | A participant marked the conversation as read. |\n| ` + "`" + `typing` + "`" + ` | ` + "`" + `{\"user_id\":...}` + "`" + ` | A participant is typing. |\n| ` + "`" + `stop_typing` + "`" + ` | ` + "`" + `{\"user_id\":...}` + "`" + ` | A participant stopped typing. |\n\n## Typical flow\n1. Connect with valid Bearer token\n2. Send ` + "`" + `{\"type\":\"join\",\"payload\":{\"conversation_id\":\"\u003cid\u003e\"}}` + "`" + ` to subscribe\n3. Use REST ` + "`" + `POST /conversations/{id}/messages` + "`" + ` to send a message\n4. Receive ` + "`" + `new_message` + "`" + `, ` + "`" + `typing` + "`" + `, etc. events in real time",
+                "tags": [
+                    "websocket"
+                ],
+                "summary": "Connect to real-time chat",
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/pkg.Response"
                         }
@@ -4680,6 +4765,33 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 64,
                     "minLength": 8
+                }
+            }
+        },
+        "internal_transport_http_user.PresenceBatchRequest": {
+            "type": "object",
+            "required": [
+                "user_ids"
+            ],
+            "properties": {
+                "user_ids": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "internal_transport_http_user.PresenceResponse": {
+            "type": "object",
+            "properties": {
+                "online": {
+                    "type": "boolean"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

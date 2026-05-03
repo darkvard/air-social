@@ -33,9 +33,7 @@ type MessageRepository interface {
 
 type PresenceStore interface {
 	SetOnline(ctx context.Context, userID int64) error
-	SetOffline(ctx context.Context, userID int64) error
-	RefreshPresence(ctx context.Context, userID int64) error
-	IsOnline(ctx context.Context, userID int64) (bool, error)
+	IsOnlineBatch(ctx context.Context, userIDs []int64) (map[int64]bool, error)
 }
 
 type UnreadStore interface {
