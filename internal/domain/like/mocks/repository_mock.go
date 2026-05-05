@@ -23,21 +23,31 @@ func (_m *MockRepository) EXPECT() *MockRepository_Expecter {
 }
 
 // DeleteCommentLike provides a mock function with given fields: ctx, commentID, userID
-func (_m *MockRepository) DeleteCommentLike(ctx context.Context, commentID int64, userID int64) error {
+func (_m *MockRepository) DeleteCommentLike(ctx context.Context, commentID int64, userID int64) (int64, error) {
 	ret := _m.Called(ctx, commentID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteCommentLike")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) (int64, error)); ok {
+		return rf(ctx, commentID, userID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) int64); ok {
 		r0 = rf(ctx, commentID, userID)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = rf(ctx, commentID, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockRepository_DeleteCommentLike_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteCommentLike'
@@ -60,32 +70,42 @@ func (_c *MockRepository_DeleteCommentLike_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockRepository_DeleteCommentLike_Call) Return(_a0 error) *MockRepository_DeleteCommentLike_Call {
-	_c.Call.Return(_a0)
+func (_c *MockRepository_DeleteCommentLike_Call) Return(_a0 int64, _a1 error) *MockRepository_DeleteCommentLike_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepository_DeleteCommentLike_Call) RunAndReturn(run func(context.Context, int64, int64) error) *MockRepository_DeleteCommentLike_Call {
+func (_c *MockRepository_DeleteCommentLike_Call) RunAndReturn(run func(context.Context, int64, int64) (int64, error)) *MockRepository_DeleteCommentLike_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeletePostLike provides a mock function with given fields: ctx, postID, userID
-func (_m *MockRepository) DeletePostLike(ctx context.Context, postID int64, userID int64) error {
+func (_m *MockRepository) DeletePostLike(ctx context.Context, postID int64, userID int64) (int64, error) {
 	ret := _m.Called(ctx, postID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeletePostLike")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) (int64, error)); ok {
+		return rf(ctx, postID, userID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) int64); ok {
 		r0 = rf(ctx, postID, userID)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = rf(ctx, postID, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockRepository_DeletePostLike_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeletePostLike'
@@ -108,12 +128,12 @@ func (_c *MockRepository_DeletePostLike_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *MockRepository_DeletePostLike_Call) Return(_a0 error) *MockRepository_DeletePostLike_Call {
-	_c.Call.Return(_a0)
+func (_c *MockRepository_DeletePostLike_Call) Return(_a0 int64, _a1 error) *MockRepository_DeletePostLike_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepository_DeletePostLike_Call) RunAndReturn(run func(context.Context, int64, int64) error) *MockRepository_DeletePostLike_Call {
+func (_c *MockRepository_DeletePostLike_Call) RunAndReturn(run func(context.Context, int64, int64) (int64, error)) *MockRepository_DeletePostLike_Call {
 	_c.Call.Return(run)
 	return _c
 }

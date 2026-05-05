@@ -9,6 +9,7 @@ import (
 	"air-social/internal/transport/http/health"
 	"air-social/internal/transport/http/like"
 	"air-social/internal/transport/http/media"
+	"air-social/internal/transport/http/notification"
 	"air-social/internal/transport/http/post"
 	"air-social/internal/transport/http/search"
 	"air-social/internal/transport/http/user"
@@ -27,6 +28,7 @@ type Handler struct {
 	Search       search.Handler
 	Conversation chat.ConversationHandler
 	Message      chat.MessageHandler
+	Notification notification.Handler
 }
 
 func NewHandler(prov Provider, usecase UseCase) Handler {
@@ -44,5 +46,6 @@ func NewHandler(prov Provider, usecase UseCase) Handler {
 		Search:       search.NewHandler(link, usecase.Search),
 		Conversation: chat.NewConversationHandler(usecase.Conversation),
 		Message:      chat.NewMessageHandler(usecase.Messages),
+		Notification: notification.NewHandler(usecase.Notification),
 	}
 }

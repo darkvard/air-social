@@ -169,3 +169,72 @@ var SocialPostDeletedQueueConfig = QueueConfig{
 	DeadLetterQueue:      postDeletedQueueDead,
 	DeadLetterRoutingKey: postDeletedQueueDeadRouting,
 }
+
+// Notification worker queues.
+// Topic exchange fan-out: same routing key → multiple queues receive the same message.
+// Each consumer domain gets its own queue, bound to the same routing key as stats/feed.
+const (
+	notifPostLikeQueue           = "notif_post_like_queue"
+	notifPostLikeQueueDead       = notifPostLikeQueue + deadExt
+	notifCommentLikeQueue        = "notif_comment_like_queue"
+	notifCommentLikeQueueDead    = notifCommentLikeQueue + deadExt
+	notifCommentCreatedQueue     = "notif_comment_created_queue"
+	notifCommentCreatedQueueDead = notifCommentCreatedQueue + deadExt
+	notifPostShareQueue          = "notif_post_share_queue"
+	notifPostShareQueueDead      = notifPostShareQueue + deadExt
+	notifFollowCreatedQueue      = "notif_follow_created_queue"
+	notifFollowCreatedQueueDead  = notifFollowCreatedQueue + deadExt
+	notifMessageCreatedQueue     = "notif_message_created_queue"
+	notifMessageCreatedQueueDead = notifMessageCreatedQueue + deadExt
+
+	messageCreatedRouting          = "chat.message.created"
+	messageCreatedQueueDeadRouting = messageCreatedRouting + deadExt
+)
+
+var NotifPostLikeQueueConfig = QueueConfig{
+	Queue:                notifPostLikeQueue,
+	RoutingKey:           postLikeRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      notifPostLikeQueueDead,
+	DeadLetterRoutingKey: postLikeRouting + deadExt,
+}
+
+var NotifCommentLikeQueueConfig = QueueConfig{
+	Queue:                notifCommentLikeQueue,
+	RoutingKey:           commentLikeRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      notifCommentLikeQueueDead,
+	DeadLetterRoutingKey: commentLikeRouting + deadExt,
+}
+
+var NotifCommentCreatedQueueConfig = QueueConfig{
+	Queue:                notifCommentCreatedQueue,
+	RoutingKey:           commentCreatedRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      notifCommentCreatedQueueDead,
+	DeadLetterRoutingKey: commentCreatedRouting + deadExt,
+}
+
+var NotifPostShareQueueConfig = QueueConfig{
+	Queue:                notifPostShareQueue,
+	RoutingKey:           postShareRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      notifPostShareQueueDead,
+	DeadLetterRoutingKey: postShareRouting + deadExt,
+}
+
+var NotifFollowCreatedQueueConfig = QueueConfig{
+	Queue:                notifFollowCreatedQueue,
+	RoutingKey:           followCreatedRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      notifFollowCreatedQueueDead,
+	DeadLetterRoutingKey: followCreatedRouting + deadExt,
+}
+
+var NotifMessageCreatedQueueConfig = QueueConfig{
+	Queue:                notifMessageCreatedQueue,
+	RoutingKey:           messageCreatedRouting,
+	DeadLetterExchange:   TopicEventsExchange.Name,
+	DeadLetterQueue:      notifMessageCreatedQueueDead,
+	DeadLetterRoutingKey: messageCreatedQueueDeadRouting,
+}

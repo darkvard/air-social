@@ -20,6 +20,7 @@ const (
 	EventReactionAdded   = "reaction_added"
 	EventReactionRemoved = "reaction_removed"
 	EventRead            = "read"
+	EventNotification    = "notification"
 )
 
 type InboundEvent struct {

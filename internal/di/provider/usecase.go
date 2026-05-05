@@ -15,6 +15,7 @@ import (
 	"air-social/internal/domain/health"
 	"air-social/internal/domain/like"
 	"air-social/internal/domain/media"
+	notifdomain "air-social/internal/domain/notification"
 	"air-social/internal/domain/post"
 	"air-social/internal/domain/search"
 	"air-social/internal/domain/stats"
@@ -54,6 +55,7 @@ type UseCase struct {
 	Search       search.UseCase
 	Conversation chat.ConversationUseCase
 	Messages     chat.Messenger
+	Notification notifdomain.UseCase
 }
 
 type UseCaseDeps struct {
@@ -88,6 +90,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 
 	convUC := getChatConversationUseCase(deps, followUC, deps.Repo.User, mediaUC)
 	messagesUC := getMessageUseCase(deps, mediaUC)
+	notifUC := getNotificationUseCase(deps)
 
 	return UseCase{
 		Health:       healthUC,
@@ -103,6 +106,7 @@ func NewUseCase(deps UseCaseDeps) UseCase {
 		Search:       searchUC,
 		Conversation: convUC,
 		Messages:     messagesUC,
+		Notification: notifUC,
 	}
 }
 
@@ -256,6 +260,14 @@ func getMessageUseCase(deps UseCaseDeps, mediaVerifier chatusecase.MediaVerifier
 		Hub:           ws.NewHubPublisher(deps.Infra.Redis),
 		Unread:        deps.Adapter.Unread,
 		MediaVerifier: mediaVerifier,
+	})
+}
+
+func getNotificationUseCase(deps UseCaseDeps) notifdomain.UseCase {
+	return notifdomain.NewUseCase(notifdomain.Deps{
+		Repo:     deps.Repo.Notification,
+		Presence: deps.Adapter.Presence,
+		Pusher:   ws.NewHubPublisher(deps.Infra.Redis),
 	})
 }
 

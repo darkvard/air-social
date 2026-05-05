@@ -125,7 +125,7 @@ func (u *usecase) DeleteComment(ctx context.Context, commentID int64, userID int
 		return pkg.OrInternalError(err)
 	}
 
-	_ = u.addCommentEvent(ctx, userID, *comment, common.EventCommentDeleted)
+	_ = u.addCommentEvent(ctx, userID, 0, *comment, common.EventCommentDeleted)
 	return nil
 }
 
@@ -160,7 +160,7 @@ func (u *usecase) UpdateComment(ctx context.Context, params UpdateParams) (*Comm
 }
 
 func (u *usecase) CreateComment(ctx context.Context, params CreateParams) (*Comment, error) {
-	_, err := u.validatePostVisibility(ctx, params.PostID, params.UserID)
+	p, err := u.validatePostVisibility(ctx, params.PostID, params.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (u *usecase) CreateComment(ctx context.Context, params CreateParams) (*Comm
 		return nil, pkg.OrInternalError(err)
 	}
 
-	_ = u.addCommentEvent(ctx, params.UserID, *comment, common.EventCommentCreated)
+	_ = u.addCommentEvent(ctx, params.UserID, p.UserID, *comment, common.EventCommentCreated)
 
 	return comment, nil
 }
@@ -261,14 +261,15 @@ func (u *usecase) validateMedia(ctx context.Context, params []Media) ([]Media, e
 	return params, nil
 }
 
-func (u *usecase) addCommentEvent(ctx context.Context, actorID int64, comment Comment, typ common.EventType) error {
+func (u *usecase) addCommentEvent(ctx context.Context, actorID int64, postOwnerID int64, comment Comment, typ common.EventType) error {
 	data := common.CommentEventPayload{
-		PostID:    comment.PostID,
-		CommentID: comment.ID,
-		ParentID:  comment.ParentID,
-		ActorID:   actorID,
-		OwnerID:   comment.UserID,
-		Typ:       typ,
+		PostID:      comment.PostID,
+		CommentID:   comment.ID,
+		ParentID:    comment.ParentID,
+		ActorID:     actorID,
+		OwnerID:     comment.UserID,
+		PostOwnerID: postOwnerID,
+		Typ:         typ,
 	}
 	return u.deps.Event.Publish(ctx, common.NewEvent(typ, data))
 }

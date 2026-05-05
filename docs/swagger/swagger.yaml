@@ -607,6 +607,42 @@ definitions:
       upload_url:
         type: string
     type: object
+  internal_transport_http_notification.CursorPaginatedResponse-internal_transport_http_notification_NotificationResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/internal_transport_http_notification.NotificationResponse'
+        type: array
+      meta:
+        $ref: '#/definitions/air-social_internal_transport_http_shared.MetaCursor-int64'
+    type: object
+  internal_transport_http_notification.NotificationResponse:
+    properties:
+      actor_id:
+        type: integer
+      created_at:
+        type: string
+      data:
+        additionalProperties: {}
+        type: object
+      id:
+        type: integer
+      read:
+        type: boolean
+      read_at:
+        type: string
+      target_id:
+        type: integer
+      target_type:
+        type: string
+      type:
+        type: string
+    type: object
+  internal_transport_http_notification.UnreadCountResponse:
+    properties:
+      count:
+        type: integer
+    type: object
   internal_transport_http_post.CreateRequest:
     properties:
       content:
@@ -2354,6 +2390,65 @@ paths:
       summary: Get presigned upload URL
       tags:
       - Media
+  /notifications:
+    get:
+      parameters:
+      - description: Cursor (last notification ID)
+        in: query
+        name: cursor
+        type: integer
+      - description: Limit (default 20, max 50)
+        in: query
+        name: limit
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_notification.CursorPaginatedResponse-internal_transport_http_notification_NotificationResponse'
+      security:
+      - BearerAuth: []
+      summary: List notifications
+      tags:
+      - Notifications
+  /notifications/{id}/read:
+    put:
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Mark a notification as read
+      tags:
+      - Notifications
+  /notifications/read:
+    put:
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Mark all notifications as read
+      tags:
+      - Notifications
+  /notifications/unread-count:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_notification.UnreadCountResponse'
+      security:
+      - BearerAuth: []
+      summary: Get unread notification count
+      tags:
+      - Notifications
   /posts:
     post:
       consumes:

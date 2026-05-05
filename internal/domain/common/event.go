@@ -88,12 +88,13 @@ type LikeEventPayload struct {
 }
 
 type CommentEventPayload struct {
-	PostID    int64     `json:"post_id"`
-	CommentID int64     `json:"comment_id"`
-	ParentID  *int64    `json:"parent_id,omitempty"` // nil ? root comment : reply comment
-	ActorID   int64     `json:"actor_id"`
-	OwnerID   int64     `json:"owner_id"`
-	Typ       EventType `json:"type"`
+	PostID      int64     `json:"post_id"`
+	CommentID   int64     `json:"comment_id"`
+	ParentID    *int64    `json:"parent_id,omitempty"` // nil ? root comment : reply comment
+	ActorID     int64     `json:"actor_id"`
+	OwnerID     int64     `json:"owner_id"`      // comment author
+	PostOwnerID int64     `json:"post_owner_id"` // post author (notification recipient)
+	Typ         EventType `json:"type"`
 }
 
 func (c CommentEventPayload) IsReply() bool {
@@ -105,7 +106,8 @@ type ShareEventPayload struct {
 	OriginalPostID int64 `json:"original_post_id"`
 	NewPostID      int64 `json:"new_post_id"`
 	ActorID        int64 `json:"actor_id"`
-	IsShared       bool  `json:"is_shared"` // true ? create post (original_id != nil) : delete post (original_id != nil)
+	OwnerID        int64 `json:"owner_id"`  // original post owner
+	IsShared       bool  `json:"is_shared"` // true = share created, false = share deleted (original post always set)
 }
 
 type PostFeedEventPayload struct {

@@ -53,12 +53,12 @@ func (u *usecase) LikePost(ctx context.Context, postID, userID int64) error {
 }
 
 func (u *usecase) UnlikePost(ctx context.Context, postID, userID int64) error {
-	err := u.deps.Repo.DeletePostLike(ctx, postID, userID)
+	ownerID, err := u.deps.Repo.DeletePostLike(ctx, postID, userID)
 	if err != nil {
 		return pkg.NewError(err, "delete post like failed")
 	}
 
-	_ = u.addLikePostEvent(ctx, false, postID, userID, -1)
+	_ = u.addLikePostEvent(ctx, false, postID, userID, ownerID)
 	return nil
 }
 
@@ -83,12 +83,12 @@ func (u *usecase) LikeComment(ctx context.Context, commentID, userID int64) erro
 }
 
 func (u *usecase) UnlikeComment(ctx context.Context, commentID, userID int64) error {
-	err := u.deps.Repo.DeleteCommentLike(ctx, commentID, userID)
+	ownerID, err := u.deps.Repo.DeleteCommentLike(ctx, commentID, userID)
 	if err != nil {
 		return pkg.NewError(err, "delete comment like failed")
 	}
 
-	_ = u.addLikeCommentEvent(ctx, false, commentID, userID, -1)
+	_ = u.addLikeCommentEvent(ctx, false, commentID, userID, ownerID)
 
 	return nil
 }

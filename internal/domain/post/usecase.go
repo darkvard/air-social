@@ -239,10 +239,15 @@ func (u *usecase) addPostFeedEvent(ctx context.Context, postID, authorID int64, 
 }
 
 func (u *usecase) addShareEvent(ctx context.Context, post Post, isShare bool) error {
+	original, err := u.deps.PostRepo.GetByID(ctx, *post.OriginalPostID)
+	if err != nil {
+		return err
+	}
 	data := common.ShareEventPayload{
 		OriginalPostID: *post.OriginalPostID,
 		NewPostID:      post.ID,
 		ActorID:        post.UserID,
+		OwnerID:        original.UserID,
 		IsShared:       isShare,
 	}
 	return u.deps.Event.Publish(ctx, common.NewEvent(common.EventPostShare, data))

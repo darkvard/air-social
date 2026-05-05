@@ -49,11 +49,18 @@ func (h *Hub) Run(ctx context.Context) {
 
 func (h *Hub) add(client *Client) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
-	if _, ok := h.clients[client.userID]; !ok {
+	isFirst := len(h.clients[client.userID]) == 0
+	if isFirst {
 		h.clients[client.userID] = make(map[*Client]struct{})
 	}
 	h.clients[client.userID][client] = struct{}{}
+	h.mu.Unlock()
+
+	if isFirst {
+		h.subMgr.ensure(notifChannel(client.userID), func(b []byte) {
+			h.sendToUser(client.userID, b)
+		})
+	}
 }
 
 func (h *Hub) remove(client *Client) {
@@ -64,10 +71,15 @@ func (h *Hub) remove(client *Client) {
 		return
 	}
 	delete(conns, client)
-	if len(conns) == 0 {
+	noMoreConns := len(conns) == 0
+	if noMoreConns {
 		delete(h.clients, client.userID)
 	}
 	h.mu.Unlock()
+
+	if noMoreConns {
+		h.subMgr.cancel(notifChannel(client.userID))
+	}
 
 	client.mu.RLock()
 	convIDs := make([]string, 0, len(client.convIDs))
@@ -80,6 +92,23 @@ func (h *Hub) remove(client *Client) {
 		if !h.hasClientInConv(convID) {
 			h.subMgr.cancel(convID)
 		}
+	}
+}
+
+func (h *Hub) sendToUser(userID int64, payload []byte) {
+	h.mu.RLock()
+	var toRemove []*Client
+	for client := range h.clients[userID] {
+		select {
+		case client.send <- payload:
+		default:
+			toRemove = append(toRemove, client)
+		}
+	}
+	h.mu.RUnlock()
+	for _, c := range toRemove {
+		h.remove(c)
+		c.closeChannel()
 	}
 }
 

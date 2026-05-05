@@ -371,7 +371,7 @@ func (s *LikeUseCaseSuite) TestUnlikePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					DeletePostLike(mock.Anything, postID, userID).
-					Return(assert.AnError).
+					Return(int64(0), assert.AnError).
 					Once()
 			},
 			wantErr: assert.AnError,
@@ -386,7 +386,7 @@ func (s *LikeUseCaseSuite) TestUnlikePost() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					DeletePostLike(mock.Anything, postID, userID).
-					Return(nil).
+					Return(int64(999), nil).
 					Once()
 
 				deps.event.EXPECT().
@@ -577,7 +577,7 @@ func (s *LikeUseCaseSuite) TestUnlikeComment() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					DeleteCommentLike(mock.Anything, commentID, userID).
-					Return(assert.AnError).
+					Return(int64(0), assert.AnError).
 					Once()
 			},
 			wantErr: assert.AnError,
@@ -592,7 +592,7 @@ func (s *LikeUseCaseSuite) TestUnlikeComment() {
 			setupMock: func(deps testDeps) {
 				deps.repo.EXPECT().
 					DeleteCommentLike(mock.Anything, commentID, userID).
-					Return(nil).
+					Return(int64(999), nil).
 					Once()
 
 				deps.event.EXPECT().

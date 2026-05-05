@@ -6,6 +6,7 @@ import (
 	commentdomain "air-social/internal/domain/comment"
 	followdomain "air-social/internal/domain/follow"
 	likedomain "air-social/internal/domain/like"
+	notifdomain "air-social/internal/domain/notification"
 	postdomain "air-social/internal/domain/post"
 	searchdomain "air-social/internal/domain/search"
 	statsdomain "air-social/internal/domain/stats"
@@ -15,6 +16,7 @@ import (
 	commentinfra "air-social/internal/infrastructure/postgres/comment"
 	followinfra "air-social/internal/infrastructure/postgres/follow"
 	likeinfra "air-social/internal/infrastructure/postgres/like"
+	notifinfra "air-social/internal/infrastructure/postgres/notification"
 	postinfra "air-social/internal/infrastructure/postgres/post"
 	searchinfra "air-social/internal/infrastructure/postgres/search"
 	statsinfra "air-social/internal/infrastructure/postgres/stats"
@@ -33,6 +35,7 @@ type Repository struct {
 	Search       searchdomain.Repository
 	Conversation chatdomain.ConversationRepository
 	Message      chatdomain.MessageRepository
+	Notification notifdomain.Repository
 }
 
 func NewRepository(infra *Infrastructure) Repository {
@@ -47,5 +50,6 @@ func NewRepository(infra *Infrastructure) Repository {
 		Search:       searchinfra.NewRepository(infra.Postgres),
 		Conversation: conversationinfra.NewRepository(infra.MongoDB),
 		Message:      messageinfra.NewRepository(infra.MongoDB),
+		Notification: notifinfra.NewRepository(infra.Postgres),
 	}
 }

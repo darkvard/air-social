@@ -21,6 +21,7 @@ import (
 	"air-social/internal/transport/http/like"
 	"air-social/internal/transport/http/media"
 	"air-social/internal/transport/http/middleware"
+	notifhttp "air-social/internal/transport/http/notification"
 	"air-social/internal/transport/http/post"
 	"air-social/internal/transport/http/search"
 	"air-social/internal/transport/http/user"
@@ -53,6 +54,7 @@ func NewServer(
 		feed.RegisterRoute(group, h.Feed, mw)
 		search.RegisterRoute(group, h.Search, mw)
 		chat.RegisterRoute(group, h.Conversation, h.Message, mw)
+		notifhttp.RegisterRoute(group, h.Notification, mw)
 	}
 	group.GET("/ws", mw.Auth, func(c *gin.Context) {
 		ws.ServeWS(hub, c)

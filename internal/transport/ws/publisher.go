@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/redis/go-redis/v9"
 
@@ -68,4 +69,16 @@ func (p *HubPublisher) PublishReactionRemoved(ctx context.Context, msgID string,
 		Type: EventReactionRemoved,
 		Data: map[string]any{keyMessageID: msgID, keyUserID: userID},
 	})
+}
+
+func (p *HubPublisher) PushNotification(ctx context.Context, userID int64, data any) error {
+	payload, err := json.Marshal(OutboundEvent{Type: EventNotification, Data: data})
+	if err != nil {
+		return err
+	}
+	return p.redis.Publish(ctx, notifChannel(userID), payload).Err()
+}
+
+func notifChannel(userID int64) string {
+	return fmt.Sprintf("notif:%d", userID)
 }

@@ -61,7 +61,7 @@ flowchart TD
 
 ## Features
 
-### Core Social ✅
+### Core Social
 
 - **Authentication** — JWT access + refresh tokens, multi-device session management, email verification, password reset
 - **Posts** — create, edit, delete, share (repost); public / followers-only / private visibility
@@ -72,7 +72,7 @@ flowchart TD
 - **Search** — full-text post search, user search by name / username
 - **Media** — presigned URL upload direct to MinIO (bypasses app server)
 
-### Performance & System Design ✅
+### Performance & System Design
 
 - **Fanout-on-Write Newsfeed** — Redis Sorted Set per user, O(1) feed read, async via RabbitMQ
 - **Write-Behind Stats Cache** — Redis delta counters, 1-minute batch flush to PostgreSQL, Lua atomic sync
@@ -81,7 +81,7 @@ flowchart TD
 - **Rate Limiting** — token bucket algorithm per endpoint
 - **Graceful Degradation** — stats read falls back to DB-only when Redis is unavailable
 
-### Real-Time Chat ✅
+### Real-Time Chat
 
 - Direct (1-on-1) and group conversations
 - **Messenger-style inbox routing** — active inbox vs. message requests based on follow relationship; implicit accept on reply
@@ -93,7 +93,7 @@ flowchart TD
 - **Mark read / unread** — mark-read updates `last_read_id` pointer and broadcasts read event; mark-unread is a private reminder (does not roll back seen status for other participants)
 - **Seen status** — derived from `participant.last_read_id` vs message ULID; no per-message writes needed
 
-### Notifications 🚧
+### Notifications
 
 - Persistent notifications in PostgreSQL with JSONB payload
 - **UPSERT deduplication** — partial unique indexes handle NULL target IDs; like → unlike → like = 1 row
@@ -159,6 +159,7 @@ Client B ──WS──► Hub (instance 2) ◄──subscribe──────
 
 - One Hub goroutine manages all connections: `map[userID]map[*Client]struct{}` supports multiple tabs/devices per user
 - Redis Pub/Sub subscriptions are created on-demand per conversation and cancelled when no clients remain (prevents goroutine leaks)
+- `notif:{userID}` channel per user — subscribed on first WS connect, cancelled on last disconnect; delivers real-time notification pushes
 - Bounded send channel per client (size 256) — a slow client is disconnected rather than blocking the broadcast loop
 
 ---
@@ -271,7 +272,7 @@ Client B ──WS──► Hub (instance 2) ◄──subscribe──────
 </details>
 
 <details>
-<summary>Notifications 🚧</summary>
+<summary>Notifications</summary>
 
 | Method | Path | Description |
 |---|---|---|

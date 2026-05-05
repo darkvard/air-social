@@ -44,13 +44,21 @@ func (r *repository) InsertPostLike(ctx context.Context, postID, userID int64) (
 	return true, ownerID, nil
 }
 
-func (r *repository) DeletePostLike(ctx context.Context, postID, userID int64) error {
+func (r *repository) DeletePostLike(ctx context.Context, postID, userID int64) (int64, error) {
 	query := `
-		DELETE FROM post_likes 
-		WHERE post_id = $1 AND user_id = $2
+		DELETE FROM post_likes pl
+		USING posts p
+		WHERE pl.post_id = $1 AND pl.user_id = $2 AND p.id = pl.post_id
+		RETURNING p.user_id
 	`
-	_, err := r.db.ExecContext(ctx, query, postID, userID)
-	return err
+	var ownerID int64
+	if err := r.db.QueryRowContext(ctx, query, postID, userID).Scan(&ownerID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, pkg.MapPostgresError(err)
+	}
+	return ownerID, nil
 }
 
 func (r *repository) InsertCommentLike(ctx context.Context, commentID, userID int64) (bool, int64, error) {
@@ -76,13 +84,21 @@ func (r *repository) InsertCommentLike(ctx context.Context, commentID, userID in
 	return true, ownerID, nil
 }
 
-func (r *repository) DeleteCommentLike(ctx context.Context, commentID, userID int64) error {
+func (r *repository) DeleteCommentLike(ctx context.Context, commentID, userID int64) (int64, error) {
 	query := `
-		DELETE FROM comment_likes 
-		WHERE comment_id = $1 AND user_id = $2
+		DELETE FROM comment_likes cl
+		USING comments c
+		WHERE cl.comment_id = $1 AND cl.user_id = $2 AND c.id = cl.comment_id
+		RETURNING c.user_id
 	`
-	_, err := r.db.ExecContext(ctx, query, commentID, userID)
-	return pkg.MapPostgresError(err)
+	var ownerID int64
+	if err := r.db.QueryRowContext(ctx, query, commentID, userID).Scan(&ownerID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, pkg.MapPostgresError(err)
+	}
+	return ownerID, nil
 }
 
 func (r *repository) GetPostLiked(ctx context.Context, postIDs []int64, userID int64) ([]int64, error) {

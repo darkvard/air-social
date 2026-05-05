@@ -8,6 +8,7 @@ import (
 	chatwkr "air-social/internal/transport/worker/chat"
 	"air-social/internal/transport/worker/email"
 	"air-social/internal/transport/worker/feed"
+	notifwkr "air-social/internal/transport/worker/notification"
 	"air-social/internal/transport/worker/stats"
 )
 
@@ -43,5 +44,12 @@ func NewWorkers(infra *Infrastructure, adapter Adapter, prov Provider, usecase U
 		Dispatcher: chatwkr.NewDispatcher(usecase.Conversation.Member),
 	})
 
-	return worker.NewManager(emailWorker, statsWorker, statsSyncer, feedWorker, chatWorker)
+	// 6. Notification Worker
+	notifWorker := notifwkr.NewWorkerGroup(consumer.Deps{
+		Conn:       infra.Rabbit,
+		Cache:      adapter.AuthCache,
+		Dispatcher: notifwkr.NewDispatcher(usecase.Notification),
+	})
+
+	return worker.NewManager(emailWorker, statsWorker, statsSyncer, feedWorker, chatWorker, notifWorker)
 }
